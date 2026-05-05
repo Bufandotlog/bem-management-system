@@ -1,0 +1,44 @@
+/* ========== VARIABLES ========== */
+:root {
+    --biru-primary: #4A90E2;      /* Biru terang utama */
+    --biru-secondary: #6BA5E8;    /* Biru lebih muda */
+    --biru-soft: #8BB9F0;         /* Biru sangat soft */
+    --biru-pudar: #A9CCF5;        /* Biru pudar */
+    --biru-gelap: #1A2F4A;        /* Biru gelap untuk gradient */
+    --biru-transparan: rgba(74, 144, 226, 0.15);
+    
+    --text-light: #fff;
+    --text-dark: #333;
+    --text-gray: #666;
+    --text-soft: #888;
+    --bg-dark: #313131;   /* UBAH DARI #000 JADI TRANSPARENT */
+    --bg-card: #111;
+    --bg-soft: #0a0a0a;
+    --border-dark: #333;
+    
+    --shadow-sm: 0 5px 15px rgba(0,0,0,0.08);
+    --shadow-md: 0 10px 25px rgba(0,0,0,0.15);
+    --shadow-lg: 0 15px 30px rgba(0,0,0,0.15);
+    
+    --transition-fast: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-dark);  /* Sekarang jadi transparent */
+    color: var(--text-light);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Pastikan konten memiliki background sendiri */
+.sambutan, .visi-misi, .card, footer {
+    background-color: rgba(0,0,0,0.7);  /* Contoh, akan diatur di file masing-masing */
+}

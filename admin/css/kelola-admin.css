@@ -1,0 +1,780 @@
+/* ===== VARIABLES - Konsisten dengan file lain ===== */
+:root {
+    --primary: #4A90E2;
+    --primary-light: #6BA5E8;
+    --primary-dark: #3A7BC8;
+    --success: #4CAF50;
+    --danger: #f44336;
+    --danger-dark: #d32f2f;
+    --warning: #ffc107;
+    --dark-100: #1a1a1a;
+    --dark-200: #222;
+    --dark-300: #2a2a2a;
+    --dark-400: #333;
+    --dark-500: #444;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #999999;
+    --border-color: #333333;
+    --border-light: #444444;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+    --shadow-primary: 0 5px 15px rgba(74, 144, 226, 0.3);
+    --transition: all 0.3s ease;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+}
+
+/* ===== LAYOUT UTAMA ===== */
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+/* ===== CARD STYLES ===== */
+.card {
+    background: var(--dark-200);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-light);
+}
+
+.card-header {
+    background: var(--dark-100);
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-header i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* ===== FORM STYLES ===== */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.form-group label i {
+    color: var(--primary);
+    width: 16px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--dark-300);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+    font-size: 0.95rem;
+}
+
+.form-control:hover {
+    border-color: var(--primary);
+    background: var(--dark-400);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--dark-400);
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.15);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+/* Select styling */
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A90E2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 44px;
+}
+
+select.form-control option {
+    background: var(--dark-200);
+    color: var(--text-primary);
+    padding: 12px;
+}
+
+/* Periode field animation */
+#periodeField {
+    transition: var(--transition);
+    animation: slideDown 0.3s ease;
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 500;
+    min-width: 120px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--text-primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+}
+
+.btn-secondary {
+    background: var(--dark-400);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--dark-500);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    min-width: unset;
+    border-radius: var(--radius-sm);
+}
+
+.btn-icon i {
+    font-size: 1rem;
+}
+
+/* Action buttons in table */
+.btn-edit, .btn-delete {
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-edit { 
+    background: var(--primary); 
+}
+
+.btn-edit:hover { 
+    background: var(--primary-light); 
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+}
+
+.btn-delete { 
+    background: var(--danger); 
+}
+
+.btn-delete:hover { 
+    background: var(--danger-dark); 
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+}
+
+.btn-edit i, .btn-delete i {
+    font-size: 0.9rem;
+}
+
+/* ===== TABLE STYLES ===== */
+.table-responsive {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    background: var(--dark-200);
+    border: 1px solid var(--border-color);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.admin-table th {
+    background: var(--dark-100);
+    color: var(--text-primary);
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.admin-table tbody tr {
+    transition: var(--transition);
+}
+
+.admin-table tbody tr:hover {
+    background: var(--dark-300);
+}
+
+/* ===== BADGE STYLES ===== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: var(--dark-400);
+    color: var(--text-secondary);
+}
+
+.badge i {
+    font-size: 0.8rem;
+}
+
+.badge.super-admin {
+    background: rgba(74, 144, 226, 0.15);
+    color: var(--primary);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+}
+
+.badge.admin {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* ===== ALERT STYLES ===== */
+.alert {
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideDown 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.alert i {
+    font-size: 1.3rem;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.alert-message {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.alert-error {
+    background: rgba(244, 67, 54, 0.1);
+    border-left-color: var(--danger);
+    color: var(--danger);
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.1);
+    border-left-color: var(--success);
+    color: var(--success);
+}
+
+/* ===== INFO CARD ===== */
+.info-card {
+    background: linear-gradient(135deg, #1a2f4a, #0f1a2a);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    padding: 24px;
+    margin-bottom: 24px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--shadow-md);
+}
+
+.info-icon {
+    background: var(--primary);
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.info-icon i {
+    color: var(--text-primary);
+    font-size: 1.8rem;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-title {
+    margin: 0 0 4px 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.info-text {
+    margin: 0;
+    color: var(--primary-light);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ===== STATS CARD ===== */
+.stats-card {
+    background: var(--dark-200);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: var(--transition);
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.stats-icon {
+    background: rgba(74, 144, 226, 0.15);
+    width: 54px;
+    height: 54px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stats-icon i {
+    color: var(--primary);
+    font-size: 1.8rem;
+}
+
+.stats-content {
+    flex: 1;
+}
+
+.stats-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.stats-value {
+    color: var(--text-primary);
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* ===== SECTION TITLE ===== */
+.section-title {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin: 0 0 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-title i {
+    color: var(--primary);
+    font-size: 1.8rem;
+}
+
+/* ===== INFO HAK AKSES - DIBUAT LEBIH RESPONSIF ===== */
+.info-card-access {
+    margin-top: 30px;
+    background: linear-gradient(135deg, #1a1f2a, #14181f);
+    border: 1px solid rgba(74, 144, 226, 0.2);
+}
+
+.access-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.access-card {
+    background: var(--dark-300);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+}
+
+.access-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.access-card.superadmin:hover {
+    border-color: gold;
+    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.15);
+}
+
+.access-card.admin:hover {
+    border-color: var(--primary);
+    box-shadow: 0 10px 25px rgba(74, 144, 226, 0.15);
+}
+
+.access-card.superadmin::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, gold, #ffd700, gold);
+}
+
+.access-card.admin::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--primary));
+}
+
+.access-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-size: 2rem;
+}
+
+.access-card.superadmin .access-icon {
+    background: rgba(255, 215, 0, 0.15);
+    color: gold;
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+}
+
+.access-card.admin .access-icon {
+    background: rgba(74, 144, 226, 0.15);
+    color: var(--primary);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.2);
+}
+
+.access-title {
+    font-size: 1.3rem;
+    margin: 0 0 16px 0;
+    font-weight: 600;
+}
+
+.access-card.superadmin .access-title {
+    color: gold;
+}
+
+.access-card.admin .access-title {
+    color: var(--primary);
+}
+
+.access-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.access-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.access-list li i {
+    color: var(--success);
+    font-size: 1rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.access-card.superadmin .access-list li i {
+    color: gold;
+}
+
+.access-card.admin .access-list li i {
+    color: var(--primary);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .access-grid {
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .card-header {
+        padding: 16px 20px;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    .admin-table {
+        font-size: 0.9rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 12px;
+    }
+    
+    .badge {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-edit, .btn-delete {
+        padding: 6px 12px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+    
+    .info-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .access-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .access-card {
+        padding: 20px;
+    }
+    
+    .access-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+    }
+    
+    .access-title {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .access-list li {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .form-group input,
+    .form-group select {
+        font-size: 16px; /* Mencegah zoom di mobile */
+    }
+    
+    .btn-primary {
+        width: 100%;
+    }
+    
+    .stats-card {
+        padding: 16px;
+    }
+    
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .stats-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .stats-value {
+        font-size: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+    }
+    
+    .info-card-access .card-body {
+        padding: 16px;
+    }
+    
+    .access-card {
+        padding: 16px;
+    }
+    
+    .access-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+    
+    .access-title {
+        font-size: 1.1rem;
+    }
+    
+    .access-list li {
+        font-size: 0.85rem;
+        gap: 8px;
+    }
+    
+    .access-list li i {
+        font-size: 0.9rem;
+    }
+}
+
+/* ===== UTILITY CLASSES - Konsisten dengan file lain ===== */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+.mt-0 { margin-top: 0; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.mt-6 { margin-top: 24px; }
+
+.mb-0 { margin-bottom: 0; }
+.mb-2 { margin-bottom: 8px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+
+.p-0 { padding: 0; }
+.p-2 { padding: 8px; }
+.p-4 { padding: 16px; }
+.p-6 { padding: 24px; }
+
+.d-flex { display: flex; }
+.align-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-4 { gap: 16px; }
+
+.w-100 { width: 100%; }

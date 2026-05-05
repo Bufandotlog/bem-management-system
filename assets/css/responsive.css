@@ -1,0 +1,432 @@
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    /* Navbar */
+    .menu-toggle {
+        display: block;
+    }
+
+    /* ✅ DIUBAH: nav-menu pakai absolute agar top: 100% bekerja dari navbar */
+.nav-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    gap: 0;
+
+    /* ✅ Default: tidak ada transisi saat menutup - langsung hilang */
+    transform: translateY(-10px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: none;
+}
+
+.nav-menu.active {
+    transform: translateY(0);
+    opacity: 1 !important;
+    visibility: visible;
+    pointer-events: auto;
+
+    /* ✅ Transisi hanya saat membuka */
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.35s;
+}
+
+    /* Garis pemisah antar item menu */
+    .nav-menu li {
+        width: 100%;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-menu li:last-child {
+        border-bottom: none;
+    }
+
+    .nav-menu a {
+        font-size: 1.2rem;
+        padding: 0.8rem 2rem;
+        width: 100%;
+        text-align: center;
+    }
+
+    .nav-menu a::after {
+        bottom: 5px;
+    }
+
+    .logo-img {
+        height: 25px;
+    }
+
+    .logo a {
+        gap: 8px;
+        font-size: 1.2rem;
+    }
+
+    /* Hero Section */
+    .hero-content {
+        padding: 0 1.5rem;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 8vw, 3.5rem);
+    }
+
+    .hero-title .biru {
+        font-size: clamp(2rem, 7vw, 3rem);
+        letter-spacing: 4px;
+    }
+
+    .hero-sub {
+        font-size: 1rem;
+        letter-spacing: 4px;
+        margin-top: 15px;
+    }
+
+    .scroll-hint {
+        bottom: 30px;
+    }
+
+    .scroll-hint i {
+        font-size: 1.5rem;
+    }
+
+    .scroll-hint span {
+        font-size: 0.8rem;
+    }
+
+    /* Container */
+    .container {
+        padding: 3rem 1.5rem;
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 2.5rem;
+        letter-spacing: 2px;
+    }
+
+    .section-title span {
+        padding: 0 0.8rem;
+    }
+
+    .section-title span::before,
+    .section-title span::after {
+        width: 20px;
+    }
+
+    /* Sambutan Section */
+    .sambutan {
+        padding: 3rem 1.5rem;
+    }
+
+    .sambutan-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .sambutan-foto {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .sambutan-text {
+        text-align: center;
+    }
+
+    .sambutan-text h2 {
+        font-size: 2rem;
+    }
+
+    .sambutan-text .jabatan {
+        font-size: 1rem;
+        letter-spacing: 1px;
+    }
+
+    .sambutan-text p {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .ttd {
+        text-align: left;
+    }
+
+    /* Visi Misi */
+    .visi-misi {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+
+    .visi, .misi {
+        padding: 1.5rem;
+    }
+
+    .visi h3, .misi h3 {
+        font-size: 1.5rem;
+    }
+
+    /* Cards Grid */
+    .card-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .card {
+        max-width: 400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .card-image {
+        height: 200px;
+    }
+
+    .card-content {
+        padding: 1.2rem;
+    }
+
+    .card-content h3 {
+        font-size: 1.2rem;
+    }
+
+    .card-meta {
+        font-size: 0.8rem;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+    }
+
+    .btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    /* Kepengurusan Page */
+    .kepengurusan-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1.5rem;
+        padding: 7rem 3% 3rem;
+    }
+
+    .photo-card .card-image-container {
+        height: 200px;
+    }
+
+    .logo-card .card-logo-container {
+        height: 160px;
+        padding: 20px;
+    }
+
+    .logo-card .card-logo {
+        max-height: 100px;
+    }
+
+    .card-info {
+        padding: 1.2rem;
+    }
+
+    .card-info h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Detail Menteri Page */
+    .detail-header {
+        padding: 7rem 5% 2rem;
+    }
+
+    .photo-header .header-photo-container {
+        width: 150px;
+        height: 150px;
+    }
+
+    .logo-header .header-logo-container {
+        width: 130px;
+        height: 130px;
+        padding: 20px;
+    }
+
+    .header-text h1 {
+        font-size: 2rem;
+    }
+
+    .header-text p {
+        font-size: 1rem;
+    }
+
+    .menteri-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1.5rem;
+        padding: 0 3% 3rem;
+    }
+
+    .member-photo-container {
+        height: 240px;
+    }
+
+    .item-info {
+        padding: 1rem;
+    }
+
+    .item-info h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Berita Detail Page */
+    .berita-detail {
+        padding: 5rem 1.5rem 2rem;
+    }
+
+    .berita-detail h1 {
+        font-size: 2rem;
+    }
+
+    .berita-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .berita-detail img {
+        max-height: 300px;
+        margin: 1.5rem 0;
+    }
+
+    .berita-content {
+        font-size: 1rem;
+    }
+
+    /* Kontak Page */
+    .kontak-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin: 5rem auto 2rem;
+        padding: 0 1.5rem;
+    }
+
+    .kontak-info {
+        padding: 2rem;
+    }
+
+    .kontak-item {
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .kontak-item i {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .kontak-item h3 {
+        font-size: 1.1rem;
+    }
+
+    .map-container iframe {
+        min-height: 300px;
+    }
+
+    /* Footer */
+    footer {
+        padding: 2rem 1.5rem 1rem;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+    }
+
+    .social-links {
+        justify-content: center;
+    }
+
+    .footer-section a {
+        display: inline-block;
+        margin: 0.3rem 0.5rem;
+    }
+
+    .copyright {
+        padding-top: 2rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* ========== EXTRA SMALL DEVICES ========== */
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: clamp(2rem, 7vw, 2.5rem);
+    }
+
+    .hero-title .biru {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+        letter-spacing: 2px;
+    }
+
+    .hero-sub {
+        font-size: 0.9rem;
+        letter-spacing: 3px;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .section-title span::before,
+    .section-title span::after {
+        width: 15px;
+    }
+
+    .kepengurusan-grid {
+        grid-template-columns: 1fr;
+        padding: 6rem 1rem 2rem;
+    }
+
+    .menteri-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .member-photo-container {
+        height: 300px;
+    }
+
+    .kontak-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .kontak-item i {
+        margin-bottom: 0.5rem;
+    }
+
+    .footer-section a {
+        display: block;
+        margin: 0.3rem 0;
+    }
+}
+
+/* ========== LANDSCAPE ORIENTATION ========== */
+@media (max-width: 896px) and (orientation: landscape) {
+    .hero {
+        min-height: 120vh;
+    }
+
+    .nav-menu {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .menteri-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}

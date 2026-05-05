@@ -1,0 +1,543 @@
+/* ============================================
+   KEPENGURUSAN ADMIN CSS
+   BEM Kabinet Astawidya
+   ============================================ */
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+    --primary: #4A90E2;
+    --primary-light: #6BA5E8;
+    --primary-dark: #1a2f4a;
+    --primary-soft: #8BB9F0;
+    --primary-glow: rgba(74, 144, 226, 0.3);
+    
+    --success: #4CAF50;
+    --warning: #ff9800;
+    --danger: #f44336;
+    --danger-dark: #8b1e1e;
+    
+    --bg-dark: #0a0a0a;
+    --bg-card: #111;
+    --bg-card-hover: #1a1a1a;
+    --bg-input: #222;
+    
+    --text-light: #fff;
+    --text-muted: #888;
+    --text-dim: #666;
+    
+    --border-color: #333;
+    --border-hover: #4A90E2;
+    
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
+    --shadow-primary: 0 0 20px var(--primary-glow);
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--text-light), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+/* ===== STATS GRID ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-primary);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-content { flex: 1; }
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.stat-label {
+    color: var(--text-light);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.stat-detail {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+}
+
+/* ===== ADMIN TABS ===== */
+.admin-tabs {
+    margin: 2rem 0;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    background: var(--bg-card);
+    padding: 0.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.75rem 2rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: var(--transition);
+    border-radius: var(--radius-md);
+    flex: 0 1 auto;
+}
+
+.tab-btn:hover {
+    color: var(--primary-light);
+    background: rgba(74, 144, 226, 0.1);
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--shadow-primary);
+}
+
+.badge {
+    display: inline-block;
+    background: var(--primary-dark);
+    color: var(--primary);
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+    border: 1px solid var(--primary);
+}
+
+.tab-btn.active .badge {
+    background: var(--primary);
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeInUp 0.4s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== BPH GRID ===== */
+.bph-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.bph-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: var(--transition);
+    position: relative;
+}
+
+.bph-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-primary);
+}
+
+.bph-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-soft));
+    transform: scaleX(0);
+    transition: var(--transition);
+}
+
+.bph-card:hover::before { transform: scaleX(1); }
+
+.bph-card h3 {
+    color: var(--primary);
+    font-size: 1.25rem;
+    padding: 1.25rem 1.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bph-card h3 i {
+    color: var(--primary-soft);
+    font-size: 1.5rem;
+}
+
+.bph-info {
+    padding: 1.25rem;
+    text-align: center;
+}
+
+/* ===== BPH PHOTO & LOGO — SERAGAM ===== */
+/* Ketua & Wakil pakai .bph-photo, Sekum & Bendum pakai .bph-logo */
+/* Keduanya kini tampil identik: lingkaran dengan border biru */
+.bph-photo,
+.bph-logo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary);
+    margin-bottom: 1rem;
+    background: transparent;  /* Hapus background putih pada logo */
+    padding: 0;               /* Hapus padding pada logo */
+    transition: var(--transition);
+}
+
+.bph-card:hover .bph-photo,
+.bph-card:hover .bph-logo {
+    transform: scale(1.05);
+    border-color: var(--primary-soft);
+    box-shadow: var(--shadow-primary);
+}
+
+.bph-info p strong {
+    color: var(--text-light);
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+/* ===== ANGGOTA LIST ===== */
+.anggota-list {
+    margin: 1rem 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+}
+
+.anggota-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.anggota-item:last-child { border-bottom: none; }
+
+.anggota-item:hover {
+    background: var(--bg-card-hover);
+    border-radius: var(--radius-sm);
+}
+
+.anggota-photo {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+}
+
+.anggota-item span {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* ===== BUTTONS ===== */
+.btn-edit, .btn-delete, .btn-view, .btn-add, .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+
+.btn-edit {
+    background: var(--primary-dark);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.btn-edit:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+}
+
+.btn-delete {
+    background: var(--danger-dark);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.btn-delete:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
+}
+
+.btn-view {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.btn-view:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-light);
+    transform: translateY(-2px);
+}
+
+.btn-add {
+    background: transparent;
+    color: var(--primary);
+    border: 2px dashed var(--primary);
+    width: 100%;
+}
+
+.btn-add:hover {
+    background: var(--primary-dark);
+    border-style: solid;
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+.btn-primary:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:focus { animation: pulse 1.5s infinite; }
+
+/* ===== KEMENTERIAN GRID ===== */
+.header-actions {
+    margin: 2rem 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.kementerian-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.kementerian-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.kementerian-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-primary);
+}
+
+.kementerian-header {
+    background: linear-gradient(135deg, var(--bg-card), var(--primary-dark));
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.kementerian-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    transition: var(--transition);
+}
+
+.kementerian-card:hover .kementerian-logo {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-primary);
+}
+
+.kementerian-header h3 {
+    color: var(--primary);
+    font-size: 1.1rem;
+    margin: 0;
+    flex: 1;
+}
+
+.kementerian-info {
+    padding: 1.25rem;
+    color: var(--text-muted);
+}
+
+.kementerian-info p {
+    margin: 0.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kementerian-info strong { color: var(--text-light); }
+
+.kementerian-actions {
+    padding: 1rem 1.25rem 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.kementerian-actions .btn-edit,
+.kementerian-actions .btn-delete,
+.kementerian-actions .btn-view {
+    flex: 1;
+    min-width: 80px;
+}
+
+/* ===== EMPTY STATES ===== */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-color);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p { margin-bottom: 1.5rem; }
+
+.text-muted { color: var(--text-muted); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 var(--primary-glow); }
+    70%  { box-shadow: 0 0 0 10px rgba(74, 144, 226, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 144, 226, 0); }
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-card); }
+::-webkit-scrollbar-thumb { background: var(--primary-dark); border-radius: var(--radius-md); }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+    .bph-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+}
+
+@media (max-width: 992px) {
+    .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .kementerian-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+}
+
+@media (max-width: 768px) {
+    .page-header h1 { font-size: 1.75rem; }
+    .admin-tabs { padding: 0.25rem; }
+    .tab-btn { padding: 0.6rem 1rem; font-size: 0.9rem; flex: 1; }
+    .bph-grid { grid-template-columns: 1fr; }
+    .bph-card { max-width: 400px; margin: 0 auto; width: 100%; }
+    .kementerian-actions { flex-direction: column; }
+    .kementerian-actions .btn-edit,
+    .kementerian-actions .btn-delete,
+    .kementerian-actions .btn-view { width: 100%; }
+    .header-actions { justify-content: center; }
+    .admin-tabs { width: 100%; }
+    .btn-primary { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 { font-size: 1.5rem; }
+    .admin-tabs { flex-direction: column; }
+    .tab-btn { width: 100%; }
+    .bph-photo, .bph-logo { width: 100px; height: 100px; }
+    .kementerian-header { flex-direction: column; text-align: center; }
+    .kementerian-header h3 { text-align: center; }
+}

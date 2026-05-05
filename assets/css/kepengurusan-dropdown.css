@@ -1,0 +1,440 @@
+/* ===== assets/css/kepengurusan-dropdown.css ===== */
+/* Custom Dropdown dengan Efek Glassy & Transparan Blur untuk Halaman Kepengengurusan */
+
+/* Container - Memastikan posisi tengah horizontal */
+.page-kepengurusan .custom-dropdown-container {
+    max-width: 550px;
+    width: 90%;
+    margin: 0 auto 30px;
+    position: relative;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+}
+
+.page-kepengurusan .custom-dropdown {
+    width: 100%;
+    max-width: 550px;
+}
+
+/* Label styling */
+.page-kepengurusan .periode-label {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 300;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.page-kepengurusan .periode-label i {
+    color: var(--biru-primary);
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+/* ===== EFEK GLASSY & TRANSPARAN BLUR ===== */
+/* Trigger button dengan efek glassmorphism premium */
+.page-kepengurusan .custom-dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 25px;
+    
+    /* Core glass effect - increased transparency */
+    background: rgba(10, 15, 25, 0.4);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    
+    border: 1.5px solid rgba(74, 144, 226, 0.25);
+    border-radius: 60px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Enhanced shadow for depth */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+                0 0 20px rgba(74, 144, 226, 0.2);
+    
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+    line-height: 1.4;
+}
+
+/* Premium glass reflection effect */
+.page-kepengurusan .custom-dropdown-trigger::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.08) 30%,
+        rgba(255, 255, 255, 0) 60%
+    );
+    pointer-events: none;
+    border-radius: 60px;
+}
+
+/* Secondary glass reflection for depth */
+.page-kepengurusan .custom-dropdown-trigger::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0) 70%
+    );
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Hover state - enhanced glass effect */
+.page-kepengurusan .custom-dropdown-trigger:hover {
+    background: rgba(15, 25, 40, 0.5);
+    backdrop-filter: blur(14px) saturate(200%);
+    -webkit-backdrop-filter: blur(14px) saturate(200%);
+    border-color: rgba(74, 144, 226, 0.5);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+                0 0 30px rgba(74, 144, 226, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Open state - intensified glass */
+.page-kepengurusan .custom-dropdown-trigger[aria-expanded="true"] {
+    background: rgba(20, 30, 45, 0.6);
+    backdrop-filter: blur(16px) saturate(200%);
+    -webkit-backdrop-filter: blur(16px) saturate(200%);
+    border-color: rgba(74, 144, 226, 0.7);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2),
+                0 8px 30px rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(74, 144, 226, 0.4);
+}
+
+/* Trigger text */
+.page-kepengurusan .trigger-text {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 15px;
+    font-weight: 500;
+}
+
+/* Arrow icon with glass effect */
+.page-kepengurusan .dropdown-arrow {
+    color: var(--biru-primary);
+    font-size: 1rem;
+    transition: all 0.4s ease;
+    filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.6));
+    opacity: 0.9;
+}
+
+.page-kepengurusan .custom-dropdown-trigger[aria-expanded="true"] .dropdown-arrow {
+    transform: rotate(180deg);
+    color: var(--biru-secondary);
+    filter: drop-shadow(0 0 12px rgba(74, 144, 226, 0.8));
+}
+
+/* ===== DROPDOWN MENU WITH MAXIMUM GLASS EFFECT ===== */
+.page-kepengurusan .custom-dropdown-menu {
+    position: absolute;
+    top: calc(100% - 2px);
+    left: 0;
+    right: 0;
+    
+    /* Super glass effect for menu */
+    background: rgba(15, 22, 35, 0.5);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    
+    border: 1.5px solid rgba(74, 144, 226, 0.4);
+    border-top: none;
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-15px);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Enhanced shadow for glass effect */
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+                0 0 40px rgba(74, 144, 226, 0.3);
+    
+    z-index: 1001;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+/* Inner glass reflection for menu */
+.page-kepengurusan .custom-dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent
+    );
+}
+
+.page-kepengurusan .custom-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Custom scrollbar with glass effect */
+.page-kepengurusan .custom-dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.page-kepengurusan .custom-dropdown-menu::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+}
+
+.page-kepengurusan .custom-dropdown-menu::-webkit-scrollbar-thumb {
+    background: rgba(74, 144, 226, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.page-kepengurusan .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 144, 226, 0.7);
+}
+
+/* Dropdown items with subtle glass */
+.page-kepengurusan .custom-dropdown-item {
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(74, 144, 226, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: left;
+    font-size: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glass reflection on items */
+.page-kepengurusan .custom-dropdown-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.page-kepengurusan .custom-dropdown-item:hover::before {
+    left: 100%;
+}
+
+.page-kepengurusan .custom-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.page-kepengurusan .custom-dropdown-item:hover {
+    background: rgba(74, 144, 226, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding-left: 25px;
+    color: white;
+}
+
+.page-kepengurusan .custom-dropdown-item.selected {
+    background: rgba(74, 144, 226, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: white;
+    font-weight: 500;
+    border-left: 4px solid var(--biru-primary);
+}
+
+/* Item content */
+.page-kepengurusan .item-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 5px 10px;
+    flex: 1;
+}
+
+.page-kepengurusan .item-nama {
+    font-weight: 600;
+    color: var(--biru-soft);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.page-kepengurusan .item-tahun {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.page-kepengurusan .item-badge {
+    font-size: 0.7rem;
+    background: rgba(255, 193, 7, 0.15);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #ffc107;
+    padding: 3px 10px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    margin-left: 5px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.page-kepengurusan .selected-icon {
+    color: var(--biru-primary);
+    font-size: 1rem;
+    margin-left: 10px;
+    filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.6));
+    opacity: 0.9;
+}
+
+/* Loading state with glass effect */
+.page-kepengurusan .custom-dropdown.loading .custom-dropdown-trigger {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.page-kepengurusan .custom-dropdown.loading .dropdown-arrow {
+    display: none;
+}
+
+.page-kepengurusan .custom-dropdown.loading .custom-dropdown-trigger::after {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--biru-primary);
+    border-right-color: var(--biru-primary);
+    border-radius: 50%;
+    animation: button-loading-spinner 0.8s linear infinite;
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    filter: drop-shadow(0 0 5px rgba(74, 144, 226, 0.5));
+}
+
+@keyframes button-loading-spinner {
+    from { transform: translateY(-50%) rotate(0turn); }
+    to { transform: translateY(-50%) rotate(1turn); }
+}
+
+/* Badge periode arsip with glass effect */
+.page-kepengurusan .periode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 8px 20px;
+    
+    /* Glass effect for badge */
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 40px;
+    color: #adb5bd;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.page-kepengurusan .periode-badge.arsip {
+    border-color: rgba(255, 193, 7, 0.4);
+    color: #ffc107;
+    background: rgba(255, 193, 7, 0.1);
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.2);
+}
+
+.page-kepengurusan .periode-badge i {
+    font-size: 0.9rem;
+    filter: drop-shadow(0 0 5px currentColor);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-kepengurusan .custom-dropdown-container {
+        width: 90%;
+        padding: 0 15px;
+    }
+    
+    .page-kepengurusan .custom-dropdown-trigger {
+        padding: 14px 20px;
+        font-size: 1rem;
+    }
+    
+    .page-kepengurusan .custom-dropdown-item {
+        padding: 12px 15px;
+    }
+    
+    .page-kepengurusan .item-badge {
+        font-size: 0.65rem;
+        padding: 2px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-kepengurusan .custom-dropdown-container {
+        width: 95%;
+    }
+    
+    .page-kepengurusan .custom-dropdown-trigger {
+        padding: 12px 15px;
+        font-size: 0.95rem;
+    }
+    
+    .page-kepengurusan .item-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+    }
+    
+    .page-kepengurusan .item-badge {
+        margin-left: 0;
+        margin-top: 3px;
+    }
+}

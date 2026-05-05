@@ -1,0 +1,243 @@
+/* ========== HERO SECTION - BACKGROUND GLOBAL ========== */
+
+/* Hero sebagai background fixed di SEMUA halaman */
+.hero {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1; /* Tetap di belakang */
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Background hero */
+.hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120%;
+    z-index: 1;
+    will-change: transform;
+}
+
+.hero-background img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
+    filter: brightness(0.85) contrast(1.0);
+    transition: none;
+}
+
+/* Gradient overlay - SANGAT TIPIS */
+.hero-gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        180deg,
+        rgba(24, 81, 147, 0.142) 1%,
+        rgba(0, 0, 0, 0.431) 40%,
+        rgba(0, 0, 0, 0.642) 50%,
+        rgba(0, 0, 0, 0.895) 65%,
+        rgb(0, 0, 0) 100%
+    );
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Vignette - gelap di pinggir */
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at center,
+        transparent 40%,
+        rgba(0,0,0,0.2) 80%,
+        rgba(0,0,0,0.4) 100%
+    );
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* Konten hero - HANYA TAMPIL DI INDEX */
+.hero-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    max-width: 1000px;
+    padding: 0 2rem;
+    width: 100%;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    will-change: transform, opacity;
+    opacity: 1;
+    background: transparent;
+    pointer-events: none; /* Non-interaktif */
+}
+
+/* Sembunyikan hero content di halaman selain index */
+.page-berita .hero-content,
+.page-kepengurusan .hero-content,
+.page-kontak .hero-content {
+    display: none;
+}
+
+/* Title styling - GLOW HANYA DI BIRU */
+.hero-title {
+    font-size: clamp(3rem, 10vw, 5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: white;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.7);
+}
+
+.hero-title .biru {
+    color: var(--biru-primary) !important;
+    font-weight: 900;
+    letter-spacing: -2px;
+    text-shadow: 0 0 20px var(--biru-primary), 0 5px 15px rgba(0,0,0,0.7);
+}
+
+/* Subtitle styling */
+.hero-sub {
+    font-size: 1.8rem;
+    letter-spacing: 12px;
+    color: white;
+    margin-top: 20px;
+    font-weight: 300;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+}
+
+/* ✅ DIUBAH: Scroll hint - center tanpa konflik transform */
+.scroll-hint {
+    position: absolute;
+    bottom: 40px;
+
+    /* ✅ Ganti left:50% + translateX dengan inset margin auto */
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    color: white;
+    font-size: 0.9rem;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 4;
+
+    /* ✅ Animasi bounce tanpa translateX agar tidak konflik */
+    animation: bounce-hint 2s infinite;
+    transition: color 0.3s ease;
+}
+
+.scroll-hint:hover {
+    color: var(--biru-soft);
+    /* ✅ Tidak override transform animasi */
+}
+
+.scroll-hint i {
+    color: var(--biru-soft);
+    font-size: 1.8rem;
+}
+
+/* ✅ DIUBAH: Keyframe bounce tanpa translateX */
+@keyframes bounce-hint {
+    0%,20%,50%,80%,100% { transform: translateY(0); }
+    40%                  { transform: translateY(10px); }
+    60%                  { transform: translateY(5px); }
+}
+
+/* Sembunyikan scroll hint di halaman selain index */
+.page-berita .scroll-hint,
+.page-kepengurusan .scroll-hint,
+.page-kontak .scroll-hint {
+    display: none;
+}
+
+/* ===== FIX UNTUK KEPENGURUSAN DROPDOWN ===== */
+.page-kepengurusan .hero {
+    z-index: -1;
+}
+
+.page-kepengurusan .hero-caption {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 10;
+    padding: 1rem;
+    pointer-events: none;
+}
+
+.page-kepengurusan .hero-caption .periode-label-container,
+.page-kepengurusan .hero-caption .periode-dropdown-container,
+.page-kepengurusan .hero-caption .periode-badge-container,
+.page-kepengurusan .hero-caption .caption-scroll {
+    pointer-events: auto;
+}
+
+.page-kepengurusan .periode-dropdown-container {
+    position: relative;
+    z-index: 100;
+}
+
+.page-kepengurusan .custom-dropdown-menu {
+    z-index: 101;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-sub {
+        font-size: 1.2rem;
+        letter-spacing: 6px;
+    }
+
+    .scroll-hint {
+        bottom: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-sub {
+        font-size: 1rem;
+        letter-spacing: 4px;
+    }
+
+    .scroll-hint {
+        bottom: 25px;
+        font-size: 0.8rem;
+        gap: 6px;
+    }
+
+    .scroll-hint i {
+        font-size: 1.5rem;
+    }
+}

@@ -1,0 +1,631 @@
+/* ============================================
+   KABINET ADMIN CSS
+   BEM Kabinet Astawidya — v3.0
+   Seragam & mobile-first
+   ============================================ */
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+    --primary:       #4A90E2;
+    --primary-light: #6BA5E8;
+    --primary-dark:  #1a2f4a;
+    --primary-soft:  #8BB9F0;
+    --primary-glow:  rgba(74, 144, 226, 0.25);
+
+    --warning:     #ffaa00;
+    --warning-dark:#2a2a1a;
+    --danger:      #f44336;
+    --danger-dark: #8b1e1e;
+
+    --bg-card:       #111;
+    --bg-card-hover: #1a1a1a;
+    --bg-input:      #1c1c1c;
+    --bg-input-hover:#242424;
+
+    --text-light: #fff;
+    --text-muted:  #888;
+    --text-dim:    #555;
+
+    --border-color: #2a2a2a;
+
+    --shadow-sm:      0 2px 8px rgba(0,0,0,0.2);
+    --shadow-md:      0 6px 16px rgba(0,0,0,0.25);
+    --shadow-lg:      0 12px 32px rgba(0,0,0,0.3);
+    --shadow-primary: 0 0 24px var(--primary-glow);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 22px;
+
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --form-max-width: 860px;
+    --section-gap:    1.5rem;
+    --input-padding:  0.85rem 1.1rem;
+}
+
+/* ===== RESET ===== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+}
+
+.page-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-soft));
+    border-radius: 2px;
+}
+
+.page-header h1 {
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-light), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 0.3rem;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+}
+
+.page-header h1 i {
+    -webkit-text-fill-color: var(--primary);
+    color: var(--primary);
+    background: none;
+}
+
+.page-header p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Periode badge */
+.periode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: rgba(74, 144, 226, 0.08);
+    border: 1px solid rgba(74, 144, 226, 0.2);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    color: #ccc;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    line-height: 1.5;
+}
+
+.periode-badge i {
+    color: var(--primary-soft);
+    flex-shrink: 0;
+}
+
+.periode-badge strong {
+    color: var(--text-light);
+}
+
+.periode-badge .warn-text {
+    color: var(--warning);
+    font-size: 0.8rem;
+    width: 100%;               /* turun ke baris baru di mobile */
+}
+
+/* ===== ADMIN FORM ===== */
+.admin-form {
+    background: var(--bg-card);
+    padding: clamp(1.2rem, 4vw, 2.5rem);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    max-width: var(--form-max-width);
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+}
+
+.admin-form::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-soft), var(--primary));
+    background-size: 200%;
+    animation: shimmer 4s linear infinite;
+}
+
+.admin-form:focus-within {
+    border-color: var(--primary-dark);
+    box-shadow: var(--shadow-primary);
+}
+
+/* ===== FORM SECTIONS ===== */
+.form-section {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: clamp(1rem, 3vw, 1.5rem);
+    margin-bottom: var(--section-gap);
+}
+
+.form-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.form-section h2 {
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    color: var(--primary-soft);
+    margin: 0 0 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.form-section h2 i {
+    color: var(--primary);
+    font-size: 1rem;
+    width: 1.2rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* ===== FORM GROUPS ===== */
+.form-group {
+    margin-bottom: 1.3rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    color: var(--text-muted);
+    margin-bottom: 0.45rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    transition: color 0.2s;
+}
+
+.form-group:focus-within label {
+    color: var(--primary-soft);
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+    width: 100%;
+    padding: var(--input-padding);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: var(--transition);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.form-group input:hover,
+.form-group textarea:hover {
+    border-color: #444;
+    background: var(--bg-input-hover);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background: var(--bg-input-hover);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.6;
+}
+
+.form-group small {
+    display: block;
+    color: var(--text-dim);
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.form-group small.warn {
+    color: var(--warning);
+}
+
+/* ===== FORM ROW (2 kolom tahun) ===== */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-row .form-group {
+    margin-bottom: 0;
+}
+
+/* ===== FILE INPUT ===== */
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    background: var(--bg-input);
+    border: 1px dashed var(--border-color);
+    color: var(--text-muted);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    -webkit-appearance: none;
+}
+
+.form-group input[type="file"]:hover {
+    border-color: var(--primary);
+    background: var(--bg-input-hover);
+    color: var(--text-light);
+}
+
+.form-group input[type="file"]::file-selector-button {
+    background: var(--primary-dark);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    margin-right: 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* ===== CURRENT IMAGE PREVIEW ===== */
+.current-image {
+    background: var(--bg-input);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: var(--transition);
+    /* gunakan flex agar tidak inline-block yang bisa overflow di mobile */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+}
+
+.current-image:hover {
+    border-color: var(--danger);
+    background: var(--bg-card-hover);
+}
+
+.current-image-label {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.75rem;
+    background: var(--primary-dark);
+    color: var(--primary);
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border: 1px solid rgba(74,144,226,0.3);
+}
+
+.current-image img {
+    max-width: 100%;
+    max-height: 180px;
+    width: auto;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--primary-dark);
+    object-fit: contain;
+    display: block;
+    transition: var(--transition);
+}
+
+.current-image:hover img {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-primary);
+}
+
+.image-info small {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    word-break: break-all;     /* nama file panjang tidak overflow */
+}
+
+.image-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* ===== IMAGE ACTIONS ===== */
+.image-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.btn-delete-direct {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 1rem;
+    background: var(--danger-dark);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.btn-delete-direct:hover {
+    background: var(--danger);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px rgba(244,67,54,0.35);
+}
+
+.btn-delete-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 1rem;
+    background: var(--warning-dark);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.btn-delete-form:hover {
+    background: var(--warning);
+    color: #111;
+    transform: translateY(-1px);
+}
+
+/* State tandai-hapus */
+.current-image.marked-delete {
+    opacity: 0.45;
+    pointer-events: none;
+    filter: grayscale(1);
+    border-color: var(--danger);
+}
+
+.delete-warn {
+    color: var(--danger);
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* ===== NEW FILE PREVIEW ===== */
+.new-file-preview {
+    display: none;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.new-file-preview img {
+    max-width: 100%;
+    max-height: 160px;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--primary);
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 0.4rem;
+}
+
+.new-file-preview small {
+    color: var(--primary-soft);
+    font-size: 0.78rem;
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.9rem 2.2rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    min-width: 140px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:hover::after { background: rgba(255,255,255,0.08); }
+.btn-primary:active       { transform: translateY(0); }
+
+.btn-primary.loading {
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+.btn-primary.loading i {
+    animation: spin 0.8s linear infinite;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.8rem;
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-light);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes shimmer {
+    0%   { background-position: 0%; }
+    100% { background-position: 200%; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== TABLET (≤ 768px) ===== */
+@media (max-width: 768px) {
+    .admin-form {
+        border-radius: var(--radius-lg);
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 0.6rem;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        min-width: unset;
+    }
+
+    /* Tombol image actions juga full-width di mobile */
+    .image-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-delete-direct,
+    .btn-delete-form {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ===== MOBILE (≤ 480px) ===== */
+@media (max-width: 480px) {
+    :root {
+        --section-gap:   1.1rem;
+        --input-padding: 0.75rem 0.9rem;
+    }
+
+    .page-header h1 { font-size: 1.3rem; }
+
+    .form-section { border-radius: var(--radius-md); }
+
+    /* Tahun mulai & selesai: tetap 2 kolom tapi lebih kecil */
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .current-image img {
+        max-height: 130px;
+    }
+
+    .periode-badge .warn-text {
+        font-size: 0.75rem;
+    }
+}
+
+/* ===== PRINT ===== */
+@media print {
+    .btn-primary, .btn-secondary,
+    .btn-delete-direct, .btn-delete-form,
+    .image-actions, .form-actions,
+    .admin-form::before { display: none; }
+
+    .admin-form    { box-shadow: none; border: 1px solid #ccc; }
+    .form-section  { border: 1px solid #ddd; }
+    input, textarea { background: #fff !important; color: #000 !important; border: 1px solid #ccc !important; }
+}

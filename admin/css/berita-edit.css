@@ -1,0 +1,656 @@
+/* ============================================
+   BERITA EDIT ADMIN CSS
+   BEM Kabinet Astawidya
+   Desain Modern & Responsif untuk Form Edit Berita (Textarea Biasa)
+   ============================================ */
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+    --primary: #4A90E2;
+    --primary-light: #6BA5E8;
+    --primary-dark: #1a2f4a;
+    --primary-soft: #8BB9F0;
+    --primary-glow: rgba(74, 144, 226, 0.3);
+    
+    --success: #4CAF50;
+    --warning: #ff9800;
+    --danger: #f44336;
+    --danger-dark: #8b1e1e;
+    
+    --bg-dark: #0a0a0a;
+    --bg-card: #111;
+    --bg-card-hover: #1a1a1a;
+    --bg-input: #222;
+    --bg-input-hover: #2a2a2a;
+    
+    --text-light: #fff;
+    --text-muted: #888;
+    --text-dim: #666;
+    
+    --border-color: #333;
+    --border-hover: #4A90E2;
+    --border-focus: #6BA5E8;
+    
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
+    --shadow-primary: 0 0 20px var(--primary-glow);
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+}
+
+.page-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-soft));
+    border-radius: var(--radius-sm);
+}
+
+.page-header h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--text-light), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.page-header p {
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    font-size: 1rem;
+}
+
+/* ===== ADMIN FORM ===== */
+.admin-form {
+    background: var(--bg-card);
+    padding: 2.5rem;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    max-width: 1000px;
+    margin: 0 auto;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-soft));
+}
+
+.admin-form:hover {
+    border-color: var(--primary-dark);
+    box-shadow: var(--shadow-primary);
+}
+
+/* ===== FORM SECTIONS ===== */
+.form-section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.form-section h2 {
+    font-size: 1.3rem;
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-section h2 i {
+    color: var(--primary-soft);
+    font-size: 1.4rem;
+}
+
+/* ===== FORM GROUPS ===== */
+.form-group {
+    margin-bottom: 1.8rem;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: var(--transition);
+}
+
+.form-group:hover label {
+    color: var(--primary-soft);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: var(--transition);
+    outline: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+.form-group input:hover,
+.form-group textarea:hover {
+    background: var(--bg-input-hover);
+    border-color: var(--border-hover);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background: var(--bg-input-hover);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 300px;
+    max-height: 600px;
+}
+
+/* Styling khusus untuk textarea konten berita */
+#konten {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.8;
+    font-size: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) var(--bg-input);
+}
+
+#konten::-webkit-scrollbar {
+    width: 8px;
+}
+
+#konten::-webkit-scrollbar-track {
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+}
+
+#konten::-webkit-scrollbar-thumb {
+    background: var(--primary-dark);
+    border-radius: var(--radius-sm);
+}
+
+#konten::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+.form-group small {
+    display: block;
+    color: var(--text-dim);
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+
+/* ===== FORM ROW (GRID) ===== */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.8rem;
+}
+
+.form-row .form-group {
+    margin-bottom: 0;
+}
+
+/* ===== CURRENT IMAGE PREVIEW ===== */
+.current-image {
+    background: var(--bg-input);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    border: 2px dashed var(--border-color);
+    position: relative;
+    transition: var(--transition);
+}
+
+.current-image:hover {
+    border-color: var(--primary);
+    background: var(--bg-card-hover);
+}
+
+.current-image::before {
+    content: 'Preview Gambar Saat Ini';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--primary-dark);
+    color: var(--primary);
+    padding: 0.2rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--primary);
+}
+
+.current-image img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: var(--radius-md);
+    border: 3px solid var(--primary-dark);
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    object-fit: contain;
+}
+
+.current-image:hover img {
+    transform: scale(1.02);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-primary);
+}
+
+.current-image p {
+    color: var(--text-muted);
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+/* ===== FILE INPUT STYLING ===== */
+.form-group input[type="file"] {
+    padding: 0.5rem;
+    background: var(--bg-input);
+    cursor: pointer;
+    border-style: dashed;
+}
+
+.form-group input[type="file"]:hover {
+    border-color: var(--primary);
+}
+
+.form-group input[type="file"]::file-selector-button {
+    background: var(--primary-dark);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    margin-right: 1rem;
+    font-weight: 500;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+    margin-top: 2.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 0.9rem 2.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    min-width: 150px;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+.btn-primary i {
+    font-size: 1.1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-secondary {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    padding: 0.9rem 2rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    text-decoration: none;
+    min-width: 150px;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-light);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.btn-secondary i {
+    font-size: 1rem;
+}
+
+/* ===== LOADING STATE ===== */
+.btn-primary.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-primary.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== FLASH MESSAGES ===== */
+.flash-message {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    padding: 1rem 1.8rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 4.7s forwards;
+    z-index: 9999;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+}
+
+.flash-message.success {
+    background: linear-gradient(135deg, #1e3a8a, #2a4a9a);
+    border-left: 4px solid var(--primary);
+}
+
+.flash-message.error {
+    background: linear-gradient(135deg, #8b1e1e, #a52a2a);
+    border-left: 4px solid var(--danger);
+}
+
+.flash-message i {
+    font-size: 1.5rem;
+}
+
+.flash-message.success i {
+    color: var(--primary-soft);
+}
+
+.flash-message.error i {
+    color: #ff6b6b;
+}
+
+.flash-message span {
+    color: white;
+    font-size: 0.95rem;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 992px) {
+    .admin-form {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .admin-form {
+        padding: 1.5rem;
+    }
+    
+    .form-section {
+        padding: 1rem;
+    }
+    
+    .form-section h2 {
+        font-size: 1.2rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 0.8rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .current-image img {
+        max-width: 100%;
+    }
+    
+    .flash-message {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+        top: 20px;
+    }
+    
+    .form-group textarea {
+        min-height: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .admin-form {
+        padding: 1rem;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        padding: 0.8rem;
+    }
+    
+    .form-group textarea {
+        min-height: 200px;
+    }
+    
+    .current-image {
+        padding: 1rem;
+    }
+    
+    .current-image::before {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.8rem;
+    }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .admin-form {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .form-actions,
+    .btn-primary,
+    .btn-secondary,
+    input[type="file"] {
+        display: none;
+    }
+}
+
+/* Loading state button */
+.btn-primary.loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.btn-primary.loading i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.2rem;
+}
+
+/* Styling untuk tombol hapus */
+.image-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.btn-delete-direct {
+    background: #f44336;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-direct:hover {
+    background: #d32f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+}
+
+.btn-delete-form {
+    background: #1a2f4a;
+    color: #4A90E2;
+    border: 1px solid #4A90E2;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-form:hover {
+    background: #4A90E2;
+    color: white;
+}
+
+/* Preview container */
+#gambar-preview-container {
+    text-align: center;
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px dashed #4A90E2;
+}

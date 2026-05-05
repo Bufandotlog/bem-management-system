@@ -1,0 +1,37 @@
+# 1. Kredensial & Konfigurasi (Wajib di-ignore!)
+.env
+.env.local
+config/config.php
+
+# 2. Uploads (Ignore isinya, tapi tetap buat foldernya)
+uploads/*
+!uploads/.gitkeep
+!uploads/ttd/
+uploads/ttd/*
+!uploads/ttd/.gitkeep
+!uploads/umum/
+uploads/umum/*
+!uploads/umum/.gitkeep
+
+# 3. Utility Scripts (Berbahaya di server produksi)
+migrate-direct.php
+init-admin.php
+test-db.php
+dump_pengaturan.php
+Dockerfile
+nginx.conf.example
+
+# 4. Logs & Cache
+logs/
+*.log
+.cache/
+
+# 5. OS & IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 6. Dependencies
+node_modules/
+vendor/

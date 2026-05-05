@@ -1,0 +1,162 @@
+# ==============================================
+# .htaccess - BEM Kabinet Astawidya
+# Letakkan di: htdocs/ (root project, sejajar index.php)
+# VERSI: 4.1 - Perbaikan: hapus FilesMatch uploads yang tidak efektif
+# ==============================================
+
+# ----------------------------------------------
+# 1. HTTPS ENFORCE
+# Redirect semua HTTP ke HTTPS
+# Kecuali localhost (untuk development)
+# ----------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Jangan redirect jika sudah HTTPS
+    RewriteCond %{HTTPS} off
+    # Jangan redirect localhost / 127.0.0.1
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ----------------------------------------------
+# 2. MATIKAN DIRECTORY LISTING
+# Tanpa ini, folder tanpa index.php bisa dilihat
+# isinya oleh siapapun via browser
+# ----------------------------------------------
+Options -Indexes
+
+# ----------------------------------------------
+# 3. BLOKIR AKSES KE FILE SENSITIF
+# ----------------------------------------------
+# Blokir .env dan semua variannya
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Blokir file backup, log, dan konfigurasi developer
+<FilesMatch "\.(sql|log|bak|backup|old|orig|tmp|sh|bat|cmd)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Blokir file konfigurasi package manager
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json|yarn\.lock|\.gitignore|\.git)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Blokir akses ke file PHP yang mengandung konfigurasi
+<FilesMatch "^(config|database|app)\.(php|inc)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ----------------------------------------------
+# 4. BLOKIR AKSES LANGSUNG KE FOLDER SENSITIF
+# ----------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Blokir akses langsung ke config/
+    RewriteRule ^config/ - [F,L]
+
+    # Blokir akses langsung ke includes/
+    RewriteRule ^includes/ - [F,L]
+
+    # Blokir akses langsung ke logs/
+    RewriteRule ^logs/ - [F,L]
+
+    # Blokir akses langsung ke folder .git jika ada
+    RewriteRule ^\.git/ - [F,L]
+</IfModule>
+
+# ----------------------------------------------
+# 5. PROTEKSI FOLDER UPLOADS
+# File yang diupload tidak boleh dieksekusi sebagai PHP
+# Menggunakan RewriteRule (lebih reliable di shared hosting)
+# ----------------------------------------------
+
+# Matikan PHP engine di folder uploads (jika mod_php tersedia)
+<IfModule mod_php.c>
+    <Directory "uploads/">
+        php_flag engine off
+    </Directory>
+</IfModule>
+<IfModule mod_php8.c>
+    <Directory "uploads/">
+        php_flag engine off
+    </Directory>
+</IfModule>
+<IfModule mod_php7.c>
+    <Directory "uploads/">
+        php_flag engine off
+    </Directory>
+</IfModule>
+
+# Blokir eksekusi file berbahaya di folder uploads/
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^uploads/.*\.(php\d?|phtml|phar|pl|py|cgi|sh|bash|exe)$ - [F,L]
+</IfModule>
+
+# ----------------------------------------------
+# 6. SECURITY HEADERS
+# Melengkapi header yang dipasang di header.php
+# Header di sini berlaku untuk SEMUA file (CSS, JS, gambar)
+# ----------------------------------------------
+<IfModule mod_headers.c>
+    # Cegah MIME sniffing
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Cegah Clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Batasi info referrer
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # HSTS — paksa browser selalu pakai HTTPS selama 1 tahun
+    # Aktifkan hanya jika HTTPS sudah berjalan dengan benar
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    # Permissions Policy — matikan fitur browser yang tidak dipakai
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
+    # Sembunyikan info server
+    Header unset Server
+    Header unset X-Powered-By
+</IfModule>
+
+# ----------------------------------------------
+# 7. CEGAH HOTLINKING GAMBAR
+# Orang lain tidak bisa embed gambar dari server ini
+# ke website mereka (menguras bandwidth)
+# ----------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_REFERER} !^$
+    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?bembudiutomo\.page\.gd [NC]
+    RewriteRule \.(jpg|jpeg|png|gif|webp|svg)$ - [F,L]
+</IfModule>
+
+# ----------------------------------------------
+# 8. CHARSET DEFAULT
+# ----------------------------------------------
+AddDefaultCharset UTF-8
+
+# ----------------------------------------------
+# 9. CACHE CONTROL UNTUK ASSET STATIS
+# Kurangi beban server — browser cache CSS/JS/gambar
+# ----------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png  "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/gif  "access plus 1 month"
+    ExpiresByType text/css   "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType application/x-font-woff2 "access plus 1 year"
+</IfModule>

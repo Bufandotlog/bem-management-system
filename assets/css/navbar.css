@@ -1,0 +1,158 @@
+/* ========== NAVBAR ========== */
+:root {
+    --navbar-height: 70px; /* Sesuaikan dengan tinggi navbar asli kamu */
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1000;
+    border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo i {
+    color: var(--biru-primary);
+    font-size: 2rem;
+}
+
+.logo-img {
+    height: 30px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.logo-img.rounded {
+    border-radius: 50%;
+    border: 2px solid var(--biru-soft);
+    padding: 2px;
+}
+
+.nav-menu {
+    display: flex;
+    list-style: none;
+    gap: 2.5rem;
+}
+
+.nav-menu a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition-fast);
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.nav-menu a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--biru-secondary);
+    transition: width var(--transition-fast);
+}
+
+.nav-menu a:hover::after,
+.nav-menu a.active::after {
+    width: 100%;
+}
+
+.menu-toggle {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--biru-primary);
+    transition: color 0.3s ease;
+}
+
+/* ✅ HAPUS: blok .nav-menu.active lama yang tanpa media query
+   (background putih & position absolute) sudah menyebabkan konflik */
+
+/* ===== MOBILE NAVBAR ===== */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+
+    /* Nav menu disembunyikan lewat responsive.css (left: -100%)
+       Tidak perlu display:none di sini agar animasi slide tetap jalan */
+
+    /* Menu terbuka - tema gelap transparan */
+    .nav-menu.active {
+        /* ✅ Reset dari rule lama yang putih */
+        background: rgba(0, 0, 0, 0.3) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border-bottom: 1px solid rgba(74, 144, 226, 0.3) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+        /* Layout */
+        padding: 1rem 0;
+        gap: 0;
+
+        /* Pastikan position mengikuti responsive.css (fixed, left:0) */
+        position: fixed;
+        top: 100%;
+    }
+
+    .nav-menu.active li {
+        margin: 0;
+        width: 100%;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-menu.active li:last-child {
+        border-bottom: none;
+    }
+
+    /* Link warna putih, bukan hitam */
+    .nav-menu.active a {
+        color: var(--text-light) !important;
+        display: block;
+        padding: 0.9rem 2rem;
+        font-size: 1rem;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .nav-menu.active a:hover,
+    .nav-menu.active li.active a {
+        background: rgba(74, 144, 226, 0.15);
+        color: var(--biru-secondary) !important;
+    }
+
+    /* Ganti underline dengan background highlight */
+    .nav-menu.active a::after {
+        display: none;
+    }
+
+    /* Icon hamburger berubah warna saat aktif */
+    .menu-toggle.active {
+        color: var(--biru-secondary);
+    }
+}

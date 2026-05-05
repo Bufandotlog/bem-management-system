@@ -1,0 +1,505 @@
+/* ===== ARSIP PAGE STYLES ===== */
+.arsip-header {
+    background: linear-gradient(135deg, #0a0a0a, #1a2f4a);
+    padding: 80px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.arsip-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(74,144,226,0.1) 0%, transparent 70%);
+    animation: rotate 30s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.arsip-header-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.arsip-title {
+    font-size: 3rem;
+    color: white;
+    margin-bottom: 15px;
+    text-shadow: 0 5px 15px rgba(74,144,226,0.3);
+}
+
+.arsip-title i {
+    color: var(--biru-primary, #4A90E2);
+    margin-right: 10px;
+}
+
+.arsip-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+}
+
+.arsip-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 50px 20px;
+}
+
+/* ===== FEATURED PERIODE ===== */
+.periode-featured {
+    margin-bottom: 60px;
+}
+
+.featured-title {
+    font-size: 1.8rem;
+    color: white;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.featured-title i {
+    color: gold;
+}
+
+/* ✅ DIUBAH: transparan blur */
+.featured-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(74, 144, 226, 0.25);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 30px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 30px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.featured-card:hover {
+    border-color: var(--biru-primary, #4A90E2);
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 60px rgba(74, 144, 226, 0.25),
+                0 0 0 1px rgba(74, 144, 226, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.featured-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 25px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.featured-content h3 {
+    font-size: 2rem;
+    color: white;
+    margin: 0 0 10px 0;
+}
+
+.featured-tahun {
+    font-size: 1.2rem;
+    color: var(--biru-primary, #4A90E2);
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.featured-deskripsi {
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    max-width: 600px;
+}
+
+.featured-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 8px 15px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    border: 1px solid rgba(74, 144, 226, 0.2);
+}
+
+.stat-item i {
+    color: var(--biru-primary, #4A90E2);
+}
+
+.featured-link {
+    color: var(--biru-primary, #4A90E2);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.featured-link i {
+    transition: transform 0.3s ease;
+}
+
+.featured-card:hover .featured-link i {
+    transform: translateX(5px);
+}
+
+.featured-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid var(--biru-primary, #4A90E2);
+    box-shadow: 0 10px 30px rgba(74,144,226,0.4);
+}
+
+.featured-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ===== GRID PERIODE ===== */
+.arsip-grid-section {
+    margin-bottom: 60px;
+}
+
+.arsip-grid-section .section-title {
+    font-size: 1.8rem;
+    color: white;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 2px solid rgba(74, 144, 226, 0.2);
+    padding-bottom: 15px;
+
+    /* Override gradient text dari berita.css */
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: white;
+    background-clip: unset;
+    text-transform: none;
+    letter-spacing: normal;
+    animation: none;
+}
+
+.arsip-grid-section .section-title i {
+    color: var(--biru-primary, #4A90E2);
+}
+
+.arsip-grid-section .section-title span::before,
+.arsip-grid-section .section-title span::after {
+    display: none;
+}
+
+.periode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+/* ✅ DIUBAH: transparan blur */
+.periode-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(74, 144, 226, 0.25);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.periode-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--biru-primary, #4A90E2);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 15px 30px rgba(74, 144, 226, 0.25),
+                0 0 0 1px rgba(74, 144, 226, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.periode-card.active-card {
+    border-left: 4px solid #4CAF50;
+}
+
+/* ✅ DIUBAH: header card transparan */
+.periode-card-header {
+    position: relative;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 15px;
+}
+
+.periode-badge-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+.badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-active {
+    background: #4CAF50;
+    color: white;
+}
+
+.badge-arsip {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.periode-thumbnail {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 3px solid var(--biru-primary, #4A90E2);
+    overflow: hidden;
+    position: absolute;
+    bottom: -40px;
+    left: 20px;
+}
+
+.periode-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.default-thumbnail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26, 47, 74, 0.6);
+}
+
+.default-thumbnail i {
+    font-size: 2rem;
+    color: var(--biru-primary, #4A90E2);
+}
+
+.periode-card-body {
+    padding: 50px 20px 20px;
+}
+
+.periode-nama {
+    font-size: 1.3rem;
+    color: white;
+    margin: 0 0 5px 0;
+}
+
+.periode-tahun {
+    color: var(--biru-primary, #4A90E2);
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+/* ✅ DIUBAH: stats transparan */
+.periode-stats {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+    font-size: 0.9rem;
+    padding: 4px 0;
+}
+
+.stat-row i {
+    color: var(--biru-primary, #4A90E2);
+    width: 20px;
+}
+
+.periode-deskripsi {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+/* ✅ DIUBAH: footer card transparan */
+.periode-card-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.view-link {
+    color: var(--biru-primary, #4A90E2);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.view-link i {
+    transition: transform 0.3s ease;
+}
+
+.periode-card:hover .view-link i {
+    transform: translateX(5px);
+}
+
+/* ===== INFO CARD ===== */
+.arsip-info {
+    margin-top: 50px;
+}
+
+/* ✅ DIUBAH: info card transparan */
+.info-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(74, 144, 226, 0.25);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+}
+
+.info-card i {
+    font-size: 3rem;
+    color: var(--biru-primary, #4A90E2);
+    margin-bottom: 15px;
+}
+
+.info-card h4 {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.info-card p {
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: rgba(74, 144, 226, 0.3);
+    margin-bottom: 20px;
+}
+
+.empty-state p {
+    color: rgba(255,255,255,0.5);
+    font-size: 1.2rem;
+}
+
+/* ===== FALLBACK BROWSER LAMA ===== */
+@supports not (backdrop-filter: blur(1px)) {
+    .featured-card,
+    .periode-card,
+    .info-card {
+        background: rgba(10, 20, 40, 0.85);
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .arsip-header {
+        padding: 100px 20px 60px; /* Tambah padding top untuk navbar */
+        margin-top: 5vh;
+    }
+
+    .arsip-title {
+        font-size: 2rem;
+    }
+
+    .arsip-subtitle {
+        font-size: 1rem;
+    }
+
+    .featured-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .featured-image {
+        margin: 0 auto;
+    }
+
+    .featured-stats {
+        justify-content: center;
+    }
+
+    .periode-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .arsip-header {
+        padding: 90px 15px 50px;
+        margin-top: 5vh;
+    }
+
+    .arsip-title {
+        font-size: 1.5rem;
+    }
+
+    .featured-title {
+        font-size: 1.4rem;
+    }
+
+    .featured-content h3 {
+        font-size: 1.5rem;
+    }
+}

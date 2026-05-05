@@ -1,0 +1,300 @@
+/* ===== ADMIN - HALAMAN HAPUS KEPENGURUSAN ===== */
+:root {
+    --danger-primary: #f44336;
+    --danger-dark: #d32f2f;
+    --danger-soft: #ff6655;
+    --danger-bg: #2a1a1a;
+    --danger-border: #f44336;
+    
+    --secondary-bg: #333;
+    --secondary-hover: #444;
+    
+    --text-light: #fff;
+    --text-soft: #ccc;
+    --text-muted: #888;
+    
+    --shadow-sm: 0 5px 15px rgba(0,0,0,0.2);
+    --shadow-md: 0 10px 25px rgba(0,0,0,0.3);
+    --shadow-lg: 0 15px 35px rgba(0,0,0,0.4);
+    
+    --transition-smooth: 0.3s ease;
+}
+
+/* ===== CONTAINER ===== */
+.delete-confirmation {
+    max-width: 600px;
+    margin: 50px auto;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+}
+
+.delete-confirmation h1 {
+    font-size: 2.2rem;
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 0.8rem;
+}
+
+.delete-confirmation h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--danger-primary), transparent);
+    border-radius: 3px;
+}
+
+/* ===== WARNING BOX ===== */
+.warning-box {
+    background: var(--danger-bg);
+    border: 2px solid var(--danger-border);
+    border-radius: 20px;
+    padding: 40px 30px;
+    margin: 30px 0;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    animation: pulseWarning 2s infinite;
+}
+
+/* Efek background pattern */
+.warning-box::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(244,67,54,0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+    z-index: 0;
+}
+
+.warning-box i {
+    font-size: 4rem;
+    color: var(--danger-primary);
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+    animation: shakeWarning 0.5s ease infinite;
+}
+
+.warning-box p {
+    margin: 12px 0;
+    color: var(--text-soft);
+    font-size: 1.1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.warning-box p strong {
+    color: var(--text-light);
+    font-size: 1.2rem;
+    background: rgba(244,67,54,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.warning-box p:last-child {
+    color: var(--danger-primary);
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--danger-border);
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+/* ===== BUTTON DANGER ===== */
+.btn-danger {
+    background: linear-gradient(145deg, var(--danger-primary), var(--danger-dark));
+    color: white;
+    padding: 14px 35px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-danger::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(244,67,54,0.5);
+}
+
+.btn-danger:hover::before {
+    left: 100%;
+}
+
+.btn-danger i {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-danger:hover i {
+    transform: scale(1.2) rotate(10deg);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+}
+
+/* ===== BUTTON SECONDARY ===== */
+.btn-secondary {
+    background: var(--secondary-bg);
+    color: white;
+    padding: 14px 35px;
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: all var(--transition-smooth);
+    box-shadow: var(--shadow-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 2px solid transparent;
+}
+
+.btn-secondary:hover {
+    background: var(--secondary-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--text-muted);
+}
+
+.btn-secondary i {
+    transition: transform 0.3s ease;
+}
+
+.btn-secondary:hover i {
+    transform: scale(1.1);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseWarning {
+    0% {
+        box-shadow: 0 5px 20px rgba(244,67,54,0.2);
+    }
+    50% {
+        box-shadow: 0 5px 30px rgba(244,67,54,0.5);
+    }
+    100% {
+        box-shadow: 0 5px 20px rgba(244,67,54,0.2);
+    }
+}
+
+@keyframes shakeWarning {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(5deg);
+    }
+    75% {
+        transform: rotate(-5deg);
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .delete-confirmation {
+        margin: 30px 15px;
+    }
+    
+    .delete-confirmation h1 {
+        font-size: 1.8rem;
+    }
+    
+    .warning-box {
+        padding: 30px 20px;
+    }
+    
+    .warning-box i {
+        font-size: 3rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .btn-danger,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .delete-confirmation h1 {
+        font-size: 1.5rem;
+    }
+    
+    .warning-box p {
+        font-size: 1rem;
+    }
+    
+    .warning-box p strong {
+        font-size: 1.1rem;
+    }
+    
+    .btn-danger,
+    .btn-secondary {
+        font-size: 1rem;
+        padding: 10px 20px;
+    }
+}

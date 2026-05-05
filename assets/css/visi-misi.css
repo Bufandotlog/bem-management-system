@@ -1,0 +1,265 @@
+/* ========== VISI MISI ========== */
+.visi-misi {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem; /* Reduced gap */
+    margin: 3rem auto; /* Centered with auto margin */
+    max-width: 1000px; /* Added max-width to control width */
+    width: 90%; /* Responsive width */
+    
+    /* PENTING: Cegah wrap di desktop */
+    flex-wrap: nowrap;
+    
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    
+    /* Pastikan di atas hero */
+    position: relative;
+    z-index: 10;
+    
+    /* Hapus background */
+    background: none;
+    background-color: transparent;
+}
+
+.visi, .misi {
+    /* SOLUSI FLEX STABIL: Distribusi lebar merata */
+    flex: 1 1 0;
+    min-width: 0; /* KRUSIAL: Mencegah flex item meluap */
+    
+    /* Background transparan - glass effect yang lebih subtle */
+    background: rgba(10, 20, 30, 0.4); /* Reduced opacity */
+    backdrop-filter: blur(8px); /* Slightly less blur */
+    -webkit-backdrop-filter: blur(8px);
+    
+    /* Padding lebih proporsional */
+    padding: 1.75rem; /* Slightly reduced padding */
+    
+    border-radius: 20px; /* Slightly smaller radius */
+    border: 1px solid rgba(74, 144, 226, 0.2); /* More subtle border */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* Lighter shadow */
+    
+    /* Transisi */
+    transition: all 0.3s ease;
+}
+
+/* Efek glass berbeda untuk visi dan misi - more subtle */
+.visi {
+    background: linear-gradient(145deg, rgba(15, 30, 45, 0.4), rgba(10, 25, 40, 0.4));
+    border-left: 2px solid rgba(74, 144, 226, 0.3);
+}
+
+.misi {
+    background: linear-gradient(225deg, rgba(10, 25, 40, 0.4), rgba(15, 30, 45, 0.4));
+    border-right: 2px solid rgba(74, 144, 226, 0.3);
+    margin-top: 2rem;
+}
+
+/* Hover effects - tetap subtle */
+.visi:hover {
+    background: linear-gradient(145deg, rgba(20, 40, 60, 0.5), rgba(15, 35, 55, 0.5));
+    backdrop-filter: blur(10px);
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(74, 144, 226, 0.2);
+}
+
+.misi:hover {
+    background: linear-gradient(225deg, rgba(15, 35, 55, 0.5), rgba(20, 40, 60, 0.5));
+    backdrop-filter: blur(10px);
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(74, 144, 226, 0.2);
+}
+
+.visi h3, .misi h3 {
+    color: #8ab0e0; /* Slightly brighter */
+    font-size: 1.8rem; /* Reduced from 2rem */
+    margin-bottom: 1.2rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+    display: inline-block;
+}
+
+/* Underline effect - lebih pendek dan subtle */
+.visi h3::after, .misi h3::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 50px; /* Reduced from 60px */
+    height: 2px; /* Reduced from 3px */
+    background: rgba(74, 144, 226, 0.5);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+}
+
+.visi p {
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.7; /* Slightly reduced */
+    font-size: 1rem; /* Reduced from 1.1rem */
+    margin-top: 0.8rem;
+}
+
+.misi ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 0.8rem;
+}
+
+.misi li {
+    margin-bottom: 0.8rem; /* Reduced from 1rem */
+    padding-left: 1.8rem; /* Reduced from 2rem */
+    position: relative;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.6; /* Slightly reduced */
+    font-size: 1rem; /* Reduced from 1.05rem */
+    transition: transform 0.2s ease;
+}
+
+.misi li:hover {
+    transform: translateX(3px);
+    color: white;
+}
+
+.misi li::before {
+    content: '▹';
+    color: rgba(74, 144, 226, 0.9);
+    font-size: 1.2rem; /* Reduced from 1.3rem */
+    position: absolute;
+    left: 0;
+    top: -1px;
+    text-shadow: 0 0 8px rgba(74, 144, 226, 0.4);
+}
+
+/* Hapus background yang tidak perlu */
+.sambutan, .visi-misi, .card, footer {
+    background-color: transparent !important;
+}
+
+/* Container styling - lebih proporsional */
+.container {
+    width: 100%;
+    max-width: 1100px; /* Reduced from 1200px */
+    margin: 0 auto;
+    padding: 0 1.5rem; /* Reduced padding */
+    box-sizing: border-box;
+    background: transparent;
+}
+
+/* RESPONSIVE BREAKPOINTS YANG JELAS */
+
+/* Desktop besar */
+@media (min-width: 1200px) {
+    .visi-misi {
+        max-width: 1000px; /* Tetap terkontrol */
+    }
+    
+    .visi, .misi {
+        padding: 2rem; /* Reduced from 2.5rem */
+    }
+    
+    .visi h3, .misi h3 {
+        font-size: 1.9rem; /* Adjusted */
+    }
+}
+
+/* Desktop sedang */
+@media (max-width: 992px) {
+    .container {
+        padding: 0 1.2rem;
+    }
+    
+    .visi-misi {
+        gap: 1.2rem;
+        width: 95%;
+    }
+    
+    .visi h3, .misi h3 {
+        font-size: 1.7rem;
+    }
+    
+    .visi, .misi {
+        padding: 1.5rem;
+    }
+}
+
+/* Tablet landscape - TETAP HORIZONTAL */
+@media (max-width: 768px) {
+    .visi-misi {
+        flex-direction: row; /* TETAP HORIZONTAL */
+        flex-wrap: nowrap; /* PAKSA TIDAK WRAP */
+        gap: 1.2rem;
+        width: 95%;
+    }
+    
+    .visi, .misi {
+        padding: 1.3rem;
+    }
+    
+    .visi p {
+        font-size: 0.95rem;
+    }
+    
+    .misi li {
+        font-size: 0.95rem;
+        padding-left: 1.6rem;
+    }
+}
+
+/* Mobile landscape - BARU BERUBAH VERTIKAL */
+@media (max-width: 640px) {
+    .visi-misi {
+        flex-direction: column; /* BERUBAH VERTIKAL */
+        flex-wrap: wrap;
+        gap: 1.2rem;
+        width: 100%;
+        max-width: 500px; /* Lebih sempit di mobile */
+    }
+    
+    .visi, .misi {
+        width: 100%;
+        min-width: 100%;
+        padding: 1.3rem;
+    }
+    
+    .visi h3, .misi h3 {
+        font-size: 1.6rem;
+    }
+}
+
+/* Mobile kecil */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 0.8rem;
+    }
+    
+    .visi-misi {
+        margin: 2rem auto;
+        gap: 1rem;
+        max-width: 400px;
+    }
+    
+    .visi, .misi {
+        padding: 1.1rem;
+    }
+    
+    .visi h3, .misi h3 {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+    }
+    
+    .visi p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    .misi li {
+        font-size: 0.9rem;
+        padding-left: 1.4rem;
+        margin-bottom: 0.7rem;
+    }
+    
+    .misi li::before {
+        font-size: 1rem;
+    }
+}

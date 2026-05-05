@@ -1,0 +1,14 @@
+{
+    "name": "bufan/bem-platform",
+    "description": "Platform Sekretariat BEM",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

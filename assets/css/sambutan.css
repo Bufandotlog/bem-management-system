@@ -1,0 +1,150 @@
+/* ========== SAMBUTAN SECTION ========== */
+.sambutan {
+    /* Hapus background sepenuhnya */
+    background: none;
+    
+    /* Hapus backdrop-filter */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    
+    /* Hapus border dan box-shadow */
+    border: none;
+    box-shadow: none;
+    
+    padding: 5rem 2rem;
+    
+    /* Geser ke bawah setelah hero */
+    margin-top: 100vh;
+    
+    /* Efek fade in saat scroll (diatur oleh JS) */
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    
+    /* Pastikan di atas hero */
+    position: relative;
+    z-index: 1;
+}
+
+/* Hapus hover effect untuk background */
+.sambutan:hover {
+    background: none;
+    border: none;
+}
+
+.sambutan-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.sambutan-foto {
+    position: relative;
+    border-radius: 30px;
+    overflow: hidden;
+    
+    /* Border tetap ada agar foto terlihat */
+    border: 3px solid rgba(74, 144, 226, 0.5);
+    
+    /* Bayangan pada foto */
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sambutan-foto:hover {
+    border-color: rgba(74, 144, 226, 0.8);
+    box-shadow: 0 25px 40px -10px rgba(74, 144, 226, 0.3);
+}
+
+.sambutan-foto img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.sambutan-foto:hover img {
+    transform: scale(1.05);
+}
+
+.sambutan-text h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.sambutan-text .jabatan {
+    color: #7aa5d9;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.sambutan-text p {
+    color: white;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.ttd {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    
+    /* Border transparan tipis */
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sambutan {
+        padding: 3rem 1.5rem;
+    }
+    
+    .sambutan-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .sambutan-foto {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .sambutan-text {
+        text-align: center;
+    }
+    
+    .sambutan-text h2 {
+        font-size: 2rem;
+    }
+    
+    .ttd {
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .sambutan {
+        padding: 2rem 1rem;
+    }
+    
+    .sambutan-text h2 {
+        font-size: 1.8rem;
+    }
+    
+    .sambutan-text p {
+        font-size: 1rem;
+    }
+}

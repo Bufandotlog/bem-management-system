@@ -1,0 +1,411 @@
+/* ===== DETAIL HEADER ===== */
+.detail-header {
+    text-align: center;
+    padding: 8rem 2rem 3rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #0a0a0a, var(--biru-gelap));
+    border-bottom: 3px solid var(--biru-primary);
+}
+
+/* ===== PHOTO HEADER (Ketua & Wakil) ===== */
+.photo-header .header-photo-container {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 5px solid white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.photo-header .header-photo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ===== LOGO HEADER (Sekum & Bendum) — disamakan dengan photo-header ===== */
+.logo-header .header-logo-container {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 5px solid white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    background: transparent;
+}
+
+.logo-header .header-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.logo-header .header-logo-container:hover .header-logo {
+    transform: scale(1.05);
+}
+
+/* ===== HEADER TEXT ===== */
+.header-text h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.header-text p {
+    font-size: 1.2rem;
+    color: var(--biru-soft);
+}
+
+/* ===== DETAIL DESCRIPTION ===== */
+.detail-description {
+    max-width: 1200px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+}
+
+.description-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+}
+
+.desc-section {
+    margin-top: 5vh;
+    margin-bottom: 1rem;
+}
+
+.desc-section h2 {
+    color: var(--biru-secondary);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.desc-section h2 i {
+    color: var(--biru-primary);
+}
+
+/* Glass morphism */
+.desc-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(74, 144, 226, 0.25);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    height: 100%;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+    .desc-card { background: rgba(10, 20, 40, 0.85); }
+}
+
+.desc-card p {
+    color: #ccc;
+    line-height: 1.8;
+    font-size: 1rem;
+}
+
+.tugas-list,
+.proker-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tugas-list li,
+.proker-list li {
+    color: #ccc;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+}
+
+.tugas-list li:last-child,
+.proker-list li:last-child {
+    border-bottom: none;
+}
+
+.tugas-list i {
+    color: #4CAF50;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.proker-list i {
+    color: var(--biru-soft);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ===== ANGGOTA SECTION ===== */
+.anggota-section {
+    max-width: 1400px;
+    margin: 4rem auto;
+    padding: 0 2rem;
+}
+
+.anggota-title {
+    text-align: center;
+    color: var(--biru-secondary);
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    margin-top: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.anggota-title i {
+    color: var(--biru-primary);
+}
+
+/* ===== ANGGOTA GRID ===== */
+.anggota-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+    margin: 0 auto;
+}
+
+.anggota-item {
+    width: 250px;
+    flex: 0 0 250px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(74, 144, 226, 0.25);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.anggota-item:hover {
+    transform: translateY(-5px);
+    border-color: var(--biru-primary);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 15px 30px rgba(74, 144, 226, 0.35),
+                0 0 0 1px rgba(74, 144, 226, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+    .anggota-item { background: rgba(10, 20, 40, 0.85); }
+}
+
+.member-photo-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+}
+
+.member-photo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.anggota-item:hover .member-photo-container img {
+    transform: scale(1.05);
+}
+
+.item-info {
+    padding: 1.2rem;
+    text-align: center;
+}
+
+.item-info h3 {
+    color: var(--biru-secondary);
+    font-size: 1.2rem;
+    margin-bottom: 0.3rem;
+}
+
+.item-info .jabatan {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* ===== TOMBOL KEMBALI ===== */
+.back-button-container {
+    text-align: center;
+    margin: 3rem 0 4rem;
+}
+
+.btn-kembali {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.8rem 2rem;
+    background: transparent;
+    color: var(--biru-soft);
+    text-decoration: none;
+    border: 2px solid var(--biru-primary);
+    border-radius: 30px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-kembali:hover {
+    background: var(--biru-primary);
+    color: #000;
+    transform: translateX(-5px);
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* Tablet besar */
+@media (max-width: 992px) {
+    .photo-header .header-photo-container,
+    .logo-header .header-logo-container {
+        width: 170px;
+        height: 170px;
+    }
+
+    .header-text h1 {
+        font-size: 2.2rem;
+    }
+
+    .anggota-item {
+        width: 220px;
+        flex: 0 0 220px;
+    }
+}
+
+/* Tablet kecil */
+@media (max-width: 768px) {
+    .detail-header {
+        padding: 7rem 1.5rem 2.5rem;
+    }
+
+    .header-text h1 {
+        font-size: 2rem;
+    }
+
+    .header-text p {
+        font-size: 1rem;
+    }
+
+    .detail-description {
+        padding: 0 1.5rem;
+        margin: 2rem auto;
+    }
+
+    .description-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .anggota-title {
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+    }
+
+    .anggota-section {
+        padding: 0 1.5rem;
+        margin: 3rem auto;
+    }
+
+    .anggota-item {
+        width: 210px;
+        flex: 0 0 210px;
+    }
+}
+
+/* HP besar - 2 kolom card anggota */
+@media (max-width: 600px) {
+    .anggota-grid {
+        gap: 1rem;
+    }
+
+    .anggota-item {
+        width: calc(50% - 0.5rem);
+        flex: 0 0 calc(50% - 0.5rem);
+    }
+}
+
+/* HP standar */
+@media (max-width: 480px) {
+    .detail-header {
+        padding: 6.5rem 1rem 2rem;
+    }
+
+    .photo-header .header-photo-container,
+    .logo-header .header-logo-container {
+        width: 130px;
+        height: 130px;
+        border-width: 3px;
+    }
+
+    .header-text h1 {
+        font-size: 1.7rem;
+    }
+
+    .header-text p {
+        font-size: 0.95rem;
+    }
+
+    .detail-description {
+        padding: 0 1rem;
+    }
+
+    .desc-card {
+        padding: 1.2rem;
+    }
+
+    .desc-section h2 {
+        font-size: 1.2rem;
+    }
+
+    .anggota-title {
+        font-size: 1.5rem;
+    }
+
+    .anggota-section {
+        padding: 0 1rem;
+    }
+
+    .btn-kembali {
+        padding: 0.7rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .anggota-item {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 320px;
+    }
+}
+
+/* HP kecil */
+@media (max-width: 380px) {
+    .detail-header {
+        padding: 6rem 0.8rem 1.5rem;
+    }
+
+    .header-text h1 {
+        font-size: 1.4rem;
+    }
+
+    .anggota-item {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 300px;
+    }
+}

@@ -1,0 +1,364 @@
+/* ============================================
+   BERITA HAPUS ADMIN CSS
+   BEM Kabinet Astawidya
+   Desain Modern & Responsif untuk Halaman Hapus Berita
+   ============================================ */
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+    --primary: #4A90E2;
+    --primary-light: #6BA5E8;
+    --primary-dark: #1a2f4a;
+    --primary-soft: #8BB9F0;
+    --primary-glow: rgba(74, 144, 226, 0.3);
+    
+    --danger: #f44336;
+    --danger-dark: #8b1e1e;
+    --danger-glow: rgba(244, 67, 54, 0.3);
+    
+    --bg-dark: #0a0a0a;
+    --bg-card: #111;
+    --bg-card-hover: #1a1a1a;
+    --bg-input: #222;
+    
+    --text-light: #fff;
+    --text-muted: #888;
+    --text-dim: #666;
+    
+    --border-color: #333;
+    
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
+    --shadow-danger: 0 0 20px var(--danger-glow);
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+}
+
+.page-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--danger), #ff6b6b);
+    border-radius: var(--radius-sm);
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--text-light), var(--danger));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+/* ===== DELETE CONFIRMATION ===== */
+.delete-confirmation {
+    max-width: 600px;
+    margin: 50px auto;
+    text-align: center;
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== WARNING BOX ===== */
+.warning-box {
+    background: linear-gradient(135deg, #2a1a1a, #1a0f0f);
+    border: 2px solid var(--danger);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    margin: 2rem 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.warning-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--danger), #ff6b6b, var(--danger));
+    animation: slide 2s ease infinite;
+}
+
+@keyframes slide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.warning-box i {
+    font-size: 4rem;
+    color: var(--danger);
+    margin-bottom: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.warning-box p {
+    margin: 0.8rem 0;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.warning-box p:first-of-type {
+    color: var(--text-light);
+}
+
+.warning-box strong {
+    color: var(--danger);
+    font-size: 1.2rem;
+    display: inline-block;
+    background: rgba(244, 67, 54, 0.1);
+    padding: 0.2rem 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--danger);
+}
+
+/* ===== BERITA INFO ===== */
+.berita-info {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.berita-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.berita-info-item:last-child {
+    border-bottom: none;
+}
+
+.berita-info-item .label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.berita-info-item .value {
+    color: var(--primary-soft);
+    font-weight: 600;
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger), #ff6b6b);
+    color: white;
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    min-width: 180px;
+}
+
+.btn-danger::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-danger:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-danger);
+}
+
+.btn-danger:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-danger:active {
+    transform: translateY(-1px);
+}
+
+.btn-danger i {
+    font-size: 1.1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-secondary {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    padding: 1rem 2rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    text-decoration: none;
+    min-width: 150px;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-light);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.btn-secondary i {
+    font-size: 1rem;
+}
+
+/* ===== LOADING STATE ===== */
+.btn-danger.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-danger.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .delete-confirmation {
+        margin: 30px auto;
+        padding: 0 1rem;
+    }
+    
+    .warning-box {
+        padding: 1.5rem;
+    }
+    
+    .warning-box i {
+        font-size: 3rem;
+    }
+    
+    .warning-box p {
+        font-size: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 0.8rem;
+    }
+    
+    .btn-danger,
+    .btn-secondary {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .warning-box {
+        padding: 1.2rem;
+    }
+    
+    .warning-box i {
+        font-size: 2.5rem;
+    }
+    
+    .berita-info-item {
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .warning-box {
+        border: 2px solid #000;
+        background: none;
+    }
+    
+    .form-actions {
+        display: none;
+    }
+}
