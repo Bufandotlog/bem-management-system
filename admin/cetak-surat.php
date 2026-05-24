@@ -219,7 +219,6 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 outline: none !important;
                 background: white !important; 
                 page-break-after: always; 
-                overflow: hidden;
             }
             * { 
                 box-shadow: none !important; 
@@ -691,7 +690,20 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             }
             
             $total_days_r = count($rd_json);
+        ?>
+        <div class="page" style="margin-top: 10mm; page-break-before: always; position: relative;">
+            <div style="text-align: left; font-size: 12pt; margin-bottom: 20px; font-style: italic;">Lampiran <?php echo ($lampiran_offset + $idx_rd + 1); ?></div>
+            
+            <div style="text-align: center; margin-bottom: 30px; text-transform: uppercase;">
+                <h1 style="font-size: 14pt; font-weight: bold; margin: 3px 0;">SUSUNAN ACARA</h1>
+                <h2 style="font-size: 14pt; font-weight: bold; margin: 3px 0;"><?php echo htmlspecialchars($rd_nama); ?></h2>
+                <h3 style="font-size: 14pt; font-weight: bold; margin: 3px 0;">PERIODE <?php echo htmlspecialchars($rd_tahun); ?></h3>
+                <p style="font-weight: bold; margin-top: 5px; font-size: 12pt;"><?php echo htmlspecialchars($tanggal_utama_r); ?></p>
+            </div>
 
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; page-break-inside: auto;">
+            <?php 
+            $day_counter = 1;
             foreach($rd_json as $dayIdx => $dayData):
                 $day_ts = strtotime($rd_tanggal_mulai . " + $dayIdx days");
                 $hari_nama = $hari_id_r[date('l', $day_ts)] ?? date('l', $day_ts);
@@ -702,29 +714,19 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 if ($total_days_r === 1) {
                     $judul_hari = strtoupper($rd_nama);
                 } else {
-                    $judul_hari = strtoupper($rd_nama) . ' - HARI KE-' . ($dayIdx + 1);
+                    $judul_hari = strtoupper($rd_nama) . ' - HARI KE-' . $day_counter;
                 }
                 
                 $items = $dayData['items'] ?? [];
                 // Skip if no items to avoid "nanggung" tables
                 if (empty($items)) continue;
-        ?>
-        <div class="page" style="margin-top: 10mm; page-break-before: always; position: relative;">
-            <?php if ($dayIdx === 0): ?>
-                <div style="text-align: left; font-size: 12pt; margin-bottom: 20px; font-style: italic;">Lampiran <?php echo ($lampiran_offset + $idx_rd + 1); ?></div>
-                
-                <div style="text-align: center; margin-bottom: 30px; text-transform: uppercase;">
-                    <h1 style="font-size: 14pt; font-weight: bold; margin: 3px 0; line-height: 1.5;">
-                        SUSUNAN ACARA <?php echo htmlspecialchars(strtoupper($rd_nama)); ?> PERIODE <?php echo htmlspecialchars($rd_tahun); ?>
-                    </h1>
-                    <p style="font-weight: bold; margin-top: 5px; font-size: 12pt; text-transform: uppercase;"><?php echo htmlspecialchars($tanggal_utama_r); ?></p>
-                </div>
-            <?php else: ?>
-                <div style="height: 30px;"></div>
-            <?php endif; ?>
-
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; page-break-inside: auto;">
+            ?>
                 <thead>
+                    <?php if ($day_counter > 1): ?>
+                    <tr>
+                        <td colspan="5" style="border: none; height: 30px;"></td>
+                    </tr>
+                    <?php endif; ?>
                     <tr>
                         <th colspan="5" style="background-color: #d9e2f3; font-weight: bold; font-size: 12pt; padding: 10px; border: 1px solid #000; text-align: center; -webkit-print-color-adjust: exact;">
                             <?php echo htmlspecialchars($judul_hari); ?><br><br>
@@ -734,8 +736,8 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                     <tr>
                         <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 5%; -webkit-print-color-adjust: exact;">NO</th>
                         <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 15%; -webkit-print-color-adjust: exact;">WAKTU</th>
-                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 30%; -webkit-print-color-adjust: exact;">ACARA</th>
-                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 35%; -webkit-print-color-adjust: exact;">TEMPAT / KETERANGAN</th>
+                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 35%; -webkit-print-color-adjust: exact;">ACARA</th>
+                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 30%; -webkit-print-color-adjust: exact;"><?php echo ($dayData['tipe_ket'] ?? 'ket') === 'ket' ? 'KETERANGAN' : 'TEMPAT'; ?></th>
                         <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 15%; -webkit-print-color-adjust: exact;">PENANGGUNG<br>JAWAB</th>
                     </tr>
                 </thead>
@@ -762,15 +764,19 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                                 <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo $num++; ?>.</td>
                                 <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; white-space: nowrap;" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo htmlspecialchars($item['waktu']); ?></td>
                             <?php endif; ?>
-                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;"><?php echo htmlspecialchars($item['acara']); ?></td>
+                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;"><?php echo nl2br(htmlspecialchars($item['acara'])); ?></td>
                             <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;"><?php echo htmlspecialchars($item['keterangan']); ?></td>
                             <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;"><?php echo htmlspecialchars($item['pj']); ?></td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
+            <?php 
+                $day_counter++;
+            endforeach; 
+            ?>
             </table>
         </div>
-        <?php endforeach; endforeach; ?>
+        <?php endforeach; ?>
     <?php endif; ?>
     
     <!-- Container untuk render Lampiran PDF (EXTERNAL) -->

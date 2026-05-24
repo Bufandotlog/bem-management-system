@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $durasi_menit_arr = $_POST['durasi_menit'] ?? [];
     $waktu_mulai_jam_arr  = $_POST['waktu_mulai_jam'] ?? [];
     $waktu_mulai_menit_arr = $_POST['waktu_mulai_menit'] ?? [];
+    $tipe_ket_arr = $_POST['tipe_ket'] ?? [];
 
     // Build rundown JSON
     $rundown_days = [];
@@ -69,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $rundown_days[] = [
                 'waktu_mulai_jam'   => (int)($waktu_mulai_jam_arr[$dayId] ?? 7),
                 'waktu_mulai_menit' => (int)($waktu_mulai_menit_arr[$dayId] ?? 0),
+                'tipe_ket'          => $tipe_ket_arr[$dayId] ?? 'ket',
                 'items' => $day_items,
             ];
         }
@@ -634,6 +636,7 @@ function addDay() {
             <i class="fas fa-calendar-day fa-2x"></i>
             <h2>DAY ${dayCount}</h2>
             ${removeDayBtn}
+            <input type="hidden" name="tipe_ket[${dayCount}]" class="tipe-ket-hidden" value="ket">
         </div>
         
         <div class="info-grid">
@@ -666,8 +669,8 @@ function addDay() {
                         <th style="width: 5%; text-align: center;">NO</th>
                         <th style="width: 20%;">WAKTU / DURASI</th>
                         <th style="width: 25%;">ACARA</th>
-                        <th style="width: 25%;">KET / TEMPAT</th>
-                        <th style="width: 20%;">PENANGGUNG JAWAB</th>
+                        <th style="width: 30%;" class="th-ket-tempat">KET / TEMPAT</th>
+                        <th style="width: 15%;">PENANGGUNG JAWAB</th>
                         <th style="width: 5%; text-align: center;">AKSI</th>
                     </tr>
                 </thead>
@@ -846,7 +849,7 @@ function addRow(dayId) {
         </td>
         <td data-label="KET / TEMPAT">
             <div style="display: flex; gap: 5px;">
-                <select style="width: auto; padding: 10px 5px; border-radius: 8px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid var(--border-color); cursor: pointer; outline: none;" onchange="switchKetTempat(this)">
+                <select class="ket-tempat-select" style="width: auto; padding: 10px 5px; border-radius: 8px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid var(--border-color); cursor: pointer; outline: none;" onchange="switchKetTempat(this)">
                     <option value="ket">Ket.</option>
                     <option value="tempat">Tmpt</option>
                 </select>
@@ -901,7 +904,7 @@ function addParallelRow(btn, dayId) {
         </td>
         <td data-label="KET / TEMPAT">
             <div style="display: flex; gap: 5px;">
-                <select style="width: auto; padding: 10px 5px; border-radius: 8px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid var(--border-color); cursor: pointer; outline: none;" onchange="switchKetTempat(this)">
+                <select class="ket-tempat-select" style="width: auto; padding: 10px 5px; border-radius: 8px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid var(--border-color); cursor: pointer; outline: none;" onchange="switchKetTempat(this)">
                     <option value="ket">Ket.</option>
                     <option value="tempat">Tmpt</option>
                 </select>
@@ -1044,12 +1047,41 @@ function recalculateTimes(dayId) {
 
 // Autocomplete Logic
 function switchKetTempat(selectElem) {
-    const picker = selectElem.nextElementSibling;
-    const results = picker.querySelector('.tpl-results');
     const type = selectElem.value;
     const list = type === 'ket' ? ketList : tempatList;
-    results.innerHTML = list.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('');
-    picker.querySelector('input').focus();
+    
+    const dayCard = selectElem.closest('.day-card');
+    if (!dayCard) return;
+    
+    // Update hidden input
+    const hiddenTipe = dayCard.querySelector('.tipe-ket-hidden');
+    if (hiddenTipe) hiddenTipe.value = type;
+    
+    // Update TH
+    const th = dayCard.querySelector('.th-ket-tempat');
+    if (th) {
+        th.innerText = type === 'ket' ? 'KETERANGAN' : 'TEMPAT';
+    }
+    
+    // Update all selects in this dayCard
+    const allSelects = dayCard.querySelectorAll('select.ket-tempat-select');
+    allSelects.forEach(sel => {
+        sel.value = type;
+        const picker = sel.nextElementSibling;
+        if (picker && picker.classList.contains('tpl-picker')) {
+            const results = picker.querySelector('.tpl-results');
+            if (results) {
+                results.innerHTML = list.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('');
+            }
+        }
+    });
+    
+    // Focus the input of the changed row
+    const currentPicker = selectElem.nextElementSibling;
+    if (currentPicker) {
+        const input = currentPicker.querySelector('input');
+        if (input) input.focus();
+    }
 }
 
 document.addEventListener('focusin', function(e) {
@@ -1159,6 +1191,28 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (dJam && item.durasi_jam !== undefined) dJam.value = item.durasi_jam;
                             if (dMenit && item.durasi_menit !== undefined) dMenit.value = item.durasi_menit;
                         }
+                    }
+                });
+
+                // Restore tipe_ket for the whole day
+                const tipeKetHidden = dayCard.querySelector('.tipe-ket-hidden');
+                let dayTipeKet = 'ket'; // default
+                if (dayData.tipe_ket !== undefined) {
+                    dayTipeKet = dayData.tipe_ket;
+                }
+                if (tipeKetHidden) tipeKetHidden.value = dayTipeKet;
+                const thKetTempat = dayCard.querySelector('.th-ket-tempat');
+                if (thKetTempat) thKetTempat.innerText = dayTipeKet === 'ket' ? 'KETERANGAN' : 'TEMPAT';
+
+                // Update all selects to match dayTipeKet
+                const allSelects = dayCard.querySelectorAll('select.ket-tempat-select');
+                allSelects.forEach(sel => {
+                    sel.value = dayTipeKet;
+                    const picker = sel.nextElementSibling;
+                    if (picker) {
+                        const results = picker.querySelector('.tpl-results');
+                        const list = dayTipeKet === 'ket' ? ketList : tempatList;
+                        if (results) results.innerHTML = list.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('');
                     }
                 });
 

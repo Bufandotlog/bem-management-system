@@ -59,6 +59,7 @@ $acara_arr = $_POST['acara'] ?? [];
 $ket_arr   = $_POST['keterangan'] ?? [];
 $pj_arr    = $_POST['penanggung_jawab'] ?? [];
 $is_parallel_arr = $_POST['is_parallel'] ?? [];
+$tipe_ket_arr = $_POST['tipe_ket'] ?? [];
 
 $rundown_days = [];
 
@@ -89,6 +90,7 @@ for ($dayId = 1; $dayId <= $durasi_hari; $dayId++) {
         $rundown_days[] = [
             'judul_hari' => 'DAY ' . $dayId,
             'tanggal' => sanitizeText($tanggal),
+            'tipe_ket' => sanitizeText($tipe_ket_arr[$dayId] ?? 'ket'),
             'items' => $day_items
         ];
     }
@@ -260,8 +262,8 @@ $download_name = "RUNDOWN - $nama_acara - $tahun";
                     <th style="width: 5%;">NO</th>
                     <th style="width: 15%;">WAKTU</th>
                     <th style="width: 35%;">ACARA</th>
-                    <th style="width: 15%;">KET / TEMPAT</th>
-                    <th style="width: 30%;">PENANGGUNG<br>JAWAB</th>
+                    <th style="width: 30%;"><?php echo ($dayData['tipe_ket'] ?? 'ket') === 'ket' ? 'KETERANGAN' : 'TEMPAT'; ?></th>
+                    <th style="width: 15%;">PENANGGUNG<br>JAWAB</th>
                 </tr>
             </thead>
             <tbody>
