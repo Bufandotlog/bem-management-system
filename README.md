@@ -28,18 +28,25 @@ Sistem informasi manajemen organisasi Badan Eksekutif Mahasiswa (BEM) yang diran
 
 ---
 
-## 🚀 Instalasi Cepat
+## 📚 Dokumentasi Proyek
 
-Untuk panduan instalasi mendalam dan konfigurasi teknis, silakan merujuk pada:
+Untuk mempermudah pemahaman teknis dan pemeliharaan jangka panjang, dokumentasi sistem telah dikelompokkan ke dalam folder domain terstruktur di bawah direktori `docs/`:
 
-### 📖 [**PANDUAN INSTALASI LENGKAP (INSTALL.md)**](INSTALL.md)
+```text
+docs/
+├── 📁 setup/
+│   └── 📄 INSTALL.md                     # Panduan setup & instalasi server
+├── 📁 architecture/
+│   └── 📄 PANDUAN_LOKAL_DAN_ARSITEKTUR.md # Struktur kode & panduan kelola admin
+└── 📁 persuratan/
+    └── 📄 SISTEM_PERSURATAN.md           # Analisis teknis & modul surat JSON
+```
 
-**Ringkasan Cepat:**
-1. Clone repository ini.
-2. Salin `.env.example.mysql` atau `.env.example.pgsql` menjadi `.env`.
-3. Impor skema database dari folder `databases/`.
-4. Sesuaikan kredensial di file `.env`.
-5. Login dengan user `superadmin` / `admin1234`.
+Berikut adalah tautan cepat ke masing-masing domain dokumentasi:
+
+1. 🛠️ [**Domain Setup & Instalasi**](docs/setup/INSTALL.md) — Langkah setup lokal (Laragon/XAMPP/Built-in) & Database (PostgreSQL/MySQL).
+2. 💻 [**Domain Arsitektur & Pengelolaan**](docs/architecture/PANDUAN_LOKAL_DAN_ARSITEKTUR.md) — Panduan data master BEM, 2FA security, serta pemetaan file-by-file.
+3. ✉️ [**Domain Modul Persuratan**](docs/persuratan/SISTEM_PERSURATAN.md) — Cara kerja data persistence, skema JSON kolom `konten_surat`, PDF.js merger, dan pembersihan HTML WA.
 
 ---
 
