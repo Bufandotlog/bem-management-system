@@ -845,6 +845,14 @@ function copyRedaksi(data, btn) {
         actionWord = "mengundang " + tujuanShort;
     }
 
+    // Bersihkan HTML tag dari data.konteks
+    let cleanKonteks = "";
+    if (data.konteks) {
+        let tempDiv = document.createElement("div");
+        tempDiv.innerHTML = data.konteks;
+        cleanKonteks = (tempDiv.textContent || tempDiv.innerText || "").trim();
+    }
+
     let text = `Assalamu'alaikum Wr. Wb.
 Yth. 
 ${tujuan}
@@ -855,7 +863,7 @@ Sehubungan dengan diadakanya ${kegiatan}. Dengan ini kami ${actionWord} pada keg
 🕘 | ${data.waktu || '-'}
 🏢 | ${data.tempat || '-'}
 
-${data.konteks ? data.konteks + '\n\n' : ''}Demikian informasi ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terima kasih.
+${cleanKonteks ? cleanKonteks + '\n\n' : ''}Demikian informasi ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terima kasih.
 
 Wassalamu’alaikum Wr. Wb.`;
 

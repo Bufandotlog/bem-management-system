@@ -190,8 +190,9 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
         .indent { text-indent: 40px; margin-top: 5px; }
         
         /* Waktu Pelaksanaan Table */
-        .waktu-pelaksanaan { width: calc(100% - 40px); margin-left: 40px; margin-top: 10px; margin-bottom: 10px; border-collapse: collapse; }
+        .waktu-pelaksanaan { width: 100%; margin-top: 10px; margin-bottom: 10px; border-collapse: collapse; }
         .waktu-pelaksanaan td { vertical-align: top; padding: 4px 10px; border: none; }
+        .waktu-pelaksanaan td:first-child { padding-left: 0; }
         
         /* TTD Area */
         .ttd-area { width: 100%; margin-top: 15px; text-align: center; }
@@ -422,18 +423,30 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             
             // Hindari redundansi untuk berbagai jenis surat di paragraf pertama
             $perihal_paragraf_1 = mb_strtolower($surat['perihal']);
+            
+            $suffix_word = '';
+            if (strpos($perihal_paragraf_1, 'podcast') !== false) {
+                $suffix_word = ' podcast';
+            } elseif (strpos($perihal_paragraf_1, 'poadcast') !== false) {
+                $suffix_word = ' poadcast';
+            }
+
             if (strpos($perihal_paragraf_1, 'pemberitahuan') !== false) {
-                $perihal_paragraf_1 = 'pemberitahuan';
+                if (strpos($perihal_paragraf_1, 'kegiatan') !== false) {
+                    $perihal_paragraf_1 = 'pemberitahuan kegiatan' . $suffix_word;
+                } else {
+                    $perihal_paragraf_1 = 'pemberitahuan' . $suffix_word;
+                }
             } elseif (strpos($perihal_paragraf_1, 'undangan') !== false) {
-                $perihal_paragraf_1 = 'undangan';
+                $perihal_paragraf_1 = 'undangan' . $suffix_word;
             } elseif (strpos($perihal_paragraf_1, 'delegasi') !== false) {
-                $perihal_paragraf_1 = 'delegasi';
+                $perihal_paragraf_1 = 'delegasi' . $suffix_word;
             } elseif (strpos($perihal_paragraf_1, 'utusan') !== false) {
-                $perihal_paragraf_1 = 'utusan';
+                $perihal_paragraf_1 = 'utusan' . $suffix_word;
             } elseif (strpos($perihal_paragraf_1, 'peminjaman') !== false) {
-                $perihal_paragraf_1 = 'permohonan peminjaman';
+                $perihal_paragraf_1 = 'permohonan peminjaman' . $suffix_word;
             } elseif (strpos($perihal_paragraf_1, 'permohonan') !== false) {
-                $perihal_paragraf_1 = 'permohonan';
+                $perihal_paragraf_1 = 'permohonan' . $suffix_word;
             }
 
             $paragraf_permohonan  = 'Dengan ini kami menyampaikan '
@@ -447,7 +460,10 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             
             <?php
             // Paragraf Penutup: dinamis (mengikuti perihal)
-            $paragraf_penutup = 'Demikian surat ' . mb_strtolower($surat['perihal']) . ' ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terimakasih.';
+            $perihal_penutup = mb_strtolower($surat['perihal']);
+            $perihal_penutup = str_replace(['podcast', 'poadcast'], '', $perihal_penutup);
+            $perihal_penutup = preg_replace('/\s+/', ' ', trim($perihal_penutup));
+            $paragraf_penutup = 'Demikian surat ' . $perihal_penutup . ' ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terimakasih.';
             ?>
             <p class="indent"><?php echo htmlspecialchars($paragraf_penutup); ?></p>
             
@@ -809,7 +825,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             for (const fileUrl of lampiranFiles) {
                 try {
                     // Gunakan path relatif agar lebih aman dari masalah CORS/Protokol
-                    const fullUrl = '../' + fileUrl; 
+                    const fullUrl = '../uploads/' + fileUrl; 
                     const loadingTask = pdfjsLib.getDocument({
                         url: fullUrl,
                         withCredentials: true // Penting untuk beberapa hosting dengan security cookies
