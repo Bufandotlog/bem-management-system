@@ -271,6 +271,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     background: rgba(231, 76, 60, 0.2);
 }
 
+.btn-insert-row {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-insert-row:hover {
+    background: rgba(46, 204, 113, 0.25);
+    transform: scale(1.1);
+}
+
+.btn-move-row {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+    border: none;
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-move-row:hover {
+    background: rgba(155, 89, 182, 0.25);
+    transform: scale(1.1);
+}
+.btn-move-row:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@keyframes highlightNew {
+    0% { background: rgba(46, 204, 113, 0.25); transform: scale(1.01); }
+    100% { background: transparent; transform: scale(1); }
+}
+
 .actions-bar {
     position: sticky;
     bottom: 20px;
@@ -797,6 +841,17 @@ function updateDayNumbers() {
                 addParallelBtn.setAttribute('onclick', `addParallelRow(this, ${dCount})`);
             }
             
+            const insertRowBtn = row.querySelector('.btn-insert-row');
+            if (insertRowBtn) {
+                insertRowBtn.setAttribute('onclick', `insertRowAfter(this, ${dCount})`);
+            }
+            
+            const moveRowBtns = row.querySelectorAll('.btn-move-row');
+            moveRowBtns.forEach(moveBtn => {
+                const dir = moveBtn.title.includes('Atas') ? 'up' : 'down';
+                moveBtn.setAttribute('onclick', `moveRow(this, ${dCount}, '${dir}')`);
+            });
+            
             const cbSelesai = row.querySelector('.cb-selesai');
             if (cbSelesai) {
                 cbSelesai.setAttribute('onchange', `recalculateTimes(${dCount})`);
@@ -805,7 +860,7 @@ function updateDayNumbers() {
     });
 }
 
-function addRow(dayId) {
+function addRow(dayId, afterRow = null) {
     const dayCard = document.getElementById('day-' + dayId);
     if(!dayCard) return;
     
@@ -870,20 +925,45 @@ function addRow(dayId) {
             </div>
         </td>
         <td data-label="AKSI" style="text-align: center; white-space: nowrap;">
-            <div style="display: flex; gap: 5px; justify-content: center;">
-                <button type="button" class="btn-add-parallel" onclick="addParallelRow(this, ${dayId})" title="Tambah Baris Paralel (Kegiatan Bersamaan)" style="background: rgba(74, 144, 226, 0.1); color: var(--accent-color); border: none; border-radius: 8px; width: 36px; height: 36px; cursor: pointer; transition: 0.3s;">
-                    <i class="fas fa-layer-group"></i>
-                </button>
-                <button type="button" class="btn-remove-row" onclick="removeRow(this, ${dayId})" title="Hapus Baris Ini">
-                    <i class="fas fa-trash"></i>
-                </button>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                <div style="display: flex; gap: 3px; justify-content: center;">
+                    <button type="button" class="btn-move-row" onclick="moveRow(this, ${dayId}, 'up')" title="Pindah ke Atas">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <button type="button" class="btn-move-row" onclick="moveRow(this, ${dayId}, 'down')" title="Pindah ke Bawah">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <div style="display: flex; gap: 3px; justify-content: center;">
+                    <button type="button" class="btn-insert-row" onclick="insertRowAfter(this, ${dayId})" title="Sisipkan Baris Baru di Bawah">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <button type="button" class="btn-add-parallel" onclick="addParallelRow(this, ${dayId})" title="Tambah Baris Paralel (Kegiatan Bersamaan)" style="background: rgba(74, 144, 226, 0.1); color: var(--accent-color); border: none; border-radius: 8px; width: 36px; height: 36px; cursor: pointer; transition: 0.3s;">
+                        <i class="fas fa-layer-group"></i>
+                    </button>
+                    <button type="button" class="btn-remove-row" onclick="removeRow(this, ${dayId})" title="Hapus Baris Ini">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
         </td>
     `;
     
-    tbody.appendChild(tr);
+    // Support insert-after mode: if afterRow is provided, insert after it instead of appending
+    if (afterRow) {
+        // Find the last parallel-row after the reference row
+        let insertAfterEl = afterRow;
+        while (insertAfterEl.nextElementSibling && insertAfterEl.nextElementSibling.classList.contains('parallel-row')) {
+            insertAfterEl = insertAfterEl.nextElementSibling;
+        }
+        insertAfterEl.insertAdjacentElement('afterend', tr);
+    } else {
+        tbody.appendChild(tr);
+    }
+    
     updateRowNumbers(dayId);
     recalculateTimes(dayId);
+    return tr;
 }
 
 function addParallelRow(btn, dayId) {
@@ -963,6 +1043,86 @@ function removeRow(btn, dayId) {
     }
     updateRowNumbers(dayId);
     recalculateTimes(dayId);
+}
+
+// --- INSERT ROW AFTER: Sisipkan baris baru di bawah baris referensi (mirip Google Forms) ---
+function insertRowAfter(btn, dayId) {
+    const refRow = btn.closest('tr');
+    if (!refRow) return;
+    
+    const newRow = addRow(dayId, refRow);
+    
+    // Animasi highlight baris baru agar user tahu posisi baris yang baru disisipkan
+    if (newRow) {
+        newRow.style.animation = 'highlightNew 0.8s ease-out';
+        // Scroll ke baris baru
+        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// --- MOVE ROW: Pindahkan baris ke atas atau ke bawah ---
+function moveRow(btn, dayId, direction) {
+    const mainRow = btn.closest('tr.main-row');
+    if (!mainRow) return;
+    
+    const dayCard = document.getElementById('day-' + dayId);
+    if (!dayCard) return;
+    const tbody = dayCard.querySelector('.rundownBody');
+    
+    // Kumpulkan baris ini beserta parallel-row-nya sebagai satu grup
+    function getRowGroup(row) {
+        const group = [row];
+        let next = row.nextElementSibling;
+        while (next && next.classList.contains('parallel-row')) {
+            group.push(next);
+            next = next.nextElementSibling;
+        }
+        return group;
+    }
+    
+    const currentGroup = getRowGroup(mainRow);
+    
+    if (direction === 'up') {
+        // Cari main-row sebelumnya
+        let prevEl = mainRow.previousElementSibling;
+        // Skip parallel-rows dari grup sebelumnya
+        while (prevEl && prevEl.classList.contains('parallel-row')) {
+            prevEl = prevEl.previousElementSibling;
+        }
+        if (!prevEl || !prevEl.classList.contains('main-row')) return; // Sudah paling atas
+        
+        // Pindahkan grup saat ini ke sebelum prevEl (main-row sebelumnya)
+        currentGroup.forEach(row => {
+            tbody.insertBefore(row, prevEl);
+        });
+    } else if (direction === 'down') {
+        // Cari main-row setelah grup ini
+        const lastInGroup = currentGroup[currentGroup.length - 1];
+        let nextMainRow = lastInGroup.nextElementSibling;
+        if (!nextMainRow || !nextMainRow.classList.contains('main-row')) return; // Sudah paling bawah
+        
+        // Kumpulkan grup baris berikutnya
+        const nextGroup = getRowGroup(nextMainRow);
+        const lastInNextGroup = nextGroup[nextGroup.length - 1];
+        
+        // Pindahkan grup saat ini ke setelah grup berikutnya
+        currentGroup.forEach(row => {
+            lastInNextGroup.insertAdjacentElement('afterend', row);
+        });
+        // Karena forEach menyisipkan satu-satu setelah lastInNextGroup, urutannya jadi terbalik
+        // Perbaiki: sisipkan ulang dalam urutan yang benar
+        for (let i = 1; i < currentGroup.length; i++) {
+            currentGroup[i - 1].insertAdjacentElement('afterend', currentGroup[i]);
+        }
+    }
+    
+    updateRowNumbers(dayId);
+    recalculateTimes(dayId);
+    
+    // Animasi singkat untuk feedback visual
+    mainRow.style.animation = 'none';
+    mainRow.offsetHeight; // trigger reflow
+    mainRow.style.animation = 'highlightNew 0.5s ease-out';
 }
 
 function updateRowNumbers(dayId) {

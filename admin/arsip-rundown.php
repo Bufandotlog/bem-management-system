@@ -17,15 +17,33 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     csrfVerify();
     $del_id = (int)$_GET['delete'];
     
-    try {
-        $res = dbQuery("DELETE FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$del_id, $periode_id]);
-        if ($res) {
-            $success = "Data rundown berhasil dihapus.";
-        } else {
-            $error = "Gagal menghapus data.";
+    // Cek apakah arsip rundown ini terikat dengan surat
+    $is_terikat = false;
+    $surat_terkait = [];
+    $surat_list_check = dbFetchAll("SELECT nomor_surat, konten_surat FROM arsip_surat WHERE periode_id = ?", [$periode_id], "i");
+    foreach ($surat_list_check as $s) {
+        $konten = json_decode($s['konten_surat'], true);
+        if (isset($konten['rundown_internal_ids']) && is_array($konten['rundown_internal_ids'])) {
+            if (in_array($del_id, $konten['rundown_internal_ids'])) {
+                $is_terikat = true;
+                $surat_terkait[] = $s['nomor_surat'];
+            }
         }
-    } catch (Exception $e) {
-        $error = "Gagal menghapus data: " . $e->getMessage();
+    }
+    
+    if ($is_terikat) {
+        $error = "Tidak bisa menghapus arsip rundown karena masih terikat dengan surat (" . htmlspecialchars($surat_terkait[0]) . "). Rundown hanya bisa dihapus jika berdiri sendiri (tidak terikat pada surat apapun).";
+    } else {
+        try {
+            $res = dbQuery("DELETE FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$del_id, $periode_id]);
+            if ($res) {
+                $success = "Data rundown berhasil dihapus karena berdiri sendiri (tidak terikat pada surat).";
+            } else {
+                $error = "Gagal menghapus data.";
+            }
+        } catch (Exception $e) {
+            $error = "Gagal menghapus data: " . $e->getMessage();
+        }
     }
 }
 
@@ -61,6 +79,18 @@ if (isset($_GET['duplicate']) && is_numeric($_GET['duplicate'])) {
 
 // Ambil data arsip rundown
 $list_rundown = dbFetchAll("SELECT * FROM arsip_rundown WHERE periode_id = ? ORDER BY created_at DESC", [$periode_id], "i");
+
+// Hitung keterkaitan surat untuk visualisasi (mirip arsip-lampiran)
+$surat_list_all = dbFetchAll("SELECT nomor_surat, konten_surat FROM arsip_surat WHERE periode_id = ?", [$periode_id], "i");
+$rundown_to_surat = [];
+foreach ($surat_list_all as $s) {
+    $konten = json_decode($s['konten_surat'], true);
+    if (isset($konten['rundown_internal_ids']) && is_array($konten['rundown_internal_ids'])) {
+        foreach ($konten['rundown_internal_ids'] as $r_id) {
+            $rundown_to_surat[$r_id][] = $s['nomor_surat'];
+        }
+    }
+}
 
 // Bulan Indonesia untuk tampilan
 $bulan_id = [
@@ -210,6 +240,7 @@ function formatTanggalId($tanggal, $bulan_id) {
                             }
                             $tanggal_display = formatTanggalId($r['tanggal_mulai'], $bulan_id);
                             $durasi = (int)$r['durasi_hari'];
+                            $terkait = $rundown_to_surat[$r['id']] ?? [];
                         ?>
                         <tr style="border-bottom: 1px solid var(--border-color); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                             <td style="padding: 15px;" data-label="No"><?php echo $idx + 1; ?></td>
@@ -221,6 +252,21 @@ function formatTanggalId($tanggal, $bulan_id) {
                                         <?php echo htmlspecialchars($r['tahun']); ?>
                                     </span>
                                 </div>
+                                <?php if(!empty($terkait)): ?>
+                                    <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:4px;">
+                                        <?php foreach($terkait as $ns): ?>
+                                            <span style="background:rgba(243, 156, 18, 0.1); color:#f39c12; padding:3px 8px; border-radius:6px; font-size:0.7rem; font-weight:600; border:1px solid rgba(243, 156, 18, 0.3);" title="Terikat dengan surat ini">
+                                                <i class="fas fa-link"></i> <?php echo htmlspecialchars($ns); ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div style="margin-top:8px;">
+                                        <span style="background:rgba(46, 204, 113, 0.1); color:#2ecc71; padding:3px 8px; border-radius:6px; font-size:0.7rem; font-weight:600; border:1px solid rgba(46, 204, 113, 0.3);" title="Tidak terikat pada surat manapun">
+                                            <i class="fas fa-check"></i> Berdiri Sendiri
+                                        </span>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td style="padding: 15px;" data-label="Tanggal Pelaksanaan">
                                 <div style="color: #eee;"><?php echo htmlspecialchars($tanggal_display); ?></div>
