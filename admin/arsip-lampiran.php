@@ -23,7 +23,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $surat_terkait = [];
     $surat_list = dbFetchAll("SELECT nomor_surat, konten_surat FROM arsip_surat WHERE periode_id = ?", [$periode_id], "i");
     foreach ($surat_list as $s) {
-        $konten = json_decode($s['konten_surat'], true);
+        $konten = json_decode((string)$s['konten_surat'], true);
         if (isset($konten['lampiran_internal_ids']) && is_array($konten['lampiran_internal_ids'])) {
             if (in_array($del_id, $konten['lampiran_internal_ids'])) {
                 $is_terikat = true;
@@ -77,7 +77,7 @@ $list_lampiran = dbFetchAll("SELECT * FROM lampiran_pinjam WHERE periode_id = ? 
 $surat_list_all = dbFetchAll("SELECT nomor_surat, konten_surat FROM arsip_surat WHERE periode_id = ?", [$periode_id], "i");
 $lampiran_to_surat = [];
 foreach ($surat_list_all as $s) {
-    $konten = json_decode($s['konten_surat'], true);
+    $konten = json_decode((string)$s['konten_surat'], true);
     if (isset($konten['lampiran_internal_ids']) && is_array($konten['lampiran_internal_ids'])) {
         foreach ($konten['lampiran_internal_ids'] as $l_id) {
             $lampiran_to_surat[$l_id][] = $s['nomor_surat'];

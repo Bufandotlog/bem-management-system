@@ -274,6 +274,13 @@ $posisiEncoded = urlencode($posisi);
 </form>
 <?php endif; ?>
 
+<form method="POST" id="formHapusFotoAnggota"
+      onsubmit="return confirm('Yakin ingin menghapus foto anggota ini?')">
+    <?php echo csrfField(); ?>
+    <input type="hidden" name="action_hapus" value="hapus_foto_anggota">
+    <input type="hidden" name="anggota_id" id="hapusFotoAnggotaId" value="">
+</form>
+
 <?php if (!$data): ?>
     <div class="info-bar">
         <i class="fas fa-info-circle"></i>
@@ -424,22 +431,27 @@ $posisiEncoded = urlencode($posisi);
         </div>
     </div>
 
-    <!-- Program Kerja -->
+    <!-- Program Kerja / Wewenang -->
+    <?php 
+    $is_presma_wapresma = in_array($posisi, ['ketua', 'wakil_ketua']);
+    $proker_title = $is_presma_wapresma ? 'Wewenang' : 'Program Kerja';
+    $proker_icon = $is_presma_wapresma ? 'gavel' : 'calendar-alt';
+    ?>
     <div class="form-section">
-        <h2><i class="fas fa-calendar-alt"></i> Program Kerja</h2>
+        <h2><i class="fas fa-<?php echo $proker_icon; ?>"></i> <?php echo $proker_title; ?></h2>
         <div class="form-group">
             <div id="prokerContainer">
                 <?php foreach (!empty($proker_list) ? $proker_list : [''] as $i => $item): ?>
                 <div class="list-item">
                     <input type="text" name="proker[]"
                            value="<?php echo htmlspecialchars($item); ?>"
-                           placeholder="Program Kerja <?php echo $i + 1; ?>">
+                           placeholder="<?php echo $proker_title; ?> <?php echo $i + 1; ?>">
                     <button type="button" class="btn-remove" onclick="hapusListItem(this)" title="Hapus">×</button>
                 </div>
                 <?php endforeach; ?>
             </div>
-            <button type="button" class="btn-add" onclick="tambahItem('prokerContainer', 'proker[]', 'Program Kerja')">
-                <i class="fas fa-plus"></i> Tambah Program Kerja
+            <button type="button" class="btn-add" onclick="tambahItem('prokerContainer', 'proker[]', '<?php echo $proker_title; ?>')">
+                <i class="fas fa-plus"></i> Tambah <?php echo $proker_title; ?>
             </button>
         </div>
     </div>
@@ -471,16 +483,11 @@ $posisiEncoded = urlencode($posisi);
                             <img src="<?php echo uploadUrl($anggota['foto']); ?>"
                                  alt="Foto <?php echo htmlspecialchars($anggota['nama']); ?>">
                             <small><?php echo htmlspecialchars(basename($anggota['foto'])); ?></small>
-                            <?php /* Hapus foto anggota via form POST tersendiri */ ?>
-                            <form method="POST" style="display:inline"
-                                  onsubmit="return confirm('Yakin hapus foto anggota ini?')">
-                                <?php echo csrfField(); ?>
-                                <input type="hidden" name="action_hapus" value="hapus_foto_anggota">
-                                <input type="hidden" name="anggota_id" value="<?php echo (int)$anggota['id']; ?>">
-                                <button type="submit" class="btn-delete-very-small" title="Hapus Foto">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            <?php /* PENTING: Gunakan type="button" dan submit form eksternal agar tidak nested */ ?>
+                            <button type="button" class="btn-delete-very-small" title="Hapus Foto"
+                                    onclick="hapusFotoAnggota(<?php echo (int)$anggota['id']; ?>)">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                         <?php endif; ?>
                         <input type="file" name="anggota_foto[]" accept="image/*"
@@ -601,10 +608,16 @@ function setupPreview(inputId, wrapId, imgId) {
 setupPreview('inputFoto', 'previewFotoWrap', 'previewFotoImg');
 setupPreview('inputLogo', 'previewLogoWrap', 'previewLogoImg');
 
-document.getElementById('submitBtn').addEventListener('click', function () {
-    if (this.classList.contains('loading')) return;
-    this.classList.add('loading');
-    this.innerHTML = '<i class="fas fa-spinner"></i> Menyimpan...';
+function hapusFotoAnggota(id) {
+    document.getElementById('hapusFotoAnggotaId').value = id;
+    document.getElementById('formHapusFotoAnggota').submit();
+}
+
+document.getElementById('bphForm').addEventListener('submit', function () {
+    const btn = document.getElementById('submitBtn');
+    if (btn.classList.contains('loading')) return;
+    btn.classList.add('loading');
+    btn.innerHTML = '<i class="fas fa-spinner"></i> Menyimpan...';
 });
 </script>
 

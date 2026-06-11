@@ -834,10 +834,17 @@ function toggleGroup(groupId, btn) {
 }
 
 function copyRedaksi(data, btn) {
-    let perihal = data.perihal;
-    let kegiatan = data.kegiatan || "Kegiatan BEM";
-    let tujuan = data.tujuan;
-    let tujuanShort = data.tujuan_short;
+    function stripHtml(html) {
+        if (!html) return "";
+        let tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html.replace(/<br\s*\/?>/gi, "\n");
+        return (tempDiv.textContent || tempDiv.innerText || "").trim();
+    }
+
+    let perihal = stripHtml(data.perihal);
+    let kegiatan = stripHtml(data.kegiatan || "Kegiatan BEM");
+    let tujuan = stripHtml(data.tujuan);
+    let tujuanShort = stripHtml(data.tujuan_short);
     
     // Tentukan kata kerja aksi (mengundang/permohonan/dll)
     let actionWord = "menyampaikan " + perihal.toLowerCase() + " kepada " + tujuanShort;
@@ -846,12 +853,7 @@ function copyRedaksi(data, btn) {
     }
 
     // Bersihkan HTML tag dari data.konteks
-    let cleanKonteks = "";
-    if (data.konteks) {
-        let tempDiv = document.createElement("div");
-        tempDiv.innerHTML = data.konteks;
-        cleanKonteks = (tempDiv.textContent || tempDiv.innerText || "").trim();
-    }
+    let cleanKonteks = stripHtml(data.konteks);
 
     let text = `Assalamu'alaikum Wr. Wb.
 Yth. 
@@ -859,9 +861,9 @@ ${tujuan}
 
 Sehubungan dengan diadakanya ${kegiatan}. Dengan ini kami ${actionWord} pada kegiatan tersebut, yang akan dilaksanakan pada :
 
-🗓️ | ${data.hari || '-'}
-🕘 | ${data.waktu || '-'}
-🏢 | ${data.tempat || '-'}
+🗓️ | ${stripHtml(data.hari) || '-'}
+🕘 | ${stripHtml(data.waktu) || '-'}
+🏢 | ${stripHtml(data.tempat) || '-'}
 
 ${cleanKonteks ? cleanKonteks + '\n\n' : ''}Demikian informasi ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terima kasih.
 

@@ -1,6 +1,6 @@
 /* ========== NAVBAR ========== */
 :root {
-    --navbar-height: 70px; /* Sesuaikan dengan tinggi navbar asli kamu */
+    --navbar-height: 54px; /* Slimmed down from 70px */
 }
 
 .navbar {
@@ -18,7 +18,7 @@
 .nav-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 1rem 2rem;
+    padding: 0.45rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -64,7 +64,7 @@
     font-weight: 500;
     transition: color var(--transition-fast);
     position: relative;
-    padding: 0.5rem 0;
+    padding: 0.3rem 0;
 }
 
 .nav-menu a::after {

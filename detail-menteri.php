@@ -201,9 +201,13 @@ $tahun_label   = date('Y') . '/' . (date('Y') + 1);
         </div>
         <?php endif; ?>
 
-        <?php if (!empty($proker)): ?>
+        <?php if (!empty($proker)): 
+            $is_presma_wapresma = ($type === 'bph' && in_array($parent['posisi'] ?? '', ['ketua', 'wakil_ketua']));
+            $proker_title = $is_presma_wapresma ? 'Wewenang' : 'Program Kerja';
+            $proker_icon = $is_presma_wapresma ? 'gavel' : 'calendar-alt';
+        ?>
         <div class="desc-section">
-            <h2><i class="fas fa-calendar-alt"></i> Program Kerja</h2>
+            <h2><i class="fas fa-<?php echo $proker_icon; ?>"></i> <?php echo $proker_title; ?></h2>
             <div class="desc-card">
                 <ul class="proker-list">
                     <?php foreach ($proker as $item): ?>
