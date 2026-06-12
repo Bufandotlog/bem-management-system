@@ -7,7 +7,7 @@ requireSekretaris();
 
 $periode_id = getUserPeriode();
 $jenis = $_GET['jenis'] ?? 'L';
-if (!in_array($jenis, ['L', 'D', 'M'])) $jenis = 'L';
+if (!in_array($jenis, ['L', 'D', 'M', 'I'])) $jenis = 'L';
 
 $error = '';
 $success = '';
@@ -163,7 +163,7 @@ foreach ($surat_list_raw as $s) {
 // Get latest ID for Keluar/Dalam UI rendering
 // Get latest ID for current Tab UI rendering
 $latest_keluar_id = 0;
-if ($jenis !== 'M') {
+if (!in_array($jenis, ['M', 'I'])) {
     $latest_keluar_id = dbFetchOne("SELECT MAX(id) as last_id FROM arsip_surat WHERE periode_id = ? AND jenis_surat = ?", [$periode_id, $jenis], "is")['last_id'];
 }
 
@@ -432,16 +432,17 @@ $css = "
         
         <div class="surat-actions" style="display:flex; flex-wrap:wrap; gap:10px; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px;">
             <div class="tab-container" style="flex-wrap:nowrap; margin-bottom:0; display:flex; gap:5px; flex: 1; min-width: 250px;">
-                <a href="arsip-surat.php?jenis=L" class="tab-btn <?php echo $jenis === 'L' ? 'active' : ''; ?>" style="flex:1; text-align:center; padding: 10px 5px; font-size: 0.85rem;">Keluar (L)</a>
-                <a href="arsip-surat.php?jenis=D" class="tab-btn <?php echo $jenis === 'D' ? 'active' : ''; ?>" style="flex:1; text-align:center; padding: 10px 5px; font-size: 0.85rem;">Dalam (D)</a>
-                <a href="arsip-surat.php?jenis=M" class="tab-btn <?php echo $jenis === 'M' ? 'active' : ''; ?>" style="flex:1; text-align:center; padding: 10px 5px; font-size: 0.85rem;">Masuk (M)</a>
+                <a href="arsip-surat.php?jenis=L" class="tab-btn <?php echo $jenis === 'L' ? 'active' : ''; ?>" style="flex:1; text-align:center; padding: 10px 5px; font-size: 0.85rem;">Keluar (Eksternal)</a>
+                <a href="arsip-surat.php?jenis=D" class="tab-btn <?php echo $jenis === 'D' ? 'active' : ''; ?>" style="flex:1; text-align:center; padding: 10px 5px; font-size: 0.85rem;">Keluar (Internal)</a>
+                <a href="arsip-surat.php?jenis=M" class="tab-btn <?php echo $jenis === 'M' ? 'active' : ''; ?>" style="flex:1; text-align:center; padding: 10px 5px; font-size: 0.85rem;">Masuk (Eksternal)</a>
+                <a href="arsip-surat.php?jenis=I" class="tab-btn <?php echo $jenis === 'I' ? 'active' : ''; ?>" style="flex:1; text-align:center; padding: 10px 5px; font-size: 0.85rem;">Masuk (Internal)</a>
             </div>
             
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex:1; min-width: 250px;">
                 <a href="arsip-surat.php?jenis=<?php echo $jenis; ?>&export=excel" class="btn-buat" style="background:#2E7D32; flex:1; justify-content:center; white-space: nowrap;"><i class="fas fa-file-excel"></i> Excel</a>
                 
-                <?php if ($jenis === 'M'): ?>
-                    <a href="arsip-manual.php?type=M" class="btn-buat" style="background:#f39c12; flex:1; justify-content:center; white-space: nowrap;"><i class="fas fa-file-import"></i> Catat Manual</a>
+                <?php if (in_array($jenis, ['M', 'I'])): ?>
+                    <a href="arsip-manual.php?type=<?php echo $jenis; ?>" class="btn-buat" style="background:#f39c12; flex:1; justify-content:center; white-space: nowrap;"><i class="fas fa-file-import"></i> Catat Manual</a>
                 <?php else: ?>
                     <a href="buat-surat.php" class="btn-buat" style="flex:1.2; justify-content:center; white-space: nowrap;"><i class="fas fa-plus"></i> Buat Otomatis</a>
                     <a href="arsip-manual.php?type=<?php echo $jenis; ?>" class="btn-buat" style="background:#f39c12; flex:1; justify-content:center; white-space: nowrap;"><i class="fas fa-file-import"></i> Catat Manual</a>
@@ -456,10 +457,10 @@ $css = "
                     <thead>
                         <tr class="header-row">
                             <th width="5%" style="text-align:center;">No</th>
-                            <th width="15%" style="text-align:center;">Tanggal <?php echo $jenis==='M' ? 'Diterima' : 'Dikirim'; ?></th>
+                            <th width="15%" style="text-align:center;">Tanggal <?php echo in_array($jenis, ['M', 'I']) ? 'Diterima' : 'Dikirim'; ?></th>
                             <th width="20%">Nomor Surat</th>
                             <th width="20%">Perihal</th>
-                            <th width="25%"><?php echo $jenis==='M' ? 'Asal Instansi' : 'Dituju Kepada'; ?></th>
+                            <th width="25%"><?php echo in_array($jenis, ['M', 'I']) ? 'Asal Instansi' : 'Dituju Kepada'; ?></th>
                             <th style="text-align:center;">Aksi</th>
                         </tr>
                     </thead>
@@ -541,7 +542,7 @@ $css = "
                                 </div>
                             </td>
                             <td data-label="Perihal"><span><?php echo htmlspecialchars($parent['perihal']); ?></span></td>
-                            <td data-label="<?php echo $jenis==='M' ? 'Asal Instansi' : 'Dituju Kepada'; ?>">
+                            <td data-label="<?php echo in_array($jenis, ['M', 'I']) ? 'Asal Instansi' : 'Dituju Kepada'; ?>">
                                 <div>
                                     <div style="margin-bottom: 8px;">
                                         <?php echo nl2br(htmlspecialchars($parent['tujuan'])); ?>
@@ -560,7 +561,7 @@ $css = "
                                     $edit_link = $is_manual ? "arsip-manual.php?edit={$parent['id']}" : "buat-surat.php?edit={$parent['id']}"; 
                                     ?>
                                     <a href="<?php echo $edit_link; ?>" class="btn-edit" title="Edit Surat"><i class="fas fa-edit"></i> Edit</a>
-                                    <?php if ($jenis !== 'M'): ?>
+                                    <?php if (!in_array($jenis, ['M', 'I'])): ?>
                                         <?php 
                                         $konten = json_decode((string)$parent['konten_surat'], true) ?? [];
                                         $tujuan_first = trim(explode("\n", $parent['tujuan'])[0]);
@@ -582,7 +583,7 @@ $css = "
                                         <a href="buat-surat.php?clone=<?php echo $parent['id']; ?>" class="btn-buat" style="background: #27ae60;" title="Buat salinan surat ini untuk tujuan lain"><i class="fas fa-copy"></i> Duplikat</a>
                                     <?php endif; ?>
                                     
-                                    <?php if ($jenis === 'M' || $parent['id'] == $latest_keluar_id): ?>
+                                    <?php if (in_array($jenis, ['M', 'I']) || $parent['id'] == $latest_keluar_id): ?>
                                         <button type="button" 
                                            onclick="handleHapusArsip(<?php echo $parent['id']; ?>, '<?php echo addslashes($parent['nomor_surat']); ?>')"
                                            class="btn-delete" title="Hapus"><i class="fas fa-trash-alt"></i> Hapus</button>
@@ -681,7 +682,7 @@ $css = "
                                         ?>
                                         <a href="<?php echo $child_edit; ?>" class="btn-edit" title="Edit Surat"><i class="fas fa-edit"></i> Edit</a>
                                         
-                                        <?php if ($jenis !== 'M'): ?>
+                                        <?php if (!in_array($jenis, ['M', 'I'])): ?>
                                             <?php 
                                             $ckonten = json_decode((string)$child['konten_surat'], true) ?? [];
                                             $ctujuan_first = trim(explode("\n", $child['tujuan'])[0]);

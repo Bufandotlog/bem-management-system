@@ -24,27 +24,35 @@ function detectBaseUrl() {
                 : 'http';
 
     $rawHost = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    // Sanitasi host: hanya izinkan alfanumerik, titik, strip, titik dua (port)
     $host    = preg_replace('/[^a-zA-Z0-9.\-:]/', '', $rawHost);
 
     if (empty($host)) {
         $host = 'localhost';
-        error_log("detectBaseUrl(): HTTP_HOST tidak valid [{$rawHost}], fallback ke localhost");
     }
 
-    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/';
-    // Sanitasi SCRIPT_NAME: hapus path traversal (..)
-    $scriptName = preg_replace('/\.\.+/', '', $scriptName);
-    $dirName    = dirname($scriptName);
-
-    if ($dirName === '/' || $dirName === '\\' || $dirName === '.') {
-        $baseUrl = $protocol . '://' . $host . '/';
+    $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
+    $rootDir = str_replace('\\', '/', dirname(__DIR__));
+    
+    $basePath = '';
+    if (!empty($docRoot) && strpos($rootDir, $docRoot) === 0) {
+        $basePath = substr($rootDir, strlen($docRoot));
     } else {
-        $dirName = str_replace('\\', '/', $dirName);
-        $baseUrl = $protocol . '://' . $host . $dirName . '/';
+        // Fallback sederhana jika Document Root bermasalah
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/';
+        $scriptName = preg_replace('/\.\.+/', '', $scriptName);
+        $basePath   = dirname($scriptName);
+        
+        // Hapus '/admin' jika script sedang dieksekusi di dalam folder admin
+        if (str_ends_with($basePath, '/admin')) {
+            $basePath = substr($basePath, 0, -6);
+        }
     }
 
-    return $baseUrl;
+    if ($basePath === '/' || $basePath === '.') {
+        $basePath = '';
+    }
+
+    return $protocol . '://' . $host . $basePath . '/';
 }
 
 // ============================================

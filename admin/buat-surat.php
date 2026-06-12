@@ -679,8 +679,8 @@ if ($is_edit || $is_clone) {
                     <div class="form-group">
                         <label>Jenis Surat</label>
                         <select name="jenis_surat" id="jenis_surat_select" <?php echo $is_clone ? 'disabled' : ''; ?>>
-                            <option value="L" <?php echo $jenis_surat_val === 'L' ? 'selected' : ''; ?>>Surat Keluar (L)</option>
-                            <option value="D" <?php echo $jenis_surat_val === 'D' ? 'selected' : ''; ?>>Surat Dalam (D)</option>
+                            <option value="L" <?php echo $jenis_surat_val === 'L' ? 'selected' : ''; ?>>Surat Keluar (Eksternal) [L]</option>
+                            <option value="D" <?php echo $jenis_surat_val === 'D' ? 'selected' : ''; ?>>Surat Keluar (Internal) [D]</option>
                         </select>
                         <?php if($is_clone): ?><input type="hidden" name="jenis_surat" value="<?php echo $jenis_surat_val; ?>"><?php endif; ?>
                     </div>

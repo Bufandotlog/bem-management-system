@@ -358,7 +358,46 @@ if (isset($page_css)) {
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 2.5px; background-color: #666; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: #4A90E2; border-color: #4A90E2; }
         input:checked + .slider:before { transform: translateX(23px); background-color: white; box-shadow: 0 0 8px rgba(255,255,255,0.4); }
+
+        /* === Sidebar Dropdown (inline critical) === */
+        .sidebar-dropdown-menu {
+            max-height: 0 !important;
+            overflow: hidden !important;
+            transition: max-height 0.35s ease !important;
+        }
+        .sidebar-dropdown.open > .sidebar-dropdown-menu {
+            max-height: 500px !important;
+        }
+        .sidebar-dropdown-toggle .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+        .sidebar-dropdown.open > .sidebar-dropdown-toggle .chevron-icon {
+            transform: rotate(90deg);
+        }
     </style>
+    <script>
+    function toggleSidebarDropdown(btn) {
+        var dropdown = btn.closest('.sidebar-dropdown');
+        if (!dropdown) return;
+        
+        var isOpen = dropdown.classList.contains('open');
+        
+        // Close all other dropdowns (accordion behavior)
+        var allDropdowns = document.querySelectorAll('.sidebar-dropdown');
+        for (var i = 0; i < allDropdowns.length; i++) {
+            if (allDropdowns[i] !== dropdown) {
+                allDropdowns[i].classList.remove('open');
+            }
+        }
+        
+        // Toggle current dropdown
+        if (isOpen) {
+            dropdown.classList.remove('open');
+        } else {
+            dropdown.classList.add('open');
+        }
+    }
+    </script>
 </head>
 <body class="<?php echo htmlspecialchars(basename($current_page, '.php'), ENT_QUOTES, 'UTF-8'); ?>">
 <div class="admin-wrapper" style="overflow-x: hidden;">
@@ -410,129 +449,186 @@ if (isset($page_css)) {
         </div>
         <?php endif; ?>
 
+        <?php
+        // Map halaman ke status aktif untuk menu sidebar
+        $info_bem_pages = [
+            'berita.php', 'berita-edit.php', 'berita-hapus.php',
+            'kepengurusan.php', 'kepengurusan-edit.php', 'kepengurusan-hapus.php',
+            'kabinet.php', 'visi-misi.php', 'kontak.php',
+            'upload-struktur.php', 'upload-struktur-hapus.php',
+            'kementerian-anggota.php', 'kementerian-edit.php', 'kementerian-hapus.php'
+        ];
+        $is_info_bem_active = in_array($current_page, $info_bem_pages);
+        
+        $surat_pages = [
+            'arsip-surat.php', 'buat-surat.php', 'pengaturan-surat.php', 'cetak-surat.php', 'arsip-manual.php', 'catat-surat-masuk.php'
+        ];
+        $is_surat_active = in_array($current_page, $surat_pages);
+        
+        $barang_pages = [
+            'master-barang.php', 'master-tempat.php', 'cetak-lampiran.php', 'arsip-lampiran.php', 'cetak-lampiran-pdf.php'
+        ];
+        $is_barang_active = in_array($current_page, $barang_pages);
+        
+        $rundown_pages = [
+            'master-penanggung-jawab.php', 'master-keterangan.php', 'master-tempat-kegiatan.php', 'cetak-rundown.php', 'arsip-rundown.php', 'cetak-rundown-pdf.php'
+        ];
+        $is_rundown_active = in_array($current_page, $rundown_pages);
+        
+        $superadmin_pages = [
+            'periode-kepengurusan.php', 'kelola-admin.php', 'ganti-periode.php', 'audit-log.php', 'backup-database.php'
+        ];
+        $is_superadmin_active = in_array($current_page, $superadmin_pages);
+        
+        $akun_pages = [
+            'pengaturan.php', '2fa-setup.php', '2fa-verify.php'
+        ];
+        $is_akun_active = in_array($current_page, $akun_pages);
+        ?>
+
         <nav class="sidebar-menu">
+            <!-- Dashboard (Direct Link) -->
             <a href="dashboard.php"
                class="<?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>">
                 <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
             </a>
 
+            <!-- Informasi BEM (Dropdown) -->
             <?php if (!$isSekretaris || $isSuperadmin): ?>
-                <a href="berita.php"
-                class="<?php echo $current_page === 'berita.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-newspaper"></i><span>Berita</span>
-                </a>
-                <a href="kepengurusan.php"
-                class="<?php echo $current_page === 'kepengurusan.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-users"></i><span>Kepengurusan</span>
-                </a>
-                <a href="kabinet.php"
-                class="<?php echo $current_page === 'kabinet.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-crown"></i><span>Kabinet</span>
-                </a>
-                <a href="visi-misi.php"
-                class="<?php echo $current_page === 'visi-misi.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-bullseye"></i><span>Visi Misi</span>
-                </a>
-                <a href="kontak.php"
-                class="<?php echo $current_page === 'kontak.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-address-book"></i><span>Kontak</span>
-                </a>
-                <a href="upload-struktur.php"
-                class="<?php echo $current_page === 'upload-struktur.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-image"></i><span>Upload Struktur</span>
-                </a>
+            <div class="sidebar-dropdown <?php echo $is_info_bem_active ? 'active open' : ''; ?>">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-university"></i>
+                    <span>Informasi BEM</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="berita.php" class="<?php echo in_array($current_page, ['berita.php', 'berita-edit.php', 'berita-hapus.php']) ? 'active' : ''; ?>">
+                        <i class="fas fa-newspaper"></i><span>Berita</span>
+                    </a>
+                    <a href="kepengurusan.php" class="<?php echo in_array($current_page, ['kepengurusan.php', 'kepengurusan-edit.php', 'kepengurusan-hapus.php', 'kementerian-anggota.php', 'kementerian-edit.php', 'kementerian-hapus.php']) ? 'active' : ''; ?>">
+                        <i class="fas fa-users"></i><span>Kepengurusan</span>
+                    </a>
+                    <a href="kabinet.php" class="<?php echo $current_page === 'kabinet.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-crown"></i><span>Kabinet</span>
+                    </a>
+                    <a href="visi-misi.php" class="<?php echo $current_page === 'visi-misi.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-bullseye"></i><span>Visi Misi</span>
+                    </a>
+                    <a href="kontak.php" class="<?php echo $current_page === 'kontak.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-address-book"></i><span>Kontak</span>
+                    </a>
+                    <a href="upload-struktur.php" class="<?php echo in_array($current_page, ['upload-struktur.php', 'upload-struktur-hapus.php']) ? 'active' : ''; ?>">
+                        <i class="fas fa-image"></i><span>Upload Struktur</span>
+                    </a>
+                </div>
+            </div>
             <?php endif; ?>
 
+            <!-- Surat & Arsip (Dropdown) -->
             <?php if ($isSekretaris || $isSuperadmin): ?>
-            <div class="menu-divider"></div>
-            <div class="menu-label">Surat & Arsip</div>
-            <a href="arsip-surat.php"
-               class="<?php echo $current_page === 'arsip-surat.php' ? 'active' : ''; ?>">
-                <i class="fas fa-folder-open"></i><span>Arsip Surat</span>
-            </a>
-            <a href="buat-surat.php"
-               class="<?php echo $current_page === 'buat-surat.php' ? 'active' : ''; ?>">
-                <i class="fas fa-file-signature"></i><span>Buat Surat Otomatis</span>
-            </a>
-            <a href="pengaturan-surat.php"
-               class="<?php echo $current_page === 'pengaturan-surat.php' ? 'active' : ''; ?>">
-                <i class="fas fa-cogs"></i><span>Pengaturan Surat</span>
-            </a>
+            <div class="sidebar-dropdown <?php echo $is_surat_active ? 'active open' : ''; ?>">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-envelope"></i>
+                    <span>Surat & Arsip</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="arsip-surat.php" class="<?php echo $current_page === 'arsip-surat.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-folder-open"></i><span>Arsip Surat</span>
+                    </a>
+                    <a href="buat-surat.php" class="<?php echo in_array($current_page, ['buat-surat.php', 'cetak-surat.php']) ? 'active' : ''; ?>">
+                        <i class="fas fa-file-signature"></i><span>Buat Surat Otomatis</span>
+                    </a>
+                    <a href="pengaturan-surat.php" class="<?php echo $current_page === 'pengaturan-surat.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-cogs"></i><span>Pengaturan Surat</span>
+                    </a>
+                </div>
+            </div>
             <?php endif; ?>
 
+            <!-- Peminjaman Barang (Dropdown) -->
             <?php if ($isSekretaris || $isSuperadmin): ?>
-            <div class="menu-divider"></div>
-            <div class="menu-label">Peminjaman Barang</div>
-            <a href="master-barang.php"
-               class="<?php echo $current_page === 'master-barang.php' ? 'active' : ''; ?>">
-                <i class="fas fa-boxes"></i><span>Master Barang</span>
-            </a>
-            <a href="master-tempat.php"
-               class="<?php echo $current_page === 'master-tempat.php' ? 'active' : ''; ?>">
-                <i class="fas fa-map-marker-alt"></i><span>Master Tempat</span>
-            </a>
-            <a href="cetak-lampiran.php"
-               class="<?php echo $current_page === 'cetak-lampiran.php' ? 'active' : ''; ?>">
-                <i class="fas fa-print"></i><span>Cetak Lampiran</span>
-            </a>
-            <a href="arsip-lampiran.php"
-               class="<?php echo $current_page === 'arsip-lampiran.php' ? 'active' : ''; ?>">
-                <i class="fas fa-archive"></i><span>Arsip Lampiran</span>
-            </a>
+            <div class="sidebar-dropdown <?php echo $is_barang_active ? 'active open' : ''; ?>">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-boxes"></i>
+                    <span>Peminjaman Barang</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="master-barang.php" class="<?php echo $current_page === 'master-barang.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-boxes"></i><span>Master Barang</span>
+                    </a>
+                    <a href="master-tempat.php" class="<?php echo $current_page === 'master-tempat.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-map-marker-alt"></i><span>Master Tempat</span>
+                    </a>
+                    <a href="cetak-lampiran.php" class="<?php echo in_array($current_page, ['cetak-lampiran.php', 'cetak-lampiran-pdf.php']) ? 'active' : ''; ?>">
+                        <i class="fas fa-print"></i><span>Cetak Lampiran</span>
+                    </a>
+                    <a href="arsip-lampiran.php" class="<?php echo $current_page === 'arsip-lampiran.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-archive"></i><span>Arsip Lampiran</span>
+                    </a>
+                </div>
+            </div>
             <?php endif; ?>
 
+            <!-- Rundown Acara (Dropdown) -->
             <?php if ($isSekretaris || $isSuperadmin): ?>
-            <div class="menu-divider"></div>
-            <div class="menu-label">Rundown Acara</div>
-            <a href="master-penanggung-jawab.php"
-               class="<?php echo $current_page === 'master-penanggung-jawab.php' ? 'active' : ''; ?>">
-                <i class="fas fa-user-tie"></i><span>Master PJ</span>
-            </a>
-            <a href="master-keterangan.php"
-               class="<?php echo $current_page === 'master-keterangan.php' ? 'active' : ''; ?>">
-                <i class="fas fa-list"></i><span>Master Keterangan</span>
-            </a>
-            <a href="master-tempat-kegiatan.php"
-               class="<?php echo $current_page === 'master-tempat-kegiatan.php' ? 'active' : ''; ?>">
-                <i class="fas fa-map-marked-alt"></i><span>Master Tempat Kegiatan</span>
-            </a>
-            <a href="cetak-rundown.php"
-               class="<?php echo $current_page === 'cetak-rundown.php' ? 'active' : ''; ?>">
-                <i class="fas fa-calendar-check"></i><span>Cetak Rundown</span>
-            </a>
-            <a href="arsip-rundown.php"
-               class="<?php echo $current_page === 'arsip-rundown.php' ? 'active' : ''; ?>">
-                <i class="fas fa-clipboard-list"></i><span>Arsip Rundown</span>
-            </a>
+            <div class="sidebar-dropdown <?php echo $is_rundown_active ? 'active open' : ''; ?>">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Rundown Acara</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="master-penanggung-jawab.php" class="<?php echo $current_page === 'master-penanggung-jawab.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-user-tie"></i><span>Master PJ</span>
+                    </a>
+                    <a href="master-keterangan.php" class="<?php echo $current_page === 'master-keterangan.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-list"></i><span>Master Keterangan</span>
+                    </a>
+                    <a href="master-tempat-kegiatan.php" class="<?php echo $current_page === 'master-tempat-kegiatan.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-map-marked-alt"></i><span>Master Tempat Kegiatan</span>
+                    </a>
+                    <a href="cetak-rundown.php" class="<?php echo in_array($current_page, ['cetak-rundown.php', 'cetak-rundown-pdf.php']) ? 'active' : ''; ?>">
+                        <i class="fas fa-calendar-check"></i><span>Cetak Rundown</span>
+                    </a>
+                    <a href="arsip-rundown.php" class="<?php echo $current_page === 'arsip-rundown.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-clipboard-list"></i><span>Arsip Rundown</span>
+                    </a>
+                </div>
+            </div>
             <?php endif; ?>
 
+            <!-- Akun (Direct Link) -->
             <div class="menu-divider"></div>
-            <div class="menu-label">Akun</div>
             <a href="pengaturan.php"
-               class="<?php echo $current_page === 'pengaturan.php' ? 'active' : ''; ?>">
+               class="<?php echo $is_akun_active ? 'active' : ''; ?>">
                 <i class="fas fa-user-cog"></i><span>Profil & Keamanan</span>
             </a>
 
+            <!-- Superadmin (Dropdown) -->
             <?php if ($isSuperadmin): ?>
-            <div class="menu-divider"></div>
-            <div class="menu-label">Superadmin</div>
-
-            <a href="periode-kepengurusan.php"
-               class="<?php echo $current_page === 'periode-kepengurusan.php' ? 'active' : ''; ?>">
-                <i class="fas fa-calendar-alt"></i><span>Periode</span>
-            </a>
-            <a href="kelola-admin.php"
-               class="<?php echo $current_page === 'kelola-admin.php' ? 'active' : ''; ?>">
-                <i class="fas fa-user-shield"></i><span>Kelola Admin</span>
-            </a>
-            <a href="ganti-periode.php"
-               class="<?php echo $current_page === 'ganti-periode.php' ? 'active' : ''; ?>">
-                <i class="fas fa-sync-alt"></i><span>Ganti Periode</span>
-            </a>
-            <a href="audit-log.php"
-               class="<?php echo $current_page === 'audit-log.php' ? 'active' : ''; ?>">
-                <i class="fas fa-clipboard-list"></i><span>Audit Log</span>
-            </a>
+            <div class="sidebar-dropdown <?php echo $is_superadmin_active ? 'active open' : ''; ?>">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Superadmin</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="periode-kepengurusan.php" class="<?php echo $current_page === 'periode-kepengurusan.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-calendar-alt"></i><span>Periode</span>
+                    </a>
+                    <a href="kelola-admin.php" class="<?php echo $current_page === 'kelola-admin.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-user-shield"></i><span>Kelola Admin</span>
+                    </a>
+                    <a href="ganti-periode.php" class="<?php echo $current_page === 'ganti-periode.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-sync-alt"></i><span>Ganti Periode</span>
+                    </a>
+                    <a href="audit-log.php" class="<?php echo $current_page === 'audit-log.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-history"></i><span>Audit Log</span>
+                    </a>
+                </div>
+            </div>
             <?php endif; ?>
         </nav>
 

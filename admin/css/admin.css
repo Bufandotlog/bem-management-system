@@ -210,6 +210,109 @@ body {
     flex-shrink: 0;
 }
 
+/* Sidebar Dropdown Container */
+.sidebar-dropdown {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sidebar Dropdown Toggle */
+.sidebar-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 20px;
+    color: var(--text-light);
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    font-size: 0.9rem;
+    font-family: inherit;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.sidebar-dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-white);
+    border-left-color: rgba(255, 255, 255, 0.4);
+}
+
+.sidebar-dropdown-toggle i:first-child {
+    width: 20px;
+    text-align: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.sidebar-dropdown-toggle span {
+    flex: 1;
+}
+
+/* Chevron Icon */
+.sidebar-dropdown-toggle .chevron-icon {
+    font-size: 0.75rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-dim);
+}
+
+.sidebar-dropdown.open .sidebar-dropdown-toggle .chevron-icon {
+    transform: rotate(90deg);
+    color: var(--text-white);
+}
+
+.sidebar-dropdown.active > .sidebar-dropdown-toggle {
+    color: var(--text-white);
+    font-weight: 600;
+}
+
+/* Dropdown Menu */
+.sidebar-dropdown-menu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-dropdown.open .sidebar-dropdown-menu {
+    max-height: 500px;
+}
+
+/* Dropdown Sub-links */
+.sidebar-dropdown-menu a {
+    padding: 10px 20px 10px 48px; /* Extra left padding to indent sub-items */
+    font-size: 0.85rem;
+    border-left: 3px solid transparent;
+    position: relative;
+}
+
+.sidebar-dropdown-menu a::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: background 0.2s, transform 0.2s;
+}
+
+.sidebar-dropdown-menu a:hover::before {
+    background: var(--text-white);
+    transform: translateY(-50%) scale(1.3);
+}
+
+.sidebar-dropdown-menu a.active::before {
+    background: var(--text-white);
+    transform: translateY(-50%) scale(1.3);
+}
+
 .menu-divider {
     height: 1px;
     background: var(--sidebar-border);

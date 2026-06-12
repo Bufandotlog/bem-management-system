@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $file_path = $is_edit ? $edit_data['file_surat'] : null;
         if (isset($_FILES['file_surat']) && $_FILES['file_surat']['error'] !== UPLOAD_ERR_NO_FILE) {
-            $folder = ($jenis_surat === 'M') ? 'surat_masuk' : 'surat_keluar_manual';
+            $folder = in_array($jenis_surat, ['M', 'I']) ? 'surat_masuk' : 'surat_keluar_manual';
             $uploaded = uploadFile($_FILES['file_surat'], $folder);
             if ($uploaded) {
                 // Hapus file lama jika ada
@@ -112,9 +112,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="form-group">
             <label>Jenis Surat</label>
             <select name="jenis_surat" class="form-control" required onchange="updateLabels(this.value)">
-                <option value="M" <?php echo $edit_data['jenis_surat'] === 'M' ? 'selected' : ''; ?>>Surat Masuk (M)</option>
-                <option value="L" <?php echo $edit_data['jenis_surat'] === 'L' ? 'selected' : ''; ?>>Surat Keluar Luar (L)</option>
-                <option value="D" <?php echo $edit_data['jenis_surat'] === 'D' ? 'selected' : ''; ?>>Surat Keluar Dalam (D)</option>
+                <option value="M" <?php echo $edit_data['jenis_surat'] === 'M' ? 'selected' : ''; ?>>Surat Masuk (Eksternal)</option>
+                <option value="I" <?php echo $edit_data['jenis_surat'] === 'I' ? 'selected' : ''; ?>>Surat Masuk (Internal)</option>
+                <option value="L" <?php echo $edit_data['jenis_surat'] === 'L' ? 'selected' : ''; ?>>Surat Keluar (Eksternal)</option>
+                <option value="D" <?php echo $edit_data['jenis_surat'] === 'D' ? 'selected' : ''; ?>>Surat Keluar (Internal)</option>
             </select>
         </div>
 
@@ -163,7 +164,7 @@ function updateLabels(val) {
     const labelTujuan = document.getElementById('label_tujuan');
     const inputTujuan = document.getElementsByName('tujuan')[0];
 
-    if (val === 'M') {
+    if (val === 'M' || val === 'I') {
         labelTgl.innerText = 'Tanggal Diterima';
         labelTujuan.innerText = 'Asal Instansi (Pengirim)';
         inputTujuan.placeholder = 'Universitas Majalengka / BEM...';
