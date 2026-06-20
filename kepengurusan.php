@@ -1,7 +1,70 @@
 <?php
 // kepengurusan.php - Halaman Kepengurusan
-// VERSI: 2.1 - FIX: uploadUrl() konsisten, fallback gambar, onerror handler,
-//               filter periode konsisten, optimasi query
+// VERSI: 2.2 - Added format=json support for LPJ auto-fill
+
+if (isset($_GET['format']) && $_GET['format'] === 'json') {
+    require_once __DIR__ . '/includes/functions.php';
+    header('Content-Type: application/json');
+    
+    $kementerian_id = (int)($_GET['kementerian_id'] ?? 0);
+    $selected_periode = isset($_GET['periode']) ? (int)$_GET['periode'] : 0;
+
+    if (!$selected_periode) {
+        $periode_aktif    = dbFetchOne("SELECT * FROM periode_kepengurusan WHERE is_active = 1");
+        $selected_periode = (int)($periode_aktif['id'] ?? 0);
+    }
+    
+    if ($kementerian_id <= 0) {
+        echo json_encode(['error' => 'Kementerian ID tidak valid.']);
+        exit();
+    }
+    
+    $members = dbFetchAll(
+        "SELECT nama, jabatan FROM anggota_kementerian 
+         WHERE kementerian_id = ? AND periode_id = ? ORDER BY urutan",
+        [$kementerian_id, $selected_periode], "ii"
+    );
+    
+    if (empty($members)) {
+        echo json_encode([
+            'ketua' => '',
+            'sekretaris' => '',
+            'bendahara' => '',
+            'anggota' => [],
+            'found' => false
+        ]);
+        exit();
+    }
+    
+    $ketua = '';
+    $sekretaris = '';
+    $bendahara = '';
+    $anggota = [];
+    
+    foreach ($members as $m) {
+        $jab = strtolower($m['jabatan']);
+        if (strpos($jab, 'anggota') !== false) {
+            $anggota[] = $m['nama'];
+        } elseif (strpos($jab, 'sekretaris') !== false || strpos($jab, 'sekertaris') !== false || strpos($jab, 'sekre') !== false) {
+            $sekretaris = $m['nama'];
+        } elseif (strpos($jab, 'bendahara') !== false || strpos($jab, 'bendum') !== false) {
+            $bendahara = $m['nama'];
+        } elseif (strpos($jab, 'menteri') !== false || strpos($jab, 'mentri') !== false || strpos($jab, 'ketua') !== false || strpos($jab, 'kepala') !== false) {
+            $ketua = $m['nama'];
+        } else {
+            $anggota[] = $m['nama'];
+        }
+    }
+    
+    echo json_encode([
+        'ketua' => $ketua,
+        'sekretaris' => $sekretaris,
+        'bendahara' => $bendahara,
+        'anggota' => $anggota,
+        'found' => true
+    ]);
+    exit();
+}
 
 include 'header.php';
 $page_title = 'Kepengurusan';

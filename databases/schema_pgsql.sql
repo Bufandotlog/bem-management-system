@@ -292,3 +292,25 @@ CREATE TABLE "short_links" (
   "created_by" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ----------------------------------------
+-- 14. Tabel `lpj_dokumen`
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS "lpj_dokumen" CASCADE;
+CREATE TABLE "lpj_dokumen" (
+  "id" SERIAL PRIMARY KEY,
+  "periode_id" INTEGER NOT NULL REFERENCES "periode_kepengurusan"("id") ON DELETE CASCADE,
+  "kementerian_id" INTEGER NOT NULL REFERENCES "kementerian"("id") ON DELETE CASCADE,
+  "triwulan" VARCHAR(50) NOT NULL,
+  "status" VARCHAR(50) NOT NULL DEFAULT 'draft',
+  "keanggotaan" TEXT,
+  "keadaan_objektif" TEXT,
+  "proker_terlaksana" TEXT,
+  "proker_belum_terlaksana" TEXT,
+  "anggaran" TEXT,
+  "dokumentasi" TEXT,
+  "file_path" VARCHAR(255),
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

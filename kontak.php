@@ -115,7 +115,11 @@ if (!$kontak_data) {
     <!-- Google Maps -->
     <div class="map-container">
         <?php if (!empty($kontak_data['map_embed'])): ?>
-            <iframe src="<?php echo htmlspecialchars($kontak_data['map_embed']); ?>" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <?php if (stripos(trim($kontak_data['map_embed']), '<iframe') === 0): ?>
+                <?php echo $kontak_data['map_embed']; ?>
+            <?php else: ?>
+                <iframe src="<?php echo htmlspecialchars($kontak_data['map_embed']); ?>" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <?php endif; ?>
         <?php else: ?>
             <div style="width:100%; height:450px; background:#111; display:flex; align-items:center; justify-content:center; color:#666;">
                 <p>Peta tidak tersedia</p>

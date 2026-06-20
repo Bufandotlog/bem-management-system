@@ -17,10 +17,16 @@
 /* @import url('global-background.css'); */ /* NONAKTIFKAN */
 
 /* Animasi Scroll (umum) */
-.sambutan, .visi-misi, .card, .kontak-item, .menteri-item {
+.sambutan, .visi-misi, .card, .kontak-item, .menteri-item, .section-title {
     opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(35px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sambutan.visible, .visi-misi.visible, .card.visible, .kontak-item.visible, .menteri-item.visible, .section-title.visible {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    visibility: visible !important;
 }
 
 /* ===== KONTEN DI ATAS HERO ===== */
@@ -31,8 +37,6 @@
     position: relative;
     z-index: 10;
     display: block;
-    opacity: 1;
-    visibility: visible;
 }
 
 /* HALAMAN LAIN - sambutan tidak perlu margin */
@@ -46,8 +50,6 @@
 
 .visi-misi {
     display: block;
-    opacity: 1;
-    visibility: visible;
     position: relative;
     z-index: 10;
 }
@@ -179,6 +181,97 @@ footer {
     .hero-sub {
         letter-spacing: 2px;
         font-size: 0.85rem;
+    }
+}
+
+/* ===== SECTIONS SNAP SCROLL & EXIT/ENTER TRANSITIONS (INDEX PAGE) ===== */
+@media (min-width: 992px) {
+    /* Enable native scroll snapping on HTML container */
+    html.index-html-snap {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+    }
+    
+    /* Transparent blocker to reserve space for fixed Hero */
+    html.index-html-snap .hero-snap-point {
+        height: 100vh;
+        width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        pointer-events: none;
+        display: block;
+    }
+    
+    /* Make each section a full viewport screen */
+    html.index-html-snap .home-section {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        min-height: 100vh;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding: 90px 2rem 40px !important; /* Spacing for fixed header and layout margin */
+        
+        /* Transition properties */
+        will-change: transform, opacity;
+        opacity: 0;
+        transform: scale(0.8) translateY(120px);
+        transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1), 
+                    transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    /* Center containers vertically inside full screen snap sections */
+    html.index-html-snap .visi-misi-section .container,
+    html.index-html-snap .berita-section .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+    }
+    
+    /* Focus active state (Current element in view) */
+    html.index-html-snap .home-section.focus-active {
+        opacity: 1 !important;
+        transform: scale(1) translateY(0) !important;
+        z-index: 10;
+        pointer-events: auto;
+    }
+    
+    /* Exit UP state (Scrolling down - exits to top: zoom in + translate up + fade out) */
+    html.index-html-snap .home-section.focus-exit-up {
+        opacity: 0 !important;
+        transform: scale(1.22) translateY(-140px) !important;
+        z-index: 5;
+        pointer-events: none;
+    }
+    
+    /* Exit DOWN state (Scrolling up - exits to bottom: zoom out + translate down + fade out) */
+    html.index-html-snap .home-section.focus-exit-down {
+        opacity: 0 !important;
+        transform: scale(0.8) translateY(140px) !important;
+        z-index: 5;
+        pointer-events: none;
+    }
+    
+    /* Let footer snap gracefully at the bottom */
+    html.index-html-snap footer {
+        scroll-snap-align: end;
+        scroll-snap-stop: always;
+    }
+}
+
+/* Fallback for mobile/tablet to hide the snap point */
+@media (max-width: 991px) {
+    .hero-snap-point {
+        display: none !important;
     }
 }
 

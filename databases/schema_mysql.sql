@@ -352,4 +352,31 @@ CREATE TABLE `short_links` (
   UNIQUE KEY `short_code` (`short_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------------------
+-- 14. Tabel `lpj_dokumen`
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS `lpj_dokumen`;
+CREATE TABLE `lpj_dokumen` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `periode_id` int(11) NOT NULL,
+  `kementerian_id` int(11) NOT NULL,
+  `triwulan` varchar(50) NOT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'draft',
+  `keanggotaan` longtext DEFAULT NULL,
+  `keadaan_objektif` text DEFAULT NULL,
+  `proker_terlaksana` longtext DEFAULT NULL,
+  `proker_belum_terlaksana` longtext DEFAULT NULL,
+  `anggaran` longtext DEFAULT NULL,
+  `dokumentasi` longtext DEFAULT NULL,
+  `file_path` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `periode_id` (`periode_id`),
+  KEY `kementerian_id` (`kementerian_id`),
+  CONSTRAINT `fk_lpj_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_lpj_kementerian` FOREIGN KEY (`kementerian_id`) REFERENCES `kementerian` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;

@@ -10,7 +10,7 @@ import { initFormValidation } from './modules/form-validation.js';
 import { initBackToTop } from './modules/back-to-top.js';
 import { initCardAnimation } from './modules/card-animation.js';
 import { initHeroParallax } from './modules/hero-parallax.js';
-import { initScrollReveal } from './modules/scroll-reveal.js';
+import { initScrollReveal } from './modules/scroll-reveal.js?v=2.0.1';
 import { initTypingAnimation } from './modules/typing-animation.js';
 import { initBeritaCaptionFade } from './modules/berita-caption.js';
 import { initKepengurusanCaptionFade } from './modules/kepengurusan-caption.js';

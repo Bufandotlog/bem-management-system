@@ -61,10 +61,11 @@ if (empty($visi_misi['misi'])) {
 $berita_terbaru = dbFetchAll("SELECT * FROM berita ORDER BY tanggal DESC LIMIT 3");
 ?>
 
-<!-- HERO SECTION TELAH DIHAPUS - SUDAH ADA DI HEADER -->
+<!-- Absolute scroll snap target untuk Hero Section di paling atas -->
+<div class="hero-snap-point"></div>
 
 <!-- Sambutan Presiden Mahasiswa - dengan sambutan dari database -->
-<section id="sambutan" class="sambutan">
+<section id="sambutan" class="sambutan home-section">
     <div class="sambutan-container">
         <div class="sambutan-foto">
             <?php if (!empty($ketua['foto'])): ?>
@@ -110,64 +111,68 @@ $berita_terbaru = dbFetchAll("SELECT * FROM berita ORDER BY tanggal DESC LIMIT 3
 </section>
 
 <!-- Visi Misi - dari tabel visi_misi -->
-<div class="container">
-    <h2 class="section-title"><span>VISI & MISI</span></h2>
-    <div class="visi-misi">
-        <div class="visi">
-            <h3>Visi</h3>
-            <p><?php echo nl2br(htmlspecialchars($visi_misi['visi'])); ?></p>
-        </div>
-        <div class="misi">
-            <h3>Misi</h3>
-            <ul>
-                <?php foreach($visi_misi['misi'] as $misi): ?>
-                <li><?php echo htmlspecialchars($misi); ?></li>
-                <?php endforeach; ?>
-            </ul>
+<section id="visi-misi-section" class="home-section visi-misi-section">
+    <div class="container">
+        <h2 class="section-title"><span>VISI & MISI</span></h2>
+        <div class="visi-misi">
+            <div class="visi">
+                <h3>Visi</h3>
+                <p><?php echo nl2br(htmlspecialchars($visi_misi['visi'])); ?></p>
+            </div>
+            <div class="misi">
+                <h3>Misi</h3>
+                <ul>
+                    <?php foreach($visi_misi['misi'] as $misi): ?>
+                    <li><?php echo htmlspecialchars($misi); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
         </div>
     </div>
-</div>
+</section>
 
 <!-- Berita Terkini - dengan class spesifik untuk home -->
-<div class="container news-section"> <!-- TAMBAHKAN class news-section -->
-    <h2 class="section-title"><span>BERITA TERKINI</span></h2>
-    
-    <?php if (empty($berita_terbaru)): ?>
-        <div style="text-align: center; padding: 3rem; color: #888;">
-            <i class="far fa-newspaper" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-            <p>Belum ada berita saat ini.</p>
-        </div>
-    <?php else: ?>
-        <div class="card-grid home-news-grid">
-            <?php foreach($berita_terbaru as $b): ?>
-            <div class="card home-news-card">
-                <div class="card-image home-news-image">
-                    <?php if (!empty($b['gambar'])): ?>
-                        <!-- ✨ DIPERBAIKI: menggunakan uploadUrl() -->
-                        <img src="<?php echo uploadUrl($b['gambar']); ?>" 
-                             alt="<?php echo htmlspecialchars($b['judul']); ?>">
-                    <?php else: ?>
-                        <!-- ⚠️ Default news tetap menggunakan baseUrl() -->
-                        <img src="<?php echo baseUrl('assets/images/default-news.jpg'); ?>" alt="Default News">
-                    <?php endif; ?>
-                </div>
-                <div class="card-content home-news-content">
-                    <h3><?php echo htmlspecialchars($b['judul']); ?></h3>
-                    <div class="card-meta home-news-meta">
-                        <span><i class="far fa-calendar-alt"></i> <?php echo formatTanggal($b['tanggal']); ?></span>
-                        <span><i class="far fa-user"></i> <?php echo htmlspecialchars($b['penulis']); ?></span>
-                    </div>
-                    <p><?php echo htmlspecialchars(substr($b['konten'], 0, 150)); ?>...</p>
-                    <a href="berita-detail.php?slug=<?php echo $b['slug']; ?>" class="btn btn-small">Baca Selengkapnya</a>
-                </div>
+<section id="berita-section" class="home-section berita-section">
+    <div class="container news-section"> <!-- TAMBAHKAN class news-section -->
+        <h2 class="section-title"><span>BERITA TERKINI</span></h2>
+        
+        <?php if (empty($berita_terbaru)): ?>
+            <div style="text-align: center; padding: 3rem; color: #888;">
+                <i class="far fa-newspaper" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p>Belum ada berita saat ini.</p>
             </div>
-            <?php endforeach; ?>
-        </div>
-        <div style="text-align: center; margin-top: 3rem;">
-            <a href="berita.php" class="btn">Lihat Semua Berita</a>
-        </div>
-    <?php endif; ?>
-</div>
+        <?php else: ?>
+            <div class="card-grid home-news-grid">
+                <?php foreach($berita_terbaru as $b): ?>
+                <div class="card home-news-card">
+                    <div class="card-image home-news-image">
+                        <?php if (!empty($b['gambar'])): ?>
+                            <!-- ✨ DIPERBAIKI: menggunakan uploadUrl() -->
+                            <img src="<?php echo uploadUrl($b['gambar']); ?>" 
+                                 alt="<?php echo htmlspecialchars($b['judul']); ?>">
+                        <?php else: ?>
+                            <!-- ⚠️ Default news tetap menggunakan baseUrl() -->
+                            <img src="<?php echo baseUrl('assets/images/default-news.jpg'); ?>" alt="Default News">
+                        <?php endif; ?>
+                    </div>
+                    <div class="card-content home-news-content">
+                        <h3><?php echo htmlspecialchars($b['judul']); ?></h3>
+                        <div class="card-meta home-news-meta">
+                            <span><i class="far fa-calendar-alt"></i> <?php echo formatTanggal($b['tanggal']); ?></span>
+                            <span><i class="far fa-user"></i> <?php echo htmlspecialchars($b['penulis']); ?></span>
+                        </div>
+                        <p><?php echo htmlspecialchars(substr($b['konten'], 0, 150)); ?>...</p>
+                        <a href="berita-detail.php?slug=<?php echo $b['slug']; ?>" class="btn btn-small">Baca Selengkapnya</a>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="berita.php" class="btn">Lihat Semua Berita</a>
+            </div>
+        <?php endif; ?>
+    </div>
+</section>
 
 <!-- CSS untuk mengatur jarak dengan footer -->
 <style>

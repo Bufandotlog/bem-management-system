@@ -465,6 +465,11 @@ if (isset($page_css)) {
         ];
         $is_surat_active = in_array($current_page, $surat_pages);
         
+        $lpj_pages = [
+            'arsip-lpj.php', 'buat-lpj.php', 'pengaturan-lpj.php'
+        ];
+        $is_lpj_active = in_array($current_page, $lpj_pages);
+        
         $barang_pages = [
             'master-barang.php', 'master-tempat.php', 'cetak-lampiran.php', 'arsip-lampiran.php', 'cetak-lampiran-pdf.php'
         ];
@@ -541,6 +546,28 @@ if (isset($page_css)) {
                     </a>
                     <a href="pengaturan-surat.php" class="<?php echo $current_page === 'pengaturan-surat.php' ? 'active' : ''; ?>">
                         <i class="fas fa-cogs"></i><span>Pengaturan Surat</span>
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- LPJ (Dropdown) -->
+            <?php if ($isSekretaris || $isSuperadmin): ?>
+            <div class="sidebar-dropdown <?php echo $is_lpj_active ? 'active open' : ''; ?>">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>LPJ</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="arsip-lpj.php" class="<?php echo $current_page === 'arsip-lpj.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-archive"></i><span>Arsip LPJ</span>
+                    </a>
+                    <a href="buat-lpj.php" class="<?php echo $current_page === 'buat-lpj.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-file-medical"></i><span>Buat LPJ</span>
+                    </a>
+                    <a href="pengaturan-lpj.php" class="<?php echo $current_page === 'pengaturan-lpj.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-sliders-h"></i><span>Pengaturan LPJ</span>
                     </a>
                 </div>
             </div>
