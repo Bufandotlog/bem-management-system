@@ -189,7 +189,7 @@ NGINX_TEMP
 
     mkdir -p "${APP_DIR}/certbot_www"
 
-    # Request certificate
+    # Request certificate (non-interactive, otomatis pakai cert yg sudah ada)
     docker run --rm \
         -v "${APP_DIR}/certbot_conf:/etc/letsencrypt" \
         -v "${APP_DIR}/certbot_www:/var/www/certbot" \
@@ -199,6 +199,8 @@ NGINX_TEMP
         --email "bembudiutomo@gmail.com" \
         --agree-tos \
         --no-eff-email \
+        --non-interactive \
+        --keep-until-expiring \
         -d "${DOMAIN}" \
         -d "www.${DOMAIN}"
 
