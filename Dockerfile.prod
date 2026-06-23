@@ -27,7 +27,8 @@ RUN apk add --no-cache \
     unzip \
     curl \
     # Izin write ke folder uploads
-    && mkdir -p /tmp/php-sessions
+    && mkdir -p /tmp/php-sessions \
+    && chmod 1777 /tmp/php-sessions
 
 # ── PHP Extensions ───────────────────────────────────────
 RUN docker-php-ext-configure gd \
