@@ -1,0 +1,52 @@
+# ============================================================
+# .dockerignore - BEM ASTAWIDYA
+# File yang TIDAK perlu masuk ke Docker image
+# ============================================================
+
+# Git
+.git
+.gitignore
+
+# Environment (jangan pernah masuk image!)
+.env
+.env.*
+
+# Development artifacts
+scratch/db_data/
+scratch/__pycache__/
+scratch/*.log
+
+# Logs (di-mount sebagai volume)
+logs/
+
+# Uploads (di-mount sebagai volume)
+uploads/
+
+# Development tools
+admin/node_modules/
+admin/node_modules.zip
+admin/package-lock.json
+
+# Database dumps
+databases/dump_migration_*.sql.gz
+databases/dump_*.sql
+
+# Docker files sendiri (tidak perlu di dalam image)
+docker/
+docker-compose.yml
+docker-compose.override.yml
+Dockerfile
+Dockerfile.prod
+
+# Documentation
+docs/
+*.md
+LICENSE
+
+# IDE & OS
+.vscode/
+.idea/
+*.DS_Store
+*.swp
+*.swo
+Thumbs.db

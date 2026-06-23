@@ -3,7 +3,7 @@
 # ============================================
 .env
 .env.local
-.env.production
+# .env.production sengaja TIDAK diabaikan (berisi template, bukan kredensial)
 config/config.php
 
 # ============================================
@@ -35,10 +35,18 @@ test-db.php
 dump_pengaturan.php
 
 # ============================================
-# 5. Docker & Server Config (Lokal saja)
+# 5. Docker & Server Config
+# Dockerfile lama (sudah diganti Dockerfile.prod)
 # ============================================
-Dockerfile
 nginx.conf.example
+# Backup dumps database
+databases/dump_migration_*.sql.gz
+databases/dump_*.sql.gz
+# Folder certbot (generated di VPS)
+certbot_www/
+certbot_conf/
+# Backups
+backups/
 
 # ============================================
 # 6. Dependencies & Build Artifacts

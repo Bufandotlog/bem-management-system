@@ -1,0 +1,87 @@
+# ============================================================
+# BEM ASTAWIDYA - Dockerfile Production
+# PHP 8.2-FPM (lebih ringan, tanpa Apache)
+# ============================================================
+
+FROM php:8.2-fpm-alpine
+
+LABEL maintainer="BEM ASTAWIDYA"
+LABEL description="BEM Management System - Production Image"
+
+# ── System dependencies ──────────────────────────────────
+RUN apk add --no-cache \
+    # Build tools (untuk compile ekstensi PHP)
+    $PHPIZE_DEPS \
+    # Library MySQL/MariaDB
+    mariadb-dev \
+    # Library GD (untuk resize gambar)
+    libjpeg-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
+    freetype-dev \
+    # Python untuk bem_lpj_manager.py
+    python3 \
+    py3-pip \
+    # Tools lainnya
+    zip \
+    unzip \
+    curl \
+    # Izin write ke folder uploads
+    && mkdir -p /tmp/php-sessions
+
+# ── PHP Extensions ───────────────────────────────────────
+RUN docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_mysql \
+        mysqli \
+        gd \
+        opcache \
+        exif \
+    && apk del $PHPIZE_DEPS
+
+# ── Python packages untuk LPJ generator ─────────────────
+RUN pip3 install --no-cache-dir --break-system-packages \
+    python-docx \
+    Pillow
+
+# ── PHP Configuration (optimasi RAM 1GB VPS) ────────────
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+
+# ── Salin source code ────────────────────────────────────
+WORKDIR /var/www/html
+
+# Salin source (exclude file sensitif via .dockerignore)
+COPY --chown=www-data:www-data . .
+
+# ── Buat folder yang diperlukan & set permission ─────────
+RUN mkdir -p uploads/lpj uploads/surat uploads/foto logs \
+    && chown -R www-data:www-data uploads logs \
+    && chmod -R 755 uploads logs \
+    # Hapus file yang tidak perlu di production
+    && rm -rf \
+        .git \
+        .env \
+        .env.example* \
+        scratch/db_data \
+        scratch/*.py \
+        databases/dump_migration_*.sql.gz \
+        admin/node_modules \
+        admin/node_modules.zip \
+        docker/nginx \
+        docker/php \
+        Dockerfile \
+        Dockerfile.prod \
+    # Pastikan script python bisa dieksekusi
+    && cp -r scratch /tmp/bem_scratch || true
+
+# Expose PHP-FPM port
+EXPOSE 9000
+
+USER www-data
+
+CMD ["php-fpm"]

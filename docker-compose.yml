@@ -1,0 +1,141 @@
+version: '3.8'
+
+# ============================================================
+# BEM ASTAWIDYA - Production Docker Compose
+# VPS: 202.134.242.217 | RAM: 1GB | Ubuntu 24.04
+# ============================================================
+
+services:
+
+  # ──────────────────────────────────────────────
+  # 1. DATABASE - MariaDB (lebih ringan dari MySQL)
+  # ──────────────────────────────────────────────
+  db:
+    image: mariadb:10.11-jammy
+    container_name: bem_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./databases/schema_mysql.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    networks:
+      - bem_internal
+    # Tuning RAM rendah untuk VPS 1GB
+    command: >
+      --innodb-buffer-pool-size=64M
+      --innodb-log-file-size=16M
+      --max-connections=50
+      --query-cache-size=0
+      --tmp-table-size=16M
+      --max-heap-table-size=16M
+      --slow-query-log=1
+      --slow-query-log-file=/var/log/mysql/slow.log
+      --long-query-time=2
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # 2. PHP-FPM (dipisah dari web server)
+  # ──────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: bem_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      BASE_URL: ${BASE_URL}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DEBUG_TOKEN: ${DEBUG_TOKEN}
+    volumes:
+      - ./uploads:/var/www/html/uploads
+      - ./logs:/var/www/html/logs
+      - ./scratch:/var/www/html/scratch:ro
+    networks:
+      - bem_internal
+    # Mencegah app pakai RAM berlebihan
+    mem_limit: 256m
+    memswap_limit: 256m
+
+  # ──────────────────────────────────────────────
+  # 3. NGINX - Reverse Proxy + Static Files
+  # ──────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: bem_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Config nginx
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Static files (assets, uploads) langsung dari host
+      - ./assets:/var/www/html/assets:ro
+      - ./uploads:/var/www/html/uploads:ro
+      # SSL Certbot
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      # Logs
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - bem_internal
+      - bem_external
+    mem_limit: 64m
+
+  # ──────────────────────────────────────────────
+  # 4. CERTBOT - SSL Let's Encrypt (renewal otomatis)
+  # ──────────────────────────────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: bem_certbot
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    # Jalankan manual pertama kali, lalu cron akan handle renewal
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
+    networks:
+      - bem_external
+
+# ──────────────────────────────────────────────
+# VOLUMES
+# ──────────────────────────────────────────────
+volumes:
+  db_data:
+    driver: local
+  certbot_www:
+    driver: local
+  certbot_conf:
+    driver: local
+
+# ──────────────────────────────────────────────
+# NETWORKS
+# ──────────────────────────────────────────────
+networks:
+  # Internal: app <-> db, nginx <-> app
+  bem_internal:
+    driver: bridge
+    internal: true
+  # External: nginx bisa reach internet (certbot)
+  bem_external:
+    driver: bridge
