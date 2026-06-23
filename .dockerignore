@@ -31,8 +31,9 @@ admin/package-lock.json
 databases/dump_migration_*.sql.gz
 databases/dump_*.sql
 
-# Docker files sendiri (tidak perlu di dalam image)
-docker/
+# Docker files (exclude semua kecuali docker/php yg dipakai COPY di Dockerfile)
+docker/nginx/
+docker/scripts/
 docker-compose.yml
 docker-compose.override.yml
 Dockerfile
