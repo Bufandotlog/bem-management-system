@@ -15,6 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 APP_DIR="/var/www/html/bem"
+REPO_URL="https://github.com/Bufandotlog/bem-management-system"
 DOMAIN="bembudiutomo.my.id"
 
 log()  { echo -e "${GREEN}[✅]${NC} $1"; }
@@ -105,22 +106,20 @@ log "UFW Firewall aktif"
 sudo ufw status
 
 # ─────────────────────────────────────────────────────────────
-# LANGKAH 6: Clone / Setup repository
+# LANGKAH 6: Clone / Update repository
 # ─────────────────────────────────────────────────────────────
 info "Setup direktori aplikasi di ${APP_DIR}..."
 sudo mkdir -p "${APP_DIR}"
 sudo chown "$USER":www-data "${APP_DIR}"
 
 if [ -d "${APP_DIR}/.git" ]; then
-    info "Repository sudah ada, pull terbaru..."
+    info "Repository sudah ada, pull versi terbaru..."
     cd "${APP_DIR}"
     git pull origin main
 else
-    warn "CLONE REPOSITORY:"
-    warn "Jalankan manual: git clone <repo_url> ${APP_DIR}"
-    warn "Atau upload file via SCP/SFTP lalu lanjutkan script"
-    echo ""
-    read -p "Tekan Enter setelah source code ada di ${APP_DIR}..." -r
+    info "Clone repository dari GitHub..."
+    git clone "${REPO_URL}" "${APP_DIR}"
+    log "Repository berhasil di-clone ke ${APP_DIR}"
 fi
 
 cd "${APP_DIR}"
