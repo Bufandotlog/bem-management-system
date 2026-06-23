@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 # ============================================================
 # BEM ASTAWIDYA - Production Docker Compose
@@ -93,9 +93,9 @@ services:
       # Static files (assets, uploads) langsung dari host
       - ./assets:/var/www/html/assets:ro
       - ./uploads:/var/www/html/uploads:ro
-      # SSL Certbot
-      - certbot_www:/var/www/certbot:ro
-      - certbot_conf:/etc/letsencrypt:ro
+      # SSL Certbot (bind mount — sesuai deploy.sh)
+      - ./certbot_www:/var/www/certbot:ro
+      - ./certbot_conf:/etc/letsencrypt:ro
       # Logs
       - ./logs/nginx:/var/log/nginx
     networks:
@@ -110,8 +110,8 @@ services:
     image: certbot/certbot:latest
     container_name: bem_certbot
     volumes:
-      - certbot_www:/var/www/certbot
-      - certbot_conf:/etc/letsencrypt
+      - ./certbot_www:/var/www/certbot
+      - ./certbot_conf:/etc/letsencrypt
     # Jalankan manual pertama kali, lalu cron akan handle renewal
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
     networks:
@@ -122,10 +122,6 @@ services:
 # ──────────────────────────────────────────────
 volumes:
   db_data:
-    driver: local
-  certbot_www:
-    driver: local
-  certbot_conf:
     driver: local
 
 # ──────────────────────────────────────────────

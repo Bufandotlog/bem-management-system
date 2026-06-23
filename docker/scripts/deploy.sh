@@ -188,6 +188,20 @@ NGINX_TEMP
         nginx:1.25-alpine
 
     mkdir -p "${APP_DIR}/certbot_www"
+    mkdir -p "${APP_DIR}/certbot_conf"
+
+    # Download SSL helper files yang dibutuhkan Nginx
+    if [ ! -f "${APP_DIR}/certbot_conf/options-ssl-nginx.conf" ]; then
+        info "Download options-ssl-nginx.conf..."
+        curl -fsSL https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf \
+            -o "${APP_DIR}/certbot_conf/options-ssl-nginx.conf"
+    fi
+
+    if [ ! -f "${APP_DIR}/certbot_conf/ssl-dhparams.pem" ]; then
+        info "Download ssl-dhparams.pem..."
+        curl -fsSL https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem \
+            -o "${APP_DIR}/certbot_conf/ssl-dhparams.pem"
+    fi
 
     # Request certificate (non-interactive, otomatis pakai cert yg sudah ada)
     docker run --rm \
@@ -209,7 +223,7 @@ NGINX_TEMP
 
     log "SSL Certificate berhasil didapat!"
 else
-    warn "SSL dilewati. Jalankan manual: bash ${APP_DIR}/docker/scripts/certbot_init.sh"
+    warn "SSL dilewati. Jalankan manual nanti."
 fi
 
 # ─────────────────────────────────────────────────────────────
