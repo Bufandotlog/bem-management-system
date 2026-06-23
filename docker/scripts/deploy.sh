@@ -176,6 +176,9 @@ server {
 }
 NGINX_TEMP
 
+    # Cleanup container lama jika ada (dari run sebelumnya yang gagal)
+    docker rm -f nginx_temp 2>/dev/null || true
+
     # Jalankan nginx temp container
     docker run -d --rm \
         --name nginx_temp \
