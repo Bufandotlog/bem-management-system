@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-APP_DIR="/opt/bem"
+APP_DIR="/var/www/html/bem"
 DOMAIN="bem.ukminstbunas.cloud"  # ← GANTI DOMAIN
 
 log()  { echo -e "${GREEN}[✅]${NC} $1"; }
@@ -109,7 +109,7 @@ sudo ufw status
 # ─────────────────────────────────────────────────────────────
 info "Setup direktori aplikasi di ${APP_DIR}..."
 sudo mkdir -p "${APP_DIR}"
-sudo chown "$USER":"$USER" "${APP_DIR}"
+sudo chown "$USER":www-data "${APP_DIR}"
 
 if [ -d "${APP_DIR}/.git" ]; then
     info "Repository sudah ada, pull terbaru..."

@@ -7,11 +7,11 @@
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────
-BACKUP_DIR="/opt/bem/backups"
-COMPOSE_DIR="/opt/bem"
+BACKUP_DIR="/var/www/html/bem/backups"
+COMPOSE_DIR="/var/www/html/bem"
 KEEP_DAYS=14       # Simpan backup 14 hari terakhir
 DATE=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="/opt/bem/logs/backup.log"
+LOG_FILE="/var/www/html/bem/logs/backup.log"
 
 # Ambil credentials dari .env
 source "${COMPOSE_DIR}/.env"
