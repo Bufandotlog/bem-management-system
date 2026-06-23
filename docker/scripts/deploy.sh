@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 APP_DIR="/var/www/html/bem"
-DOMAIN="bem.ukminstbunas.cloud"  # ← GANTI DOMAIN
+DOMAIN="bembudiutomo.my.id"
 
 log()  { echo -e "${GREEN}[✅]${NC} $1"; }
 warn() { echo -e "${YELLOW}[⚠️ ]${NC} $1"; }
@@ -194,7 +194,7 @@ NGINX_TEMP
         certbot/certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
-        --email "admin@${DOMAIN}" \
+        --email "bembudiutomo@gmail.com" \
         --agree-tos \
         --no-eff-email \
         -d "${DOMAIN}" \
