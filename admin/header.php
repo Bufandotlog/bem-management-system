@@ -530,7 +530,7 @@ if (isset($page_css)) {
             <?php endif; ?>
 
             <!-- Surat & Arsip (Dropdown) -->
-            <?php if ($isSekretaris || $isSuperadmin): ?>
+            <?php if ($isSekretaris || $isSuperadmin || $admin_role === 'admin'): ?>
             <div class="sidebar-dropdown <?php echo $is_surat_active ? 'active open' : ''; ?>">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
                     <i class="fas fa-envelope"></i>
@@ -552,7 +552,7 @@ if (isset($page_css)) {
             <?php endif; ?>
 
             <!-- LPJ (Dropdown) -->
-            <?php if ($isSekretaris || $isSuperadmin): ?>
+            <?php if ($isSekretaris || $isSuperadmin || $admin_role === 'admin'): ?>
             <div class="sidebar-dropdown <?php echo $is_lpj_active ? 'active open' : ''; ?>">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
                     <i class="fas fa-file-invoice-dollar"></i>
@@ -574,7 +574,7 @@ if (isset($page_css)) {
             <?php endif; ?>
 
             <!-- Peminjaman Barang (Dropdown) -->
-            <?php if ($isSekretaris || $isSuperadmin): ?>
+            <?php if ($isSekretaris || $isSuperadmin || $admin_role === 'admin'): ?>
             <div class="sidebar-dropdown <?php echo $is_barang_active ? 'active open' : ''; ?>">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
                     <i class="fas fa-boxes"></i>
@@ -599,7 +599,7 @@ if (isset($page_css)) {
             <?php endif; ?>
 
             <!-- Rundown Acara (Dropdown) -->
-            <?php if ($isSekretaris || $isSuperadmin): ?>
+            <?php if ($isSekretaris || $isSuperadmin || $admin_role === 'admin'): ?>
             <div class="sidebar-dropdown <?php echo $is_rundown_active ? 'active open' : ''; ?>">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
                     <i class="fas fa-calendar-alt"></i>
@@ -632,6 +632,12 @@ if (isset($page_css)) {
                class="<?php echo $is_akun_active ? 'active' : ''; ?>">
                 <i class="fas fa-user-cog"></i><span>Profil & Keamanan</span>
             </a>
+            <?php if ($admin_role === 'admin'): ?>
+            <a href="kelola-admin.php"
+               class="<?php echo $current_page === 'kelola-admin.php' ? 'active' : ''; ?>">
+                <i class="fas fa-user-shield"></i><span>Kelola Admin</span>
+            </a>
+            <?php endif; ?>
 
             <!-- Superadmin (Dropdown) -->
             <?php if ($isSuperadmin): ?>

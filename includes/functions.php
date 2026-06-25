@@ -462,7 +462,8 @@ function requireLogin() {
 }
 
 function isSekretaris() {
-    return ($_SESSION['admin_role'] ?? '') === 'sekretaris' || ($_SESSION['admin_role'] ?? '') === 'superadmin' || !empty($_SESSION['admin_can_access_all']);
+    $role = $_SESSION['admin_role'] ?? '';
+    return $role === 'sekretaris' || $role === 'admin' || $role === 'superadmin' || !empty($_SESSION['admin_can_access_all']);
 }
 
 function requireSekretaris() {

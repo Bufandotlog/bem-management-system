@@ -19,13 +19,13 @@ $beritaTerbaru = dbFetchAll("SELECT judul, tanggal FROM berita ORDER BY tanggal 
 $suratTerbaru = dbFetchAll("SELECT nomor_surat, perihal, jenis_surat FROM arsip_surat WHERE periode_id = ? ORDER BY id DESC LIMIT 5", [$periode_id], "i");
 
 // Logika tampilan (Hybrid)
-$showGeneralStats = ($isSuperadmin || $admin_role === 'kominfo');
-$showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris');
+$showGeneralStats = ($isSuperadmin || $admin_role === 'kominfo' || $admin_role === 'admin');
+$showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_role === 'admin');
 ?>
 
 <div class="page-header">
     <div>
-        <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ($admin_role === 'kominfo' ? 'Kominfo' : '')); ?></h1>
+        <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ($admin_role === 'kominfo' ? 'Kominfo' : ($admin_role === 'admin' ? 'Admin' : ''))); ?></h1>
         <p>Selamat datang di panel kendali BEM Kabinet Astawidya</p>
     </div>
     <div class="date-display">
@@ -172,12 +172,12 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris');
         <a href="kepengurusan.php?action=new" class="action-card"><i class="fas fa-user-plus"></i><span>Tambah Anggota</span></a>
     <?php endif; ?>
     
-    <?php if ($isSuperadmin || $admin_role === 'sekretaris'): ?>
+    <?php if ($isSuperadmin || $admin_role === 'sekretaris' || $admin_role === 'admin'): ?>
         <a href="buat-surat.php" class="action-card" style="background: rgba(74, 144, 226, 0.1); border-color: rgba(74, 144, 226, 0.3);"><i class="fas fa-file-signature"></i><span>Buat Surat</span></a>
         <a href="arsip-surat.php" class="action-card" style="background: rgba(103, 58, 183, 0.1); border-color: rgba(103, 58, 183, 0.3);"><i class="fas fa-search"></i><span>Cari Arsip</span></a>
     <?php endif; ?>
 
-    <?php if ($isSuperadmin): ?>
+    <?php if ($isSuperadmin || $admin_role === 'admin'): ?>
         <a href="kelola-admin.php" class="action-card" style="background: rgba(255,255,255,0.05);"><i class="fas fa-user-shield"></i><span>Kelola Admin</span></a>
     <?php endif; ?>
 </div>

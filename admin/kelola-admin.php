@@ -9,20 +9,37 @@ $page_css = 'kelola-admin';
 require_once __DIR__ . '/header.php';
 require_once __DIR__ . '/../includes/totp.php';
 
-if ($_SESSION['admin_role'] !== 'superadmin' && !$user_can_access_all) {
+$current_user_role   = $_SESSION['admin_role'] ?? '';
+$current_user_period = getUserPeriode();
+
+if ($current_user_role !== 'superadmin' && $current_user_role !== 'admin' && !$user_can_access_all) {
     redirect('admin/dashboard.php', 'Akses ditolak!', 'error');
     exit();
 }
 
 $periode_list = dbFetchAll("SELECT * FROM periode_kepengurusan ORDER BY tahun_mulai DESC");
-$admin_list   = dbFetchAll("
-    SELECT u.id, u.username, u.nama, u.email, u.role, u.can_access_all,
-           u.periode_id, u.totp_enabled, u.is_active, u.created_at,
-           p.nama as periode_nama, p.tahun_mulai, p.tahun_selesai
-    FROM users u
-    LEFT JOIN periode_kepengurusan p ON u.periode_id = p.id
-    ORDER BY u.role DESC, u.created_at DESC
-");
+
+if ($current_user_role === 'superadmin' || $user_can_access_all) {
+    $admin_list = dbFetchAll("
+        SELECT u.id, u.username, u.nama, u.email, u.role, u.can_access_all,
+               u.periode_id, u.totp_enabled, u.is_active, u.created_at,
+               p.nama as periode_nama, p.tahun_mulai, p.tahun_selesai
+        FROM users u
+        LEFT JOIN periode_kepengurusan p ON u.periode_id = p.id
+        ORDER BY u.role DESC, u.created_at DESC
+    ");
+} else {
+    // Admin hanya bisa melihat admin dari periodenya sendiri dan bukan superadmin
+    $admin_list = dbFetchAll("
+        SELECT u.id, u.username, u.nama, u.email, u.role, u.can_access_all,
+               u.periode_id, u.totp_enabled, u.is_active, u.created_at,
+               p.nama as periode_nama, p.tahun_mulai, p.tahun_selesai
+        FROM users u
+        LEFT JOIN periode_kepengurusan p ON u.periode_id = p.id
+        WHERE u.periode_id = ? AND u.role != 'superadmin'
+        ORDER BY u.role DESC, u.created_at DESC
+    ", [$current_user_period], "i");
+}
 
 $error   = '';
 $success = '';
@@ -50,16 +67,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'tamba
         if ($roleInput === 'sekertaris' || $roleInput === 'sekretaris') {
             $role = 'sekretaris';
         } else {
-            $role = in_array($roleInput, ['kominfo','superadmin']) ? $roleInput : 'kominfo';
+            $role = in_array($roleInput, ['kominfo','superadmin','admin']) ? $roleInput : 'kominfo';
         }
 
         $periode_id = !empty($_POST['periode_id']) ? (int)$_POST['periode_id'] : null;
+
+        // Jika yang menambah bukan superadmin, batasi periodenya dan cegah membuat superadmin
+        if ($current_user_role !== 'superadmin' && !$user_can_access_all) {
+            if ($role === 'superadmin') {
+                $role = 'kominfo'; // Tolak kenaikan ke superadmin secara diam-diam
+            }
+            $periode_id = $current_user_period;
+        }
+
         $can_access_all = ($role === 'superadmin') ? 1 : 0;
 
         if (empty($username) || empty($password) || empty($nama)) {
             $error = 'Username, password, dan nama wajib diisi!';
-        } elseif (($role === 'kominfo' || $role === 'sekretaris') && !$periode_id) {
-            $error = 'Pilih periode untuk kominfo/sekretaris!';
+        } elseif (($role === 'kominfo' || $role === 'sekretaris' || $role === 'admin') && !$periode_id) {
+            $error = 'Pilih periode untuk role tersebut!';
         } elseif (strlen($password) < 8) {
             $error = 'Password minimal 8 karakter!';
         } else {
@@ -101,14 +127,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'tamba
                         $success = "Admin '{$username}' berhasil dibuat TANPA 2FA aktif.";
                     }
 
-                    // Refresh daftar
-                    $admin_list = dbFetchAll("
-                        SELECT u.id, u.username, u.nama, u.email, u.role, u.can_access_all,
-                               u.periode_id, u.totp_enabled, u.is_active, u.created_at,
-                               p.nama as periode_nama, p.tahun_mulai, p.tahun_selesai
-                        FROM users u LEFT JOIN periode_kepengurusan p ON u.periode_id = p.id
-                        ORDER BY u.role DESC, u.created_at DESC
-                    ");
+                    // Refresh daftar sesuai role
+                    if ($current_user_role === 'superadmin' || $user_can_access_all) {
+                        $admin_list = dbFetchAll("
+                            SELECT u.id, u.username, u.nama, u.email, u.role, u.can_access_all,
+                                   u.periode_id, u.totp_enabled, u.is_active, u.created_at,
+                                   p.nama as periode_nama, p.tahun_mulai, p.tahun_selesai
+                            FROM users u LEFT JOIN periode_kepengurusan p ON u.periode_id = p.id
+                            ORDER BY u.role DESC, u.created_at DESC
+                        ");
+                    } else {
+                        $admin_list = dbFetchAll("
+                            SELECT u.id, u.username, u.nama, u.email, u.role, u.can_access_all,
+                                   u.periode_id, u.totp_enabled, u.is_active, u.created_at,
+                                   p.nama as periode_nama, p.tahun_mulai, p.tahun_selesai
+                            FROM users u LEFT JOIN periode_kepengurusan p ON u.periode_id = p.id
+                            WHERE u.periode_id = ? AND u.role != 'superadmin'
+                            ORDER BY u.role DESC, u.created_at DESC
+                        ", [$current_user_period], "i");
+                    }
 
                 } catch (Exception $e) {
                     dbRollback();
@@ -128,19 +165,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'hapus
         $error = 'Request tidak valid.';
     } else {
         $id = (int) ($_POST['id'] ?? 0);
+        
+        // Proteksi level akses & periode
+        $targetUser = dbFetchOne("SELECT role, periode_id FROM users WHERE id = ?", [$id], "i");
+        if ($current_user_role !== 'superadmin' && !$user_can_access_all) {
+            if (!$targetUser || $targetUser['role'] === 'superadmin' || (int)$targetUser['periode_id'] !== (int)$current_user_period) {
+                $error = 'Akses ditolak: Anda tidak memiliki wewenang untuk menghapus akun ini!';
+                $id = 0;
+            }
+        }
+
         if ($id === (int)$_SESSION['admin_id']) {
             $error = 'Tidak dapat menghapus akun sendiri!';
         } elseif ($id > 0) {
             dbBeginTransaction();
             try {
-                // Matikan cek foreign key sementara agar tidak macet
                 dbQuery("SET FOREIGN_KEY_CHECKS = 0");
 
                 $existingTables = [];
                 $res = dbFetchAll("SHOW TABLES");
                 foreach ($res as $r) { $existingTables[] = reset($r); }
 
-                // 1. Bersihkan referensi created_by di tabel yang memilikinya
                 $created_by_tables = [
                     'anggota_bph', 'kementerian', 'anggota_kementerian', 
                     'struktur_organisasi', 'berita', 'arsip_surat', 'short_links'
@@ -150,13 +195,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'hapus
                         try {
                             dbQuery("UPDATE `$table` SET created_by = NULL WHERE created_by = ?", [$id], "i");
                         } catch (Exception $e) {
-                            // Abaikan jika error kolom tidak ada, lanjut ke tabel berikutnya
                             continue;
                         }
                     }
                 }
                 
-                // 2. Bersihkan referensi updated_by di tabel yang memilikinya
                 $updated_by_tables = ['struktur_organisasi'];
                 foreach ($updated_by_tables as $table) {
                     if (in_array($table, $existingTables)) {
@@ -168,7 +211,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'hapus
                     }
                 }
 
-                // 3. Hapus data terkait di tabel user_id
                 $user_id_tables = ['user_sessions', 'audit_log', 'signatures', 'notifikasi'];
                 foreach ($user_id_tables as $table) {
                     if (in_array($table, $existingTables)) {
@@ -180,10 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'hapus
                     }
                 }
 
-                // 4. Baru hapus user-nya
                 dbQuery("DELETE FROM users WHERE id = ?", [$id], "i");
-                
-                // Hidupkan kembali cek foreign key
                 dbQuery("SET FOREIGN_KEY_CHECKS = 1");
                 
                 dbCommit();
@@ -209,6 +248,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reset
         $id          = (int) ($_POST['id'] ?? 0);
         $new_password = $_POST['new_password'] ?? '';
 
+        // Proteksi level akses & periode
+        $targetUser = dbFetchOne("SELECT role, periode_id FROM users WHERE id = ?", [$id], "i");
+        if ($current_user_role !== 'superadmin' && !$user_can_access_all) {
+            if (!$targetUser || $targetUser['role'] === 'superadmin' || (int)$targetUser['periode_id'] !== (int)$current_user_period) {
+                $error = 'Akses ditolak: Anda tidak memiliki wewenang untuk mereset akun ini!';
+                $id = 0;
+            }
+        }
+
         if ($id > 0 && strlen($new_password) >= 8) {
             $hashed = password_hash($new_password, PASSWORD_BCRYPT, ['cost'=>12]);
             dbQuery("UPDATE users SET password = ? WHERE id = ?", [$hashed, $id], "si");
@@ -229,6 +277,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggl
         $error = 'Request tidak valid.';
     } else {
         $id = (int) ($_POST['id'] ?? 0);
+
+        // Proteksi level akses & periode
+        $targetUser = dbFetchOne("SELECT role, periode_id FROM users WHERE id = ?", [$id], "i");
+        if ($current_user_role !== 'superadmin' && !$user_can_access_all) {
+            if (!$targetUser || $targetUser['role'] === 'superadmin' || (int)$targetUser['periode_id'] !== (int)$current_user_period) {
+                $error = 'Akses ditolak: Anda tidak memiliki wewenang untuk menonaktifkan akun ini!';
+                $id = 0;
+            }
+        }
+
         if ($id === (int)$_SESSION['admin_id']) {
             $error = 'Tidak dapat menonaktifkan akun sendiri!';
         } elseif ($id > 0) {
@@ -240,7 +298,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggl
                 dbQuery("UPDATE users SET is_active = ? WHERE id = ?", [$newStatus, $id], "ii");
                 $statusLog = $newStatus ? 'diaktifkan' : 'dinonaktifkan';
                 auditLog('UPDATE', 'users', $id, 'Akun ' . $target['username'] . ' ' . $statusLog);
-                // Nonaktifkan → putuskan semua sesi aktifnya seketika
                 if (!$newStatus) {
                     dbQuery("DELETE FROM user_sessions WHERE user_id = ?", [$id], "i");
                 }
@@ -262,15 +319,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ubah_
         $error = 'Request tidak valid.';
     } else {
         $id         = (int) ($_POST['id'] ?? 0);
-        $newRole    = in_array($_POST['new_role'] ?? '', ['kominfo','superadmin','sekretaris']) ? $_POST['new_role'] : 'kominfo';
+        $newRole    = in_array($_POST['new_role'] ?? '', ['kominfo','superadmin','sekretaris','admin']) ? $_POST['new_role'] : 'kominfo';
         $newPeriode = !empty($_POST['new_periode']) ? (int)$_POST['new_periode'] : null;
         
+        // Proteksi level akses & periode
+        $targetUser = dbFetchOne("SELECT role, periode_id FROM users WHERE id = ?", [$id], "i");
+        if ($current_user_role !== 'superadmin' && !$user_can_access_all) {
+            if (!$targetUser || $targetUser['role'] === 'superadmin' || (int)$targetUser['periode_id'] !== (int)$current_user_period) {
+                $error = 'Akses ditolak: Anda tidak memiliki wewenang untuk mengubah akun ini!';
+                $id = 0;
+            }
+            if ($newRole === 'superadmin') {
+                $error = 'Akses ditolak: Anda tidak dapat menaikkan ke role Superadmin!';
+                $id = 0;
+            }
+            $newPeriode = $current_user_period;
+        }
+
         if ($id === (int)$_SESSION['admin_id'] && $newRole !== 'superadmin') {
             $error = 'Jangan turunkan pangkat diri sendiri!';
-        } elseif (($newRole === 'kominfo' || $newRole === 'sekretaris') && !$newPeriode) {
-            $error = 'Kominfo/Sekretaris wajib dikaitkan dengan satu periode!';
+        } elseif (($newRole === 'kominfo' || $newRole === 'sekretaris' || $newRole === 'admin') && !$newPeriode) {
+            $error = 'Peran tersebut wajib dikaitkan dengan satu periode!';
         } elseif ($id > 0) {
-            // Jika superadmin, periode bisa dikosongkan (akses semua)
             if ($newRole === 'superadmin') $newPeriode = null;
             
             dbQuery("UPDATE users SET role = ?, periode_id = ? WHERE id = ?", [$newRole, $newPeriode, $id], "sii");
@@ -385,23 +455,39 @@ if (isset($_SESSION['flash'])) {
                     <select name="role" class="form-control" id="roleSelect" onchange="togglePeriodeField()">
                         <option value="kominfo" selected>Kominfo (CMS & Media)</option>
                         <option value="sekretaris">Sekretaris</option>
-                        <option value="superadmin">Superadmin</option>
+                        <?php if ($isSuperadmin): ?>
+                            <option value="admin">Admin (CMS, Media & Surat)</option>
+                            <option value="superadmin">Superadmin</option>
+                        <?php else: ?>
+                            <option value="admin">Admin (CMS, Media & Surat)</option>
+                        <?php endif; ?>
                     </select>
                 </div>
 
                 <div class="form-group" id="periodeField">
                     <label><i class="fas fa-calendar-alt"></i> Periode:</label>
-                    <select name="periode_id" class="form-control">
-                        <option value="">-- Pilih Periode --</option>
-                        <?php foreach ($periode_list as $p): ?>
-                            <option value="<?php echo (int)$p['id']; ?>">
-                                <?php echo htmlspecialchars($p['nama']); ?>
-                                (<?php echo (int)$p['tahun_mulai']; ?>/<?php echo (int)$p['tahun_selesai']; ?>)
-                                <?php echo $p['is_active'] ? '• AKTIF' : ''; ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <small>Kominfo hanya bisa mengelola SATU periode</small>
+                    <?php if ($isSuperadmin): ?>
+                        <select name="periode_id" class="form-control">
+                            <option value="">-- Pilih Periode --</option>
+                            <?php foreach ($periode_list as $p): ?>
+                                <option value="<?php echo (int)$p['id']; ?>">
+                                    <?php echo htmlspecialchars($p['nama']); ?>
+                                    (<?php echo (int)$p['tahun_mulai']; ?>/<?php echo (int)$p['tahun_selesai']; ?>)
+                                    <?php echo $p['is_active'] ? '• AKTIF' : ''; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small>Kominfo/Sekretaris/Admin hanya bisa mengelola SATU periode</small>
+                    <?php else: ?>
+                        <input type="hidden" name="periode_id" value="<?php echo $current_user_period; ?>">
+                        <div class="form-control" style="background:#1e293b;color:#cbd5e1;padding:10px;border-radius:4px;border:1px solid #334155;">
+                            <?php 
+                            $my_p = getPeriodeData($current_user_period);
+                            echo htmlspecialchars(($my_p['nama'] ?? '') . ' (' . ($my_p['tahun_mulai'] ?? 0) . '/' . ($my_p['tahun_selesai'] ?? 0) . ')');
+                            ?>
+                        </div>
+                        <small>Akun baru otomatis ditugaskan ke periode Anda saat ini.</small>
+                    <?php endif; ?>
                 </div>
 
                 <div class="form-group" style="background:rgba(74,144,226,.08);border:1px solid rgba(74,144,226,.3);border-radius:8px;padding:1rem;">
@@ -468,12 +554,16 @@ if (isset($_SESSION['flash'])) {
                                         <span class="badge" style="background:gold;color:black;">
                                             <i class="fas fa-crown"></i> Superadmin
                                         </span>
+                                    <?php elseif ($roleVal === 'admin'): ?>
+                                        <span class="badge" style="background:#4A90E2;color:white;">
+                                            <i class="fas fa-user-shield"></i> Admin
+                                        </span>
                                     <?php elseif ($isRowSekretaris): ?>
                                         <span class="badge" style="background:#2E7D32;color:white;">
                                             <i class="fas fa-file-signature"></i> Sekretaris
                                         </span>
                                     <?php else: ?>
-                                        <span class="badge" style="background:#4A90E2;color:white;">
+                                        <span class="badge" style="background:#0284c7;color:white;">
                                             <i class="fas fa-photo-video"></i> Kominfo
                                         </span>
                                     <?php endif; ?>
@@ -565,9 +655,20 @@ if (isset($_SESSION['flash'])) {
                     <li><i class="fas fa-check-circle"></i> Bisa mengganti periode yang dikelola</li>
                 </ul>
             </div>
-            <div class="access-card admin">
-                <div class="access-icon"><i class="fas fa-photo-video"></i></div>
-                <h3 class="access-title">Kominfo (CMS & Media)</h3>
+            <div class="access-card admin" style="border: 1px solid rgba(74, 144, 226, 0.3);">
+                <div class="access-icon" style="color: #4A90E2;"><i class="fas fa-user-shield"></i></div>
+                <h3 class="access-title" style="color: #4A90E2;">Admin</h3>
+                <ul class="access-list">
+                    <li><i class="fas fa-check-circle"></i> Hanya bisa mengelola SATU periode</li>
+                    <li><i class="fas fa-check-circle"></i> Akses gabungan Kominfo & Sekretaris</li>
+                    <li><i class="fas fa-check-circle"></i> Mengelola admin level bawah di periodenya</li>
+                    <li><i class="fas fa-check-circle"></i> Tidak bisa mengelola Superadmin</li>
+                    <li><i class="fas fa-check-circle"></i> Tidak bisa menambah/menghapus periode</li>
+                </ul>
+            </div>
+            <div class="access-card admin" style="border: 1px solid rgba(2, 132, 199, 0.3);">
+                <div class="access-icon" style="color:#0284c7;"><i class="fas fa-photo-video"></i></div>
+                <h3 class="access-title" style="color:#0284c7;">Kominfo (CMS & Media)</h3>
                 <ul class="access-list">
                     <li><i class="fas fa-check-circle"></i> Hanya bisa mengelola SATU periode</li>
                     <li><i class="fas fa-check-circle"></i> Mengelola CMS, Media, Berita, & Kepengurusan</li>
@@ -577,9 +678,9 @@ if (isset($_SESSION['flash'])) {
                     <li><i class="fas fa-check-circle"></i> Data terisolasi per periode</li>
                 </ul>
             </div>
-            <div class="access-card admin">
-                <div class="access-icon"><i class="fas fa-file-signature"></i></div>
-                <h3 class="access-title">Sekretaris</h3>
+            <div class="access-card admin" style="border: 1px solid rgba(46, 125, 50, 0.3);">
+                <div class="access-icon" style="color:#2E7D32;"><i class="fas fa-file-signature"></i></div>
+                <h3 class="access-title" style="color:#2E7D32;">Sekretaris</h3>
                 <ul class="access-list">
                     <li><i class="fas fa-check-circle"></i> Sama seperti Kominfo</li>
                     <li><i class="fas fa-check-circle"></i> Tambahan Akses ke Manajemen Arsip & Buat Surat otomatis</li>
@@ -621,9 +722,13 @@ if (isset($_SESSION['flash'])) {
                     <select id="customNewRole" class="form-control" onchange="toggleModalPeriode(this.value)">
                         <option value="kominfo">Kominfo (CMS & Media)</option>
                         <option value="sekretaris">Sekretaris</option>
-                        <option value="superadmin">Superadmin</option>
+                        <option value="admin">Admin (CMS, Media & Surat)</option>
+                        <?php if ($isSuperadmin): ?>
+                            <option value="superadmin">Superadmin</option>
+                        <?php endif; ?>
                     </select>
                 </div>
+                <?php if ($isSuperadmin): ?>
                 <div class="form-group" id="modalPeriodeGroup" style="display:none;">
                     <label style="display:block; margin-bottom:5px; font-size:0.9rem;">Tugaskan ke Periode:</label>
                     <select id="customNewPeriode" class="form-control">
@@ -635,6 +740,9 @@ if (isset($_SESSION['flash'])) {
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <?php else: ?>
+                    <input type="hidden" id="customNewPeriode" value="<?php echo $current_user_period; ?>">
+                <?php endif; ?>
             </div>
         </div>
         <div class="modal-footer">
@@ -798,7 +906,7 @@ document.getElementById('confirmBtn').addEventListener('click', function() {
         roleInput.value = customNewRole.value;
         periodeInput.value = customNewPeriode.value;
         if ((roleInput.value === 'kominfo' || roleInput.value === 'admin' || roleInput.value === 'sekretaris') && !periodeInput.value) {
-            alert('Pilih periode untuk kominfo/sekretaris!');
+            alert('Pilih periode untuk role tersebut!');
             return;
         }
     }
@@ -828,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if ((role === 'kominfo' || role === 'admin' || role === 'sekretaris') && !periodeId) {
                 e.preventDefault();
-                alert('Pilih periode untuk kominfo/sekretaris!');
+                alert('Pilih periode untuk role tersebut!');
             }
         });
     }
