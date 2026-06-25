@@ -78,11 +78,8 @@ $page_title = $berita['judul'];
 
     <div class="berita-content">
         <?php
-        // ✅ FIX: Konten berita kemungkinan mengandung HTML (dari rich text editor)
-        // Jika konten adalah plain text → pakai nl2br + htmlspecialchars (aman)
-        // Jika konten adalah HTML → pakai langsung (pastikan input sudah di-sanitize saat simpan)
-        // Karena tidak ada info editor, kita pakai nl2br + htmlspecialchars sebagai default aman
-        echo nl2br(htmlspecialchars($berita['konten'] ?? ''));
+        // Mengeluarkan HTML berita yang telah disanitasi oleh sanitizeHtml saat disimpan
+        echo $berita['konten'] ?? '';
         ?>
     </div>
 

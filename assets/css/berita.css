@@ -371,33 +371,38 @@
     font-size: 0.9rem;
 }
 
-/* ===== GAMBAR FEATURED 1:1 ===== */
+/* ===== GAMBAR FEATURED ADAPTIVE ===== */
 .berita-featured-image {
     width: 100%;
-    aspect-ratio: 1 / 1;
     overflow: hidden;
     border-radius: 16px;
     border: 2px solid var(--biru-soft);
-    /* Background gelap agar sisi kosong gambar portrait tidak aneh */
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.2);
     margin: 1.5rem 0 2rem;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .berita-featured-image img {
     width: 100%;
-    height: 100%;
-    /* contain: gambar portrait/landscape tampil penuh tanpa terpotong */
-    object-fit: contain;
+    height: auto;
+    max-height: 550px;
+    object-fit: cover;
     display: block;
     transition: transform 0.5s ease;
 }
 
 .berita-featured-image:hover img {
     transform: scale(1.03);
+}
+
+/* Styles for images embedded inside article content */
+.berita-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    display: block;
 }
 
 /* Konten artikel */

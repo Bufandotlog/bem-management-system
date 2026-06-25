@@ -103,6 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
 }
 ?>
 
+<!-- Quill Rich Text Editor Stylesheet -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+
 <!-- Page Header -->
 <div class="page-header">
     <h1><i class="fas fa-<?php echo $id ? 'edit' : 'plus-circle'; ?>"></i>
@@ -204,10 +207,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
         <h2><i class="fas fa-align-left"></i> Konten Berita</h2>
 
         <div class="form-group">
-            <label for="konten">Isi Berita (textarea biasa)</label>
-            <textarea name="konten" id="konten" rows="15"
-                      style="width:100%;padding:15px;background:#222;color:#fff;border:1px solid #333;border-radius:5px;font-family:inherit;line-height:1.6;"><?php echo htmlspecialchars($berita['konten'] ?? ''); ?></textarea>
-            <small>Gunakan textarea biasa. Format teks bisa menggunakan HTML.</small>
+            <label for="editor-container">Isi Berita</label>
+            <!-- Quill editor container -->
+            <div id="editor-container" style="background:#222;color:#fff;border-radius:5px;font-family:inherit;line-height:1.6;margin-bottom:10px;"></div>
+            <!-- Hidden textarea to store the actual HTML that will be submitted to PHP -->
+            <textarea name="konten" id="konten" style="display:none;"><?php echo htmlspecialchars($berita['konten'] ?? ''); ?></textarea>
+            <small>Gunakan editor teks di atas untuk menulis berita. Format teks seperti tebal (bold), miring (italic), garis bawah (underline), dan sematan foto didukung.</small>
         </div>
     </div>
 
@@ -222,7 +227,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
     </div>
 </form>
 
-<!-- JavaScript — tidak diubah -->
+<!-- Quill JavaScript Library -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+<!-- JavaScript -->
 <script>
 function hapusFotoViaForm() {
     if (confirm('Tandai foto untuk dihapus? (Penghapusan akan terjadi saat form disimpan)')) {
@@ -257,16 +265,101 @@ function previewGambarBaru(input) {
     }
 }
 
+// Inisialisasi Quill
+const quill = new Quill('#editor-container', {
+    theme: 'snow',
+    placeholder: 'Tulis konten berita di sini...',
+    modules: {
+        toolbar: {
+            container: [
+                ['bold', 'italic', 'underline'],
+                ['image']
+            ],
+            handlers: {
+                image: function() {
+                    selectLocalImage();
+                }
+            }
+        }
+    }
+});
+
+// Set isi awal editor dari textarea
+const kontenTextarea = document.getElementById('konten');
+if (kontenTextarea.value) {
+    quill.root.innerHTML = kontenTextarea.value;
+}
+
+function selectLocalImage() {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = () => {
+        const file = input.files[0];
+        if (/^image\//.test(file.type)) {
+            uploadFile(file);
+        } else {
+            alert('Hanya diperbolehkan mengunggah file gambar.');
+        }
+    };
+}
+
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    formData.append('csrf_token', csrfToken);
+
+    // Tampilkan feedback bahwa gambar sedang diupload
+    const range = quill.getSelection() || { index: quill.getLength() };
+    const textIndex = range.index;
+
+    quill.insertText(textIndex, '[Mengunggah gambar...]', { 'italic': true, 'color': '#888' });
+
+    fetch('upload-editor-image.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(result => {
+        // Hapus teks sementara
+        quill.deleteText(textIndex, '[Mengunggah gambar...]'.length);
+        
+        if (result.success) {
+            quill.insertEmbed(textIndex, 'image', result.url);
+            quill.setSelection(textIndex + 1);
+        } else {
+            alert('Gagal mengunggah gambar: ' + result.message);
+        }
+    })
+    .catch(error => {
+        quill.deleteText(textIndex, '[Mengunggah gambar...]'.length);
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat mengunggah gambar.');
+    });
+}
+
 document.getElementById('beritaForm').addEventListener('submit', function(e) {
+    // Sinkronisasi data dari editor ke textarea sebelum disubmit
+    kontenTextarea.value = quill.root.innerHTML;
+
     const judul   = document.getElementById('judul').value.trim();
     const tanggal = document.getElementById('tanggal').value;
     const penulis = document.getElementById('penulis').value.trim();
-    const konten  = document.getElementById('konten').value.trim();
-    if (!judul || !tanggal || !penulis || !konten) {
+    const konten  = kontenTextarea.value.trim();
+    
+    // Periksa apakah editor benar-benar kosong
+    const rawText = quill.getText().trim();
+    const rawHtml = quill.root.innerHTML.trim();
+
+    if (!judul || !tanggal || !penulis || !rawText || rawHtml === '<p><br></p>') {
         e.preventDefault();
         alert('Semua field harus diisi!');
         return false;
     }
+    
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.classList.add('loading');
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';

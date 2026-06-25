@@ -654,3 +654,65 @@
     border-radius: 8px;
     border: 1px dashed #4A90E2;
 }
+
+/* ===== CUSTOM QUILL EDITOR DARK THEME ===== */
+.ql-toolbar.ql-snow {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-top-left-radius: var(--radius-md) !important;
+    border-top-right-radius: var(--radius-md) !important;
+    padding: 10px !important;
+}
+.ql-container.ql-snow {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    border-bottom-left-radius: var(--radius-md) !important;
+    border-bottom-right-radius: var(--radius-md) !important;
+    font-family: inherit !important;
+    font-size: 1rem !important;
+    color: var(--text-light) !important;
+}
+.ql-editor {
+    min-height: 350px !important;
+    line-height: 1.8 !important;
+}
+.ql-editor.ql-blank::before {
+    color: var(--text-dim) !important;
+    font-style: normal !important;
+}
+.ql-snow .ql-stroke {
+    stroke: var(--text-muted) !important;
+}
+.ql-snow .ql-fill {
+    fill: var(--text-muted) !important;
+}
+.ql-snow .ql-picker {
+    color: var(--text-muted) !important;
+}
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--primary) !important;
+}
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill {
+    fill: var(--primary) !important;
+}
+.ql-snow.ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active {
+    color: var(--primary) !important;
+}
+.ql-snow .ql-picker-options {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+.ql-snow .ql-picker-item:hover,
+.ql-snow .ql-picker-item.ql-selected {
+    color: var(--primary) !important;
+}
+/* Styles for images embedded in editor */
+.ql-editor img {
+    max-width: 100% !important;
+    border-radius: var(--radius-md) !important;
+    margin: 10px 0 !important;
+    border: 1px solid var(--border-color) !important;
+}
