@@ -8,7 +8,8 @@
 
 require_once __DIR__ . '/header.php';
 
-if ($_SESSION['admin_role'] !== 'superadmin' && !$user_can_access_all) {
+$current_user_role = $_SESSION['admin_role'] ?? '';
+if ($current_user_role !== 'superadmin' && $current_user_role !== 'admin' && !$user_can_access_all) {
     redirect('admin/dashboard.php', 'Akses ditolak!', 'error');
     exit();
 }

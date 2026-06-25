@@ -637,6 +637,10 @@ if (isset($page_css)) {
                class="<?php echo $current_page === 'kelola-admin.php' ? 'active' : ''; ?>">
                 <i class="fas fa-user-shield"></i><span>Kelola Admin</span>
             </a>
+            <a href="audit-log.php"
+               class="<?php echo $current_page === 'audit-log.php' ? 'active' : ''; ?>">
+                <i class="fas fa-history"></i><span>Audit Log</span>
+            </a>
             <?php endif; ?>
 
             <!-- Superadmin (Dropdown) -->
