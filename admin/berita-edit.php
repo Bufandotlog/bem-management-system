@@ -316,29 +316,52 @@ function uploadFile(file) {
     const range = quill.getSelection() || { index: quill.getLength() };
     const textIndex = range.index;
 
-    quill.insertText(textIndex, '[Mengunggah gambar...]', { 'italic': true, 'color': '#888' });
+    let progressText = '[Mengunggah gambar... 0%]';
+    quill.insertText(textIndex, progressText, { 'italic': true, 'color': '#888' });
 
-    fetch('upload-editor-image.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(result => {
-        // Hapus teks sementara
-        quill.deleteText(textIndex, '[Mengunggah gambar...]'.length);
-        
-        if (result.success) {
-            quill.insertEmbed(textIndex, 'image', result.url);
-            quill.setSelection(textIndex + 1);
-        } else {
-            alert('Gagal mengunggah gambar: ' + result.message);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'upload-editor-image.php', true);
+
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            const newProgressText = `[Mengunggah gambar... ${percentComplete}%]`;
+            // Update progress text in editor
+            if (newProgressText !== progressText) {
+                quill.deleteText(textIndex, progressText.length);
+                quill.insertText(textIndex, newProgressText, { 'italic': true, 'color': '#888' });
+                progressText = newProgressText;
+            }
         }
-    })
-    .catch(error => {
-        quill.deleteText(textIndex, '[Mengunggah gambar...]'.length);
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat mengunggah gambar.');
-    });
+    };
+
+    xhr.onload = function() {
+        // Hapus teks progress
+        quill.deleteText(textIndex, progressText.length);
+
+        if (xhr.status === 200) {
+            try {
+                const result = JSON.parse(xhr.responseText);
+                if (result.success) {
+                    quill.insertEmbed(textIndex, 'image', result.url);
+                    quill.setSelection(textIndex + 1);
+                } else {
+                    alert('Gagal mengunggah gambar: ' + result.message);
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan parsing respon server.');
+            }
+        } else {
+            alert('Terjadi kesalahan saat mengunggah gambar (Status: ' + xhr.status + ').');
+        }
+    };
+
+    xhr.onerror = function() {
+        quill.deleteText(textIndex, progressText.length);
+        alert('Terjadi kesalahan koneksi saat mengunggah gambar.');
+    };
+
+    xhr.send(formData);
 }
 
 document.getElementById('beritaForm').addEventListener('submit', function(e) {
