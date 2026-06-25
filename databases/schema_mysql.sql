@@ -39,7 +39,7 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `nama` varchar(100) NOT NULL,
   `email` varchar(100) DEFAULT NULL,
-  `role` enum('superadmin','admin','sekretaris') NOT NULL DEFAULT 'admin',
+  `role` enum('superadmin','kominfo','sekretaris') NOT NULL DEFAULT 'kominfo',
   `periode_id` int(11) DEFAULT NULL,
   `can_access_all` tinyint(1) DEFAULT 0,
   `totp_secret` varchar(32) DEFAULT NULL,

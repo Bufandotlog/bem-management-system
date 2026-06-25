@@ -19,13 +19,13 @@ $beritaTerbaru = dbFetchAll("SELECT judul, tanggal FROM berita ORDER BY tanggal 
 $suratTerbaru = dbFetchAll("SELECT nomor_surat, perihal, jenis_surat FROM arsip_surat WHERE periode_id = ? ORDER BY id DESC LIMIT 5", [$periode_id], "i");
 
 // Logika tampilan (Hybrid)
-$showGeneralStats = ($isSuperadmin || $admin_role === 'admin');
+$showGeneralStats = ($isSuperadmin || $admin_role === 'kominfo');
 $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris');
 ?>
 
 <div class="page-header">
     <div>
-        <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ''); ?></h1>
+        <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ($admin_role === 'kominfo' ? 'Kominfo' : '')); ?></h1>
         <p>Selamat datang di panel kendali BEM Kabinet Astawidya</p>
     </div>
     <div class="date-display">

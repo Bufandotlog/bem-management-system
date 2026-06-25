@@ -45,12 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'tamba
         $emailRaw   = sanitizeText($_POST['email'] ?? '', 100);
         $email      = filter_var($emailRaw, FILTER_VALIDATE_EMAIL) ? $emailRaw : '';
         
-        $roleInput  = strtolower($_POST['role'] ?? 'admin');
+        $roleInput  = strtolower($_POST['role'] ?? 'kominfo');
         // Normalisasi ejaan sekretaris
         if ($roleInput === 'sekertaris' || $roleInput === 'sekretaris') {
             $role = 'sekretaris';
         } else {
-            $role = in_array($roleInput, ['admin','superadmin']) ? $roleInput : 'admin';
+            $role = in_array($roleInput, ['kominfo','superadmin']) ? $roleInput : 'kominfo';
         }
 
         $periode_id = !empty($_POST['periode_id']) ? (int)$_POST['periode_id'] : null;
@@ -58,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'tamba
 
         if (empty($username) || empty($password) || empty($nama)) {
             $error = 'Username, password, dan nama wajib diisi!';
-        } elseif (($role === 'admin' || $role === 'sekretaris') && !$periode_id) {
-            $error = 'Pilih periode untuk admin/sekretaris!';
+        } elseif (($role === 'kominfo' || $role === 'sekretaris') && !$periode_id) {
+            $error = 'Pilih periode untuk kominfo/sekretaris!';
         } elseif (strlen($password) < 8) {
             $error = 'Password minimal 8 karakter!';
         } else {
@@ -262,13 +262,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ubah_
         $error = 'Request tidak valid.';
     } else {
         $id         = (int) ($_POST['id'] ?? 0);
-        $newRole    = in_array($_POST['new_role'] ?? '', ['admin','superadmin','sekretaris']) ? $_POST['new_role'] : 'admin';
+        $newRole    = in_array($_POST['new_role'] ?? '', ['kominfo','superadmin','sekretaris']) ? $_POST['new_role'] : 'kominfo';
         $newPeriode = !empty($_POST['new_periode']) ? (int)$_POST['new_periode'] : null;
         
         if ($id === (int)$_SESSION['admin_id'] && $newRole !== 'superadmin') {
             $error = 'Jangan turunkan pangkat diri sendiri!';
-        } elseif (($newRole === 'admin' || $newRole === 'sekretaris') && !$newPeriode) {
-            $error = 'Admin/Sekretaris wajib dikaitkan dengan satu periode!';
+        } elseif (($newRole === 'kominfo' || $newRole === 'sekretaris') && !$newPeriode) {
+            $error = 'Kominfo/Sekretaris wajib dikaitkan dengan satu periode!';
         } elseif ($id > 0) {
             // Jika superadmin, periode bisa dikosongkan (akses semua)
             if ($newRole === 'superadmin') $newPeriode = null;
@@ -383,7 +383,7 @@ if (isset($_SESSION['flash'])) {
                 <div class="form-group">
                     <label><i class="fas fa-user-tag"></i> Role:</label>
                     <select name="role" class="form-control" id="roleSelect" onchange="togglePeriodeField()">
-                        <option value="admin" selected>Admin Biasa</option>
+                        <option value="kominfo" selected>Kominfo (CMS & Media)</option>
                         <option value="sekretaris">Sekretaris</option>
                         <option value="superadmin">Superadmin</option>
                     </select>
@@ -401,7 +401,7 @@ if (isset($_SESSION['flash'])) {
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <small>Admin biasa hanya bisa mengelola SATU periode</small>
+                    <small>Kominfo hanya bisa mengelola SATU periode</small>
                 </div>
 
                 <div class="form-group" style="background:rgba(74,144,226,.08);border:1px solid rgba(74,144,226,.3);border-radius:8px;padding:1rem;">
@@ -474,7 +474,7 @@ if (isset($_SESSION['flash'])) {
                                         </span>
                                     <?php else: ?>
                                         <span class="badge" style="background:#4A90E2;color:white;">
-                                            <i class="fas fa-user"></i> Admin
+                                            <i class="fas fa-photo-video"></i> Kominfo
                                         </span>
                                     <?php endif; ?>
                                 </td>
@@ -566,10 +566,11 @@ if (isset($_SESSION['flash'])) {
                 </ul>
             </div>
             <div class="access-card admin">
-                <div class="access-icon"><i class="fas fa-user"></i></div>
-                <h3 class="access-title">Admin Biasa</h3>
+                <div class="access-icon"><i class="fas fa-photo-video"></i></div>
+                <h3 class="access-title">Kominfo (CMS & Media)</h3>
                 <ul class="access-list">
                     <li><i class="fas fa-check-circle"></i> Hanya bisa mengelola SATU periode</li>
+                    <li><i class="fas fa-check-circle"></i> Mengelola CMS, Media, Berita, & Kepengurusan</li>
                     <li><i class="fas fa-check-circle"></i> Tidak bisa melihat periode lain</li>
                     <li><i class="fas fa-check-circle"></i> Tidak bisa menambah admin</li>
                     <li><i class="fas fa-check-circle"></i> Tidak bisa menghapus periode</li>
@@ -580,7 +581,7 @@ if (isset($_SESSION['flash'])) {
                 <div class="access-icon"><i class="fas fa-file-signature"></i></div>
                 <h3 class="access-title">Sekretaris</h3>
                 <ul class="access-list">
-                    <li><i class="fas fa-check-circle"></i> Sama seperti Admin Biasa</li>
+                    <li><i class="fas fa-check-circle"></i> Sama seperti Kominfo</li>
                     <li><i class="fas fa-check-circle"></i> Tambahan Akses ke Manajemen Arsip & Buat Surat otomatis</li>
                     <li><i class="fas fa-check-circle"></i> Data terisolasi per periode kepengurusan</li>
                 </ul>
@@ -618,7 +619,7 @@ if (isset($_SESSION['flash'])) {
                 <div class="form-group" style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-size:0.9rem;">Pilih Role Baru:</label>
                     <select id="customNewRole" class="form-control" onchange="toggleModalPeriode(this.value)">
-                        <option value="admin">Admin Biasa</option>
+                        <option value="kominfo">Kominfo (CMS & Media)</option>
                         <option value="sekretaris">Sekretaris</option>
                         <option value="superadmin">Superadmin</option>
                     </select>
@@ -718,7 +719,7 @@ function closeConfirmModal() {
 
 function toggleModalPeriode(role) {
     var group = document.getElementById('modalPeriodeGroup');
-    if (role === 'admin' || role === 'sekretaris') {
+    if (role === 'kominfo' || role === 'admin' || role === 'sekretaris') {
         group.style.display = 'block';
     } else {
         group.style.display = 'none';
@@ -796,8 +797,8 @@ document.getElementById('confirmBtn').addEventListener('click', function() {
     if (pendingAction.action === 'ubah_role') {
         roleInput.value = customNewRole.value;
         periodeInput.value = customNewPeriode.value;
-        if ((roleInput.value === 'admin' || roleInput.value === 'sekretaris') && !periodeInput.value) {
-            alert('Pilih periode untuk admin/sekretaris!');
+        if ((roleInput.value === 'kominfo' || roleInput.value === 'admin' || roleInput.value === 'sekretaris') && !periodeInput.value) {
+            alert('Pilih periode untuk kominfo/sekretaris!');
             return;
         }
     }
@@ -825,9 +826,9 @@ document.addEventListener('DOMContentLoaded', function() {
             var selectPeriode = document.querySelector('select[name="periode_id"]');
             var periodeId = selectPeriode ? selectPeriode.value : '';
             
-            if ((role === 'admin' || role === 'sekretaris') && !periodeId) {
+            if ((role === 'kominfo' || role === 'admin' || role === 'sekretaris') && !periodeId) {
                 e.preventDefault();
-                alert('Pilih periode untuk admin/sekretaris!');
+                alert('Pilih periode untuk kominfo/sekretaris!');
             }
         });
     }

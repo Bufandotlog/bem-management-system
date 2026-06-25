@@ -22,7 +22,7 @@ require_once __DIR__ . '/auth-check.php';
 $admin_id       = (int) ($_SESSION['admin_id']       ?? 0);
 $admin_name     = $_SESSION['admin_name']     ?? 'Admin';
 $admin_username = $_SESSION['admin_username'] ?? '';
-$admin_role     = $_SESSION['admin_role']     ?? 'admin';
+$admin_role     = $_SESSION['admin_role']     ?? 'kominfo';
 
 // ============================================
 // 4. VALIDASI USER KE DATABASE (FRESH)

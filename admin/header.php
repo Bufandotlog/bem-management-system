@@ -47,7 +47,7 @@ if ($current_page !== 'login.php') {
 }
 
 $admin_name = $_SESSION['admin_name'] ?? 'Admin';
-$admin_role = strtolower($_SESSION['admin_role'] ?? 'admin');
+$admin_role = strtolower($_SESSION['admin_role'] ?? 'kominfo');
 
 $isSuperadmin = $admin_role === 'superadmin'
                 || !empty($_SESSION['admin_can_access_all']);
