@@ -214,6 +214,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
             <textarea name="konten" id="konten" style="display:none;"><?php echo htmlspecialchars($berita['konten'] ?? ''); ?></textarea>
             <small>Gunakan editor teks di atas untuk menulis berita. Format teks seperti tebal (bold), miring (italic), garis bawah (underline), dan sematan foto didukung.</small>
         </div>
+
+        <div class="form-group" style="margin-top: 1.5rem; display: none;" id="footnote-list-container">
+            <label style="color: var(--biru-soft); font-weight: 600;"><i class="fas fa-image"></i> Catatan Foto / Footnote Gambar Konten</label>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 10px; line-height: 1.4;">
+                Berikut adalah gambar-gambar yang disematkan di dalam konten berita. Anda dapat memasukkan/mengubah catatan kaki (footnote) untuk masing-masing gambar di bawah ini:
+            </p>
+            <div id="footnote-list" style="display: flex; flex-direction: column; gap: 15px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                <!-- Diisi secara dinamis via JavaScript -->
+            </div>
+        </div>
     </div>
 
     <!-- Form Actions -->
@@ -334,9 +344,109 @@ quill.root.addEventListener('dblclick', function(e) {
                 e.target.setAttribute('alt', newAlt.trim());
             }
             quill.update();
+            updateFootnoteInputs();
         }
     }
 });
+
+// Dynamic Footnote Input List
+const footnoteContainer = document.getElementById('footnote-list-container');
+const footnoteList = document.getElementById('footnote-list');
+
+function updateFootnoteInputs() {
+    const imgs = quill.root.querySelectorAll('img');
+    
+    if (imgs.length === 0) {
+        footnoteContainer.style.display = 'none';
+        footnoteList.innerHTML = '';
+        return;
+    }
+    
+    footnoteContainer.style.display = 'block';
+    
+    // Save current active input ID or source to keep focus and cursor position
+    const activeElement = document.activeElement;
+    const activeSrc = activeElement ? activeElement.dataset.imgSrc : null;
+    const selectionStart = activeElement ? activeElement.selectionStart : null;
+    const selectionEnd = activeElement ? activeElement.selectionEnd : null;
+    
+    // Build list
+    footnoteList.innerHTML = '';
+    
+    imgs.forEach((img, index) => {
+        const src = img.getAttribute('src');
+        const alt = img.getAttribute('alt') || '';
+        
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '15px';
+        row.style.padding = '10px 0';
+        if (index < imgs.length - 1) {
+            row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        }
+        
+        const thumb = document.createElement('img');
+        thumb.src = src;
+        thumb.style.width = '60px';
+        thumb.style.height = '60px';
+        thumb.style.objectFit = 'cover';
+        thumb.style.borderRadius = '6px';
+        thumb.style.border = '1px solid rgba(255,255,255,0.1)';
+        
+        const inputWrapper = document.createElement('div');
+        inputWrapper.style.flex = '1';
+        
+        const label = document.createElement('div');
+        label.style.fontSize = '0.8rem';
+        label.style.color = 'var(--biru-soft)';
+        label.style.marginBottom = '6px';
+        label.style.fontWeight = '500';
+        label.innerText = `Catatan Foto #${index + 1}`;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = alt;
+        input.placeholder = 'Tulis footnote/catatan kaki untuk gambar di atas...';
+        input.dataset.imgSrc = src;
+        input.style.width = '100%';
+        input.style.padding = '8px 12px';
+        input.style.background = '#222';
+        input.style.color = '#fff';
+        input.style.border = '1px solid #444';
+        input.style.borderRadius = '5px';
+        input.style.fontFamily = 'inherit';
+        input.style.fontSize = '0.9rem';
+        
+        input.addEventListener('input', function() {
+            img.setAttribute('alt', this.value.trim());
+            // Sync with hidden textarea
+            kontenTextarea.value = quill.root.innerHTML;
+        });
+        
+        inputWrapper.appendChild(label);
+        inputWrapper.appendChild(input);
+        row.appendChild(thumb);
+        row.appendChild(inputWrapper);
+        footnoteList.appendChild(row);
+        
+        // Restore focus and cursor position
+        if (activeSrc && src === activeSrc) {
+            input.focus();
+            if (selectionStart !== null && selectionEnd !== null) {
+                input.setSelectionRange(selectionStart, selectionEnd);
+            }
+        }
+    });
+}
+
+// Watch for changes in editor
+quill.on('text-change', function() {
+    updateFootnoteInputs();
+});
+
+// Initial run
+setTimeout(updateFootnoteInputs, 500);
 
 function selectLocalImage() {
     const input = document.createElement('input');
