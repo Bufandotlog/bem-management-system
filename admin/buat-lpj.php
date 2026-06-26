@@ -41,6 +41,102 @@ if (isset($_GET['ajax_kementerian_id'])) {
         }
     }
     
+    $triwulan_param = sanitizeText($_GET['triwulan'] ?? '');
+    
+    if ($triwulan_param === 'MUBESMA') {
+        // Merge Triwulan I & II
+        $lpj1 = dbFetchOne("SELECT * FROM lpj_dokumen WHERE periode_id = ? AND kementerian_id = ? AND triwulan = 'I'", [$periode_id, $k_id], "ii");
+        $lpj2 = dbFetchOne("SELECT * FROM lpj_dokumen WHERE periode_id = ? AND kementerian_id = ? AND triwulan = 'II'", [$periode_id, $k_id], "ii");
+        
+        $keanggotaan_decoded = [];
+        $keadaan_objektif = '';
+        $proker_terlaksana = [];
+        $proker_belum_terlaksana = [];
+        
+        if ($lpj2) {
+            $keanggotaan_decoded = json_decode($lpj2['keanggotaan'], true) ?: [];
+            $keadaan_objektif = $lpj2['keadaan_objektif'] ?: '';
+        } elseif ($lpj1) {
+            $keanggotaan_decoded = json_decode($lpj1['keanggotaan'], true) ?: [];
+            $keadaan_objektif = $lpj1['keadaan_objektif'] ?: '';
+        }
+        
+        // Populate keanggotaan default values
+        $ketua = $keanggotaan_decoded['ketua'] ?? $ketua;
+        $sekretaris = $keanggotaan_decoded['sekretaris'] ?? $sekretaris;
+        $bendahara = $keanggotaan_decoded['bendahara'] ?? $bendahara;
+        $anggota = $keanggotaan_decoded['anggota'] ?? $anggota;
+        
+        // 1. Process Executed Prokers
+        $pt1 = $lpj1 ? (json_decode($lpj1['proker_terlaksana'], true) ?: []) : [];
+        $pt2 = $lpj2 ? (json_decode($lpj2['proker_terlaksana'], true) ?: []) : [];
+        
+        $proker_terlaksana = $pt1;
+        $executed_names = [];
+        foreach ($pt1 as $p) {
+            $name = trim(strtolower($p['Nama Program Kerja'] ?? $p['Nama Kegiatan'] ?? ''));
+            if ($name !== '') {
+                $executed_names[$name] = true;
+            }
+        }
+        
+        foreach ($pt2 as $p) {
+            $name = trim(strtolower($p['Nama Program Kerja'] ?? $p['Nama Kegiatan'] ?? ''));
+            if ($name !== '' && !isset($executed_names[$name])) {
+                $proker_terlaksana[] = $p;
+                $executed_names[$name] = true;
+            }
+        }
+        
+        // 2. Process Unimplemented Prokers
+        $pbt1 = $lpj1 ? (json_decode($lpj1['proker_belum_terlaksana'], true) ?: []) : [];
+        $pbt2 = $lpj2 ? (json_decode($lpj2['proker_belum_terlaksana'], true) ?: []) : [];
+        
+        $unimplemented_names = [];
+        foreach ($pbt1 as $p) {
+            $name = trim(strtolower($p['Nama Kegiatan'] ?? $p['Nama Program Kerja'] ?? ''));
+            if ($name !== '') {
+                // Check if it was executed in Triwulan 2
+                $executed_in_t2 = false;
+                foreach ($pt2 as $p2) {
+                    $p2_name = trim(strtolower($p2['Nama Program Kerja'] ?? $p2['Nama Kegiatan'] ?? ''));
+                    if ($p2_name === $name) {
+                        $executed_in_t2 = true;
+                        break;
+                    }
+                }
+                if (!$executed_in_t2) {
+                    $proker_belum_terlaksana[] = $p;
+                    $unimplemented_names[$name] = true;
+                }
+            }
+        }
+        
+        foreach ($pbt2 as $p) {
+            $name = trim(strtolower($p['Nama Kegiatan'] ?? $p['Nama Program Kerja'] ?? ''));
+            if ($name !== '' && !isset($unimplemented_names[$name])) {
+                if (!isset($executed_names[$name])) {
+                    $proker_belum_terlaksana[] = $p;
+                    $unimplemented_names[$name] = true;
+                }
+            }
+        }
+        
+        echo json_encode([
+            'deskripsi' => $keadaan_objektif ?: $deskripsi,
+            'keanggotaan' => [
+                'ketua' => $ketua,
+                'sekretaris' => $sekretaris,
+                'bendahara' => $bendahara,
+                'anggota' => $anggota
+            ],
+            'is_mubesma' => true,
+            'proker_terlaksana' => $proker_terlaksana,
+            'proker_belum_terlaksana' => $proker_belum_terlaksana
+        ]);
+        exit();
+    }
+    
     echo json_encode([
         'deskripsi' => $deskripsi,
         'keanggotaan' => [
@@ -869,7 +965,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     </div>
                     <div class="form-group" style="flex: 1; min-width: 280px;">
                         <label>Triwulan Periode</label>
-                        <select name="triwulan" class="form-control" required <?php echo $edit_data ? 'disabled' : ''; ?>>
+                        <select name="triwulan" id="triwulanSelect" class="form-control" required <?php echo $edit_data ? 'disabled' : ''; ?>>
                             <option value="">-- Pilih Triwulan --</option>
                             <option value="I" <?php echo ($selected_triwulan === 'I') ? 'selected' : ''; ?>>TRIWULAN I</option>
                             <option value="II" <?php echo ($selected_triwulan === 'II') ? 'selected' : ''; ?>>TRIWULAN II</option>
@@ -1246,7 +1342,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             const kemSelect = document.getElementById('kementerianSelect');
             const kId = kemSelect ? kemSelect.value : '';
             if (kId && kId !== lastFetchedKementerianId) {
-                fetchKepengurusan(kId);
+                const triwulan = document.getElementById('triwulanSelect').value;
+                if (triwulan === 'MUBESMA') {
+                    checkAndFetchMubesma();
+                } else {
+                    fetchKepengurusan(kId);
+                }
             }
         }
     }
@@ -1346,7 +1447,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     });
 
     // --- Schritt 3: Proker Terlaksana Dynamic Rows ---
-    function addProkerTerlaksana() {
+    function addProkerTerlaksana(ptData = null) {
         const container = document.getElementById('ptContainer');
         const div = document.createElement('div');
         div.className = 'dynamic-row pt-row';
@@ -1476,12 +1577,98 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             </div>
         `;
         container.appendChild(div);
+        
+        if (ptData) {
+            div.querySelector('input[name="pt_name[]"]').value = ptData['Nama Program Kerja'] || '';
+            div.querySelector('input[name="pt_kegiatan[]"]').value = ptData['Nama Kegiatan'] || '';
+            div.querySelector('input[name="pt_sifat[]"]').value = ptData['Sifat'] || 'Internal';
+            div.querySelector('input[name="pt_tema[]"]').value = ptData['Tema Kegiatan'] || '';
+            div.querySelector('input[name="pt_tanggal[]"]').value = ptData['Tanggal Kegiatan'] || '';
+            div.querySelector('input[name="pt_pj[]"]').value = ptData['Penanggung Jawab'] || '';
+            
+            // For multipoint inputs (tujuan, peserta, evaluasi)
+            const tujuanHidden = div.querySelector('.pt-tujuan-hidden');
+            const tujuanArr = Array.isArray(ptData['Tujuan']) ? ptData['Tujuan'] : (ptData['Tujuan'] ? [ptData['Tujuan']] : []);
+            tujuanHidden.value = JSON.stringify(tujuanArr);
+            
+            const pesertaHidden = div.querySelector('.pt-peserta-hidden');
+            const pesertaArr = Array.isArray(ptData['Peserta Kegiatan']) ? ptData['Peserta Kegiatan'] : (ptData['Peserta Kegiatan'] ? [ptData['Peserta Kegiatan']] : []);
+            pesertaHidden.value = JSON.stringify(pesertaArr);
+            
+            const evaluasiHidden = div.querySelector('.pt-evaluasi-hidden');
+            const evaluasiArr = Array.isArray(ptData['Evaluasi']) ? ptData['Evaluasi'] : (ptData['Evaluasi'] ? [ptData['Evaluasi']] : (ptData['Evaluasi & Saran'] ? [ptData['Evaluasi & Saran']] : []));
+            evaluasiHidden.value = JSON.stringify(evaluasiArr);
+            
+            // Budget
+            const noBudgetCheck = div.querySelector('.pt-no-budget-check');
+            const noBudgetHidden = div.querySelector('.pt-no-budget-hidden');
+            const tableWrapper = div.querySelector('.proker-budget-table-wrapper');
+            const anggaranHidden = div.querySelector('.pt-anggaran-hidden');
+            
+            const ptNoBudget = ptData['tidak_menggunakan_anggaran'] ? true : false;
+            noBudgetCheck.checked = ptNoBudget;
+            noBudgetHidden.value = ptNoBudget ? '1' : '0';
+            tableWrapper.style.display = ptNoBudget ? 'none' : 'block';
+            
+            const anggaranList = ptData['anggaran'] || [];
+            anggaranHidden.value = JSON.stringify(anggaranList);
+            
+            // Rebuild budget table rows if they have transactions
+            if (!ptNoBudget && anggaranList.length > 0) {
+                const tbody = div.querySelector('.proker-budget-container');
+                tbody.innerHTML = ''; // clear initial row
+                anggaranList.forEach((tx, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'pt-budget-row';
+                    tr.innerHTML = `
+                        <td><input type="text" class="form-control pt-bud-tanggal" value="${escapeHtml(tx.tanggal)}" placeholder="Tanggal" oninput="serializeProkerBudgetTable(this)"></td>
+                        <td><input type="text" class="form-control pt-bud-keterangan" value="${escapeHtml(tx.keterangan)}" placeholder="Keterangan" oninput="serializeProkerBudgetTable(this)"></td>
+                        <td><input type="text" class="form-control pt-bud-uraian" value="${escapeHtml(tx.uraian)}" placeholder="Uraian" required oninput="serializeProkerBudgetTable(this)"></td>
+                        <td><input type="number" step="1" class="form-control pt-bud-debet" value="${tx.debet || 0}" oninput="serializeProkerBudgetTable(this)"></td>
+                        <td><input type="number" step="1" class="form-control pt-bud-kredit" value="${tx.kredit || 0}" oninput="serializeProkerBudgetTable(this)"></td>
+                        <td style="text-align: right; font-weight: bold; color: #8BB9F0; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
+                        <td style="text-align: center;">
+                            ${idx > 0 ? `<button type="button" class="btn-remove-img" style="width: 28px; height: 28px; background: #dc3545;" onclick="removeBudgetRow(this)"><i class="fas fa-times"></i></button>` : ''}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                // Recalculate balance for this table
+                const firstInput = tbody.querySelector('.pt-bud-uraian');
+                if (firstInput) {
+                    serializeProkerBudgetTable(firstInput);
+                }
+            }
+            
+            // Existing photos
+            const dokList = ptData['dokumentasi'] || [];
+            const dokHidden = div.querySelector('.pt-existing-dok-hidden');
+            dokHidden.value = JSON.stringify(dokList);
+            
+            const photosGrid = div.querySelector('.proker-existing-photos-grid');
+            photosGrid.innerHTML = '';
+            dokList.forEach((dok) => {
+                const basename = dok.file_path.split('/').pop();
+                const pathUrl = `../uploads/lpj/${basename}`;
+                const photoCard = document.createElement('div');
+                photoCard.className = 'photo-item';
+                photoCard.dataset.path = dok.file_path;
+                photoCard.style.cssText = 'background: rgba(0,0,0,0.3); border: 1px solid #2a3545; border-radius: 8px; padding: 10px; text-align: center; position: relative;';
+                photoCard.innerHTML = `
+                    <img src="${pathUrl}" style="max-height: 80px; max-width: 100%; border-radius: 4px; object-fit: contain; margin-bottom: 8px;">
+                    <input type="text" class="form-control photo-caption-input" style="font-size: 0.8rem; padding: 4px 8px;" value="${escapeHtml(dok.caption)}" oninput="serializeProkerPhotos(this)">
+                    <button type="button" class="btn-remove-img" style="position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; background: #e74c3c; border: none; color: #fff; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="removeExistingPhoto(this)"><i class="fas fa-trash"></i></button>
+                `;
+                photosGrid.appendChild(photoCard);
+            });
+        }
+        
         reindexProkers();
         initializeAllMultipoints();
     }
 
     // --- Schritt 4: Proker Belum Terlaksana Dynamic Rows ---
-    function addProkerBelumTerlaksana() {
+    function addProkerBelumTerlaksana(pbtData = null) {
         const container = document.getElementById('pbtContainer');
         const div = document.createElement('div');
         div.className = 'dynamic-row pbt-row';
@@ -1531,6 +1718,18 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             </div>
         `;
         container.appendChild(div);
+        
+        if (pbtData) {
+            div.querySelector('input[name="pbt_name[]"]').value = pbtData['Nama Kegiatan'] || '';
+            div.querySelector('input[name="pbt_sifat[]"]').value = pbtData['Sifat'] || '';
+            div.querySelector('input[name="pbt_tema[]"]').value = pbtData['Tema Kegiatan'] || '';
+            div.querySelector('input[name="pbt_tujuan[]"]').value = pbtData['Tujuan Kegiatan'] || '';
+            div.querySelector('input[name="pbt_tanggal[]"]').value = pbtData['Tanggal Kegiatan'] || pbtData['Target Tanggal Rencana'] || '';
+            div.querySelector('input[name="pbt_pj[]"]').value = pbtData['Penanggung Jawab'] || '';
+            div.querySelector('input[name="pbt_peserta[]"]').value = pbtData['Peserta Kegiatan'] || pbtData['Peserta Rencana'] || '';
+            div.querySelector('input[name="pbt_anggaran[]"]').value = pbtData['Anggaran'] || pbtData['Anggaran Rencana'] || '';
+            div.querySelector('textarea[name="pbt_dokumentasi[]"]').value = pbtData['Dokumentasi'] || pbtData['Hambatan & Kendala Dokumentasi'] || '';
+        }
     }
     
     function formatRupiahJs(number) {
@@ -1874,6 +2073,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         const kId = this.value;
         if (!kId) return;
         
+        const triwulan = document.getElementById('triwulanSelect').value;
+        if (triwulan === 'MUBESMA') {
+            checkAndFetchMubesma();
+            return;
+        }
+        
         // Fetch description/keadaan objektif
         fetch(`buat-lpj.php?ajax_kementerian_id=${kId}`)
             .then(res => res.json())
@@ -1887,6 +2092,118 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         // Fetch and prefill members immediately
         fetchKepengurusan(kId);
     });
+
+    document.getElementById('triwulanSelect').addEventListener('change', function() {
+        const triwulan = this.value;
+        if (triwulan === 'MUBESMA') {
+            checkAndFetchMubesma();
+        }
+    });
+
+    function checkAndFetchMubesma() {
+        const kId = document.getElementById('kementerianSelect').value;
+        const triwulan = document.getElementById('triwulanSelect').value;
+        if (!kId || triwulan !== 'MUBESMA') return;
+        
+        const alertDiv = document.getElementById('kepengurusanAlert');
+        if (alertDiv) {
+            alertDiv.style.display = 'none';
+            alertDiv.className = '';
+            alertDiv.innerHTML = '';
+        }
+        
+        clearIndicators();
+        
+        fetch(`buat-lpj.php?ajax_kementerian_id=${kId}&triwulan=MUBESMA`)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    showKepengurusanError("Gagal mengambil data MUBESMA.");
+                    return;
+                }
+                
+                // Prefill Keadaan Objektif
+                document.getElementById('keadaanObjektif').value = data.deskripsi || '';
+                
+                // Prefill Keanggotaan
+                prefillField('anggotaKetua', data.keanggotaan.ketua || '', 'indicator_ketua');
+                prefillField('anggotaSekretaris', data.keanggotaan.sekretaris || '', 'indicator_sekretaris');
+                prefillField('anggotaBendahara', data.keanggotaan.bendahara || '', 'indicator_bendahara');
+                
+                if (data.keanggotaan.ketua) {
+                    document.getElementById('indicator_ketua').innerHTML = '<i class="fas fa-magic"></i> Diisi otomatis dari gabungan Triwulan I & II · Ubah jika perlu';
+                }
+                if (data.keanggotaan.sekretaris) {
+                    document.getElementById('indicator_sekretaris').innerHTML = '<i class="fas fa-magic"></i> Diisi otomatis dari gabungan Triwulan I & II · Ubah jika perlu';
+                }
+                if (data.keanggotaan.bendahara) {
+                    document.getElementById('indicator_bendahara').innerHTML = '<i class="fas fa-magic"></i> Diisi otomatis dari gabungan Triwulan I & II · Ubah jika perlu';
+                }
+                
+                // Clear and rebuild anggota rows
+                const container = document.getElementById('anggotaListContainer');
+                if (container) {
+                    container.innerHTML = '';
+                    if (data.keanggotaan.anggota && data.keanggotaan.anggota.length > 0) {
+                        data.keanggotaan.anggota.forEach(name => {
+                            addAnggotaRow(name);
+                        });
+                    } else {
+                        addAnggotaRow('');
+                    }
+                }
+                
+                const indicator = document.getElementById('indicator_anggota');
+                if (indicator) {
+                    indicator.className = 'autofill-indicator autofilled';
+                    indicator.innerHTML = '<i class="fas fa-magic"></i> Diisi otomatis dari gabungan Triwulan I & II · Ubah jika perlu';
+                }
+                
+                // Prefill Proker Terlaksana
+                const ptContainer = document.getElementById('ptContainer');
+                if (ptContainer && data.proker_terlaksana) {
+                    ptContainer.innerHTML = '';
+                    if (data.proker_terlaksana.length > 0) {
+                        data.proker_terlaksana.forEach(pt => {
+                            addProkerTerlaksana(pt);
+                        });
+                    } else {
+                        addProkerTerlaksana();
+                    }
+                }
+                
+                // Prefill Proker Belum Terlaksana
+                const pbtContainer = document.getElementById('pbtContainer');
+                if (pbtContainer && data.proker_belum_terlaksana) {
+                    pbtContainer.innerHTML = '';
+                    if (data.proker_belum_terlaksana.length > 0) {
+                        data.proker_belum_terlaksana.forEach(pbt => {
+                            addProkerBelumTerlaksana(pbt);
+                        });
+                    } else {
+                        addProkerBelumTerlaksana();
+                    }
+                }
+                
+                if (alertDiv) {
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.style.padding = '10px 15px';
+                    alertDiv.style.fontSize = '0.85rem';
+                    alertDiv.innerHTML = '<i class="fas fa-magic"></i> Data MUBESMA (gabungan Triwulan I dan II) berhasil disalin secara otomatis. Silakan periksa kembali dan sesuaikan jika ada perubahan.';
+                    alertDiv.style.display = 'block';
+                }
+                lastFetchedKementerianId = kId;
+            })
+            .catch(err => {
+                console.error('Error fetching MUBESMA defaults:', err);
+                showKepengurusanError("Gagal mengambil data gabungan MUBESMA. Isi manual untuk melanjutkan.");
+            });
+    }
 
     // --- Helper Functions for Dynamic Anggota ---
     function escapeHtml(str) {
