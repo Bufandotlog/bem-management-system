@@ -1033,10 +1033,10 @@ if ($is_edit || $is_clone) {
                         <div style="margin-top:15px;">
                             <label>Mode Tanda Tangan</label>
                             <select id="ttd_mode_ketua" onchange="changeTtdMode('ketua')">
-                                <option value="database" style="display:none;">📂 Gunakan TTD Tersimpan</option>
+                                <option value="database" <?php echo !empty($edit_data['panitia_ketua_ttd']) ? 'selected' : ''; ?>>📂 Gunakan TTD Tersimpan</option>
                                 <option value="draw">✍️ Gambar Manual</option>
                                 <option value="upload">📁 Upload Gambar</option>
-                                <option value="none" selected>🚫 Kosong / TTD Basah</option>
+                                <option value="none" <?php echo empty($edit_data['panitia_ketua_ttd']) ? 'selected' : ''; ?>>🚫 Kosong / TTD Basah</option>
                             </select>
                             <div id="wrap_canvas_ketua" style="display:none; margin-top:12px;">
                                 <canvas id="pad_ketua" width="300" height="150"></canvas>
@@ -1044,8 +1044,8 @@ if ($is_edit || $is_clone) {
                             </div>
                             <div id="wrap_upload_ketua" style="display:none; margin-top:12px;"><input type="file" id="upload_ketua" accept="image/png" onchange="handleTtdUpload('ketua', this)"></div>
                             <input type="hidden" name="panitia_ketua_ttd" id="ttd_ketua_val" value="<?php echo htmlspecialchars($edit_data['panitia_ketua_ttd'] ?? ''); ?>">
-                            <div id="preview_ttd_ketua" style="margin-top:15px; display:none; text-align:center;">
-                                <img id="img_preview_ketua" style="max-height:80px; border-radius:8px; border: 1px solid var(--border-color); background: #fff; padding: 5px;">
+                            <div id="preview_ttd_ketua" style="margin-top:15px; <?php echo !empty($edit_data['panitia_ketua_ttd']) ? 'display:block;' : 'display:none;'; ?> text-align:center;">
+                                <img id="img_preview_ketua" src="<?php echo !empty($edit_data['panitia_ketua_ttd']) ? (strpos($edit_data['panitia_ketua_ttd'], 'data:image') !== false ? htmlspecialchars($edit_data['panitia_ketua_ttd']) : uploadUrl($edit_data['panitia_ketua_ttd'])) : ''; ?>" style="max-height:80px; border-radius:8px; border: 1px solid var(--border-color); background: #fff; padding: 5px;">
                             </div>
                         </div>
                     </div>
@@ -1066,10 +1066,10 @@ if ($is_edit || $is_clone) {
                         <div style="margin-top:15px;">
                             <label>Mode Tanda Tangan</label>
                             <select id="ttd_mode_sekretaris" onchange="changeTtdMode('sekretaris')">
-                                <option value="database" style="display:none;">📂 Gunakan TTD Tersimpan</option>
+                                <option value="database" <?php echo !empty($edit_data['panitia_sekretaris_ttd']) ? 'selected' : ''; ?>>📂 Gunakan TTD Tersimpan</option>
                                 <option value="draw">✍️ Gambar Manual</option>
                                 <option value="upload">📁 Upload Gambar</option>
-                                <option value="none" selected>🚫 Kosong / TTD Basah</option>
+                                <option value="none" <?php echo empty($edit_data['panitia_sekretaris_ttd']) ? 'selected' : ''; ?>>🚫 Kosong / TTD Basah</option>
                             </select>
                             <div id="wrap_canvas_sekretaris" style="display:none; margin-top:12px;">
                                 <canvas id="pad_sekretaris" width="300" height="150"></canvas>
@@ -1077,8 +1077,8 @@ if ($is_edit || $is_clone) {
                             </div>
                             <div id="wrap_upload_sekretaris" style="display:none; margin-top:12px;"><input type="file" id="upload_sekretaris" accept="image/png" onchange="handleTtdUpload('sekretaris', this)"></div>
                             <input type="hidden" name="panitia_sekretaris_ttd" id="ttd_sekretaris_val" value="<?php echo htmlspecialchars($edit_data['panitia_sekretaris_ttd'] ?? ''); ?>">
-                            <div id="preview_ttd_sekretaris" style="margin-top:15px; display:none; text-align:center;">
-                                <img id="img_preview_sekretaris" style="max-height:80px; border-radius:8px; border: 1px solid var(--border-color); background: #fff; padding: 5px;">
+                            <div id="preview_ttd_sekretaris" style="margin-top:15px; <?php echo !empty($edit_data['panitia_sekretaris_ttd']) ? 'display:block;' : 'display:none;'; ?> text-align:center;">
+                                <img id="img_preview_sekretaris" src="<?php echo !empty($edit_data['panitia_sekretaris_ttd']) ? (strpos($edit_data['panitia_sekretaris_ttd'], 'data:image') !== false ? htmlspecialchars($edit_data['panitia_sekretaris_ttd']) : uploadUrl($edit_data['panitia_sekretaris_ttd'])) : ''; ?>" style="max-height:80px; border-radius:8px; border: 1px solid var(--border-color); background: #fff; padding: 5px;">
                             </div>
                         </div>
                     </div>
