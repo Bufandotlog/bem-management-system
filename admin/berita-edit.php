@@ -265,6 +265,38 @@ function previewGambarBaru(input) {
     }
 }
 
+// Register Custom Image Blot to support alt attributes in Quill 2.0
+const ImageBlot = Quill.import('formats/image');
+class CustomImageBlot extends ImageBlot {
+    static create(value) {
+        let url = typeof value === 'object' ? (value.src || value.url) : value;
+        let node = super.create(url);
+        if (typeof value === 'object' && value.alt) {
+            node.setAttribute('alt', value.alt);
+        }
+        return node;
+    }
+
+    static formats(domNode) {
+        return {
+            alt: domNode.getAttribute('alt')
+        };
+    }
+
+    format(name, value) {
+        if (name === 'alt') {
+            if (value) {
+                this.domNode.setAttribute('alt', value);
+            } else {
+                this.domNode.removeAttribute('alt');
+            }
+        } else {
+            super.format(name, value);
+        }
+    }
+}
+Quill.register(CustomImageBlot, true);
+
 // Inisialisasi Quill
 const quill = new Quill('#editor-container', {
     theme: 'snow',
