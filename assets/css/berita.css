@@ -454,8 +454,8 @@
 }
 
 .berita-content-image-wrapper.is-portrait .berita-content-image-box {
-    max-width: 320px;
-    flex: 0 0 320px;
+    max-width: 250px;
+    flex: 0 0 250px;
 }
 
 .berita-content-image-wrapper.is-portrait .berita-content-image-footnote {
@@ -474,13 +474,13 @@
 }
 
 .berita-content-image-wrapper.is-landscape .berita-content-image-box {
-    max-width: 500px;
+    max-width: 400px;
     width: 100%;
 }
 
 .berita-content-image-wrapper.is-landscape .berita-content-image-footnote {
     width: 100%;
-    max-width: 500px;
+    max-width: 400px;
     text-align: center;
     padding-top: 1rem;
     border-top: 1px dashed rgba(255, 255, 255, 0.15);
@@ -599,7 +599,7 @@
     }
     
     .berita-content-image-wrapper.is-portrait .berita-content-image-box {
-        max-width: 260px;
+        max-width: 200px;
         flex: 0 0 auto;
     }
     
