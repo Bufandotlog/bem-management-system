@@ -371,36 +371,50 @@
     font-size: 0.9rem;
 }
 
-/* ===== GAMBAR FEATURED MODERN DENGAN FOOTNOTE ===== */
-.berita-featured-image-container {
+/* ===== GAMBAR FEATURED ADAPTIVE ===== */
+.berita-featured-image {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 2px solid var(--biru-soft);
+    background: rgba(0, 0, 0, 0.2);
+    margin: 1.5rem 0 2rem;
+    position: relative;
+}
+
+.berita-featured-image img {
+    width: 100%;
+    height: auto;
+    max-height: 550px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.berita-featured-image:hover img {
+    transform: scale(1.03);
+}
+
+/* ===== INLINE CONTENT IMAGES WITH FOOTNOTE ===== */
+.berita-content-image-container {
     margin: 2rem 0;
     width: 100%;
 }
 
-.berita-featured-image-wrapper {
+.berita-content-image-wrapper {
     display: flex;
     gap: 2rem;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.berita-featured-image-wrapper.has-footnote {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     padding: 1.5rem;
     backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
 }
 
-.berita-featured-image-wrapper.no-footnote {
-    border: none;
-    background: transparent;
-    padding: 0;
-    backdrop-filter: none;
-}
-
-.berita-featured-image-box {
+.berita-content-image-box {
     overflow: hidden;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -411,25 +425,20 @@
     transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
-.berita-featured-image-wrapper.no-footnote .berita-featured-image-box {
-    max-width: 500px;
-    width: 100%;
-    margin: 0 auto;
-}
-
-.berita-featured-image-box img {
+.berita-content-image-box img {
     max-width: 100%;
     height: auto;
     object-fit: contain;
     display: block;
+    margin: 0 !important;
 }
 
-.berita-featured-image-box:hover {
+.berita-content-image-box:hover {
     border-color: var(--biru-primary);
     transform: scale(1.02);
 }
 
-.berita-image-footnote {
+.berita-content-image-footnote {
     font-size: 0.95rem;
     line-height: 1.6;
     color: rgba(255, 255, 255, 0.7);
@@ -439,17 +448,17 @@
 }
 
 /* ===== TATA LETAK JIKA VERTIKAL (PORTRAIT) ===== */
-.berita-featured-image-wrapper.is-portrait {
+.berita-content-image-wrapper.is-portrait {
     flex-direction: row;
     align-items: stretch;
 }
 
-.berita-featured-image-wrapper.is-portrait .berita-featured-image-box {
+.berita-content-image-wrapper.is-portrait .berita-content-image-box {
     max-width: 320px;
     flex: 0 0 320px;
 }
 
-.berita-featured-image-wrapper.is-portrait .berita-image-footnote {
+.berita-content-image-wrapper.is-portrait .berita-content-image-footnote {
     flex: 1;
     display: flex;
     align-items: center;
@@ -459,17 +468,17 @@
 }
 
 /* ===== TATA LETAK JIKA HORIZONTAL (LANDSCAPE) ===== */
-.berita-featured-image-wrapper.is-landscape {
+.berita-content-image-wrapper.is-landscape {
     flex-direction: column;
     align-items: center;
 }
 
-.berita-featured-image-wrapper.is-landscape .berita-featured-image-box {
+.berita-content-image-wrapper.is-landscape .berita-content-image-box {
     max-width: 500px;
     width: 100%;
 }
 
-.berita-featured-image-wrapper.is-landscape .berita-image-footnote {
+.berita-content-image-wrapper.is-landscape .berita-content-image-footnote {
     width: 100%;
     max-width: 500px;
     text-align: center;
@@ -575,21 +584,26 @@
     }
 
     /* Gambar 1:1 tetap proporsional di mobile */
-    .berita-featured-image-container {
+    .berita-featured-image {
+        margin: 1rem 0 1.5rem;
+        border-radius: 12px;
+    }
+
+    .berita-content-image-container {
         margin: 1.5rem 0;
     }
     
-    .berita-featured-image-wrapper.is-portrait {
+    .berita-content-image-wrapper.is-portrait {
         flex-direction: column;
         align-items: center;
     }
     
-    .berita-featured-image-wrapper.is-portrait .berita-featured-image-box {
+    .berita-content-image-wrapper.is-portrait .berita-content-image-box {
         max-width: 260px;
         flex: 0 0 auto;
     }
     
-    .berita-featured-image-wrapper.is-portrait .berita-image-footnote {
+    .berita-content-image-wrapper.is-portrait .berita-content-image-footnote {
         border-left: none;
         border-top: 3px solid var(--biru-primary);
         padding-left: 0;

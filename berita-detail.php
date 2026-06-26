@@ -67,48 +67,13 @@ $page_title = $berita['judul'];
     </div>
 
     <?php if (!empty($berita['gambar'])): ?>
-    <div class="berita-featured-image-container">
-        <div class="berita-featured-image-wrapper <?php echo empty($berita['footnote']) ? 'no-footnote' : 'has-footnote'; ?>" id="imageWrapper">
-            <div class="berita-featured-image-box">
-                <img src="<?php echo uploadUrl($berita['gambar']); ?>"
-                     alt="<?php echo htmlspecialchars($berita['judul']); ?>"
-                     loading="lazy"
-                     id="featuredImage"
-                     onerror="this.closest('.berita-featured-image-container').style.display='none'">
-            </div>
-            <?php if (!empty($berita['footnote'])): ?>
-                <div class="berita-image-footnote">
-                    <?php echo nl2br(htmlspecialchars($berita['footnote'])); ?>
-                </div>
-            <?php endif; ?>
-        </div>
+    <div class="berita-featured-image">
+        <!-- ✅ FIX: uploadUrl() bukan BASE_URL . 'uploads/' . $path -->
+        <img src="<?php echo uploadUrl($berita['gambar']); ?>"
+             alt="<?php echo htmlspecialchars($berita['judul']); ?>"
+             loading="lazy"
+             onerror="this.parentElement.style.display='none'">
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const img = document.getElementById('featuredImage');
-            const wrapper = document.getElementById('imageWrapper');
-            if (img && wrapper && !wrapper.classList.contains('no-footnote')) {
-                const checkOrientation = () => {
-                    const width = img.naturalWidth;
-                    const height = img.naturalHeight;
-                    if (width && height) {
-                        if (height > width) {
-                            wrapper.classList.add('is-portrait');
-                            wrapper.classList.remove('is-landscape');
-                        } else {
-                            wrapper.classList.add('is-landscape');
-                            wrapper.classList.remove('is-portrait');
-                        }
-                    }
-                };
-                if (img.complete) {
-                    checkOrientation();
-                } else {
-                    img.addEventListener('load', checkOrientation);
-                }
-            }
-        });
-    </script>
     <?php endif; ?>
 
     <div class="berita-content">
@@ -117,6 +82,58 @@ $page_title = $berita['judul'];
         echo $berita['konten'] ?? '';
         ?>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const contentImages = document.querySelectorAll('.berita-content img');
+            contentImages.forEach((img, idx) => {
+                const altText = img.getAttribute('alt');
+                if (altText && altText.trim() !== '') {
+                    // Buat struktur container pembungkus yang rapi
+                    const container = document.createElement('div');
+                    container.className = 'berita-content-image-container';
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'berita-content-image-wrapper';
+                    wrapper.id = 'contentImageWrapper_' + idx;
+                    
+                    const box = document.createElement('div');
+                    box.className = 'berita-content-image-box';
+                    
+                    const footnote = document.createElement('div');
+                    footnote.className = 'berita-content-image-footnote';
+                    footnote.innerText = altText;
+                    
+                    // Susun elemen
+                    img.parentNode.insertBefore(container, img);
+                    box.appendChild(img);
+                    wrapper.appendChild(box);
+                    wrapper.appendChild(footnote);
+                    container.appendChild(wrapper);
+                    
+                    // Deteksi orientasi gambar
+                    const checkOrientation = () => {
+                        const width = img.naturalWidth;
+                        const height = img.naturalHeight;
+                        if (width && height) {
+                            if (height > width) {
+                                wrapper.classList.add('is-portrait');
+                                wrapper.classList.remove('is-landscape');
+                            } else {
+                                wrapper.classList.add('is-landscape');
+                                wrapper.classList.remove('is-portrait');
+                            }
+                        }
+                    };
+                    if (img.complete) {
+                        checkOrientation();
+                    } else {
+                        img.addEventListener('load', checkOrientation);
+                    }
+                }
+            });
+        });
+    </script>
 
     <div class="berita-footer">
         <a href="berita.php" class="btn btn-kembali">
