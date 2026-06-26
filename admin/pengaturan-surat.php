@@ -83,6 +83,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'tamba
     }
 }
 
+// Proses Edit / Update Panitia Tetap
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit_panitia') {
+    if (!csrfVerify()) {
+        $error = "Token CSRF tidak valid.";
+    } else {
+        $id_update = (int)$_POST['panitia_id'];
+        $nama    = strtoupper(sanitizeText($_POST['nama_panitia'] ?? '', 100));
+        $jabatan = $_POST['jabatan_panitia'] === 'sekretaris' ? 'sekretaris' : 'ketua';
+        
+        if (empty($nama)) {
+            $error = "Nama wajib diisi.";
+        } else {
+            if (!empty($_FILES['file_ttd']['name'])) {
+                $uploaded = uploadFile($_FILES['file_ttd'], 'ttd');
+                if ($uploaded) {
+                    $old_data = dbFetchOne("SELECT file_ttd FROM panitia_tetap WHERE id = ? AND periode_id = ?", [$id_update, $periode_id], "ii");
+                    if ($old_data) {
+                        $old_path = UPLOAD_PATH . '/' . $old_data['file_ttd'];
+                        if (file_exists($old_path)) unlink($old_path);
+                    }
+                    dbQuery("UPDATE panitia_tetap SET nama = ?, jabatan = ?, file_ttd = ? WHERE id = ? AND periode_id = ?", [$nama, $jabatan, $uploaded, $id_update, $periode_id], "sssii");
+                    $success = "Data panitia dan tanda tangan berhasil diperbarui.";
+                } else {
+                    $error = "Gagal mengunggah tanda tangan baru.";
+                }
+            } else {
+                dbQuery("UPDATE panitia_tetap SET nama = ?, jabatan = ? WHERE id = ? AND periode_id = ?", [$nama, $jabatan, $id_update, $periode_id], "ssii");
+                $success = "Data panitia berhasil diperbarui.";
+            }
+        }
+    }
+}
+
 // Proses Hapus Panitia Tetap
 if (isset($_GET['hapus_panitia']) && is_numeric($_GET['hapus_panitia'])) {
     if (hash_equals($_SESSION['csrf_token'] ?? '', $_GET['csrf_token'] ?? '')) {
@@ -136,6 +169,13 @@ $edit_id = (isset($_GET['edit']) && is_numeric($_GET['edit'])) ? (int)$_GET['edi
 $edit_data = null;
 if ($edit_id > 0) {
     $edit_data = dbFetchOne("SELECT * FROM surat_templates WHERE id = ? AND periode_id = ?", [$edit_id, $periode_id], "ii");
+}
+
+// Mode Edit Panitia Setup
+$edit_panitia_id = (isset($_GET['edit_panitia']) && is_numeric($_GET['edit_panitia'])) ? (int)$_GET['edit_panitia'] : 0;
+$edit_panitia_data = null;
+if ($edit_panitia_id > 0) {
+    $edit_panitia_data = dbFetchOne("SELECT * FROM panitia_tetap WHERE id = ? AND periode_id = ?", [$edit_panitia_id, $periode_id], "ii");
 }
 
 // Ambil semua template
@@ -533,15 +573,38 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
     <div class="card-body">
         <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 20px;">Simpan data Ketua dan Sekretaris Pelaksana di sini agar saat pembuatan surat nanti Anda tinggal memilih dari dropdown.</p>
         <div style="display:flex; gap:30px; flex-wrap:wrap;">
-            <div style="flex:1; min-width:300px; background:rgba(0,0,0,0.2); padding:20px; border-radius:8px;">
-                <h4 style="margin-top:0;"><i class="fas fa-user-plus"></i> Tambah Panitia Baru</h4>
+            <div id="form-panitia" style="flex:1; min-width:300px; background:rgba(0,0,0,0.2); padding:20px; border-radius:8px;">
+                <h4 style="margin-top:0;"><i class="fas <?php echo $edit_panitia_data ? 'fa-edit' : 'fa-user-plus'; ?>"></i> <?php echo $edit_panitia_data ? 'Edit Panitia' : 'Tambah Panitia Baru'; ?></h4>
                 <form method="POST" enctype="multipart/form-data">
                     <?php echo csrfField(); ?>
-                    <input type="hidden" name="action" value="tambah_panitia">
-                    <div class="form-group"><label>Nama Lengkap (UPPERCASE)</label><input type="text" name="nama_panitia" class="form-control" required></div>
-                    <div class="form-group"><label>Jabatan</label><select name="jabatan_panitia" class="form-control"><option value="ketua">Ketua Pelaksana</option><option value="sekretaris">Sekretaris Pelaksana</option></select></div>
-                    <div class="form-group"><label>Unggah Tanda Tangan (PNG)</label><input type="file" name="file_ttd" class="form-control" accept="image/png" required></div>
-                    <button type="submit" class="btn-primary" style="width:100%;"><i class="fas fa-plus"></i> Simpan</button>
+                    <input type="hidden" name="action" value="<?php echo $edit_panitia_data ? 'edit_panitia' : 'tambah_panitia'; ?>">
+                    <?php if ($edit_panitia_data): ?>
+                        <input type="hidden" name="panitia_id" value="<?php echo $edit_panitia_data['id']; ?>">
+                    <?php endif; ?>
+                    <div class="form-group"><label>Nama Lengkap (UPPERCASE)</label><input type="text" name="nama_panitia" class="form-control" value="<?php echo htmlspecialchars($edit_panitia_data['nama'] ?? ''); ?>" required></div>
+                    <div class="form-group">
+                        <label>Jabatan</label>
+                        <select name="jabatan_panitia" class="form-control">
+                            <option value="ketua" <?php echo ($edit_panitia_data['jabatan'] ?? '') === 'ketua' ? 'selected' : ''; ?>>Ketua Pelaksana</option>
+                            <option value="sekretaris" <?php echo ($edit_panitia_data['jabatan'] ?? '') === 'sekretaris' ? 'selected' : ''; ?>>Sekretaris Pelaksana</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unggah Tanda Tangan (PNG)</label>
+                        <input type="file" name="file_ttd" class="form-control" accept="image/png" <?php echo $edit_panitia_data ? '' : 'required'; ?>>
+                        <?php if ($edit_panitia_data): ?>
+                            <div style="margin-top: 8px;">
+                                <span style="font-size: 0.75rem; color: #aaa;">Tanda Tangan Saat Ini:</span>
+                                <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block; vertical-align: middle; margin-left: 8px;">
+                                    <img src="<?php echo uploadUrl($edit_panitia_data['file_ttd']); ?>" style="max-height:30px; mix-blend-mode:multiply;">
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%;"><i class="fas fa-save"></i> <?php echo $edit_panitia_data ? 'Perbarui' : 'Simpan'; ?></button>
+                    <?php if ($edit_panitia_data): ?>
+                        <a href="pengaturan-surat.php" class="btn-buat" style="width:100%; margin-top:10px; background:#444; justify-content:center; display: flex; align-items: center; text-decoration: none;"><i class="fas fa-times"></i> Batal Edit</a>
+                    <?php endif; ?>
                 </form>
             </div>
             <div style="flex:2; min-width:350px;">
@@ -557,7 +620,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                                 <tr>
                                     <td data-label="Nama & Jabatan"><div style="font-weight:bold; color:#fff;"><?php echo htmlspecialchars($pt['nama']); ?></div><div style="font-size:0.75rem; color:#4A90E2;"><?php echo $pt['jabatan'] === 'ketua' ? 'Ketua Pelaksana' : 'Sekretaris'; ?></div></td>
                                     <td data-label="Pratinjau TTD" style="text-align:center;"><div style="background:#fff; padding:5px; border-radius:4px; display:inline-block;"><img src="<?php echo uploadUrl($pt['file_ttd']); ?>" style="max-height:40px; mix-blend-mode:multiply;"></div></td>
-                                    <td data-label="Aksi" style="text-align:center;"><a href="?hapus_panitia=<?php echo $pt['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" class="btn-delete" onclick="return confirm('Hapus?')"><i class="fas fa-trash"></i> Hapus</a></td>
+                                    <td data-label="Aksi" style="text-align:center;"><div class="btn-group-mobile"><a href="?edit_panitia=<?php echo $pt['id']; ?>#form-panitia" class="btn-edit" style="margin-right:5px;"><i class="fas fa-edit"></i> Edit</a><a href="?hapus_panitia=<?php echo $pt['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" class="btn-delete" onclick="return confirm('Hapus?')"><i class="fas fa-trash"></i> Hapus</a></div></td>
                                 </tr>
                             <?php endforeach; endif; ?>
                         </tbody>
