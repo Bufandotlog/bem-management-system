@@ -433,6 +433,7 @@ if (empty($pts)) {
 
 // Fetch all ministries for selection
 $kementerian_list = dbFetchAll("SELECT id, nama FROM kementerian WHERE periode_id = ? ORDER BY urutan ASC", [$periode_id], "i");
+$selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?? ''));
 ?>
 
 <style>
@@ -870,9 +871,9 @@ $kementerian_list = dbFetchAll("SELECT id, nama FROM kementerian WHERE periode_i
                         <label>Triwulan Periode</label>
                         <select name="triwulan" class="form-control" required <?php echo $edit_data ? 'disabled' : ''; ?>>
                             <option value="">-- Pilih Triwulan --</option>
-                            <option value="I" <?php echo (($edit_data['triwulan'] ?? '') === 'I') ? 'selected' : ''; ?>>TRIWULAN I</option>
-                            <option value="II" <?php echo (($edit_data['triwulan'] ?? '') === 'II') ? 'selected' : ''; ?>>TRIWULAN II</option>
-                            <option value="MUBESMA" <?php echo (($edit_data['triwulan'] ?? '') === 'MUBESMA') ? 'selected' : ''; ?>>MUBESMA (gabungan TRIWULAN I dan TRIWULAN II)</option>
+                            <option value="I" <?php echo ($selected_triwulan === 'I') ? 'selected' : ''; ?>>TRIWULAN I</option>
+                            <option value="II" <?php echo ($selected_triwulan === 'II') ? 'selected' : ''; ?>>TRIWULAN II</option>
+                            <option value="MUBESMA" <?php echo ($selected_triwulan === 'MUBESMA') ? 'selected' : ''; ?>>MUBESMA (gabungan TRIWULAN I dan TRIWULAN II)</option>
                         </select>
                         <?php if ($edit_data): ?>
                             <input type="hidden" name="triwulan" value="<?php echo htmlspecialchars($edit_data['triwulan']); ?>">

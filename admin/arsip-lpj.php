@@ -136,6 +136,20 @@ $query_lpj = "SELECT l.*, k.nama as nama_kementerian, k.logo as logo_kementerian
               ORDER BY l.updated_at DESC";
 
 $lpj_list = dbFetchAll($query_lpj, $query_params, $query_types);
+
+// Kelompokkan triwulan berdasarkan filter atau tampilkan semua default
+$groups_to_display = [];
+if (!empty($filter_triwulan)) {
+    $groups_to_display = [$filter_triwulan];
+} else {
+    $groups_to_display = ['I', 'II', 'MUBESMA'];
+    // Tambahkan triwulan lain jika ada di database (agar tidak hilang data)
+    foreach ($lpj_list as $lpj) {
+        if (!in_array($lpj['triwulan'], $groups_to_display)) {
+            $groups_to_display[] = $lpj['triwulan'];
+        }
+    }
+}
 ?>
 
 <style>
@@ -264,6 +278,101 @@ $lpj_list = dbFetchAll($query_lpj, $query_params, $query_types);
         color: #ffc107;
         border: 1px solid #ffc107;
     }
+
+    /* ===== GROUP STYLES ===== */
+    .lpj-group-section {
+        margin-bottom: 45px;
+    }
+    .lpj-group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #2a3545;
+        position: relative;
+    }
+    .lpj-group-header::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100px;
+        height: 2px;
+        background: #4A90E2;
+    }
+    .lpj-group-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .lpj-group-title i {
+        font-size: 1.4rem;
+        color: #4A90E2;
+    }
+    .lpj-group-title h2 {
+        font-size: 1.25rem;
+        color: #fff;
+        margin: 0;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+    .lpj-group-count {
+        font-size: 0.78rem;
+        background: rgba(74, 144, 226, 0.15);
+        color: #8BB9F0;
+        border: 1px solid rgba(74, 144, 226, 0.3);
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+    
+    .empty-group-placeholder {
+        background: rgba(15, 18, 23, 0.4);
+        border: 1px dashed #2a3545;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+    }
+    .empty-group-placeholder:hover {
+        border-color: rgba(74, 144, 226, 0.4);
+        background: rgba(15, 18, 23, 0.6);
+    }
+    .empty-group-placeholder i {
+        font-size: 2.2rem;
+        color: #55657e;
+    }
+    .empty-group-placeholder p {
+        color: #7a8b9e;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    .btn-buat-quick {
+        font-size: 0.78rem;
+        color: #4A90E2;
+        background: rgba(74, 144, 226, 0.1);
+        border: 1px solid rgba(74, 144, 226, 0.2);
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-buat-quick:hover {
+        background: #4A90E2;
+        color: #fff;
+        border-color: #4A90E2;
+        transform: translateY(-1px);
+    }
 </style>
 
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -315,70 +424,126 @@ $lpj_list = dbFetchAll($query_lpj, $query_params, $query_types);
     <?php echo csrfField(); ?>
     <input type="hidden" name="action_consolidate" value="1">
 
-    <div class="lpj-grid">
-        <?php if (empty($lpj_list)): ?>
-            <div style="grid-column: span 3; text-align: center; padding: 40px; background: #0f1217; border: 1px solid #2a3545; border-radius: 12px;">
-                <i class="fas fa-file-excel" style="font-size: 3rem; color: #666; margin-bottom: 15px;"></i>
-                <p style="color: #888;">Belum ada dokumen LPJ yang sesuai dengan filter.</p>
-                <a href="buat-lpj.php" class="btn-primary" style="margin-top: 10px;"><i class="fas fa-plus"></i> Buat LPJ Sekarang</a>
-            </div>
-        <?php else: foreach ($lpj_list as $lpj):
-            $is_draft = $lpj['status'] === 'draft';
-            $logo = $lpj['logo_kementerian'] ? uploadUrl($lpj['logo_kementerian']) : BASE_URL . 'assets/images/default-logo.png';
+    <?php if (empty($lpj_list)): ?>
+        <div style="text-align: center; padding: 40px; background: #0f1217; border: 1px solid #2a3545; border-radius: 12px; margin-bottom: 30px;">
+            <i class="fas fa-file-excel" style="font-size: 3rem; color: #666; margin-bottom: 15px;"></i>
+            <p style="color: #888;">Belum ada dokumen LPJ yang sesuai dengan filter.</p>
+            <a href="buat-lpj.php" class="btn-primary" style="margin-top: 10px;"><i class="fas fa-plus"></i> Buat LPJ Sekarang</a>
+        </div>
+    <?php else: ?>
+        <?php 
+        // Group the LPJ items
+        $grouped_lpj = [];
+        foreach ($groups_to_display as $g) {
+            $grouped_lpj[$g] = [];
+        }
+        foreach ($lpj_list as $lpj) {
+            $tw = $lpj['triwulan'];
+            $grouped_lpj[$tw][] = $lpj;
+        }
+        
+        foreach ($groups_to_display as $group_key):
+            $group_items = $grouped_lpj[$group_key] ?? [];
+            
+            // Define display name for group
+            $group_name = '';
+            $group_icon = 'fas fa-calendar-alt';
+            if ($group_key === 'I') {
+                $group_name = 'TRIWULAN I';
+                $group_icon = 'fas fa-calendar-minus';
+            } elseif ($group_key === 'II') {
+                $group_name = 'TRIWULAN II';
+                $group_icon = 'fas fa-calendar-plus';
+            } elseif ($group_key === 'MUBESMA') {
+                $group_name = 'MUBESMA (Gabungan Triwulan I & II)';
+                $group_icon = 'fas fa-scroll';
+            } else {
+                $group_name = 'TRIWULAN ' . htmlspecialchars($group_key);
+            }
+            
+            // Skip empty groups if we have filter active
+            if (empty($group_items) && (!empty($filter_triwulan) || $filter_kementerian > 0)) {
+                continue;
+            }
         ?>
-            <div class="lpj-card <?php echo $is_draft ? 'lpj-draft' : ''; ?>">
-                <div class="lpj-card-header">
-                    <div class="logo-container">
-                        <img src="<?php echo $logo; ?>" alt="Logo">
-                    </div>
-                    <div>
-                        <h3><?php echo htmlspecialchars($lpj['nama_kementerian']); ?></h3>
-                        <span class="status-badge <?php echo $is_draft ? 'status-draft' : 'status-submitted'; ?>">
-                            <?php echo $is_draft ? 'Draft' : 'Submitted'; ?>
-                        </span>
+            <div class="lpj-group-section">
+                <div class="lpj-group-header">
+                    <div class="lpj-group-title">
+                        <i class="<?php echo $group_icon; ?>"></i>
+                        <h2><?php echo $group_name; ?></h2>
+                        <span class="lpj-group-count"><?php echo count($group_items); ?> Dokumen</span>
                     </div>
                 </div>
                 
-                <div class="lpj-card-body">
-                    <div class="info-row">
-                        <span>Triwulan:</span>
-                        <span class="info-value">
-                            <?php 
-                            if ($lpj['triwulan'] === 'MUBESMA') {
-                                echo 'MUBESMA';
-                            } else {
-                                echo 'Triwulan ' . htmlspecialchars($lpj['triwulan']);
-                            }
-                            ?>
-                        </span>
+                <?php if (empty($group_items)): ?>
+                    <div class="empty-group-placeholder">
+                        <i class="far fa-folder-open"></i>
+                        <p>Belum ada LPJ kementerian yang dibuat untuk periode ini.</p>
+                        <a href="buat-lpj.php?triwulan=<?php echo urlencode($group_key); ?>" class="btn-buat-quick"><i class="fas fa-plus"></i> Mulai Buat</a>
                     </div>
-                    <div class="info-row">
-                        <span>Diperbarui:</span>
-                        <span class="info-value"><?php echo formatTanggal($lpj['updated_at'], true); ?></span>
+                <?php else: ?>
+                    <div class="lpj-grid">
+                        <?php foreach ($group_items as $lpj): 
+                            $is_draft = $lpj['status'] === 'draft';
+                            $logo = $lpj['logo_kementerian'] ? uploadUrl($lpj['logo_kementerian']) : BASE_URL . 'assets/images/default-logo.png';
+                        ?>
+                            <div class="lpj-card <?php echo $is_draft ? 'lpj-draft' : ''; ?>">
+                                <div class="lpj-card-header">
+                                    <div class="logo-container">
+                                        <img src="<?php echo $logo; ?>" alt="Logo">
+                                    </div>
+                                    <div>
+                                        <h3><?php echo htmlspecialchars($lpj['nama_kementerian']); ?></h3>
+                                        <span class="status-badge <?php echo $is_draft ? 'status-draft' : 'status-submitted'; ?>">
+                                            <?php echo $is_draft ? 'Draft' : 'Submitted'; ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="lpj-card-body">
+                                    <div class="info-row">
+                                        <span>Triwulan:</span>
+                                        <span class="info-value">
+                                            <?php 
+                                            if ($lpj['triwulan'] === 'MUBESMA') {
+                                                echo 'MUBESMA';
+                                            } else {
+                                                echo 'Triwulan ' . htmlspecialchars($lpj['triwulan']);
+                                            }
+                                            ?>
+                                        </span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span>Diperbarui:</span>
+                                        <span class="info-value"><?php echo formatTanggal($lpj['updated_at'], true); ?></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="lpj-card-actions">
+                                    <?php if (!$is_draft): ?>
+                                        <label class="lpj-checkbox-label">
+                                            <input type="checkbox" name="selected_lpj[]" value="<?php echo $lpj['id']; ?>">
+                                            <span>Pilih</span>
+                                        </label>
+                                    <?php else: ?>
+                                        <span style="font-size: 0.75rem; color: #888; font-style: italic;">Selesaikan draft untuk konsolidasi</span>
+                                    <?php endif; ?>
+                                    
+                                    <div style="display: flex; gap: 6px;">
+                                        <a href="buat-lpj.php?id=<?php echo $lpj['id']; ?>" class="btn-edit" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fas fa-edit"></i> Edit</a>
+                                        <?php if (!empty($lpj['file_path'])): ?>
+                                            <a href="<?php echo uploadUrl($lpj['file_path']); ?>" class="btn-buat" style="padding: 4px 8px; font-size: 0.75rem; background: #4A90E2;" download><i class="fas fa-download"></i> Docx</a>
+                                        <?php endif; ?>
+                                        <button type="button" class="btn-delete" style="padding: 4px 8px; font-size: 0.75rem;" onclick="confirmDelete(<?php echo $lpj['id']; ?>)"><i class="fas fa-trash"></i> Hapus</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                </div>
-                
-                <div class="lpj-card-actions">
-                    <?php if (!$is_draft): ?>
-                        <label class="lpj-checkbox-label">
-                            <input type="checkbox" name="selected_lpj[]" value="<?php echo $lpj['id']; ?>">
-                            <span>Pilih</span>
-                        </label>
-                    <?php else: ?>
-                        <span style="font-size: 0.75rem; color: #888; font-style: italic;">Selesaikan draft untuk konsolidasi</span>
-                    <?php endif; ?>
-                    
-                    <div style="display: flex; gap: 6px;">
-                        <a href="buat-lpj.php?id=<?php echo $lpj['id']; ?>" class="btn-edit" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fas fa-edit"></i> Edit</a>
-                        <?php if (!empty($lpj['file_path'])): ?>
-                            <a href="<?php echo uploadUrl($lpj['file_path']); ?>" class="btn-buat" style="padding: 4px 8px; font-size: 0.75rem; background: #4A90E2;" download><i class="fas fa-download"></i> Docx</a>
-                        <?php endif; ?>
-                        <button type="button" class="btn-delete" style="padding: 4px 8px; font-size: 0.75rem;" onclick="confirmDelete(<?php echo $lpj['id']; ?>)"><i class="fas fa-trash"></i> Hapus</button>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
-        <?php endforeach; endif; ?>
-    </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </form>
 
 <!-- Delete Form -->
