@@ -95,19 +95,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit_
         if (empty($nama)) {
             $error = "Nama wajib diisi.";
         } else {
+            $hapus_ttd = isset($_POST['hapus_ttd_lama']) && $_POST['hapus_ttd_lama'] === '1';
+
             if (!empty($_FILES['file_ttd']['name'])) {
                 $uploaded = uploadFile($_FILES['file_ttd'], 'ttd');
                 if ($uploaded) {
                     $old_data = dbFetchOne("SELECT file_ttd FROM panitia_tetap WHERE id = ? AND periode_id = ?", [$id_update, $periode_id], "ii");
-                    if ($old_data) {
-                        $old_path = UPLOAD_PATH . '/' . $old_data['file_ttd'];
-                        if (file_exists($old_path)) unlink($old_path);
+                    if ($old_data && !empty($old_data['file_ttd'])) {
+                        deleteFile($old_data['file_ttd']);
                     }
                     dbQuery("UPDATE panitia_tetap SET nama = ?, jabatan = ?, file_ttd = ? WHERE id = ? AND periode_id = ?", [$nama, $jabatan, $uploaded, $id_update, $periode_id], "sssii");
                     $success = "Data panitia dan tanda tangan berhasil diperbarui.";
                 } else {
                     $error = "Gagal mengunggah tanda tangan baru.";
                 }
+            } else if ($hapus_ttd) {
+                $old_data = dbFetchOne("SELECT file_ttd FROM panitia_tetap WHERE id = ? AND periode_id = ?", [$id_update, $periode_id], "ii");
+                if ($old_data && !empty($old_data['file_ttd'])) {
+                    deleteFile($old_data['file_ttd']);
+                }
+                dbQuery("UPDATE panitia_tetap SET nama = ?, jabatan = ?, file_ttd = '' WHERE id = ? AND periode_id = ?", [$nama, $jabatan, $id_update, $periode_id], "ssii");
+                $success = "Data panitia diperbarui dan tanda tangan lama dihapus.";
             } else {
                 dbQuery("UPDATE panitia_tetap SET nama = ?, jabatan = ? WHERE id = ? AND periode_id = ?", [$nama, $jabatan, $id_update, $periode_id], "ssii");
                 $success = "Data panitia berhasil diperbarui.";
@@ -122,8 +130,9 @@ if (isset($_GET['hapus_panitia']) && is_numeric($_GET['hapus_panitia'])) {
         $id_hapus = (int)$_GET['hapus_panitia'];
         $data = dbFetchOne("SELECT file_ttd FROM panitia_tetap WHERE id = ? AND periode_id = ?", [$id_hapus, $periode_id], "ii");
         if ($data) {
-            $old_path = UPLOAD_PATH . '/' . $data['file_ttd'];
-            if (file_exists($old_path)) unlink($old_path);
+            if (!empty($data['file_ttd'])) {
+                deleteFile($data['file_ttd']);
+            }
             dbQuery("DELETE FROM panitia_tetap WHERE id = ? AND periode_id = ?", [$id_hapus, $periode_id], "ii");
             $success = "Data panitia berhasil dihapus.";
         }
@@ -592,12 +601,19 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                     <div class="form-group">
                         <label>Unggah Tanda Tangan (PNG)</label>
                         <input type="file" name="file_ttd" class="form-control" accept="image/png" <?php echo $edit_panitia_data ? '' : 'required'; ?>>
-                        <?php if ($edit_panitia_data): ?>
-                            <div style="margin-top: 8px;">
+                        <?php if ($edit_panitia_data && !empty($edit_panitia_data['file_ttd'])): ?>
+                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <span style="font-size: 0.75rem; color: #aaa;">Tanda Tangan Saat Ini:</span>
-                                <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block; vertical-align: middle; margin-left: 8px;">
+                                <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block; vertical-align: middle;">
                                     <img src="<?php echo uploadUrl($edit_panitia_data['file_ttd']); ?>" style="max-height:30px; mix-blend-mode:multiply;">
                                 </div>
+                                <label style="font-size: 0.75rem; color: #ff6b6b; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
+                                    <input type="checkbox" name="hapus_ttd_lama" value="1"> Hapus TTD saat ini
+                                </label>
+                            </div>
+                        <?php elseif ($edit_panitia_data): ?>
+                            <div style="margin-top: 8px;">
+                                <span style="font-size: 0.75rem; color: #888; font-style: italic;">(Belum ada tanda tangan diunggah / TTD Basah)</span>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -619,7 +635,15 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                             <?php else: foreach ($list_panitia as $pt): ?>
                                 <tr>
                                     <td data-label="Nama & Jabatan"><div style="font-weight:bold; color:#fff;"><?php echo htmlspecialchars($pt['nama']); ?></div><div style="font-size:0.75rem; color:#4A90E2;"><?php echo $pt['jabatan'] === 'ketua' ? 'Ketua Pelaksana' : 'Sekretaris'; ?></div></td>
-                                    <td data-label="Pratinjau TTD" style="text-align:center;"><div style="background:#fff; padding:5px; border-radius:4px; display:inline-block;"><img src="<?php echo uploadUrl($pt['file_ttd']); ?>" style="max-height:40px; mix-blend-mode:multiply;"></div></td>
+                                    <td data-label="Pratinjau TTD" style="text-align:center;">
+                                        <?php if (!empty($pt['file_ttd'])): ?>
+                                            <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block;">
+                                                <img src="<?php echo uploadUrl($pt['file_ttd']); ?>" style="max-height:40px; mix-blend-mode:multiply;">
+                                            </div>
+                                        <?php else: ?>
+                                            <span style="font-size: 0.75rem; color: #888; font-style: italic;">TTD Basah</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td data-label="Aksi" style="text-align:center;"><div class="btn-group-mobile"><a href="?edit_panitia=<?php echo $pt['id']; ?>#form-panitia" class="btn-edit" style="margin-right:5px;"><i class="fas fa-edit"></i> Edit</a><a href="?hapus_panitia=<?php echo $pt['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" class="btn-delete" onclick="return confirm('Hapus?')"><i class="fas fa-trash"></i> Hapus</a></div></td>
                                 </tr>
                             <?php endforeach; endif; ?>
