@@ -38,6 +38,18 @@ function ensureUploadFolders() {
 // Jalankan otomatis SETELAH UPLOAD_PATH didefinisikan
 ensureUploadFolders();
 
+// Auto-migration: Pastikan kolom footnote ada di tabel berita
+try {
+    dbQuery("SELECT footnote FROM berita LIMIT 1");
+} catch (Exception $e) {
+    try {
+        dbQuery("ALTER TABLE berita ADD COLUMN footnote TEXT DEFAULT NULL");
+    } catch (Exception $ex) {
+        // Abaikan jika database belum siap
+    }
+}
+
+
 // ============================================
 // FUNGSI HELPER PATH & URL (unchanged)
 // ============================================

@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
     $judul   = sanitizeText($_POST['judul']   ?? '', 255);
     $penulis = sanitizeText($_POST['penulis'] ?? '', 100);
     $konten  = sanitizeHtml($_POST['konten']  ?? '');
+    $footnote = sanitizeText($_POST['footnote'] ?? '', 1000);
 
     $tanggal = $_POST['tanggal'] ?? '';
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal) ||
@@ -84,17 +85,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
 
     if ($id) {
         dbQuery(
-            "UPDATE berita SET judul=?, slug=?, tanggal=?, penulis=?, gambar=?, konten=? WHERE id=? AND periode_id=?",
-            [$judul, $slug, $tanggal, $penulis, $gambar, $konten, $id, $periode_id],
-            "ssssssii"
+            "UPDATE berita SET judul=?, slug=?, tanggal=?, penulis=?, gambar=?, konten=?, footnote=? WHERE id=? AND periode_id=?",
+            [$judul, $slug, $tanggal, $penulis, $gambar, $konten, $footnote, $id, $periode_id],
+            "sssssssii"
         );
         auditLog('UPDATE', 'berita', $id, 'Edit berita: ' . $judul);
         redirect('admin/berita.php', 'Berita berhasil diperbarui!', 'success');
     } else {
         dbQuery(
-            "INSERT INTO berita (judul, slug, tanggal, penulis, gambar, konten, periode_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [$judul, $slug, $tanggal, $penulis, $gambar, $konten, $periode_id],
-            "ssssssi"
+            "INSERT INTO berita (judul, slug, tanggal, penulis, gambar, konten, footnote, periode_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [$judul, $slug, $tanggal, $penulis, $gambar, $konten, $footnote, $periode_id],
+            "sssssssi"
         );
         $newId = dbLastInsertId();
         auditLog('CREATE', 'berita', $newId, 'Tambah berita: ' . $judul);
@@ -199,6 +200,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
                 <img id="gambar-preview" src="#" alt="Preview"
                      style="max-width:200px;max-height:150px;border:2px solid #4A90E2;padding:5px;border-radius:5px;">
             </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label for="footnote">Footnote / Catatan Foto</label>
+            <textarea name="footnote" id="footnote" rows="3" placeholder="Masukkan catatan/footnote untuk foto berita (opsional)" style="width:100%;padding:10px;background:#222;color:#fff;border:1px solid #333;border-radius:5px;font-family:inherit;line-height:1.5;"><?php echo htmlspecialchars($berita['footnote'] ?? ''); ?></textarea>
+            <small>
+                <i class="fas fa-info-circle"></i>
+                Catatan ini akan tampil di samping foto jika foto vertikal (portrait), or di bawah foto jika foto horizontal (landscape).
+            </small>
         </div>
     </div>
 

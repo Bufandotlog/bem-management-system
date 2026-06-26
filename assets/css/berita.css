@@ -371,28 +371,111 @@
     font-size: 0.9rem;
 }
 
-/* ===== GAMBAR FEATURED ADAPTIVE ===== */
-.berita-featured-image {
+/* ===== GAMBAR FEATURED MODERN DENGAN FOOTNOTE ===== */
+.berita-featured-image-container {
+    margin: 2rem 0;
     width: 100%;
-    overflow: hidden;
+}
+
+.berita-featured-image-wrapper {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.berita-featured-image-wrapper.has-footnote {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    border: 2px solid var(--biru-soft);
-    background: rgba(0, 0, 0, 0.2);
-    margin: 1.5rem 0 2rem;
-    position: relative;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
 }
 
-.berita-featured-image img {
+.berita-featured-image-wrapper.no-footnote {
+    border: none;
+    background: transparent;
+    padding: 0;
+    backdrop-filter: none;
+}
+
+.berita-featured-image-box {
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.berita-featured-image-wrapper.no-footnote .berita-featured-image-box {
+    max-width: 500px;
     width: 100%;
-    height: auto;
-    max-height: 550px;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.5s ease;
+    margin: 0 auto;
 }
 
-.berita-featured-image:hover img {
-    transform: scale(1.03);
+.berita-featured-image-box img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.berita-featured-image-box:hover {
+    border-color: var(--biru-primary);
+    transform: scale(1.02);
+}
+
+.berita-image-footnote {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+    position: relative;
+    max-width: 100%;
+}
+
+/* ===== TATA LETAK JIKA VERTIKAL (PORTRAIT) ===== */
+.berita-featured-image-wrapper.is-portrait {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.berita-featured-image-wrapper.is-portrait .berita-featured-image-box {
+    max-width: 320px;
+    flex: 0 0 320px;
+}
+
+.berita-featured-image-wrapper.is-portrait .berita-image-footnote {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding-left: 1.5rem;
+    border-left: 3px solid var(--biru-primary);
+    text-align: left;
+}
+
+/* ===== TATA LETAK JIKA HORIZONTAL (LANDSCAPE) ===== */
+.berita-featured-image-wrapper.is-landscape {
+    flex-direction: column;
+    align-items: center;
+}
+
+.berita-featured-image-wrapper.is-landscape .berita-featured-image-box {
+    max-width: 500px;
+    width: 100%;
+}
+
+.berita-featured-image-wrapper.is-landscape .berita-image-footnote {
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    margin-top: 0.5rem;
 }
 
 /* Styles for images embedded inside article content */
@@ -492,9 +575,26 @@
     }
 
     /* Gambar 1:1 tetap proporsional di mobile */
-    .berita-featured-image {
-        margin: 1rem 0 1.5rem;
-        border-radius: 12px;
+    .berita-featured-image-container {
+        margin: 1.5rem 0;
+    }
+    
+    .berita-featured-image-wrapper.is-portrait {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .berita-featured-image-wrapper.is-portrait .berita-featured-image-box {
+        max-width: 260px;
+        flex: 0 0 auto;
+    }
+    
+    .berita-featured-image-wrapper.is-portrait .berita-image-footnote {
+        border-left: none;
+        border-top: 3px solid var(--biru-primary);
+        padding-left: 0;
+        padding-top: 1rem;
+        text-align: center;
     }
 
     .berita-content {
