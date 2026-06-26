@@ -588,12 +588,13 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 
     /* ===== DYNAMIC ROW STYLES ===== */
     .dynamic-row {
-        background: rgba(255,255,255,0.02);
-        border: 1px solid #2a3545;
+        background: #0f131a;
+        border: 1px solid #35445b;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
+        padding: 25px;
+        margin-bottom: 35px;
         position: relative;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     .dynamic-row .btn-remove-row {
         position: absolute;
@@ -611,10 +612,39 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         background: #c82333;
     }
 
+    .btn-add-row-mini {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(74, 144, 226, 0.05);
+        border: 1px dashed #4A90E2;
+        color: #4A90E2;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 10px;
+        width: fit-content;
+    }
+    .btn-add-row-mini:hover {
+        background: rgba(74, 144, 226, 0.15);
+        color: #fff;
+        border-color: #4A90E2;
+    }
+
     .form-row-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .form-row-grid + .form-row-grid {
+        margin-top: 20px !important;
+    }
+    .dynamic-row > .form-group {
+        margin-top: 20px !important;
+        margin-bottom: 0;
     }
 
     .btn-add-row {
@@ -903,8 +933,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         background: rgba(74, 144, 226, 0.2) !important;
     }
 
-    .admin-form {
+    .admin-form, .page-header, .step-progress, .alert {
         max-width: 1100px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
     .proker-budget-table-wrapper {
         overflow-x: auto;
@@ -921,6 +953,172 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         padding: 6px 10px;
         font-size: 0.85rem;
         height: auto;
+    }
+
+    /* New Photo Row Premium Styling */
+    .new-photo-row {
+        background: rgba(15, 18, 23, 0.6);
+        border: 1px solid #2a3545;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    @media(min-width: 576px) {
+        .new-photo-row {
+            grid-template-columns: 160px 1fr;
+            align-items: center;
+        }
+    }
+    .new-photo-row:hover {
+        border-color: #4A90E2;
+        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.15);
+    }
+    .new-photo-row .btn-remove-img {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        background: rgba(220, 53, 69, 0.15) !important;
+        border: 1px solid rgba(220, 53, 69, 0.4) !important;
+        color: #ff6b6b !important;
+        border-radius: 50% !important;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .new-photo-row .btn-remove-img:hover {
+        background: #dc3545 !important;
+        color: #fff !important;
+        transform: scale(1.05);
+    }
+    .photo-upload-zone {
+        border: 2px dashed #2a3545;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        height: 110px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition: all 0.2s;
+        color: #888;
+    }
+    .photo-upload-zone:hover {
+        border-color: #4A90E2;
+        background: rgba(74, 144, 226, 0.05);
+        color: #4A90E2;
+    }
+    .photo-upload-zone input[type="file"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+    }
+    .photo-upload-zone .preview-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+    }
+    .photo-upload-zone .upload-spinner {
+        display: none;
+        font-size: 1.5rem;
+        color: #4A90E2;
+        z-index: 3;
+    }
+    .photo-upload-zone .upload-icon {
+        font-size: 1.6rem;
+        margin-bottom: 5px;
+        z-index: 1;
+    }
+    .photo-upload-zone .upload-text {
+        font-size: 0.75rem;
+        font-weight: 500;
+        z-index: 1;
+    }
+    
+    .new-photo-row input.proker-new-photo-caption {
+        background: #0f1217 !important;
+        border: 1px solid #2a3545 !important;
+        color: #fff !important;
+        padding: 10px 14px !important;
+        border-radius: 8px !important;
+        height: auto !important;
+        font-size: 0.9rem !important;
+    }
+    .new-photo-row input.proker-new-photo-caption:focus {
+        border-color: #4A90E2 !important;
+        box-shadow: 0 0 8px rgba(74,144,226,0.2) !important;
+        outline: none !important;
+    }
+    
+    /* Caption input for existing photos */
+    .photo-caption-input {
+        background: #0f1217 !important;
+        border: 1px solid #2a3545 !important;
+        color: #fff !important;
+        margin-top: 5px;
+    }
+    .photo-caption-input:focus {
+        border-color: #4A90E2 !important;
+        outline: none !important;
+    }
+    
+    /* Submit overlay/spinner */
+    .submit-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(8px);
+        z-index: 99999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+    .submit-overlay-content {
+        text-align: center;
+        background: #121620;
+        border: 1px solid #2a3545;
+        border-radius: 16px;
+        padding: 30px 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .submit-overlay .spinner {
+        font-size: 3rem;
+        color: #4A90E2;
+        margin-bottom: 20px;
+    }
+    .submit-overlay h3 {
+        margin: 0 0 10px 0;
+        font-size: 1.25rem;
+        color: #fff;
+    }
+    .submit-overlay p {
+        margin: 0;
+        font-size: 0.88rem;
+        color: #888;
     }
 </style>
 
@@ -2015,18 +2213,48 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         const prokerCard = btn.closest('.pt-row');
         const container = prokerCard.querySelector('.proker-new-photos-container');
         const div = document.createElement('div');
-        div.style.display = 'flex';
-        div.style.gap = '10px';
-        div.style.alignItems = 'center';
-        div.style.marginBottom = '8px';
         div.className = 'new-photo-row';
         div.innerHTML = `
-            <input type="file" class="form-control proker-new-photo-file" accept="image/*" style="flex: 2;" required>
-            <input type="text" class="form-control proker-new-photo-caption" placeholder="Caption/Keterangan Foto..." style="flex: 3;" required>
-            <button type="button" class="btn-remove-img" style="width: 32px; height: 32px; background: #dc3545;" onclick="this.parentElement.remove();"><i class="fas fa-times"></i></button>
+            <div class="photo-upload-zone">
+                <i class="fas fa-spinner fa-spin upload-spinner"></i>
+                <i class="fas fa-camera upload-icon"></i>
+                <span class="upload-text">Pilih Gambar</span>
+                <input type="file" class="proker-new-photo-file" accept="image/*" required onchange="handleNewPhotoUpload(this)">
+                <img class="preview-img" style="display: none;">
+            </div>
+            <div style="display: flex; flex-direction: column; justify-content: center; width: 100%; box-sizing: border-box; padding-right: 25px;">
+                <label style="font-size: 0.78rem; color: #aaa; margin-bottom: 6px; font-weight: 600;">Keterangan Foto</label>
+                <input type="text" class="form-control proker-new-photo-caption" placeholder="Masukkan keterangan atau caption foto kegiatan..." required>
+            </div>
+            <button type="button" class="btn-remove-img" onclick="this.parentElement.remove();"><i class="fas fa-times"></i></button>
         `;
         container.appendChild(div);
         reindexProkers();
+    }
+
+    function handleNewPhotoUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const zone = input.closest('.photo-upload-zone');
+        const spinner = zone.querySelector('.upload-spinner');
+        const icon = zone.querySelector('.upload-icon');
+        const text = zone.querySelector('.upload-text');
+        const preview = zone.querySelector('.preview-img');
+        
+        // Show spinner
+        spinner.style.display = 'inline-block';
+        icon.style.display = 'none';
+        text.style.display = 'none';
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Hide spinner and show preview
+            spinner.style.display = 'none';
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
     }
 
     function reindexProkers() {
@@ -2055,6 +2283,8 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     function saveDraft() {
         serializeAllProkerData();
         document.getElementById('lpjStatus').value = 'draft';
+        const overlay = document.getElementById('submitOverlay');
+        if (overlay) overlay.style.display = 'flex';
         // Bypass step validation when saving as draft
         document.getElementById('lpjForm').submit();
     }
@@ -2066,6 +2296,8 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 
     document.getElementById('lpjForm').addEventListener('submit', function(e) {
         serializeAllProkerData();
+        const overlay = document.getElementById('submitOverlay');
+        if (overlay) overlay.style.display = 'flex';
     });
 
     // --- AJAX default values loader ---
@@ -2674,5 +2906,14 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         });
     });
 </script>
+
+<!-- Submit loading overlay -->
+<div id="submitOverlay" class="submit-overlay">
+    <div class="submit-overlay-content">
+        <i class="fas fa-spinner fa-spin spinner"></i>
+        <h3>Menyimpan Laporan...</h3>
+        <p>Mohon tunggu sebentar, dokumen dan gambar sedang diunggah ke server.</p>
+    </div>
+</div>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
