@@ -71,19 +71,14 @@ if (isset($_GET['ajax_kementerian_id'])) {
         $pt1 = $lpj1 ? (json_decode($lpj1['proker_terlaksana'], true) ?: []) : [];
         $pt2 = $lpj2 ? (json_decode($lpj2['proker_terlaksana'], true) ?: []) : [];
         
-        $proker_terlaksana = $pt1;
+        // Merge all executed prokers from both quarters (do not deduplicate)
+        $proker_terlaksana = array_merge($pt1, $pt2);
+        
+        // Build map of executed program names to check against unimplemented ones
         $executed_names = [];
-        foreach ($pt1 as $p) {
+        foreach ($proker_terlaksana as $p) {
             $name = trim(strtolower($p['Nama Program Kerja'] ?? $p['Nama Kegiatan'] ?? ''));
             if ($name !== '') {
-                $executed_names[$name] = true;
-            }
-        }
-        
-        foreach ($pt2 as $p) {
-            $name = trim(strtolower($p['Nama Program Kerja'] ?? $p['Nama Kegiatan'] ?? ''));
-            if ($name !== '' && !isset($executed_names[$name])) {
-                $proker_terlaksana[] = $p;
                 $executed_names[$name] = true;
             }
         }
