@@ -745,9 +745,7 @@ def generate_lpj(output_path, config_data):
                 run_cap = p_cap.add_run(photo.get("caption", ""))
                 format_run(run_cap, size_pt=11, italic=True)
                 
-        # Only add page break between prokers if there are more
-        if idx < len(config_data.get('proker_terlaksana', [])):
-            doc.add_page_break()
+        pass
         
     # D. PROGRAM KERJA YANG BELUM TERLAKSANA
     p_hdr_d = doc.add_paragraph()
@@ -1082,7 +1080,6 @@ def consolidate_lpj(output_path, file_list):
                     p_cap.paragraph_format.space_after = Pt(12)
                     run_cap = p_cap.add_run(photo.get("caption", ""))
                     format_run(run_cap, size_pt=11, italic=True)
-            master_doc.add_page_break()
             
         # Program Kerja Belum Realisasi
         p_sub4 = master_doc.add_paragraph()
