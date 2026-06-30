@@ -212,6 +212,53 @@ def set_document_formatting(doc):
     style.paragraph_format.space_before = Pt(0)
     style.paragraph_format.space_after = Pt(6)
 
+def add_document_footer(doc, triwulan_str):
+    for section in doc.sections:
+        section.different_first_page_header_footer = True
+        
+        # Main footer
+        footer = section.footer
+        if not footer.paragraphs:
+            p = footer.add_paragraph()
+        else:
+            p = footer.paragraphs[0]
+            p.text = ""
+            
+        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        
+        if triwulan_str.upper() == "MUBESMA":
+            txt = "Laporan Pertanggungjawaban Mubesma | Halaman "
+        else:
+            txt = f"Laporan Pertanggungjawaban Triwulan {triwulan_str} | Halaman "
+            
+        run_txt = p.add_run(txt)
+        format_run(run_txt, font_name="Times New Roman", size_pt=10, italic=True)
+        
+        run_num = p.add_run()
+        format_run(run_num, font_name="Times New Roman", size_pt=10, bold=True)
+        
+        fldChar1 = OxmlElement('w:fldChar')
+        fldChar1.set(qn('w:fldCharType'), 'begin')
+        instrText = OxmlElement('w:instrText')
+        instrText.set(qn('xml:space'), 'preserve')
+        instrText.text = "PAGE"
+        fldChar2 = OxmlElement('w:fldChar')
+        fldChar2.set(qn('w:fldCharType'), 'end')
+        
+        run_num._r.append(fldChar1)
+        run_num._r.append(instrText)
+        run_num._r.append(fldChar2)
+        
+        # Cover page footer (empty)
+        first_page_footer = section.first_page_footer
+        if not first_page_footer.paragraphs:
+            p_first = first_page_footer.add_paragraph()
+        else:
+            p_first = first_page_footer.paragraphs[0]
+            p_first.text = ""
+
 def parse_docx(doc_path):
     if not os.path.exists(doc_path):
         return None
@@ -780,6 +827,7 @@ def generate_lpj(output_path, config_data):
         render_table_rows(table, fields, indent_cm=INDENT_PROKER, bold_label=False, prefix_alpha=True)
         doc.add_paragraph()
         
+    add_document_footer(doc, triwulan_str)
     doc.save(output_path)
     return True
 
@@ -1189,6 +1237,7 @@ def consolidate_lpj(output_path, file_list):
         for r in p.runs:
             format_run(r, size_pt=12, bold=True)
             
+    add_document_footer(master_doc, triwulan_val)
     master_doc.save(output_path)
     return True
 
