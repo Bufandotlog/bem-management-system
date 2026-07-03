@@ -83,28 +83,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_logo'])
         array_map(fn($v) => sanitizeText($v, 200), $_POST['proker'] ?? []),
         fn($v) => !empty($v)
     ));
+    $fungsi = array_values(array_filter(
+        array_map(fn($v) => sanitizeText($v, 200), $_POST['fungsi'] ?? []),
+        fn($v) => !empty($v)
+    ));
 
     $tugas_json  = !empty($tugas)  ? json_encode($tugas)  : null;
     $proker_json = !empty($proker) ? json_encode($proker) : null;
+    $fungsi_json = !empty($fungsi) ? json_encode($fungsi) : null;
 
     dbBeginTransaction();
     try {
         if ($id) {
             dbQuery(
-                "UPDATE kementerian SET nama=?, slug=?, logo=?, deskripsi=?, tugas=?, proker=?
+                "UPDATE kementerian SET nama=?, slug=?, logo=?, deskripsi=?, tugas=?, proker=?, fungsi=?
                  WHERE id=? AND periode_id=?",
-                [$nama, $slug, $logo, $deskripsi, $tugas_json, $proker_json, $id, $active_periode],
-                "ssssssii"
+                [$nama, $slug, $logo, $deskripsi, $tugas_json, $proker_json, $fungsi_json, $id, $active_periode],
+                "sssssssii"
             );
             dbCommit();
             auditLog('UPDATE', 'kementerian', $id, 'Edit kementerian: ' . $nama);
             redirect('admin/kementerian-anggota.php?id=' . $id, 'Kementerian berhasil diupdate!', 'success');
         } else {
             dbQuery(
-                "INSERT INTO kementerian (periode_id, created_by, nama, slug, logo, deskripsi, tugas, proker)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                [$active_periode, $_SESSION['admin_id'], $nama, $slug, $logo, $deskripsi, $tugas_json, $proker_json],
-                "iissssss"
+                "INSERT INTO kementerian (periode_id, created_by, nama, slug, logo, deskripsi, tugas, proker, fungsi)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [$active_periode, $_SESSION['admin_id'], $nama, $slug, $logo, $deskripsi, $tugas_json, $proker_json, $fungsi_json],
+                "iisssssss"
             );
             $new_id = dbLastId();
             dbCommit();
@@ -123,9 +128,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_logo'])
 // Persiapan data tampilan
 $tugas_list  = [];
 $proker_list = [];
+$fungsi_list = [];
 if ($kementerian) {
     if (!empty($kementerian['tugas']))  $tugas_list  = json_decode($kementerian['tugas'],  true) ?: [];
     if (!empty($kementerian['proker'])) $proker_list = json_decode($kementerian['proker'], true) ?: [];
+    if (!empty($kementerian['fungsi'])) $fungsi_list = json_decode($kementerian['fungsi'], true) ?: [];
 }
 
 $periode_info = ($periode_data['nama'] ?? 'Astawidya')
@@ -224,6 +231,27 @@ $periode_info = ($periode_data['nama'] ?? 'Astawidya')
         <div class="form-group">
             <textarea name="deskripsi" rows="4"
                       placeholder="Deskripsi kementerian..."><?php echo htmlspecialchars($kementerian['deskripsi'] ?? ''); ?></textarea>
+        </div>
+    </div>
+
+    <!-- Fungsi -->
+    <div class="form-section">
+        <h2><i class="fas fa-bullseye"></i> Fungsi</h2>
+        <div class="form-group">
+            <div id="fungsiContainer">
+                <?php foreach (!empty($fungsi_list) ? $fungsi_list : [''] as $i => $item): ?>
+                <div class="list-item">
+                    <input type="text" name="fungsi[]"
+                           value="<?php echo htmlspecialchars($item); ?>"
+                           placeholder="Fungsi <?php echo $i + 1; ?>">
+                    <button type="button" class="btn-remove" onclick="hapusItem(this)" title="Hapus">×</button>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" class="btn-add"
+                    onclick="tambahItem('fungsiContainer', 'fungsi[]', 'Fungsi')">
+                <i class="fas fa-plus"></i> Tambah Fungsi
+            </button>
         </div>
     </div>
 

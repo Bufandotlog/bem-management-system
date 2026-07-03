@@ -108,6 +108,7 @@ CREATE TABLE "kementerian" (
   "id" SERIAL PRIMARY KEY,
   "nama_kementerian" VARCHAR(100) NOT NULL,
   "deskripsi" TEXT,
+  "fungsi" TEXT,
   "urutan" INTEGER DEFAULT 0,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

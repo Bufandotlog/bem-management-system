@@ -49,6 +49,17 @@ try {
     }
 }
 
+// Auto-migration: Pastikan kolom fungsi ada di tabel kementerian
+try {
+    dbQuery("SELECT fungsi FROM kementerian LIMIT 1");
+} catch (Exception $e) {
+    try {
+        dbQuery("ALTER TABLE kementerian ADD COLUMN fungsi TEXT DEFAULT NULL");
+    } catch (Exception $ex) {
+        // Abaikan jika database belum siap
+    }
+}
+
 
 // ============================================
 // FUNGSI HELPER PATH & URL (unchanged)
@@ -682,6 +693,7 @@ function getAllKementerian($periode_id = null) {
         $k['anggota'] = dbFetchAll($sql, $params, $types);
         $k['tugas']   = json_decode($k['tugas'],  true) ?? [];
         $k['proker']  = json_decode($k['proker'], true) ?? [];
+        $k['fungsi']  = json_decode($k['fungsi'] ?? '', true) ?? [];
     }
     return $kementerian;
 }
@@ -701,6 +713,7 @@ function getKementerianBySlug($slug, $periode_id = null) {
         $data['anggota'] = dbFetchAll($sql, $params, $types);
         $data['tugas']   = json_decode($data['tugas'],  true) ?? [];
         $data['proker']  = json_decode($data['proker'], true) ?? [];
+        $data['fungsi']  = json_decode($data['fungsi'] ?? '', true) ?? [];
     }
     return $data;
 }
