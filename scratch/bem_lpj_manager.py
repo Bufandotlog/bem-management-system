@@ -347,6 +347,10 @@ def parse_docx(doc_path):
         "cover": {"triwulan": "", "kementerian": "", "periode": ""},
         "keanggotaan": {"ketua": "", "sekretaris": "", "bendahara": "", "anggota": ""},
         "keadaan_objektif": "",
+        "tugas_pokok": [],
+        "fungsi": [],
+        "visi": "",
+        "misi": [],
         "proker_terlaksana": [],
         "proker_belum_terlaksana": [],
         "anggaran": [],
@@ -399,7 +403,7 @@ def parse_docx(doc_path):
             tupoksi_header_found = True
             continue
         if tupoksi_header_found:
-            if "realisasi program kerja" in p_text.lower() or p_text.startswith("IV. REALISASI") or p_text.startswith("C. REALISASI"):
+            if "evaluasi pencapaian" in p_text.lower() or p_text.startswith("IV. EVALUASI") or "realisasi program kerja" in p_text.lower() or p_text.startswith("V. REALISASI") or p_text.startswith("C. REALISASI"):
                 break
             if "tugas pokok" in p_text.lower() and (p_text.startswith("A.") or p_text.startswith("A. ")):
                 current_list_type = 'tugas'
@@ -416,6 +420,34 @@ def parse_docx(doc_path):
                         fungsi_list.append(cleaned_item)
     data["tugas_pokok"] = tugas_list
     data["fungsi"] = fungsi_list
+
+    # Parse Visi and Misi (Only for MUBESMA)
+    visi_hdr_found = False
+    current_list_type = None
+    visi_txt = ""
+    misi_list = []
+    for idx, p in enumerate(doc.paragraphs):
+        p_text = p.text.strip()
+        if "evaluasi pencapaian" in p_text.lower() or p_text.startswith("IV. EVALUASI"):
+            visi_hdr_found = True
+            continue
+        if visi_hdr_found:
+            if "realisasi program kerja" in p_text.lower() or p_text.startswith("V. REALISASI") or p_text.startswith("C. REALISASI"):
+                break
+            if "visi" in p_text.lower() and (p_text.startswith("A.") or p_text.startswith("A. ")):
+                current_list_type = 'visi'
+                continue
+            elif "misi" in p_text.lower() and (p_text.startswith("B.") or p_text.startswith("B. ")):
+                current_list_type = 'misi'
+                continue
+            if current_list_type == 'visi' and p_text and not p_text.startswith("Visi dan Misi"):
+                visi_txt = p_text
+            elif current_list_type == 'misi' and p_text:
+                cleaned_item = re.sub(r'^\d+[\.\s-]*', '', p_text).strip()
+                if cleaned_item:
+                    misi_list.append(cleaned_item)
+    data["visi"] = visi_txt
+    data["misi"] = misi_list
 
     # Walk through tables sequentially
     current_proker = None
@@ -652,8 +684,8 @@ def generate_lpj(output_path, config_data):
     is_mubesma = (triwulan_str == "MUBESMA")
     pref_a = "I." if is_mubesma else "A."
     pref_b = "II." if is_mubesma else "B."
-    pref_c = "IV." if is_mubesma else "C."
-    pref_d = "V." if is_mubesma else "D."
+    pref_c = "V." if is_mubesma else "C."
+    pref_d = "VI." if is_mubesma else "D."
     
     if triwulan_str == "MUBESMA":
         add_minister_cover(doc, kementrian_str, years_str)
@@ -778,6 +810,60 @@ def generate_lpj(output_path, config_data):
             p_f_item.paragraph_format.left_indent = Cm(1.5)
             p_f_item.paragraph_format.first_line_indent = Cm(-0.5)
             format_run(p_f_item.add_run(f"{f_idx}.\t{f_item}"), size_pt=12)
+            
+        # IV. EVALUASI PENCAPAIAN VISI DAN MISI
+        p_hdr_vm = doc.add_paragraph()
+        p_hdr_vm.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_vm.paragraph_format.space_before = Pt(12)
+        p_hdr_vm.paragraph_format.space_after = Pt(6)
+        p_hdr_vm.paragraph_format.keep_with_next = True
+        format_run(p_hdr_vm.add_run("IV. EVALUASI PENCAPAIAN VISI DAN MISI"), size_pt=12, bold=True)
+        
+        p_sub_vm = doc.add_paragraph()
+        p_sub_vm.paragraph_format.space_before = Pt(6)
+        p_sub_vm.paragraph_format.space_after = Pt(6)
+        p_sub_vm.paragraph_format.keep_with_next = True
+        p_sub_vm.paragraph_format.left_indent = Cm(0.5)
+        org_name = "Badan Perwakilan Mahasiswa" if "bpm" in output_path.lower() else "Badan Eksekutif Mahasiswa"
+        format_run(p_sub_vm.add_run(f"Visi dan Misi {org_name} INSTBUNAS Majalengka"), size_pt=12, bold=True)
+        
+        # A. Visi
+        p_v_hdr = doc.add_paragraph()
+        p_v_hdr.paragraph_format.space_before = Pt(6)
+        p_v_hdr.paragraph_format.space_after = Pt(4)
+        p_v_hdr.paragraph_format.keep_with_next = True
+        p_v_hdr.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_v_hdr.add_run("A. Visi"), size_pt=12, bold=True)
+        
+        visi_text = config_data.get("visi", "").strip()
+        if not visi_text:
+            visi_text = "(Belum diatur)"
+        p_v_txt = doc.add_paragraph()
+        p_v_txt.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        p_v_txt.paragraph_format.line_spacing = 1.15
+        p_v_txt.paragraph_format.space_after = Pt(12)
+        p_v_txt.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_v_txt.add_run(visi_text), size_pt=12)
+        
+        # B. Misi
+        p_m_hdr = doc.add_paragraph()
+        p_m_hdr.paragraph_format.space_before = Pt(6)
+        p_m_hdr.paragraph_format.space_after = Pt(4)
+        p_m_hdr.paragraph_format.keep_with_next = True
+        p_m_hdr.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_m_hdr.add_run("B. Misi"), size_pt=12, bold=True)
+        
+        misi_list = config_data.get("misi", [])
+        if not misi_list:
+            misi_list = ["(Belum diatur)"]
+        for m_idx, m_item in enumerate(misi_list, 1):
+            p_m_item = doc.add_paragraph()
+            p_m_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p_m_item.paragraph_format.line_spacing = 1.15
+            p_m_item.paragraph_format.space_after = Pt(4)
+            p_m_item.paragraph_format.left_indent = Cm(1.5)
+            p_m_item.paragraph_format.first_line_indent = Cm(-0.5)
+            format_run(p_m_item.add_run(f"{m_idx}.\t{m_item}"), size_pt=12)
             
     # C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN
     p_hdr_c = doc.add_paragraph()
@@ -1170,13 +1256,66 @@ def consolidate_lpj(output_path, file_list):
                 p_f_item.paragraph_format.left_indent = Cm(1.5)
                 p_f_item.paragraph_format.first_line_indent = Cm(-0.5)
                 format_run(p_f_item.add_run(f"{f_idx}.\t{f_item}"), size_pt=12)
+                
+            # 4. Evaluasi Pencapaian Visi dan Misi
+            p_sub_vm = master_doc.add_paragraph()
+            p_sub_vm.paragraph_format.space_before = Pt(12)
+            p_sub_vm.paragraph_format.space_after = Pt(6)
+            p_sub_vm.paragraph_format.keep_with_next = True
+            format_run(p_sub_vm.add_run("4. Evaluasi Pencapaian Visi dan Misi"), size_pt=12, bold=True)
+            
+            p_sub_vm_lbl = master_doc.add_paragraph()
+            p_sub_vm_lbl.paragraph_format.space_before = Pt(6)
+            p_sub_vm_lbl.paragraph_format.space_after = Pt(6)
+            p_sub_vm_lbl.paragraph_format.keep_with_next = True
+            p_sub_vm_lbl.paragraph_format.left_indent = Cm(0.5)
+            org_lbl = "Badan Perwakilan Mahasiswa" if "bpm" in output_path.lower() else "Badan Eksekutif Mahasiswa"
+            format_run(p_sub_vm_lbl.add_run(f"Visi dan Misi {org_lbl} INSTBUNAS Majalengka"), size_pt=12, bold=True)
+            
+            # A. Visi
+            p_v_hdr = master_doc.add_paragraph()
+            p_v_hdr.paragraph_format.space_before = Pt(6)
+            p_v_hdr.paragraph_format.space_after = Pt(4)
+            p_v_hdr.paragraph_format.keep_with_next = True
+            p_v_hdr.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_v_hdr.add_run("A. Visi"), size_pt=12, bold=True)
+            
+            visi_text = pdata.get("visi", "").strip()
+            if not visi_text:
+                visi_text = "(Belum diatur)"
+            p_v_txt = master_doc.add_paragraph()
+            p_v_txt.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p_v_txt.paragraph_format.line_spacing = 1.15
+            p_v_txt.paragraph_format.space_after = Pt(12)
+            p_v_txt.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_v_txt.add_run(visi_text), size_pt=12)
+            
+            # B. Misi
+            p_m_hdr = master_doc.add_paragraph()
+            p_m_hdr.paragraph_format.space_before = Pt(6)
+            p_m_hdr.paragraph_format.space_after = Pt(4)
+            p_m_hdr.paragraph_format.keep_with_next = True
+            p_m_hdr.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_m_hdr.add_run("B. Misi"), size_pt=12, bold=True)
+            
+            misi_list = pdata.get("misi", [])
+            if not misi_list:
+                misi_list = ["(Belum diatur)"]
+            for m_idx, m_item in enumerate(misi_list, 1):
+                p_m_item = master_doc.add_paragraph()
+                p_m_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_m_item.paragraph_format.line_spacing = 1.15
+                p_m_item.paragraph_format.space_after = Pt(4)
+                p_m_item.paragraph_format.left_indent = Cm(1.5)
+                p_m_item.paragraph_format.first_line_indent = Cm(-0.5)
+                format_run(p_m_item.add_run(f"{m_idx}.\t{m_item}"), size_pt=12)
         
         # Realisasi Proker
         p_sub3 = master_doc.add_paragraph()
         p_sub3.paragraph_format.space_before = Pt(12)
         p_sub3.paragraph_format.space_after = Pt(6)
         p_sub3.paragraph_format.keep_with_next = True
-        sub3_title = "4. Realisasi Program Kerja" if is_mubesma else "3. Realisasi Program Kerja"
+        sub3_title = "5. Realisasi Program Kerja" if is_mubesma else "3. Realisasi Program Kerja"
         format_run(p_sub3.add_run(sub3_title), size_pt=12, bold=True)
         
         for idx_pk, pk in enumerate(pdata["proker_terlaksana"], 1):
@@ -1356,7 +1495,7 @@ def consolidate_lpj(output_path, file_list):
         p_sub4.paragraph_format.space_before = Pt(12)
         p_sub4.paragraph_format.space_after = Pt(6)
         p_sub4.paragraph_format.keep_with_next = True
-        sub4_title = "5. Program Kerja Belum Terealisasi" if is_mubesma else "4. Program Kerja Belum Terealisasi"
+        sub4_title = "6. Program Kerja Belum Terealisasi" if is_mubesma else "4. Program Kerja Belum Terealisasi"
         format_run(p_sub4.add_run(sub4_title), size_pt=12, bold=True)
         
         for idx_pk, pk in enumerate(pdata["proker_belum_terlaksana"], 1):

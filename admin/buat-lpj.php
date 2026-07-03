@@ -412,6 +412,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $periode_row = dbFetchOne("SELECT nama, tahun_mulai, tahun_selesai FROM periode_kepengurusan WHERE id = ?", [$periode_id], "i");
             $p_name = $periode_row ? ($periode_row['nama'] . ' (' . $periode_row['tahun_mulai'] . '-' . $periode_row['tahun_selesai'] . ')') : '2025-2026';
             
+            $visi_misi_row = dbFetchOne("SELECT visi, misi FROM visi_misi WHERE id = 1");
+            $visi = $visi_misi_row ? ($visi_misi_row['visi'] ?? '') : '';
+            $misi = $visi_misi_row && !empty($visi_misi_row['misi']) ? json_decode($visi_misi_row['misi'], true) : [];
+            
             // Construct input JSON for the python generator
             $config_data = [
                 'cover' => [
@@ -423,6 +427,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'keanggotaan' => $keanggotaan,
                 'tugas_pokok' => $k_tugas,
                 'fungsi' => $k_fungsi,
+                'visi' => $visi,
+                'misi' => $misi,
                 'proker_terlaksana' => $proker_terlaksana,
                 'proker_belum_terlaksana' => $proker_belum_terlaksana,
                 'anggaran' => $anggaran,
