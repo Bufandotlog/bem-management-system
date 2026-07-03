@@ -529,8 +529,9 @@ if (!empty($filter_triwulan)) {
                                         <span style="font-size: 0.75rem; color: #888; font-style: italic;">Selesaikan draft untuk konsolidasi</span>
                                     <?php endif; ?>
                                     
-                                    <div style="display: flex; gap: 6px;">
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                                         <a href="buat-lpj.php?id=<?php echo $lpj['id']; ?>" class="btn-edit" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fas fa-edit"></i> Edit</a>
+                                        <a href="cetak-lpj.php?id=<?php echo $lpj['id']; ?>" target="_blank" class="btn-buat" style="padding: 4px 8px; font-size: 0.75rem; background: #9b59b6;"><i class="fas fa-eye"></i> Preview &amp; PDF</a>
                                         <?php if (!empty($lpj['file_path'])): ?>
                                             <a href="<?php echo uploadUrl($lpj['file_path']); ?>" class="btn-buat" style="padding: 4px 8px; font-size: 0.75rem; background: #4A90E2;" download><i class="fas fa-download"></i> Docx</a>
                                         <?php endif; ?>
