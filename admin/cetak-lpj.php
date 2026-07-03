@@ -516,8 +516,8 @@ if (!function_exists('parsePoints')) {
                                 <?php if ($r_idx === 0): ?>
                                 <td style="text-align: justify; vertical-align: top;" rowspan="<?php echo $span; ?>"><?php echo htmlspecialchars($grp['name']); ?></td>
                                 <?php endif; ?>
-                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($r_row['Nama Kegiatan'] ?? $r_row['Nama Program Kerja'] ?? '—'); ?></td>
-                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($r_row['Tempat Kegiatan'] ?? $r_row['Tempat'] ?? '—'); ?></td>
+                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars(($r_row['Nama Kegiatan'] ?? $r_row['Nama Program Kerja'] ?? '') ?: '—'); ?></td>
+                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars(($r_row['Tempat Kegiatan'] ?? $r_row['Tempat'] ?? '') ?: '—'); ?></td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endforeach; ?>
@@ -552,12 +552,12 @@ if (!function_exists('parsePoints')) {
                             <tr>
                                 <td class="col-label">a.&nbsp;&nbsp;Nama Kegiatan</td>
                                 <td class="col-colon">:</td>
-                                <td><?php echo htmlspecialchars($pk['Nama Kegiatan'] ?? $pk['Nama Program Kerja'] ?? '—'); ?></td>
+                                <td><?php echo htmlspecialchars(($pk['Nama Kegiatan'] ?? $pk['Nama Program Kerja'] ?? '') ?: '—'); ?></td>
                             </tr>
                             <tr>
                                 <td class="col-label">b.&nbsp;&nbsp;Tempat Kegiatan</td>
                                 <td class="col-colon">:</td>
-                                <td><?php echo htmlspecialchars($pk['Tempat Kegiatan'] ?? $pk['Tempat'] ?? '—'); ?></td>
+                                <td><?php echo htmlspecialchars(($pk['Tempat Kegiatan'] ?? $pk['Tempat'] ?? '') ?: '—'); ?></td>
                             </tr>
                             <tr>
                                 <td class="col-label">c.&nbsp;&nbsp;Sifat Kegiatan</td>
