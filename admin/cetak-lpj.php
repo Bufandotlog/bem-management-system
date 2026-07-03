@@ -34,6 +34,18 @@ $proker_terlaksana = json_decode($lpj['proker_terlaksana'] ?? '', true) ?: [];
 $proker_belum_terlaksana = json_decode($lpj['proker_belum_terlaksana'] ?? '', true) ?: [];
 $keadaan_objektif = $lpj['keadaan_objektif'] ?? '';
 
+// Sort by date (parse Indonesian month names)
+$id_months = ['januari'=>1,'februari'=>2,'maret'=>3,'april'=>4,'mei'=>5,'juni'=>6,'juli'=>7,'agustus'=>8,'september'=>9,'oktober'=>10,'november'=>11,'desember'=>12];
+$parse_id_date = function($d) use ($id_months) {
+    preg_match('/(\d+)(?:\s*[-–]\s*\d+)?\s+(\w+)\s+(\d{4})/i', strtolower(trim($d)), $m);
+    if (!empty($m)) return mktime(0, 0, 0, $id_months[$m[2]] ?? 1, (int)$m[1], (int)$m[3]);
+    return 0;
+};
+$sorted_proker = $proker_terlaksana;
+usort($sorted_proker, function($a, $b) use ($parse_id_date) {
+    return $parse_id_date($a['Tanggal Kegiatan'] ?? '') - $parse_id_date($b['Tanggal Kegiatan'] ?? '');
+});
+
 // Fetch kementerian details for Tugas Pokok and Fungsi
 $k_row = dbFetchOne("SELECT tugas, fungsi FROM kementerian WHERE id = ?", [$lpj['kementerian_id']], "i");
 $k_tugas = $k_row && !empty($k_row['tugas']) ? json_decode($k_row['tugas'], true) : [];
@@ -460,6 +472,28 @@ if (!function_exists('parsePoints')) {
             <?php if (empty($proker_terlaksana)): ?>
                 <p class="narrative-p" style="font-style: italic; text-indent: 0;">(Tidak ada data program kerja)</p>
             <?php else: ?>
+                <?php
+                // Clean program name helper
+                $clean_prog_name = function($name) {
+                    if (empty($name)) return '';
+                    return trim(preg_replace('/^\d+[\.\s-]*/', '', $name));
+                };
+
+                // Group consecutive same-named programs for rowspan
+                $proker_groups_v = [];
+                $prev_prog = null;
+                $current_no = 1;
+                foreach ($sorted_proker as $pk_row) {
+                    $prog_name = $clean_prog_name($pk_row['Nama Program Kerja'] ?? '—');
+                    if ($prev_prog === $prog_name && !empty($proker_groups_v)) {
+                        $proker_groups_v[count($proker_groups_v)-1]['rows'][] = $pk_row;
+                    } else {
+                        $proker_groups_v[] = ['name' => $pk_row['Nama Program Kerja'] ?? '—', 'start_no' => $current_no, 'rows' => [$pk_row]];
+                        $prev_prog = $prog_name;
+                    }
+                    $current_no++;
+                }
+                ?>
                 <table class="budget-table" style="margin-left: 0; width: 100%; margin-top: 10px;">
                     <thead>
                         <tr>
@@ -471,14 +505,21 @@ if (!function_exists('parsePoints')) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($proker_terlaksana as $pk_idx => $pk_row): ?>
-                        <tr>
-                            <td style="text-align: center;"><?php echo ($pk_idx + 1); ?></td>
-                            <td><?php echo htmlspecialchars($pk_row['Tanggal Kegiatan'] ?? '—'); ?></td>
-                            <td><?php echo htmlspecialchars($pk_row['Nama Program Kerja'] ?? '—'); ?></td>
-                            <td><?php echo htmlspecialchars($pk_row['Nama Kegiatan'] ?? $pk_row['Nama Program Kerja'] ?? '—'); ?></td>
-                            <td><?php echo htmlspecialchars($pk_row['Tempat Kegiatan'] ?? $pk_row['Tempat'] ?? '—'); ?></td>
-                        </tr>
+                        <?php foreach ($proker_groups_v as $grp): ?>
+                            <?php $span = count($grp['rows']); ?>
+                            <?php foreach ($grp['rows'] as $r_idx => $r_row): ?>
+                            <tr>
+                                <?php if ($r_idx === 0): ?>
+                                <td style="text-align: center; vertical-align: middle;" rowspan="<?php echo $span; ?>"><?php echo $grp['start_no']; ?></td>
+                                <?php endif; ?>
+                                <td><?php echo htmlspecialchars($r_row['Tanggal Kegiatan'] ?? '—'); ?></td>
+                                <?php if ($r_idx === 0): ?>
+                                <td style="vertical-align: middle;" rowspan="<?php echo $span; ?>"><?php echo htmlspecialchars($grp['name']); ?></td>
+                                <?php endif; ?>
+                                <td><?php echo htmlspecialchars($r_row['Nama Kegiatan'] ?? $r_row['Nama Program Kerja'] ?? '—'); ?></td>
+                                <td><?php echo htmlspecialchars($r_row['Tempat Kegiatan'] ?? $r_row['Tempat'] ?? '—'); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -502,7 +543,7 @@ if (!function_exists('parsePoints')) {
             <?php if (empty($proker_terlaksana)): ?>
                 <p class="narrative-p" style="font-style: italic; text-indent: 0;">(Tidak ada program kerja terlaksana)</p>
             <?php else: ?>
-                <?php foreach ($proker_terlaksana as $idx => $pk): ?>
+                <?php foreach ($sorted_proker as $idx => $pk): ?>
                     <div class="proker-block">
                         <div class="subsection-header" style="margin-left: 0.5cm; margin-bottom: 10px;">
                             <?php echo ($idx + 1) . '. ' . htmlspecialchars($pk['Nama Program Kerja'] ?? 'Program Kerja'); ?>

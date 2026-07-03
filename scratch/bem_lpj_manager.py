@@ -48,6 +48,22 @@ def clean_proker_name(name):
         return ""
     return re.sub(r'^\d+[\.\s-]*', '', name).strip()
 
+def parse_id_date(d):
+    if not d:
+        return 0
+    id_months = {
+        'januari': 1, 'februari': 2, 'maret': 3, 'april': 4, 'mei': 5, 'juni': 6,
+        'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12
+    }
+    match = re.search(r'(\d+)(?:\s*[-–]\s*\d+)?\s+(\w+)\s+(\d{4})', d.strip().lower())
+    if match:
+        day = int(match.group(1))
+        month_name = match.group(2)
+        year = int(match.group(3))
+        month = id_months.get(month_name, 1)
+        return year * 10000 + month * 100 + day
+    return 0
+
 def format_kementerian_title(k_name):
     if not k_name:
         return "MENTERI KEMENTERIAN"
@@ -684,8 +700,8 @@ def generate_lpj(output_path, config_data):
     is_mubesma = (triwulan_str == "MUBESMA")
     pref_a = "I." if is_mubesma else "A."
     pref_b = "II." if is_mubesma else "B."
-    pref_c = "V." if is_mubesma else "C."
-    pref_d = "VI." if is_mubesma else "D."
+    pref_c = "VI." if is_mubesma else "C."
+    pref_d = "VII." if is_mubesma else "D."
     
     if triwulan_str == "MUBESMA":
         add_minister_cover(doc, kementrian_str, years_str)
@@ -865,6 +881,92 @@ def generate_lpj(output_path, config_data):
             p_m_item.paragraph_format.first_line_indent = Cm(-0.5)
             format_run(p_m_item.add_run(f"{m_idx}.\t{m_item}"), size_pt=12)
             
+    # Sort proker terlaksana chronologically
+    proker_terlaksana = config_data.get("proker_terlaksana", [])
+    proker_terlaksana.sort(key=lambda x: parse_id_date(x.get('Tanggal Kegiatan', '')))
+
+    if is_mubesma:
+        # V. PROGRAM KERJA (Summary Table)
+        p_hdr_v = doc.add_paragraph()
+        p_hdr_v.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_v.paragraph_format.space_before = Pt(12)
+        p_hdr_v.paragraph_format.space_after = Pt(6)
+        p_hdr_v.paragraph_format.keep_with_next = True
+        format_run(p_hdr_v.add_run("V. PROGRAM KERJA"), size_pt=12, bold=True)
+        
+        table_v = doc.add_table(rows=1, cols=5)
+        table_v.style = 'Table Grid'
+        set_table_indent(table_v, 0.5)
+        set_table_widths(table_v, [Cm(1.0), Cm(3.5), Cm(4.5), Cm(4.5), Cm(3.0)])
+        
+        headers_v = ["NO", "WAKTU", "PROGRAM KERJA", "NAMA KEGIATAN", "TEMPAT"]
+        hdr_cells = table_v.rows[0].cells
+        for c_idx, h in enumerate(headers_v):
+            hdr_cells[c_idx].text = h
+            set_cell_shading(hdr_cells[c_idx], "D3D3D3")
+            set_cell_margins(hdr_cells[c_idx], top=100, bottom=100, left=120, right=120)
+            hdr_cells[c_idx].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            hdr_cells[c_idx].paragraphs[0].paragraph_format.line_spacing = 1.0
+            format_run(hdr_cells[c_idx].paragraphs[0].runs[0], size_pt=12, bold=True)
+            
+        proker_groups_v = []
+        prev_prog = None
+        current_no = 1
+        for pk_row in proker_terlaksana:
+            prog_name = clean_proker_name(pk_row.get('Nama Program Kerja', '—'))
+            if prev_prog == prog_name and proker_groups_v:
+                proker_groups_v[-1]['rows'].append(pk_row)
+            else:
+                proker_groups_v.append({
+                    'name': pk_row.get('Nama Program Kerja', '—'),
+                    'start_no': current_no,
+                    'rows': [pk_row]
+                })
+                prev_prog = prog_name
+            current_no += 1
+            
+        row_idx = 1
+        for grp in proker_groups_v:
+            span = len(grp['rows'])
+            start_row = row_idx
+            for r_idx, r_row in enumerate(grp['rows']):
+                row_cells = table_v.add_row().cells
+                set_table_widths(table_v, [Cm(1.0), Cm(3.5), Cm(4.5), Cm(4.5), Cm(3.0)])
+                
+                if r_idx == 0:
+                    row_cells[0].text = str(grp['start_no'])
+                    row_cells[2].text = grp['name']
+                
+                row_cells[1].text = r_row.get('Tanggal Kegiatan', '—')
+                row_cells[3].text = r_row.get('Nama Kegiatan', r_row.get('Nama Program Kerja', '—'))
+                row_cells[4].text = r_row.get('Tempat Kegiatan', r_row.get('Tempat', '—'))
+                
+                for c_idx, cell in enumerate(row_cells):
+                    set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+                    p = cell.paragraphs[0]
+                    p.paragraph_format.line_spacing = 1.0
+                    p.paragraph_format.space_before = Pt(0)
+                    p.paragraph_format.space_after = Pt(0)
+                    if c_idx == 0:
+                        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    else:
+                        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                    for r in p.runs:
+                        format_run(r, size_pt=12)
+                row_idx += 1
+                
+            end_row = row_idx - 1
+            if span > 1:
+                cell_no_start = table_v.cell(start_row, 0)
+                cell_no_end = table_v.cell(end_row, 0)
+                cell_no_start.merge(cell_no_end)
+                cell_no_start.vertical_alignment = 1
+                
+                cell_pk_start = table_v.cell(start_row, 2)
+                cell_pk_end = table_v.cell(end_row, 2)
+                cell_pk_start.merge(cell_pk_end)
+                cell_pk_start.vertical_alignment = 1
+
     # C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN
     p_hdr_c = doc.add_paragraph()
     p_hdr_c.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -875,7 +977,7 @@ def generate_lpj(output_path, config_data):
     
     INDENT_PROKER = 1.0  # cm indent for proker sub-content
     
-    for idx, pk in enumerate(config_data.get("proker_terlaksana", []), 1):
+    for idx, pk in enumerate(proker_terlaksana, 1):
         p_name = doc.add_paragraph()
         p_name.paragraph_format.space_before = Pt(12)
         p_name.paragraph_format.space_after = Pt(6)
@@ -1310,15 +1412,101 @@ def consolidate_lpj(output_path, file_list):
                 p_m_item.paragraph_format.first_line_indent = Cm(-0.5)
                 format_run(p_m_item.add_run(f"{m_idx}.\t{m_item}"), size_pt=12)
         
+        # Sort proker terlaksana chronologically
+        proker_terlaksana = pdata.get("proker_terlaksana", [])
+        proker_terlaksana.sort(key=lambda x: parse_id_date(x.get('Tanggal Kegiatan', '')))
+
+        if is_mubesma:
+            # 5. Program Kerja (Summary Table)
+            p_sub_sum = master_doc.add_paragraph()
+            p_sub_sum.paragraph_format.space_before = Pt(12)
+            p_sub_sum.paragraph_format.space_after = Pt(6)
+            p_sub_sum.paragraph_format.keep_with_next = True
+            format_run(p_sub_sum.add_run("5. Program Kerja"), size_pt=12, bold=True)
+            
+            # Create summary table
+            table_v = master_doc.add_table(rows=1, cols=5)
+            table_v.style = 'Table Grid'
+            set_table_indent(table_v, 0.5)
+            set_table_widths(table_v, [Cm(1.0), Cm(3.5), Cm(4.5), Cm(4.5), Cm(3.0)])
+            
+            headers_v = ["NO", "WAKTU", "PROGRAM KERJA", "NAMA KEGIATAN", "TEMPAT"]
+            hdr_cells = table_v.rows[0].cells
+            for c_idx, h in enumerate(headers_v):
+                hdr_cells[c_idx].text = h
+                set_cell_shading(hdr_cells[c_idx], "D3D3D3")
+                set_cell_margins(hdr_cells[c_idx], top=100, bottom=100, left=120, right=120)
+                hdr_cells[c_idx].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                hdr_cells[c_idx].paragraphs[0].paragraph_format.line_spacing = 1.0
+                format_run(hdr_cells[c_idx].paragraphs[0].runs[0], size_pt=12, bold=True)
+                
+            proker_groups_v = []
+            prev_prog = None
+            current_no = 1
+            for pk_row in proker_terlaksana:
+                prog_name = clean_proker_name(pk_row.get('Nama Program Kerja', '—'))
+                if prev_prog == prog_name and proker_groups_v:
+                    proker_groups_v[-1]['rows'].append(pk_row)
+                else:
+                    proker_groups_v.append({
+                        'name': pk_row.get('Nama Program Kerja', '—'),
+                        'start_no': current_no,
+                        'rows': [pk_row]
+                    })
+                    prev_prog = prog_name
+                current_no += 1
+                
+            row_idx = 1
+            for grp in proker_groups_v:
+                span = len(grp['rows'])
+                start_row = row_idx
+                for r_idx, r_row in enumerate(grp['rows']):
+                    row_cells = table_v.add_row().cells
+                    set_table_widths(table_v, [Cm(1.0), Cm(3.5), Cm(4.5), Cm(4.5), Cm(3.0)])
+                    
+                    if r_idx == 0:
+                        row_cells[0].text = str(grp['start_no'])
+                        row_cells[2].text = grp['name']
+                    
+                    row_cells[1].text = r_row.get('Tanggal Kegiatan', '—')
+                    row_cells[3].text = r_row.get('Nama Kegiatan', r_row.get('Nama Program Kerja', '—'))
+                    row_cells[4].text = r_row.get('Tempat Kegiatan', r_row.get('Tempat', '—'))
+                    
+                    for c_idx, cell in enumerate(row_cells):
+                        set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+                        p = cell.paragraphs[0]
+                        p.paragraph_format.line_spacing = 1.0
+                        p.paragraph_format.space_before = Pt(0)
+                        p.paragraph_format.space_after = Pt(0)
+                        if c_idx == 0:
+                            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        else:
+                            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                        for r in p.runs:
+                            format_run(r, size_pt=12)
+                    row_idx += 1
+                    
+                end_row = row_idx - 1
+                if span > 1:
+                    cell_no_start = table_v.cell(start_row, 0)
+                    cell_no_end = table_v.cell(end_row, 0)
+                    cell_no_start.merge(cell_no_end)
+                    cell_no_start.vertical_alignment = 1
+                    
+                    cell_pk_start = table_v.cell(start_row, 2)
+                    cell_pk_end = table_v.cell(end_row, 2)
+                    cell_pk_start.merge(cell_pk_end)
+                    cell_pk_start.vertical_alignment = 1
+
         # Realisasi Proker
         p_sub3 = master_doc.add_paragraph()
         p_sub3.paragraph_format.space_before = Pt(12)
         p_sub3.paragraph_format.space_after = Pt(6)
         p_sub3.paragraph_format.keep_with_next = True
-        sub3_title = "5. Realisasi Program Kerja" if is_mubesma else "3. Realisasi Program Kerja"
+        sub3_title = "6. Realisasi Program Kerja" if is_mubesma else "3. Realisasi Program Kerja"
         format_run(p_sub3.add_run(sub3_title), size_pt=12, bold=True)
         
-        for idx_pk, pk in enumerate(pdata["proker_terlaksana"], 1):
+        for idx_pk, pk in enumerate(proker_terlaksana, 1):
             p_name = master_doc.add_paragraph()
             p_name.paragraph_format.space_before = Pt(12)
             p_name.paragraph_format.space_after = Pt(6)
@@ -1495,7 +1683,7 @@ def consolidate_lpj(output_path, file_list):
         p_sub4.paragraph_format.space_before = Pt(12)
         p_sub4.paragraph_format.space_after = Pt(6)
         p_sub4.paragraph_format.keep_with_next = True
-        sub4_title = "6. Program Kerja Belum Terealisasi" if is_mubesma else "4. Program Kerja Belum Terealisasi"
+        sub4_title = "7. Program Kerja Belum Terealisasi" if is_mubesma else "4. Program Kerja Belum Terealisasi"
         format_run(p_sub4.add_run(sub4_title), size_pt=12, bold=True)
         
         for idx_pk, pk in enumerate(pdata["proker_belum_terlaksana"], 1):
