@@ -510,14 +510,14 @@ if (!function_exists('parsePoints')) {
                             <?php foreach ($grp['rows'] as $r_idx => $r_row): ?>
                             <tr>
                                 <?php if ($r_idx === 0): ?>
-                                <td style="text-align: center; vertical-align: middle;" rowspan="<?php echo $span; ?>"><?php echo $grp['start_no']; ?></td>
+                                <td style="text-align: center; vertical-align: top;" rowspan="<?php echo $span; ?>"><?php echo $grp['start_no']; ?></td>
                                 <?php endif; ?>
-                                <td><?php echo htmlspecialchars($r_row['Tanggal Kegiatan'] ?? '—'); ?></td>
+                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($r_row['Tanggal Kegiatan'] ?? '—'); ?></td>
                                 <?php if ($r_idx === 0): ?>
-                                <td style="vertical-align: middle;" rowspan="<?php echo $span; ?>"><?php echo htmlspecialchars($grp['name']); ?></td>
+                                <td style="text-align: justify; vertical-align: top;" rowspan="<?php echo $span; ?>"><?php echo htmlspecialchars($grp['name']); ?></td>
                                 <?php endif; ?>
-                                <td><?php echo htmlspecialchars($r_row['Nama Kegiatan'] ?? $r_row['Nama Program Kerja'] ?? '—'); ?></td>
-                                <td><?php echo htmlspecialchars($r_row['Tempat Kegiatan'] ?? $r_row['Tempat'] ?? '—'); ?></td>
+                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($r_row['Nama Kegiatan'] ?? $r_row['Nama Program Kerja'] ?? '—'); ?></td>
+                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($r_row['Tempat Kegiatan'] ?? $r_row['Tempat'] ?? '—'); ?></td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endforeach; ?>

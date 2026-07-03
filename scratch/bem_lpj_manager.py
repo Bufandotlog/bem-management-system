@@ -943,6 +943,7 @@ def generate_lpj(output_path, config_data):
                 
                 for c_idx, cell in enumerate(row_cells):
                     set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+                    cell.vertical_alignment = 0
                     p = cell.paragraphs[0]
                     p.paragraph_format.line_spacing = 1.0
                     p.paragraph_format.space_before = Pt(0)
@@ -950,7 +951,7 @@ def generate_lpj(output_path, config_data):
                     if c_idx == 0:
                         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     else:
-                        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                     for r in p.runs:
                         format_run(r, size_pt=12)
                 row_idx += 1
@@ -960,12 +961,12 @@ def generate_lpj(output_path, config_data):
                 cell_no_start = table_v.cell(start_row, 0)
                 cell_no_end = table_v.cell(end_row, 0)
                 cell_no_start.merge(cell_no_end)
-                cell_no_start.vertical_alignment = 1
+                cell_no_start.vertical_alignment = 0
                 
                 cell_pk_start = table_v.cell(start_row, 2)
                 cell_pk_end = table_v.cell(end_row, 2)
                 cell_pk_start.merge(cell_pk_end)
-                cell_pk_start.vertical_alignment = 1
+                cell_pk_start.vertical_alignment = 0
 
     # C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN
     p_hdr_c = doc.add_paragraph()
@@ -1474,6 +1475,7 @@ def consolidate_lpj(output_path, file_list):
                     
                     for c_idx, cell in enumerate(row_cells):
                         set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+                        cell.vertical_alignment = 0
                         p = cell.paragraphs[0]
                         p.paragraph_format.line_spacing = 1.0
                         p.paragraph_format.space_before = Pt(0)
@@ -1481,7 +1483,7 @@ def consolidate_lpj(output_path, file_list):
                         if c_idx == 0:
                             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         else:
-                            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                            p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                         for r in p.runs:
                             format_run(r, size_pt=12)
                     row_idx += 1
@@ -1491,12 +1493,12 @@ def consolidate_lpj(output_path, file_list):
                     cell_no_start = table_v.cell(start_row, 0)
                     cell_no_end = table_v.cell(end_row, 0)
                     cell_no_start.merge(cell_no_end)
-                    cell_no_start.vertical_alignment = 1
+                    cell_no_start.vertical_alignment = 0
                     
                     cell_pk_start = table_v.cell(start_row, 2)
                     cell_pk_end = table_v.cell(end_row, 2)
                     cell_pk_start.merge(cell_pk_end)
-                    cell_pk_start.vertical_alignment = 1
+                    cell_pk_start.vertical_alignment = 0
 
         # Realisasi Proker
         p_sub3 = master_doc.add_paragraph()
