@@ -404,11 +404,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Generate Word (.docx) Document
-            $k_name_row = dbFetchOne("SELECT nama FROM kementerian WHERE id = ?", [$kementerian_id], "i");
-            $k_name = $k_name_row ? $k_name_row['nama'] : 'Kementerian';
+            $k_row = dbFetchOne("SELECT nama, tugas, fungsi FROM kementerian WHERE id = ?", [$kementerian_id], "i");
+            $k_name = $k_row ? $k_row['nama'] : 'Kementerian';
+            $k_tugas = $k_row && !empty($k_row['tugas']) ? json_decode($k_row['tugas'], true) : [];
+            $k_fungsi = $k_row && !empty($k_row['fungsi']) ? json_decode($k_row['fungsi'], true) : [];
             
             $periode_row = dbFetchOne("SELECT nama, tahun_mulai, tahun_selesai FROM periode_kepengurusan WHERE id = ?", [$periode_id], "i");
             $p_name = $periode_row ? ($periode_row['nama'] . ' (' . $periode_row['tahun_mulai'] . '-' . $periode_row['tahun_selesai'] . ')') : '2025-2026';
+            
+            $visi_misi_row = dbFetchOne("SELECT visi, misi FROM visi_misi WHERE id = 1");
+            $visi = $visi_misi_row ? ($visi_misi_row['visi'] ?? '') : '';
+            $misi = $visi_misi_row && !empty($visi_misi_row['misi']) ? json_decode($visi_misi_row['misi'], true) : [];
             
             // Construct input JSON for the python generator
             $config_data = [
@@ -419,6 +425,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ],
                 'keadaan_objektif' => $keadaan_objektif,
                 'keanggotaan' => $keanggotaan,
+                'tugas_pokok' => $k_tugas,
+                'fungsi' => $k_fungsi,
+                'visi' => $visi,
+                'misi' => $misi,
                 'proker_terlaksana' => $proker_terlaksana,
                 'proker_belum_terlaksana' => $proker_belum_terlaksana,
                 'anggaran' => $anggaran,

@@ -104,7 +104,7 @@ if (!empty($parent['foto'])) {
 }
 
 // ===========================================
-// DECODE JSON TUGAS & PROKER
+// DECODE JSON TUGAS, PROKER & FUNGSI
 // ===========================================
 $deskripsi = $parent['deskripsi'] ?? '';
 
@@ -118,6 +118,12 @@ $proker = [];
 if (!empty($parent['proker'])) {
     $decoded = json_decode($parent['proker'], true);
     $proker  = is_array($decoded) ? $decoded : [];
+}
+
+$fungsi = [];
+if (!empty($parent['fungsi'])) {
+    $decoded = json_decode($parent['fungsi'], true);
+    $fungsi  = is_array($decoded) ? $decoded : [];
 }
 
 // ===========================================
@@ -172,7 +178,7 @@ $tahun_label   = date('Y') . '/' . (date('Y') + 1);
 <!-- DESKRIPSI, TUGAS & PROGRAM KERJA            -->
 <!-- =========================================== -->
 
-<?php if (!empty($deskripsi) || !empty($tugas) || !empty($proker)): ?>
+<?php if (!empty($deskripsi) || !empty($tugas) || !empty($proker) || !empty($fungsi)): ?>
 <div class="detail-description">
     <div class="description-container">
 
@@ -181,6 +187,22 @@ $tahun_label   = date('Y') . '/' . (date('Y') + 1);
             <h2><i class="fas fa-info-circle"></i> Tentang</h2>
             <div class="desc-card">
                 <p><?php echo nl2br(htmlspecialchars($deskripsi)); ?></p>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($fungsi)): ?>
+        <div class="desc-section">
+            <h2><i class="fas fa-bullseye"></i> Fungsi</h2>
+            <div class="desc-card">
+                <ul class="fungsi-list">
+                    <?php foreach ($fungsi as $item): ?>
+                    <li>
+                        <i class="fas fa-dot-circle"></i>
+                        <?php echo htmlspecialchars($item); ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </div>
         <?php endif; ?>

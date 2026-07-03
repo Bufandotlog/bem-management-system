@@ -128,6 +128,7 @@ CREATE TABLE `kementerian` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nama_kementerian` varchar(100) NOT NULL,
   `deskripsi` text DEFAULT NULL,
+  `fungsi` text DEFAULT NULL,
   `urutan` int(11) DEFAULT 0,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)

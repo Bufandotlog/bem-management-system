@@ -114,14 +114,16 @@
 }
 
 .tugas-list,
-.proker-list {
+.proker-list,
+.fungsi-list {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
 .tugas-list li,
-.proker-list li {
+.proker-list li,
+.fungsi-list li {
     color: #ccc;
     padding: 0.75rem 0;
     border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -132,7 +134,8 @@
 }
 
 .tugas-list li:last-child,
-.proker-list li:last-child {
+.proker-list li:last-child,
+.fungsi-list li:last-child {
     border-bottom: none;
 }
 
@@ -145,6 +148,13 @@
 
 .proker-list i {
     color: var(--biru-soft);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.fungsi-list i {
+    color: #F5A623;
     font-size: 1.1rem;
     flex-shrink: 0;
     margin-top: 2px;

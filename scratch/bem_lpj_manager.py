@@ -68,6 +68,85 @@ def extract_periode_years(periode_str):
         return match.group(0)
     return periode_str
 
+def int_to_roman(num):
+    val = [10, 9, 5, 4, 1]
+    syb = ["X", "IX", "V", "IV", "I"]
+    roman_num = ''
+    i = 0
+    while num > 0:
+        for _ in range(num // val[i]):
+            roman_num += syb[i]
+            num -= val[i]
+        i += 1
+    return roman_num
+
+def get_bem_logo_path():
+    # Try different possible paths relative to the script location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'apple-touch-icon.png'),
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'web-app-manifest-512x512.png'),
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'web-app-manifest-192x192.png'),
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'favicon-96x96.png')
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+def add_minister_cover(doc, kementerian_name, periode_years):
+    # Title Block
+    p_title = doc.add_paragraph()
+    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_title.paragraph_format.line_spacing = 1.15
+    p_title.paragraph_format.space_before = Pt(72)  # Generous top margin
+    p_title.paragraph_format.space_after = Pt(6)
+    
+    run_t1 = p_title.add_run("LAPORAN PERTANGGUNGJAWABAN\n")
+    format_run(run_t1, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    formatted_menteri = format_kementerian_title(kementerian_name)
+    run_t2 = p_title.add_run(f"{formatted_menteri.upper()}\n")
+    format_run(run_t2, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    run_t3 = p_title.add_run("BADAN EKSEKUTIF MAHASISWA\n")
+    format_run(run_t3, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    run_t4 = p_title.add_run("INSTITUT BUDI UTOMO NASIONAL")
+    format_run(run_t4, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    # Logo
+    logo_path = get_bem_logo_path()
+    p_logo = doc.add_paragraph()
+    p_logo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_logo.paragraph_format.space_before = Pt(64)
+    p_logo.paragraph_format.space_after = Pt(64)
+    
+    if logo_path:
+        p_logo.add_run().add_picture(logo_path, width=Cm(6.5))
+    else:
+        run_fallback = p_logo.add_run("[LOGO BEM]")
+        format_run(run_fallback, font_name="Times New Roman", size_pt=14, bold=True)
+        
+    # Bottom Subtitle
+    p_sub = doc.add_paragraph()
+    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_sub.paragraph_format.line_spacing = 1.15
+    p_sub.paragraph_format.space_before = Pt(6)
+    p_sub.paragraph_format.space_after = Pt(24)
+    
+    run_s1 = p_sub.add_run("BADAN EKSEKUTIF MAHASISWA\n")
+    format_run(run_s1, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    run_s2 = p_sub.add_run("INSTITUT BUDI UTOMO NASIONAL MAJALENGKA\n")
+    format_run(run_s2, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    years_str = extract_periode_years(periode_years)
+    run_s3 = p_sub.add_run(f"PERIODE {years_str}")
+    format_run(run_s3, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    doc.add_page_break()
+
 def format_run(run, font_name="Times New Roman", size_pt=12, bold=False, italic=False, color_rgb=None):
     run.font.name = font_name
     run.font.size = Pt(size_pt)
@@ -212,6 +291,53 @@ def set_document_formatting(doc):
     style.paragraph_format.space_before = Pt(0)
     style.paragraph_format.space_after = Pt(6)
 
+def add_document_footer(doc, triwulan_str):
+    for section in doc.sections:
+        section.different_first_page_header_footer = True
+        
+        # Main footer
+        footer = section.footer
+        if not footer.paragraphs:
+            p = footer.add_paragraph()
+        else:
+            p = footer.paragraphs[0]
+            p.text = ""
+            
+        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        
+        if triwulan_str.upper() == "MUBESMA":
+            txt = "Laporan Pertanggungjawaban Mubesma | Halaman "
+        else:
+            txt = f"Laporan Pertanggungjawaban Triwulan {triwulan_str} | Halaman "
+            
+        run_txt = p.add_run(txt)
+        format_run(run_txt, font_name="Times New Roman", size_pt=10, italic=True)
+        
+        run_num = p.add_run()
+        format_run(run_num, font_name="Times New Roman", size_pt=10, bold=True)
+        
+        fldChar1 = OxmlElement('w:fldChar')
+        fldChar1.set(qn('w:fldCharType'), 'begin')
+        instrText = OxmlElement('w:instrText')
+        instrText.set(qn('xml:space'), 'preserve')
+        instrText.text = "PAGE"
+        fldChar2 = OxmlElement('w:fldChar')
+        fldChar2.set(qn('w:fldCharType'), 'end')
+        
+        run_num._r.append(fldChar1)
+        run_num._r.append(instrText)
+        run_num._r.append(fldChar2)
+        
+        # Cover page footer (empty)
+        first_page_footer = section.first_page_footer
+        if not first_page_footer.paragraphs:
+            p_first = first_page_footer.add_paragraph()
+        else:
+            p_first = first_page_footer.paragraphs[0]
+            p_first.text = ""
+
 def parse_docx(doc_path):
     if not os.path.exists(doc_path):
         return None
@@ -221,6 +347,10 @@ def parse_docx(doc_path):
         "cover": {"triwulan": "", "kementerian": "", "periode": ""},
         "keanggotaan": {"ketua": "", "sekretaris": "", "bendahara": "", "anggota": ""},
         "keadaan_objektif": "",
+        "tugas_pokok": [],
+        "fungsi": [],
+        "visi": "",
+        "misi": [],
         "proker_terlaksana": [],
         "proker_belum_terlaksana": [],
         "anggaran": [],
@@ -240,6 +370,8 @@ def parse_docx(doc_path):
     if triwulan_match:
         val = triwulan_match.group(1) or triwulan_match.group(2) or "MUBESMA"
         data["cover"]["triwulan"] = val.strip().upper()
+    elif "laporan pertanggung" in cover_text.lower():
+        data["cover"]["triwulan"] = "MUBESMA"
     if kementerian_match:
         kementerian = kementerian_match.group(1) or kementerian_match.group(2)
         data["cover"]["kementerian"] = kementerian.strip()
@@ -250,15 +382,72 @@ def parse_docx(doc_path):
     objektif_paras = []
     for idx, p in enumerate(doc.paragraphs):
         p_text = p.text.strip()
-        if "keadaan objektif menteri" in p_text.lower() or "keadaan objektif" in p_text.lower():
+        if "keadaan objektif menteri" in p_text.lower() or "keadaan objektif" in p_text.lower() or "pendahuluan" in p_text.lower():
             objektif_header_found = True
             continue
         if objektif_header_found:
-            if "keanggotaan" in p_text.lower() or p_text.startswith("B. KEANGGOTAAN") or p_text.startswith("C. REALISASI"):
+            if "keanggotaan" in p_text.lower() or "susunan keanggotaan" in p_text.lower() or p_text.startswith("B. KEANGGOTAAN") or p_text.startswith("II. KEANGGOTAAN") or p_text.startswith("C. REALISASI") or p_text.startswith("III. REALISASI") or "tugas pokok dan fungsi" in p_text.lower() or p_text.startswith("III. TUGAS"):
                 break
             if p_text:
                 objektif_paras.append(p_text)
     data["keadaan_objektif"] = "\n\n".join(objektif_paras)
+
+    # Parse Tugas Pokok dan Fungsi (Only for MUBESMA)
+    tupoksi_header_found = False
+    current_list_type = None
+    tugas_list = []
+    fungsi_list = []
+    for idx, p in enumerate(doc.paragraphs):
+        p_text = p.text.strip()
+        if "tugas pokok dan fungsi" in p_text.lower() or p_text.startswith("III. TUGAS"):
+            tupoksi_header_found = True
+            continue
+        if tupoksi_header_found:
+            if "evaluasi pencapaian" in p_text.lower() or p_text.startswith("IV. EVALUASI") or "realisasi program kerja" in p_text.lower() or p_text.startswith("V. REALISASI") or p_text.startswith("C. REALISASI"):
+                break
+            if "tugas pokok" in p_text.lower() and (p_text.startswith("A.") or p_text.startswith("A. ")):
+                current_list_type = 'tugas'
+                continue
+            elif "fungsi" in p_text.lower() and (p_text.startswith("B.") or p_text.startswith("B. ")):
+                current_list_type = 'fungsi'
+                continue
+            if current_list_type and p_text:
+                cleaned_item = re.sub(r'^\d+[\.\s-]*', '', p_text).strip()
+                if cleaned_item:
+                    if current_list_type == 'tugas':
+                        tugas_list.append(cleaned_item)
+                    elif current_list_type == 'fungsi':
+                        fungsi_list.append(cleaned_item)
+    data["tugas_pokok"] = tugas_list
+    data["fungsi"] = fungsi_list
+
+    # Parse Visi and Misi (Only for MUBESMA)
+    visi_hdr_found = False
+    current_list_type = None
+    visi_txt = ""
+    misi_list = []
+    for idx, p in enumerate(doc.paragraphs):
+        p_text = p.text.strip()
+        if "evaluasi pencapaian" in p_text.lower() or p_text.startswith("IV. EVALUASI"):
+            visi_hdr_found = True
+            continue
+        if visi_hdr_found:
+            if "realisasi program kerja" in p_text.lower() or p_text.startswith("V. REALISASI") or p_text.startswith("C. REALISASI"):
+                break
+            if "visi" in p_text.lower() and (p_text.startswith("A.") or p_text.startswith("A. ")):
+                current_list_type = 'visi'
+                continue
+            elif "misi" in p_text.lower() and (p_text.startswith("B.") or p_text.startswith("B. ")):
+                current_list_type = 'misi'
+                continue
+            if current_list_type == 'visi' and p_text and not p_text.startswith("Visi dan Misi"):
+                visi_txt = p_text
+            elif current_list_type == 'misi' and p_text:
+                cleaned_item = re.sub(r'^\d+[\.\s-]*', '', p_text).strip()
+                if cleaned_item:
+                    misi_list.append(cleaned_item)
+    data["visi"] = visi_txt
+    data["misi"] = misi_list
 
     # Walk through tables sequentially
     current_proker = None
@@ -488,36 +677,46 @@ def generate_lpj(output_path, config_data):
     doc = docx.Document()
     set_document_formatting(doc)
     
-    # Header Title Block (No page break, matches Image 3 exactly)
-    cover_title = doc.add_paragraph()
-    cover_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    cover_title.paragraph_format.line_spacing = 1.0
-    cover_title.paragraph_format.space_before = Pt(0)
-    cover_title.paragraph_format.space_after = Pt(12)
-    
     triwulan_str = config_data['cover']['triwulan'].upper()
-    kementrian_str = format_kementerian_title(config_data['cover']['kementerian'])
-    years_str = extract_periode_years(config_data['cover']['periode'])
+    kementrian_str = config_data['cover']['kementerian']
+    years_str = config_data['cover']['periode']
+    
+    is_mubesma = (triwulan_str == "MUBESMA")
+    pref_a = "I." if is_mubesma else "A."
+    pref_b = "II." if is_mubesma else "B."
+    pref_c = "V." if is_mubesma else "C."
+    pref_d = "VI." if is_mubesma else "D."
     
     if triwulan_str == "MUBESMA":
-        run1 = cover_title.add_run("LAPORAN PERTANGGUNG JAWABAN MUBESMA\n")
+        add_minister_cover(doc, kementrian_str, years_str)
     else:
+        # Header Title Block (No page break, matches Image 3 exactly)
+        cover_title = doc.add_paragraph()
+        cover_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cover_title.paragraph_format.line_spacing = 1.0
+        cover_title.paragraph_format.space_before = Pt(0)
+        cover_title.paragraph_format.space_after = Pt(12)
+        
+        kementrian_formatted = format_kementerian_title(kementrian_str)
+        years_extracted = extract_periode_years(years_str)
+        
         run1 = cover_title.add_run(f"LAPORAN PERTANGGUNG JAWABAN TRIWULAN {triwulan_str}\n")
-    format_run(run1, size_pt=12, bold=True)
+        format_run(run1, size_pt=12, bold=True)
+        
+        run2 = cover_title.add_run(f"{kementrian_formatted}\n")
+        format_run(run2, size_pt=12, bold=True)
+        
+        run3 = cover_title.add_run(f"BEM INSTBUNAS MAJALENGKA {years_extracted}")
+        format_run(run3, size_pt=12, bold=True)
     
-    run2 = cover_title.add_run(f"{kementrian_str}\n")
-    format_run(run2, size_pt=12, bold=True)
-    
-    run3 = cover_title.add_run(f"BEM INSTBUNAS MAJALENGKA {years_str}")
-    format_run(run3, size_pt=12, bold=True)
-    
-    # A. KEADAAN OBJEKTIF MENTERI
+    # A. KEADAAN OBJEKTIF MENTERI / PENDAHULUAN
     p_hdr_a = doc.add_paragraph()
     p_hdr_a.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_hdr_a.paragraph_format.space_before = Pt(12)
     p_hdr_a.paragraph_format.space_after = Pt(6)
     p_hdr_a.paragraph_format.keep_with_next = True
-    format_run(p_hdr_a.add_run("A. KEADAAN OBJEKTIF MENTERI"), size_pt=12, bold=True)
+    title_a = "I. PENDAHULUAN" if is_mubesma else "A. KEADAAN OBJEKTIF MENTERI"
+    format_run(p_hdr_a.add_run(title_a), size_pt=12, bold=True)
     
     obj_text = config_data.get("keadaan_objektif", "").strip()
     if not obj_text:
@@ -534,13 +733,13 @@ def generate_lpj(output_path, config_data):
         p_fungsi.paragraph_format.left_indent = Cm(0.5)
         format_run(p_fungsi.add_run("\t" + line_clean), size_pt=12)
     
-    # B. KEANGGOTAAN (flow on same page — no page break)
+    # B. SUSUNAN KEANGGOTAAN (flow on same page — no page break)
     p_hdr_b = doc.add_paragraph()
     p_hdr_b.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_hdr_b.paragraph_format.space_before = Pt(12)
     p_hdr_b.paragraph_format.space_after = Pt(6)
     p_hdr_b.paragraph_format.keep_with_next = True
-    format_run(p_hdr_b.add_run("B. KEANGGOTAAN"), size_pt=12, bold=True)
+    format_run(p_hdr_b.add_run(f"{pref_b} SUSUNAN KEANGGOTAAN"), size_pt=12, bold=True)
     
     anggota_val = config_data['keanggotaan'].get('anggota', '')
     has_anggota = False
@@ -563,13 +762,116 @@ def generate_lpj(output_path, config_data):
     table_k = doc.add_table(rows=len(rows_data), cols=3)
     render_table_rows(table_k, rows_data, indent_cm=0.5, bold_label=False, prefix_alpha=False)
     
+    if is_mubesma:
+        # III. TUGAS POKOK DAN FUNGSI
+        p_hdr_tup = doc.add_paragraph()
+        p_hdr_tup.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_tup.paragraph_format.space_before = Pt(12)
+        p_hdr_tup.paragraph_format.space_after = Pt(6)
+        p_hdr_tup.paragraph_format.keep_with_next = True
+        format_run(p_hdr_tup.add_run("III. TUGAS POKOK DAN FUNGSI"), size_pt=12, bold=True)
+        
+        # A. Tugas Pokok
+        p_sub_tp = doc.add_paragraph()
+        p_sub_tp.paragraph_format.space_before = Pt(6)
+        p_sub_tp.paragraph_format.space_after = Pt(4)
+        p_sub_tp.paragraph_format.keep_with_next = True
+        p_sub_tp.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_sub_tp.add_run("A. Tugas Pokok"), size_pt=12, bold=True)
+        
+        tugas_list = config_data.get("tugas_pokok", [])
+        if not tugas_list:
+            tugas_list = ["(Belum diatur)"]
+        for t_idx, t_item in enumerate(tugas_list, 1):
+            p_t_item = doc.add_paragraph()
+            p_t_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p_t_item.paragraph_format.line_spacing = 1.15
+            p_t_item.paragraph_format.space_after = Pt(4)
+            p_t_item.paragraph_format.left_indent = Cm(1.5)
+            p_t_item.paragraph_format.first_line_indent = Cm(-0.5)
+            format_run(p_t_item.add_run(f"{t_idx}.\t{t_item}"), size_pt=12)
+            
+        # B. Fungsi
+        p_sub_f = doc.add_paragraph()
+        p_sub_f.paragraph_format.space_before = Pt(6)
+        p_sub_f.paragraph_format.space_after = Pt(4)
+        p_sub_f.paragraph_format.keep_with_next = True
+        p_sub_f.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_sub_f.add_run("B. Fungsi"), size_pt=12, bold=True)
+        
+        fungsi_list = config_data.get("fungsi", [])
+        if not fungsi_list:
+            fungsi_list = ["(Belum diatur)"]
+        for f_idx, f_item in enumerate(fungsi_list, 1):
+            p_f_item = doc.add_paragraph()
+            p_f_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p_f_item.paragraph_format.line_spacing = 1.15
+            p_f_item.paragraph_format.space_after = Pt(4)
+            p_f_item.paragraph_format.left_indent = Cm(1.5)
+            p_f_item.paragraph_format.first_line_indent = Cm(-0.5)
+            format_run(p_f_item.add_run(f"{f_idx}.\t{f_item}"), size_pt=12)
+            
+        # IV. EVALUASI PENCAPAIAN VISI DAN MISI
+        p_hdr_vm = doc.add_paragraph()
+        p_hdr_vm.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_vm.paragraph_format.space_before = Pt(12)
+        p_hdr_vm.paragraph_format.space_after = Pt(6)
+        p_hdr_vm.paragraph_format.keep_with_next = True
+        format_run(p_hdr_vm.add_run("IV. EVALUASI PENCAPAIAN VISI DAN MISI"), size_pt=12, bold=True)
+        
+        p_sub_vm = doc.add_paragraph()
+        p_sub_vm.paragraph_format.space_before = Pt(6)
+        p_sub_vm.paragraph_format.space_after = Pt(6)
+        p_sub_vm.paragraph_format.keep_with_next = True
+        p_sub_vm.paragraph_format.left_indent = Cm(0.5)
+        org_name = "Badan Perwakilan Mahasiswa" if "bpm" in output_path.lower() else "Badan Eksekutif Mahasiswa"
+        format_run(p_sub_vm.add_run(f"Visi dan Misi {org_name} INSTBUNAS Majalengka"), size_pt=12, bold=True)
+        
+        # A. Visi
+        p_v_hdr = doc.add_paragraph()
+        p_v_hdr.paragraph_format.space_before = Pt(6)
+        p_v_hdr.paragraph_format.space_after = Pt(4)
+        p_v_hdr.paragraph_format.keep_with_next = True
+        p_v_hdr.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_v_hdr.add_run("A. Visi"), size_pt=12, bold=True)
+        
+        visi_text = config_data.get("visi", "").strip()
+        if not visi_text:
+            visi_text = "(Belum diatur)"
+        p_v_txt = doc.add_paragraph()
+        p_v_txt.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        p_v_txt.paragraph_format.line_spacing = 1.15
+        p_v_txt.paragraph_format.space_after = Pt(12)
+        p_v_txt.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_v_txt.add_run(visi_text), size_pt=12)
+        
+        # B. Misi
+        p_m_hdr = doc.add_paragraph()
+        p_m_hdr.paragraph_format.space_before = Pt(6)
+        p_m_hdr.paragraph_format.space_after = Pt(4)
+        p_m_hdr.paragraph_format.keep_with_next = True
+        p_m_hdr.paragraph_format.left_indent = Cm(0.5)
+        format_run(p_m_hdr.add_run("B. Misi"), size_pt=12, bold=True)
+        
+        misi_list = config_data.get("misi", [])
+        if not misi_list:
+            misi_list = ["(Belum diatur)"]
+        for m_idx, m_item in enumerate(misi_list, 1):
+            p_m_item = doc.add_paragraph()
+            p_m_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p_m_item.paragraph_format.line_spacing = 1.15
+            p_m_item.paragraph_format.space_after = Pt(4)
+            p_m_item.paragraph_format.left_indent = Cm(1.5)
+            p_m_item.paragraph_format.first_line_indent = Cm(-0.5)
+            format_run(p_m_item.add_run(f"{m_idx}.\t{m_item}"), size_pt=12)
+            
     # C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN
     p_hdr_c = doc.add_paragraph()
     p_hdr_c.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_hdr_c.paragraph_format.space_before = Pt(12)
     p_hdr_c.paragraph_format.space_after = Pt(6)
     p_hdr_c.paragraph_format.keep_with_next = True
-    format_run(p_hdr_c.add_run("C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN"), size_pt=12, bold=True)
+    format_run(p_hdr_c.add_run(f"{pref_c} REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN"), size_pt=12, bold=True)
     
     INDENT_PROKER = 1.0  # cm indent for proker sub-content
     
@@ -745,9 +1047,7 @@ def generate_lpj(output_path, config_data):
                 run_cap = p_cap.add_run(photo.get("caption", ""))
                 format_run(run_cap, size_pt=11, italic=True)
                 
-        # Only add page break between prokers if there are more
-        if idx < len(config_data.get('proker_terlaksana', [])):
-            doc.add_page_break()
+        pass
         
     # D. PROGRAM KERJA YANG BELUM TERLAKSANA
     p_hdr_d = doc.add_paragraph()
@@ -755,7 +1055,7 @@ def generate_lpj(output_path, config_data):
     p_hdr_d.paragraph_format.space_before = Pt(12)
     p_hdr_d.paragraph_format.space_after = Pt(6)
     p_hdr_d.paragraph_format.keep_with_next = True
-    format_run(p_hdr_d.add_run("D. PROGRAM KERJA YANG BELUM TERLAKSANA"), size_pt=12, bold=True)
+    format_run(p_hdr_d.add_run(f"{pref_d} PROGRAM KERJA YANG BELUM TERLAKSANA"), size_pt=12, bold=True)
     
     for idx, pk in enumerate(config_data.get("proker_belum_terlaksana", []), 1):
         p_name = doc.add_paragraph()
@@ -782,6 +1082,7 @@ def generate_lpj(output_path, config_data):
         render_table_rows(table, fields, indent_cm=INDENT_PROKER, bold_label=False, prefix_alpha=True)
         doc.add_paragraph()
         
+    add_document_footer(doc, triwulan_str)
     doc.save(output_path)
     return True
 
@@ -833,13 +1134,14 @@ def consolidate_lpj(output_path, file_list):
     p_toc = master_doc.add_paragraph()
     p_toc.paragraph_format.line_spacing = 1.5
     
+    is_mubesma = (triwulan_val.upper() == "MUBESMA")
     for idx, (f, pdata) in enumerate(parsed_docs_data):
         kementerian_name = pdata["cover"]["kementerian"] or os.path.basename(f)
-        ch_letter = chr(65 + idx)
+        ch_letter = int_to_roman(idx + 1) if is_mubesma else chr(65 + idx)
         p_toc.add_run(f"{ch_letter}. LAPORAN MENTERI {kementerian_name.upper()} ").font.name = "Times New Roman"
         p_toc.add_run("." * 60 + "\n").font.name = "Times New Roman"
         
-    final_letter = chr(65 + len(parsed_docs_data))
+    final_letter = int_to_roman(len(parsed_docs_data) + 1) if is_mubesma else chr(65 + len(parsed_docs_data))
     p_toc.add_run(f"{final_letter}. RINGKASAN ANGGARAN TERPADU BEM ").font.name = "Times New Roman"
     p_toc.add_run("." * 60 + "\n").font.name = "Times New Roman"
     
@@ -847,9 +1149,12 @@ def consolidate_lpj(output_path, file_list):
     
     # 3. Append Kementerian documents
     for idx, (f, pdata) in enumerate(parsed_docs_data):
-        ch_letter = chr(65 + idx)
+        ch_letter = int_to_roman(idx + 1) if is_mubesma else chr(65 + idx)
         k_name = pdata["cover"]["kementerian"] or "Kementerian"
         
+        if triwulan_val.upper() == "MUBESMA":
+            add_minister_cover(master_doc, k_name, pdata["cover"]["periode"] or periode_val)
+            
         p_ch = master_doc.add_paragraph()
         p_ch.alignment = WD_ALIGN_PARAGRAPH.LEFT
         p_ch.paragraph_format.space_before = Pt(12)
@@ -857,12 +1162,13 @@ def consolidate_lpj(output_path, file_list):
         p_ch.paragraph_format.keep_with_next = True
         format_run(p_ch.add_run(f"{ch_letter}. LAPORAN PERTANGGUNGJAWABAN MENTERI {k_name.upper()}"), size_pt=12, bold=True)
         
-        # Keadaan Objektif
+        # Keadaan Objektif / Pendahuluan
         p_sub1 = master_doc.add_paragraph()
         p_sub1.paragraph_format.space_before = Pt(12)
         p_sub1.paragraph_format.space_after = Pt(6)
         p_sub1.paragraph_format.keep_with_next = True
-        format_run(p_sub1.add_run("1. Keadaan Objektif Menteri"), size_pt=12, bold=True)
+        sub1_title = "1. Pendahuluan" if is_mubesma else "1. Keadaan Objektif Menteri"
+        format_run(p_sub1.add_run(sub1_title), size_pt=12, bold=True)
         
         obj_text = pdata["keadaan_objektif"].strip() if pdata["keadaan_objektif"] else "Deskripsi Keadaan Objektif..."
         for line in obj_text.split("\n"):
@@ -881,7 +1187,7 @@ def consolidate_lpj(output_path, file_list):
         p_sub2.paragraph_format.space_before = Pt(12)
         p_sub2.paragraph_format.space_after = Pt(6)
         p_sub2.paragraph_format.keep_with_next = True
-        format_run(p_sub2.add_run("2. Keanggotaan"), size_pt=12, bold=True)
+        format_run(p_sub2.add_run("2. Susunan Keanggotaan"), size_pt=12, bold=True)
         
         anggota_val = pdata['keanggotaan'].get('anggota', '')
         has_anggota = False
@@ -904,12 +1210,113 @@ def consolidate_lpj(output_path, file_list):
         table_k = master_doc.add_table(rows=len(rows_data), cols=3)
         render_table_rows(table_k, rows_data)
         
+        if is_mubesma:
+            p_sub_tup = master_doc.add_paragraph()
+            p_sub_tup.paragraph_format.space_before = Pt(12)
+            p_sub_tup.paragraph_format.space_after = Pt(6)
+            p_sub_tup.paragraph_format.keep_with_next = True
+            format_run(p_sub_tup.add_run("3. Tugas Pokok dan Fungsi"), size_pt=12, bold=True)
+            
+            # A. Tugas Pokok
+            p_tp = master_doc.add_paragraph()
+            p_tp.paragraph_format.space_before = Pt(6)
+            p_tp.paragraph_format.space_after = Pt(4)
+            p_tp.paragraph_format.keep_with_next = True
+            p_tp.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_tp.add_run("A. Tugas Pokok"), size_pt=12, bold=True)
+            
+            tugas_list = pdata.get("tugas_pokok", [])
+            if not tugas_list:
+                tugas_list = ["(Belum diatur)"]
+            for t_idx, t_item in enumerate(tugas_list, 1):
+                p_t_item = master_doc.add_paragraph()
+                p_t_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_t_item.paragraph_format.line_spacing = 1.15
+                p_t_item.paragraph_format.space_after = Pt(4)
+                p_t_item.paragraph_format.left_indent = Cm(1.5)
+                p_t_item.paragraph_format.first_line_indent = Cm(-0.5)
+                format_run(p_t_item.add_run(f"{t_idx}.\t{t_item}"), size_pt=12)
+                
+            # B. Fungsi
+            p_f = master_doc.add_paragraph()
+            p_f.paragraph_format.space_before = Pt(6)
+            p_f.paragraph_format.space_after = Pt(4)
+            p_f.paragraph_format.keep_with_next = True
+            p_f.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_f.add_run("B. Fungsi"), size_pt=12, bold=True)
+            
+            fungsi_list = pdata.get("fungsi", [])
+            if not fungsi_list:
+                fungsi_list = ["(Belum diatur)"]
+            for f_idx, f_item in enumerate(fungsi_list, 1):
+                p_f_item = master_doc.add_paragraph()
+                p_f_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_f_item.paragraph_format.line_spacing = 1.15
+                p_f_item.paragraph_format.space_after = Pt(4)
+                p_f_item.paragraph_format.left_indent = Cm(1.5)
+                p_f_item.paragraph_format.first_line_indent = Cm(-0.5)
+                format_run(p_f_item.add_run(f"{f_idx}.\t{f_item}"), size_pt=12)
+                
+            # 4. Evaluasi Pencapaian Visi dan Misi
+            p_sub_vm = master_doc.add_paragraph()
+            p_sub_vm.paragraph_format.space_before = Pt(12)
+            p_sub_vm.paragraph_format.space_after = Pt(6)
+            p_sub_vm.paragraph_format.keep_with_next = True
+            format_run(p_sub_vm.add_run("4. Evaluasi Pencapaian Visi dan Misi"), size_pt=12, bold=True)
+            
+            p_sub_vm_lbl = master_doc.add_paragraph()
+            p_sub_vm_lbl.paragraph_format.space_before = Pt(6)
+            p_sub_vm_lbl.paragraph_format.space_after = Pt(6)
+            p_sub_vm_lbl.paragraph_format.keep_with_next = True
+            p_sub_vm_lbl.paragraph_format.left_indent = Cm(0.5)
+            org_lbl = "Badan Perwakilan Mahasiswa" if "bpm" in output_path.lower() else "Badan Eksekutif Mahasiswa"
+            format_run(p_sub_vm_lbl.add_run(f"Visi dan Misi {org_lbl} INSTBUNAS Majalengka"), size_pt=12, bold=True)
+            
+            # A. Visi
+            p_v_hdr = master_doc.add_paragraph()
+            p_v_hdr.paragraph_format.space_before = Pt(6)
+            p_v_hdr.paragraph_format.space_after = Pt(4)
+            p_v_hdr.paragraph_format.keep_with_next = True
+            p_v_hdr.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_v_hdr.add_run("A. Visi"), size_pt=12, bold=True)
+            
+            visi_text = pdata.get("visi", "").strip()
+            if not visi_text:
+                visi_text = "(Belum diatur)"
+            p_v_txt = master_doc.add_paragraph()
+            p_v_txt.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p_v_txt.paragraph_format.line_spacing = 1.15
+            p_v_txt.paragraph_format.space_after = Pt(12)
+            p_v_txt.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_v_txt.add_run(visi_text), size_pt=12)
+            
+            # B. Misi
+            p_m_hdr = master_doc.add_paragraph()
+            p_m_hdr.paragraph_format.space_before = Pt(6)
+            p_m_hdr.paragraph_format.space_after = Pt(4)
+            p_m_hdr.paragraph_format.keep_with_next = True
+            p_m_hdr.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_m_hdr.add_run("B. Misi"), size_pt=12, bold=True)
+            
+            misi_list = pdata.get("misi", [])
+            if not misi_list:
+                misi_list = ["(Belum diatur)"]
+            for m_idx, m_item in enumerate(misi_list, 1):
+                p_m_item = master_doc.add_paragraph()
+                p_m_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_m_item.paragraph_format.line_spacing = 1.15
+                p_m_item.paragraph_format.space_after = Pt(4)
+                p_m_item.paragraph_format.left_indent = Cm(1.5)
+                p_m_item.paragraph_format.first_line_indent = Cm(-0.5)
+                format_run(p_m_item.add_run(f"{m_idx}.\t{m_item}"), size_pt=12)
+        
         # Realisasi Proker
         p_sub3 = master_doc.add_paragraph()
         p_sub3.paragraph_format.space_before = Pt(12)
         p_sub3.paragraph_format.space_after = Pt(6)
         p_sub3.paragraph_format.keep_with_next = True
-        format_run(p_sub3.add_run("3. Realisasi Program Kerja"), size_pt=12, bold=True)
+        sub3_title = "5. Realisasi Program Kerja" if is_mubesma else "3. Realisasi Program Kerja"
+        format_run(p_sub3.add_run(sub3_title), size_pt=12, bold=True)
         
         for idx_pk, pk in enumerate(pdata["proker_terlaksana"], 1):
             p_name = master_doc.add_paragraph()
@@ -1082,14 +1489,14 @@ def consolidate_lpj(output_path, file_list):
                     p_cap.paragraph_format.space_after = Pt(12)
                     run_cap = p_cap.add_run(photo.get("caption", ""))
                     format_run(run_cap, size_pt=11, italic=True)
-            master_doc.add_page_break()
             
         # Program Kerja Belum Realisasi
         p_sub4 = master_doc.add_paragraph()
         p_sub4.paragraph_format.space_before = Pt(12)
         p_sub4.paragraph_format.space_after = Pt(6)
         p_sub4.paragraph_format.keep_with_next = True
-        format_run(p_sub4.add_run("4. Program Kerja Belum Terealisasi"), size_pt=12, bold=True)
+        sub4_title = "6. Program Kerja Belum Terealisasi" if is_mubesma else "4. Program Kerja Belum Terealisasi"
+        format_run(p_sub4.add_run(sub4_title), size_pt=12, bold=True)
         
         for idx_pk, pk in enumerate(pdata["proker_belum_terlaksana"], 1):
             p_name = master_doc.add_paragraph()
@@ -1118,7 +1525,7 @@ def consolidate_lpj(output_path, file_list):
         master_doc.add_page_break()
         
     # 4. Ringkasan Anggaran Terpadu BEM
-    letter_akhir = chr(65 + len(parsed_docs_data))
+    letter_akhir = int_to_roman(len(parsed_docs_data) + 1) if is_mubesma else chr(65 + len(parsed_docs_data))
     p_final_ch = master_doc.add_paragraph()
     p_final_ch.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_final_ch.paragraph_format.space_before = Pt(12)
@@ -1192,6 +1599,7 @@ def consolidate_lpj(output_path, file_list):
         for r in p.runs:
             format_run(r, size_pt=12, bold=True)
             
+    add_document_footer(master_doc, triwulan_val)
     master_doc.save(output_path)
     return True
 
