@@ -755,8 +755,9 @@ def generate_lpj(output_path, config_data):
             p_t_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             p_t_item.paragraph_format.line_spacing = 1.15
             p_t_item.paragraph_format.space_after = Pt(4)
-            p_t_item.paragraph_format.left_indent = Cm(1.0)
-            format_run(p_t_item.add_run(f"{t_idx}. {t_item}"), size_pt=12)
+            p_t_item.paragraph_format.left_indent = Cm(1.5)
+            p_t_item.paragraph_format.first_line_indent = Cm(-0.5)
+            format_run(p_t_item.add_run(f"{t_idx}.\t{t_item}"), size_pt=12)
             
         # B. Fungsi
         p_sub_f = doc.add_paragraph()
@@ -774,8 +775,9 @@ def generate_lpj(output_path, config_data):
             p_f_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             p_f_item.paragraph_format.line_spacing = 1.15
             p_f_item.paragraph_format.space_after = Pt(4)
-            p_f_item.paragraph_format.left_indent = Cm(1.0)
-            format_run(p_f_item.add_run(f"{f_idx}. {f_item}"), size_pt=12)
+            p_f_item.paragraph_format.left_indent = Cm(1.5)
+            p_f_item.paragraph_format.first_line_indent = Cm(-0.5)
+            format_run(p_f_item.add_run(f"{f_idx}.\t{f_item}"), size_pt=12)
             
     # C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN
     p_hdr_c = doc.add_paragraph()
@@ -1145,8 +1147,9 @@ def consolidate_lpj(output_path, file_list):
                 p_t_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 p_t_item.paragraph_format.line_spacing = 1.15
                 p_t_item.paragraph_format.space_after = Pt(4)
-                p_t_item.paragraph_format.left_indent = Cm(1.0)
-                format_run(p_t_item.add_run(f"{t_idx}. {t_item}"), size_pt=12)
+                p_t_item.paragraph_format.left_indent = Cm(1.5)
+                p_t_item.paragraph_format.first_line_indent = Cm(-0.5)
+                format_run(p_t_item.add_run(f"{t_idx}.\t{t_item}"), size_pt=12)
                 
             # B. Fungsi
             p_f = master_doc.add_paragraph()
@@ -1164,8 +1167,9 @@ def consolidate_lpj(output_path, file_list):
                 p_f_item.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 p_f_item.paragraph_format.line_spacing = 1.15
                 p_f_item.paragraph_format.space_after = Pt(4)
-                p_f_item.paragraph_format.left_indent = Cm(1.0)
-                format_run(p_f_item.add_run(f"{f_idx}. {f_item}"), size_pt=12)
+                p_f_item.paragraph_format.left_indent = Cm(1.5)
+                p_f_item.paragraph_format.first_line_indent = Cm(-0.5)
+                format_run(p_f_item.add_run(f"{f_idx}.\t{f_item}"), size_pt=12)
         
         # Realisasi Proker
         p_sub3 = master_doc.add_paragraph()
