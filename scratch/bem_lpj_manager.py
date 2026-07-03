@@ -68,6 +68,18 @@ def extract_periode_years(periode_str):
         return match.group(0)
     return periode_str
 
+def int_to_roman(num):
+    val = [10, 9, 5, 4, 1]
+    syb = ["X", "IX", "V", "IV", "I"]
+    roman_num = ''
+    i = 0
+    while num > 0:
+        for _ in range(num // val[i]):
+            roman_num += syb[i]
+            num -= val[i]
+        i += 1
+    return roman_num
+
 def get_bem_logo_path():
     # Try different possible paths relative to the script location
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -370,7 +382,7 @@ def parse_docx(doc_path):
             objektif_header_found = True
             continue
         if objektif_header_found:
-            if "keanggotaan" in p_text.lower() or p_text.startswith("B. KEANGGOTAAN") or p_text.startswith("C. REALISASI"):
+            if "keanggotaan" in p_text.lower() or p_text.startswith("B. KEANGGOTAAN") or p_text.startswith("II. KEANGGOTAAN") or p_text.startswith("C. REALISASI") or p_text.startswith("III. REALISASI"):
                 break
             if p_text:
                 objektif_paras.append(p_text)
@@ -608,6 +620,12 @@ def generate_lpj(output_path, config_data):
     kementrian_str = config_data['cover']['kementerian']
     years_str = config_data['cover']['periode']
     
+    is_mubesma = (triwulan_str == "MUBESMA")
+    pref_a = "I." if is_mubesma else "A."
+    pref_b = "II." if is_mubesma else "B."
+    pref_c = "III." if is_mubesma else "C."
+    pref_d = "IV." if is_mubesma else "D."
+    
     if triwulan_str == "MUBESMA":
         add_minister_cover(doc, kementrian_str, years_str)
     else:
@@ -636,7 +654,7 @@ def generate_lpj(output_path, config_data):
     p_hdr_a.paragraph_format.space_before = Pt(12)
     p_hdr_a.paragraph_format.space_after = Pt(6)
     p_hdr_a.paragraph_format.keep_with_next = True
-    format_run(p_hdr_a.add_run("A. KEADAAN OBJEKTIF MENTERI"), size_pt=12, bold=True)
+    format_run(p_hdr_a.add_run(f"{pref_a} KEADAAN OBJEKTIF MENTERI"), size_pt=12, bold=True)
     
     obj_text = config_data.get("keadaan_objektif", "").strip()
     if not obj_text:
@@ -659,7 +677,7 @@ def generate_lpj(output_path, config_data):
     p_hdr_b.paragraph_format.space_before = Pt(12)
     p_hdr_b.paragraph_format.space_after = Pt(6)
     p_hdr_b.paragraph_format.keep_with_next = True
-    format_run(p_hdr_b.add_run("B. KEANGGOTAAN"), size_pt=12, bold=True)
+    format_run(p_hdr_b.add_run(f"{pref_b} KEANGGOTAAN"), size_pt=12, bold=True)
     
     anggota_val = config_data['keanggotaan'].get('anggota', '')
     has_anggota = False
@@ -688,7 +706,7 @@ def generate_lpj(output_path, config_data):
     p_hdr_c.paragraph_format.space_before = Pt(12)
     p_hdr_c.paragraph_format.space_after = Pt(6)
     p_hdr_c.paragraph_format.keep_with_next = True
-    format_run(p_hdr_c.add_run("C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN"), size_pt=12, bold=True)
+    format_run(p_hdr_c.add_run(f"{pref_c} REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN"), size_pt=12, bold=True)
     
     INDENT_PROKER = 1.0  # cm indent for proker sub-content
     
@@ -872,7 +890,7 @@ def generate_lpj(output_path, config_data):
     p_hdr_d.paragraph_format.space_before = Pt(12)
     p_hdr_d.paragraph_format.space_after = Pt(6)
     p_hdr_d.paragraph_format.keep_with_next = True
-    format_run(p_hdr_d.add_run("D. PROGRAM KERJA YANG BELUM TERLAKSANA"), size_pt=12, bold=True)
+    format_run(p_hdr_d.add_run(f"{pref_d} PROGRAM KERJA YANG BELUM TERLAKSANA"), size_pt=12, bold=True)
     
     for idx, pk in enumerate(config_data.get("proker_belum_terlaksana", []), 1):
         p_name = doc.add_paragraph()
@@ -951,13 +969,14 @@ def consolidate_lpj(output_path, file_list):
     p_toc = master_doc.add_paragraph()
     p_toc.paragraph_format.line_spacing = 1.5
     
+    is_mubesma = (triwulan_val.upper() == "MUBESMA")
     for idx, (f, pdata) in enumerate(parsed_docs_data):
         kementerian_name = pdata["cover"]["kementerian"] or os.path.basename(f)
-        ch_letter = chr(65 + idx)
+        ch_letter = int_to_roman(idx + 1) if is_mubesma else chr(65 + idx)
         p_toc.add_run(f"{ch_letter}. LAPORAN MENTERI {kementerian_name.upper()} ").font.name = "Times New Roman"
         p_toc.add_run("." * 60 + "\n").font.name = "Times New Roman"
         
-    final_letter = chr(65 + len(parsed_docs_data))
+    final_letter = int_to_roman(len(parsed_docs_data) + 1) if is_mubesma else chr(65 + len(parsed_docs_data))
     p_toc.add_run(f"{final_letter}. RINGKASAN ANGGARAN TERPADU BEM ").font.name = "Times New Roman"
     p_toc.add_run("." * 60 + "\n").font.name = "Times New Roman"
     
@@ -965,7 +984,7 @@ def consolidate_lpj(output_path, file_list):
     
     # 3. Append Kementerian documents
     for idx, (f, pdata) in enumerate(parsed_docs_data):
-        ch_letter = chr(65 + idx)
+        ch_letter = int_to_roman(idx + 1) if is_mubesma else chr(65 + idx)
         k_name = pdata["cover"]["kementerian"] or "Kementerian"
         
         if triwulan_val.upper() == "MUBESMA":
@@ -1238,7 +1257,7 @@ def consolidate_lpj(output_path, file_list):
         master_doc.add_page_break()
         
     # 4. Ringkasan Anggaran Terpadu BEM
-    letter_akhir = chr(65 + len(parsed_docs_data))
+    letter_akhir = int_to_roman(len(parsed_docs_data) + 1) if is_mubesma else chr(65 + len(parsed_docs_data))
     p_final_ch = master_doc.add_paragraph()
     p_final_ch.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_final_ch.paragraph_format.space_before = Pt(12)
