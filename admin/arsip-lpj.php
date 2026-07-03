@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_consolidate'])
             if (empty($files_to_consolidate)) {
                 $error = "File LPJ yang dipilih tidak ditemukan secara fisik di server.";
             } else {
-                $out_filename = 'MASTER_LPJ_Triwulan_BEM_' . time() . '.docx';
+                $out_filename = 'MASTER_LPJ_Triwulan_BPM_' . time() . '.docx';
                 $out_filepath = UPLOAD_PATH . '/lpj/' . $out_filename;
                 
                 // Ensure directory exists
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_consolidate'])
                 
                 // Build consolidation command
                 $files_escaped = array_map('escapeshellarg', $files_to_consolidate);
-                $manager_script = escapeshellarg(__DIR__ . '/../scratch/bem_lpj_manager.py');
+                $manager_script = escapeshellarg(__DIR__ . '/../scratch/bpm_lpj_manager.py');
                 $command = "python3 {$manager_script} consolidate " . escapeshellarg($out_filepath) . " " . implode(' ', $files_escaped) . " 2>&1";
                 $output = shell_exec($command);
                 
@@ -191,8 +191,8 @@ if (!empty($filter_triwulan)) {
         flex-direction: column;
     }
     .lpj-card:hover {
-        border-color: #4A90E2;
-        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.15);
+        border-color: #E23C3C;
+        box-shadow: 0 5px 15px rgba(226, 60, 60, 0.15);
     }
     .lpj-card.lpj-draft {
         border-style: dashed;
@@ -210,7 +210,7 @@ if (!empty($filter_triwulan)) {
         width: 45px;
         height: 45px;
         border-radius: 8px;
-        background: rgba(74, 144, 226, 0.1);
+        background: rgba(226, 60, 60, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -256,7 +256,7 @@ if (!empty($filter_triwulan)) {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #8BB9F0;
+        color: #F0D095;
         cursor: pointer;
         font-size: 0.8rem;
         user-select: none;
@@ -299,7 +299,7 @@ if (!empty($filter_triwulan)) {
         left: 0;
         width: 100px;
         height: 2px;
-        background: #4A90E2;
+        background: #E23C3C;
     }
     .lpj-group-title {
         display: flex;
@@ -308,7 +308,7 @@ if (!empty($filter_triwulan)) {
     }
     .lpj-group-title i {
         font-size: 1.4rem;
-        color: #4A90E2;
+        color: #E23C3C;
     }
     .lpj-group-title h2 {
         font-size: 1.25rem;
@@ -319,9 +319,9 @@ if (!empty($filter_triwulan)) {
     }
     .lpj-group-count {
         font-size: 0.78rem;
-        background: rgba(74, 144, 226, 0.15);
-        color: #8BB9F0;
-        border: 1px solid rgba(74, 144, 226, 0.3);
+        background: rgba(226, 60, 60, 0.15);
+        color: #F0D095;
+        border: 1px solid rgba(226, 60, 60, 0.3);
         padding: 2px 10px;
         border-radius: 20px;
         font-weight: bold;
@@ -340,7 +340,7 @@ if (!empty($filter_triwulan)) {
         transition: all 0.2s;
     }
     .empty-group-placeholder:hover {
-        border-color: rgba(74, 144, 226, 0.4);
+        border-color: rgba(226, 60, 60, 0.4);
         background: rgba(15, 18, 23, 0.6);
     }
     .empty-group-placeholder i {
@@ -354,9 +354,9 @@ if (!empty($filter_triwulan)) {
     }
     .btn-buat-quick {
         font-size: 0.78rem;
-        color: #4A90E2;
-        background: rgba(74, 144, 226, 0.1);
-        border: 1px solid rgba(74, 144, 226, 0.2);
+        color: #E23C3C;
+        background: rgba(226, 60, 60, 0.1);
+        border: 1px solid rgba(226, 60, 60, 0.2);
         padding: 6px 14px;
         border-radius: 6px;
         cursor: pointer;
@@ -368,9 +368,9 @@ if (!empty($filter_triwulan)) {
         gap: 6px;
     }
     .btn-buat-quick:hover {
-        background: #4A90E2;
+        background: #E23C3C;
         color: #fff;
-        border-color: #4A90E2;
+        border-color: #E23C3C;
         transform: translateY(-1px);
     }
 </style>
@@ -529,13 +529,14 @@ if (!empty($filter_triwulan)) {
                                         <span style="font-size: 0.75rem; color: #888; font-style: italic;">Selesaikan draft untuk konsolidasi</span>
                                     <?php endif; ?>
                                     
-                                    <div style="display: flex; gap: 6px;">
-                                        <a href="buat-lpj.php?id=<?php echo $lpj['id']; ?>" class="btn-edit" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fas fa-edit"></i> Edit</a>
-                                        <?php if (!empty($lpj['file_path'])): ?>
-                                            <a href="<?php echo uploadUrl($lpj['file_path']); ?>" class="btn-buat" style="padding: 4px 8px; font-size: 0.75rem; background: #4A90E2;" download><i class="fas fa-download"></i> Docx</a>
-                                        <?php endif; ?>
-                                        <button type="button" class="btn-delete" style="padding: 4px 8px; font-size: 0.75rem;" onclick="confirmDelete(<?php echo $lpj['id']; ?>)"><i class="fas fa-trash"></i> Hapus</button>
-                                    </div>
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                         <a href="buat-lpj.php?id=<?php echo $lpj['id']; ?>" class="btn-edit" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fas fa-edit"></i> Edit</a>
+                                         <a href="cetak-lpj.php?id=<?php echo $lpj['id']; ?>" target="_blank" class="btn-buat" style="padding: 4px 8px; font-size: 0.75rem; background: #9b59b6;"><i class="fas fa-eye"></i> Preview &amp; PDF</a>
+                                         <?php if (!empty($lpj['file_path'])): ?>
+                                             <a href="<?php echo uploadUrl($lpj['file_path']); ?>" class="btn-buat" style="padding: 4px 8px; font-size: 0.75rem; background: #E23C3C;" download><i class="fas fa-download"></i> Docx</a>
+                                         <?php endif; ?>
+                                         <button type="button" class="btn-delete" style="padding: 4px 8px; font-size: 0.75rem;" onclick="confirmDelete(<?php echo $lpj['id']; ?>)"><i class="fas fa-trash"></i> Hapus</button>
+                                     </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
