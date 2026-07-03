@@ -378,11 +378,11 @@ def parse_docx(doc_path):
     objektif_paras = []
     for idx, p in enumerate(doc.paragraphs):
         p_text = p.text.strip()
-        if "keadaan objektif menteri" in p_text.lower() or "keadaan objektif" in p_text.lower():
+        if "keadaan objektif menteri" in p_text.lower() or "keadaan objektif" in p_text.lower() or "pendahuluan" in p_text.lower():
             objektif_header_found = True
             continue
         if objektif_header_found:
-            if "keanggotaan" in p_text.lower() or p_text.startswith("B. KEANGGOTAAN") or p_text.startswith("II. KEANGGOTAAN") or p_text.startswith("C. REALISASI") or p_text.startswith("III. REALISASI"):
+            if "keanggotaan" in p_text.lower() or "susunan keanggotaan" in p_text.lower() or p_text.startswith("B. KEANGGOTAAN") or p_text.startswith("II. KEANGGOTAAN") or p_text.startswith("C. REALISASI") or p_text.startswith("III. REALISASI"):
                 break
             if p_text:
                 objektif_paras.append(p_text)
@@ -648,13 +648,14 @@ def generate_lpj(output_path, config_data):
         run3 = cover_title.add_run(f"BEM INSTBUNAS MAJALENGKA {years_extracted}")
         format_run(run3, size_pt=12, bold=True)
     
-    # A. KEADAAN OBJEKTIF MENTERI
+    # A. KEADAAN OBJEKTIF MENTERI / PENDAHULUAN
     p_hdr_a = doc.add_paragraph()
     p_hdr_a.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_hdr_a.paragraph_format.space_before = Pt(12)
     p_hdr_a.paragraph_format.space_after = Pt(6)
     p_hdr_a.paragraph_format.keep_with_next = True
-    format_run(p_hdr_a.add_run(f"{pref_a} KEADAAN OBJEKTIF MENTERI"), size_pt=12, bold=True)
+    title_a = "I. PENDAHULUAN" if is_mubesma else "A. KEADAAN OBJEKTIF MENTERI"
+    format_run(p_hdr_a.add_run(title_a), size_pt=12, bold=True)
     
     obj_text = config_data.get("keadaan_objektif", "").strip()
     if not obj_text:
@@ -671,13 +672,13 @@ def generate_lpj(output_path, config_data):
         p_fungsi.paragraph_format.left_indent = Cm(0.5)
         format_run(p_fungsi.add_run("\t" + line_clean), size_pt=12)
     
-    # B. KEANGGOTAAN (flow on same page — no page break)
+    # B. SUSUNAN KEANGGOTAAN (flow on same page — no page break)
     p_hdr_b = doc.add_paragraph()
     p_hdr_b.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_hdr_b.paragraph_format.space_before = Pt(12)
     p_hdr_b.paragraph_format.space_after = Pt(6)
     p_hdr_b.paragraph_format.keep_with_next = True
-    format_run(p_hdr_b.add_run(f"{pref_b} KEANGGOTAAN"), size_pt=12, bold=True)
+    format_run(p_hdr_b.add_run(f"{pref_b} SUSUNAN KEANGGOTAAN"), size_pt=12, bold=True)
     
     anggota_val = config_data['keanggotaan'].get('anggota', '')
     has_anggota = False
@@ -997,12 +998,13 @@ def consolidate_lpj(output_path, file_list):
         p_ch.paragraph_format.keep_with_next = True
         format_run(p_ch.add_run(f"{ch_letter}. LAPORAN PERTANGGUNGJAWABAN MENTERI {k_name.upper()}"), size_pt=12, bold=True)
         
-        # Keadaan Objektif
+        # Keadaan Objektif / Pendahuluan
         p_sub1 = master_doc.add_paragraph()
         p_sub1.paragraph_format.space_before = Pt(12)
         p_sub1.paragraph_format.space_after = Pt(6)
         p_sub1.paragraph_format.keep_with_next = True
-        format_run(p_sub1.add_run("1. Keadaan Objektif Menteri"), size_pt=12, bold=True)
+        sub1_title = "1. Pendahuluan" if is_mubesma else "1. Keadaan Objektif Menteri"
+        format_run(p_sub1.add_run(sub1_title), size_pt=12, bold=True)
         
         obj_text = pdata["keadaan_objektif"].strip() if pdata["keadaan_objektif"] else "Deskripsi Keadaan Objektif..."
         for line in obj_text.split("\n"):
@@ -1021,7 +1023,7 @@ def consolidate_lpj(output_path, file_list):
         p_sub2.paragraph_format.space_before = Pt(12)
         p_sub2.paragraph_format.space_after = Pt(6)
         p_sub2.paragraph_format.keep_with_next = True
-        format_run(p_sub2.add_run("2. Keanggotaan"), size_pt=12, bold=True)
+        format_run(p_sub2.add_run("2. Susunan Keanggotaan"), size_pt=12, bold=True)
         
         anggota_val = pdata['keanggotaan'].get('anggota', '')
         has_anggota = False
