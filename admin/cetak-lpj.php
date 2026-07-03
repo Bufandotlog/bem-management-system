@@ -452,10 +452,51 @@ if (!function_exists('parsePoints')) {
             </div>
         </div>
 
-        <!-- 3. REALISASI PROGRAM KERJA -->
+        <!-- 3. PROGRAM KERJA RINGKASAN (Mubesma Only) -->
+        <?php if ($is_mubesma): ?>
+        <div class="page">
+            <div class="section-header">V. PROGRAM KERJA</div>
+
+            <?php if (empty($proker_terlaksana)): ?>
+                <p class="narrative-p" style="font-style: italic; text-indent: 0;">(Tidak ada data program kerja)</p>
+            <?php else: ?>
+                <table class="budget-table" style="margin-left: 0; width: 100%; margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 7%; text-align: center;">NO</th>
+                            <th style="width: 22%; text-align: center;">WAKTU</th>
+                            <th style="width: 25%; text-align: center;">PROGRAM KERJA</th>
+                            <th style="width: 28%; text-align: center;">NAMA KEGIATAN</th>
+                            <th style="width: 18%; text-align: center;">TEMPAT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($proker_terlaksana as $pk_idx => $pk_row): ?>
+                        <tr>
+                            <td style="text-align: center;"><?php echo ($pk_idx + 1); ?></td>
+                            <td><?php echo htmlspecialchars($pk_row['Tanggal Kegiatan'] ?? '—'); ?></td>
+                            <td><?php echo htmlspecialchars($pk_row['Nama Program Kerja'] ?? '—'); ?></td>
+                            <td><?php echo htmlspecialchars($pk_row['Nama Kegiatan'] ?? $pk_row['Nama Program Kerja'] ?? '—'); ?></td>
+                            <td><?php echo htmlspecialchars($pk_row['Tempat Kegiatan'] ?? $pk_row['Tempat'] ?? '—'); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <p style="margin-top: 8px; font-size: 10pt; font-style: italic; text-align: center; color: #555;">
+                    *disesuaikan dengan program kerja selama menjabat
+                </p>
+            <?php endif; ?>
+
+            <div class="page-footer-label">
+                Laporan Pertanggungjawaban Mubesma
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- 4. REALISASI PROGRAM KERJA -->
         <div class="page">
             <div class="section-header">
-                <?php echo $is_mubesma ? "V. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN" : "C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN"; ?>
+                <?php echo $is_mubesma ? "VI. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN" : "C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN"; ?>
             </div>
 
             <?php if (empty($proker_terlaksana)): ?>
@@ -622,7 +663,7 @@ if (!function_exists('parsePoints')) {
         <!-- 4. PROGRAM KERJA BELUM TEREALISASI -->
         <div class="page">
             <div class="section-header">
-                <?php echo $is_mubesma ? "VI. PROGRAM KERJA YANG BELUM TERLAKSANA" : "D. PROGRAM KERJA YANG BELUM TERLAKSANA"; ?>
+                <?php echo $is_mubesma ? "VII. PROGRAM KERJA YANG BELUM TERLAKSANA" : "D. PROGRAM KERJA YANG BELUM TERLAKSANA"; ?>
             </div>
 
             <?php if (empty($proker_belum_terlaksana)): ?>
