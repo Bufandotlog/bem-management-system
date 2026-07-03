@@ -68,6 +68,73 @@ def extract_periode_years(periode_str):
         return match.group(0)
     return periode_str
 
+def get_bem_logo_path():
+    # Try different possible paths relative to the script location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'apple-touch-icon.png'),
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'web-app-manifest-512x512.png'),
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'web-app-manifest-192x192.png'),
+        os.path.join(script_dir, '..', 'assets', 'images', 'favicon', 'favicon-96x96.png')
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+def add_minister_cover(doc, kementerian_name, periode_years):
+    # Title Block
+    p_title = doc.add_paragraph()
+    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_title.paragraph_format.line_spacing = 1.15
+    p_title.paragraph_format.space_before = Pt(72)  # Generous top margin
+    p_title.paragraph_format.space_after = Pt(6)
+    
+    run_t1 = p_title.add_run("LAPORAN PERTANGGUNGJAWABAN\n")
+    format_run(run_t1, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    formatted_menteri = format_kementerian_title(kementerian_name)
+    run_t2 = p_title.add_run(f"{formatted_menteri.upper()}\n")
+    format_run(run_t2, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    run_t3 = p_title.add_run("BADAN EKSEKUTIF MAHASISWA\n")
+    format_run(run_t3, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    run_t4 = p_title.add_run("INSTITUT BUDI UTOMO NASIONAL")
+    format_run(run_t4, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    # Logo
+    logo_path = get_bem_logo_path()
+    p_logo = doc.add_paragraph()
+    p_logo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_logo.paragraph_format.space_before = Pt(64)
+    p_logo.paragraph_format.space_after = Pt(64)
+    
+    if logo_path:
+        p_logo.add_run().add_picture(logo_path, width=Cm(6.5))
+    else:
+        run_fallback = p_logo.add_run("[LOGO BEM]")
+        format_run(run_fallback, font_name="Times New Roman", size_pt=14, bold=True)
+        
+    # Bottom Subtitle
+    p_sub = doc.add_paragraph()
+    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_sub.paragraph_format.line_spacing = 1.15
+    p_sub.paragraph_format.space_before = Pt(6)
+    p_sub.paragraph_format.space_after = Pt(24)
+    
+    run_s1 = p_sub.add_run("BADAN EKSEKUTIF MAHASISWA\n")
+    format_run(run_s1, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    run_s2 = p_sub.add_run("INSTITUT BUDI UTOMO NASIONAL MAJALENGKA\n")
+    format_run(run_s2, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    years_str = extract_periode_years(periode_years)
+    run_s3 = p_sub.add_run(f"PERIODE {years_str}")
+    format_run(run_s3, font_name="Times New Roman", size_pt=14, bold=True)
+    
+    doc.add_page_break()
+
 def format_run(run, font_name="Times New Roman", size_pt=12, bold=False, italic=False, color_rgb=None):
     run.font.name = font_name
     run.font.size = Pt(size_pt)
@@ -287,6 +354,8 @@ def parse_docx(doc_path):
     if triwulan_match:
         val = triwulan_match.group(1) or triwulan_match.group(2) or "MUBESMA"
         data["cover"]["triwulan"] = val.strip().upper()
+    elif "laporan pertanggung" in cover_text.lower():
+        data["cover"]["triwulan"] = "MUBESMA"
     if kementerian_match:
         kementerian = kementerian_match.group(1) or kementerian_match.group(2)
         data["cover"]["kementerian"] = kementerian.strip()
@@ -535,28 +604,31 @@ def generate_lpj(output_path, config_data):
     doc = docx.Document()
     set_document_formatting(doc)
     
-    # Header Title Block (No page break, matches Image 3 exactly)
-    cover_title = doc.add_paragraph()
-    cover_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    cover_title.paragraph_format.line_spacing = 1.0
-    cover_title.paragraph_format.space_before = Pt(0)
-    cover_title.paragraph_format.space_after = Pt(12)
-    
     triwulan_str = config_data['cover']['triwulan'].upper()
-    kementrian_str = format_kementerian_title(config_data['cover']['kementerian'])
-    years_str = extract_periode_years(config_data['cover']['periode'])
+    kementrian_str = config_data['cover']['kementerian']
+    years_str = config_data['cover']['periode']
     
     if triwulan_str == "MUBESMA":
-        run1 = cover_title.add_run("LAPORAN PERTANGGUNG JAWABAN MUBESMA\n")
+        add_minister_cover(doc, kementrian_str, years_str)
     else:
+        # Header Title Block (No page break, matches Image 3 exactly)
+        cover_title = doc.add_paragraph()
+        cover_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cover_title.paragraph_format.line_spacing = 1.0
+        cover_title.paragraph_format.space_before = Pt(0)
+        cover_title.paragraph_format.space_after = Pt(12)
+        
+        kementrian_formatted = format_kementerian_title(kementrian_str)
+        years_extracted = extract_periode_years(years_str)
+        
         run1 = cover_title.add_run(f"LAPORAN PERTANGGUNG JAWABAN TRIWULAN {triwulan_str}\n")
-    format_run(run1, size_pt=12, bold=True)
-    
-    run2 = cover_title.add_run(f"{kementrian_str}\n")
-    format_run(run2, size_pt=12, bold=True)
-    
-    run3 = cover_title.add_run(f"BEM INSTBUNAS MAJALENGKA {years_str}")
-    format_run(run3, size_pt=12, bold=True)
+        format_run(run1, size_pt=12, bold=True)
+        
+        run2 = cover_title.add_run(f"{kementrian_formatted}\n")
+        format_run(run2, size_pt=12, bold=True)
+        
+        run3 = cover_title.add_run(f"BEM INSTBUNAS MAJALENGKA {years_extracted}")
+        format_run(run3, size_pt=12, bold=True)
     
     # A. KEADAAN OBJEKTIF MENTERI
     p_hdr_a = doc.add_paragraph()
@@ -896,6 +968,9 @@ def consolidate_lpj(output_path, file_list):
         ch_letter = chr(65 + idx)
         k_name = pdata["cover"]["kementerian"] or "Kementerian"
         
+        if triwulan_val.upper() == "MUBESMA":
+            add_minister_cover(master_doc, k_name, pdata["cover"]["periode"] or periode_val)
+            
         p_ch = master_doc.add_paragraph()
         p_ch.alignment = WD_ALIGN_PARAGRAPH.LEFT
         p_ch.paragraph_format.space_before = Pt(12)
