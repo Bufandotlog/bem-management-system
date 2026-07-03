@@ -538,16 +538,19 @@ def parse_docx(doc_path):
             for row in table.rows:
                 if len(row.cells) >= 3:
                     f_name = row.cells[0].text.strip()
+                    # Clean prefix like "a.  ", "b.  ", "1. ", etc.
+                    clean_key = re.sub(r'^[a-zA-Z0-9]+[\.\s]+', '', f_name).strip()
                     f_val = row.cells[2].text.strip()
-                    fields[f_name] = f_val
+                    fields[clean_key] = f_val
             
             has_evaluasi = any("evaluasi" in k.lower() for k in fields.keys())
             if has_evaluasi:
                 current_proker = {
                     "Nama Program Kerja": fields.get("Nama Program Kerja", fields.get("Nama Kegiatan", "")),
+                    "Tempat Kegiatan": fields.get("Tempat Kegiatan", fields.get("Tempat", "")),
                     "Sifat": fields.get("Sifat", "Internal"),
                     "Tema Kegiatan": fields.get("Tema Kegiatan", ""),
-                    "Tujuan": fields.get("Tujuan", ""),
+                    "Tujuan": fields.get("Tujuan", fields.get("Tujuan Kegiatan", "")),
                     "Tanggal Kegiatan": fields.get("Tanggal Kegiatan", ""),
                     "Penanggung Jawab": fields.get("Penanggung Jawab", ""),
                     "Peserta Kegiatan": fields.get("Peserta Kegiatan", ""),
@@ -988,9 +991,10 @@ def generate_lpj(output_path, config_data):
         name_str = clean_proker_name(pk.get('Nama Program Kerja', 'Proker'))
         format_run(p_name.add_run(f"{idx}. {name_str}"), size_pt=12, bold=True)
         
-        table = doc.add_table(rows=8, cols=3)
+        table = doc.add_table(rows=9, cols=3)
         fields = [
             ("Nama Kegiatan", clean_proker_name(pk.get("Nama Kegiatan", pk.get("Nama Program Kerja", "")))),
+            ("Tempat Kegiatan", pk.get("Tempat Kegiatan", pk.get("Tempat", ""))),
             ("Sifat", pk.get("Sifat", "Internal")),
             ("Tema Kegiatan", pk.get("Tema Kegiatan", "")),
             ("Tujuan", pk.get("Tujuan", "")),
@@ -1007,7 +1011,7 @@ def generate_lpj(output_path, config_data):
         p_sub_ang.paragraph_format.space_after = Pt(6)
         p_sub_ang.paragraph_format.keep_with_next = True
         p_sub_ang.paragraph_format.left_indent = Cm(INDENT_PROKER)
-        format_run(p_sub_ang.add_run("i.  Realisasi Anggaran"), size_pt=12, bold=False)
+        format_run(p_sub_ang.add_run("j.  Realisasi Anggaran"), size_pt=12, bold=False)
         
         tidak_menggunakan_anggaran = pk.get("tidak_menggunakan_anggaran", False)
         anggaran_list = pk.get("anggaran", [])
@@ -1101,7 +1105,7 @@ def generate_lpj(output_path, config_data):
         p_sub_dok.paragraph_format.space_after = Pt(6)
         p_sub_dok.paragraph_format.keep_with_next = True
         p_sub_dok.paragraph_format.left_indent = Cm(INDENT_PROKER)
-        format_run(p_sub_dok.add_run("j.  Dokumentasi Kegiatan"), size_pt=12, bold=False)
+        format_run(p_sub_dok.add_run("k.  Dokumentasi Kegiatan"), size_pt=12, bold=False)
         
         doc_list = pk.get("dokumentasi", [])
         num_photos = len(doc_list)
@@ -1517,9 +1521,10 @@ def consolidate_lpj(output_path, file_list):
             name_str = clean_proker_name(pk.get('Nama Program Kerja', 'Proker'))
             format_run(p_name.add_run(f"{idx_pk}. {name_str}"), size_pt=12, bold=True)
             
-            table = master_doc.add_table(rows=8, cols=3)
+            table = master_doc.add_table(rows=9, cols=3)
             fields = [
                 ("Nama Kegiatan", clean_proker_name(pk.get("Nama Kegiatan", pk.get("Nama Program Kerja", "")))),
+                ("Tempat Kegiatan", pk.get("Tempat Kegiatan", pk.get("Tempat", ""))),
                 ("Sifat", pk.get("Sifat", "Internal")),
                 ("Tema Kegiatan", pk.get("Tema Kegiatan", "")),
                 ("Tujuan", pk.get("Tujuan", "")),
@@ -1537,7 +1542,7 @@ def consolidate_lpj(output_path, file_list):
             p_sub_ang.paragraph_format.space_after = Pt(6)
             p_sub_ang.paragraph_format.keep_with_next = True
             p_sub_ang.paragraph_format.left_indent = Cm(INDENT_PROKER)
-            format_run(p_sub_ang.add_run("i.  Realisasi Anggaran"), size_pt=12, bold=False)
+            format_run(p_sub_ang.add_run("j.  Realisasi Anggaran"), size_pt=12, bold=False)
             
             tidak_menggunakan_anggaran = pk.get("tidak_menggunakan_anggaran", False)
             anggaran_list = pk.get("anggaran", [])
@@ -1631,7 +1636,7 @@ def consolidate_lpj(output_path, file_list):
             p_sub_dok.paragraph_format.space_after = Pt(6)
             p_sub_dok.paragraph_format.keep_with_next = True
             p_sub_dok.paragraph_format.left_indent = Cm(INDENT_PROKER)
-            format_run(p_sub_dok.add_run("j.  Dokumentasi Kegiatan"), size_pt=12, bold=False)
+            format_run(p_sub_dok.add_run("k.  Dokumentasi Kegiatan"), size_pt=12, bold=False)
             
             doc_list = pk.get("dokumentasi", [])
             num_photos = len(doc_list)

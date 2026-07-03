@@ -555,17 +555,22 @@ if (!function_exists('parsePoints')) {
                                 <td><?php echo htmlspecialchars($pk['Nama Kegiatan'] ?? $pk['Nama Program Kerja'] ?? '—'); ?></td>
                             </tr>
                             <tr>
-                                <td class="col-label">b.&nbsp;&nbsp;Sifat Kegiatan</td>
+                                <td class="col-label">b.&nbsp;&nbsp;Tempat Kegiatan</td>
+                                <td class="col-colon">:</td>
+                                <td><?php echo htmlspecialchars($pk['Tempat Kegiatan'] ?? $pk['Tempat'] ?? '—'); ?></td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">c.&nbsp;&nbsp;Sifat Kegiatan</td>
                                 <td class="col-colon">:</td>
                                 <td><?php echo htmlspecialchars($pk['Sifat'] ?? 'Internal'); ?></td>
                             </tr>
                             <tr>
-                                <td class="col-label">c.&nbsp;&nbsp;Tema Kegiatan</td>
+                                <td class="col-label">d.&nbsp;&nbsp;Tema Kegiatan</td>
                                 <td class="col-colon">:</td>
                                 <td><?php echo htmlspecialchars($pk['Tema Kegiatan'] ?? '—'); ?></td>
                             </tr>
                             <tr>
-                                <td class="col-label">d.&nbsp;&nbsp;Tujuan Kegiatan</td>
+                                <td class="col-label">e.&nbsp;&nbsp;Tujuan Kegiatan</td>
                                 <td class="col-colon">:</td>
                                 <td>
                                     <?php 
@@ -581,17 +586,17 @@ if (!function_exists('parsePoints')) {
                                 </td>
                             </tr>
                             <tr>
-                                <td class="col-label">e.&nbsp;&nbsp;Tanggal Kegiatan</td>
+                                <td class="col-label">f.&nbsp;&nbsp;Tanggal Kegiatan</td>
                                 <td class="col-colon">:</td>
                                 <td><?php echo htmlspecialchars($pk['Tanggal Kegiatan'] ?? '—'); ?></td>
                             </tr>
                             <tr>
-                                <td class="col-label">f.&nbsp;&nbsp;Penanggung Jawab</td>
+                                <td class="col-label">g.&nbsp;&nbsp;Penanggung Jawab</td>
                                 <td class="col-colon">:</td>
                                 <td><?php echo htmlspecialchars($pk['Penanggung Jawab'] ?? '—'); ?></td>
                             </tr>
                             <tr>
-                                <td class="col-label">g.&nbsp;&nbsp;Peserta Kegiatan</td>
+                                <td class="col-label">h.&nbsp;&nbsp;Peserta Kegiatan</td>
                                 <td class="col-colon">:</td>
                                 <td>
                                     <?php 
@@ -607,7 +612,7 @@ if (!function_exists('parsePoints')) {
                                 </td>
                             </tr>
                             <tr>
-                                <td class="col-label">h.&nbsp;&nbsp;Evaluasi &amp; Saran</td>
+                                <td class="col-label">i.&nbsp;&nbsp;Evaluasi &amp; Saran</td>
                                 <td class="col-colon">:</td>
                                 <td>
                                     <?php 
@@ -624,8 +629,8 @@ if (!function_exists('parsePoints')) {
                             </tr>
                         </table>
 
-                        <!-- Sub-bagian i: Realisasi Anggaran -->
-                        <div class="subsection-header" style="margin-left: 1cm; font-weight: normal; font-size: 11pt;">i.&nbsp;&nbsp;Realisasi Anggaran</div>
+                        <!-- Sub-bagian j: Realisasi Anggaran -->
+                        <div class="subsection-header" style="margin-left: 1cm; font-weight: normal; font-size: 11pt;">j.&nbsp;&nbsp;Realisasi Anggaran</div>
                         <?php 
                         $no_budget = !empty($pk['tidak_menggunakan_anggaran']);
                         $anggaran = $pk['anggaran'] ?? [];
@@ -672,11 +677,11 @@ if (!function_exists('parsePoints')) {
                                         <td class="right-align"><?php echo formatRupiah($balance); ?></td>
                                     </tr>
                                 </tbody>
-                            </table>
+                             </table>
                         <?php endif; ?>
 
-                        <!-- Sub-bagian j: Dokumentasi Kegiatan -->
-                        <div class="subsection-header" style="margin-left: 1cm; font-weight: normal; font-size: 11pt; margin-top: 15px;">j.&nbsp;&nbsp;Dokumentasi Kegiatan</div>
+                        <!-- Sub-bagian k: Dokumentasi Kegiatan -->
+                        <div class="subsection-header" style="margin-left: 1cm; font-weight: normal; font-size: 11pt; margin-top: 15px;">k.&nbsp;&nbsp;Dokumentasi Kegiatan</div>
                         <?php 
                         $doc_list = $pk['dokumentasi'] ?? [];
                         if (empty($doc_list)): 

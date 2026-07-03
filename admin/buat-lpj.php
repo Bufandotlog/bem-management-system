@@ -258,6 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Proker Terlaksana
         $pt_names = $_POST['pt_name'] ?? [];
         $pt_kegiatans = $_POST['pt_kegiatan'] ?? [];
+        $pt_tempats = $_POST['pt_tempat'] ?? [];
         $pt_sifats = $_POST['pt_sifat'] ?? [];
         $pt_temas = $_POST['pt_tema'] ?? [];
         $pt_tujuans = $_POST['pt_tujuan'] ?? [];
@@ -325,6 +326,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $proker_terlaksana[] = [
                     'Nama Program Kerja' => sanitizeText($pt_names[$i]),
                     'Nama Kegiatan' => sanitizeText($pt_kegiatans[$i] ?? ''),
+                    'Tempat Kegiatan' => sanitizeText($pt_tempats[$i] ?? ''),
                     'Sifat' => sanitizeText($pt_sifats[$i] ?? 'Internal'),
                     'Tema Kegiatan' => sanitizeText($pt_temas[$i] ?? ''),
                     'Tujuan' => normalize_points_input($pt_tujuans[$i] ?? ''),
@@ -1291,6 +1293,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                                 <input type="text" name="pt_kegiatan[]" class="form-control" value="<?php echo htmlspecialchars($pt['Nama Kegiatan'] ?? ''); ?>" required placeholder="Cth: Menghadiri Undangan Bemnus">
                             </div>
                             <div class="form-group">
+                                <label>Tempat Kegiatan</label>
+                                <input type="text" name="pt_tempat[]" class="form-control" value="<?php echo htmlspecialchars($pt['Tempat Kegiatan'] ?? $pt['Tempat'] ?? ''); ?>" required placeholder="Cth: Aula Kampus / Zoom Meeting">
+                            </div>
+                            <div class="form-group">
                                 <label>Sifat</label>
                                 <input type="text" name="pt_sifat[]" class="form-control" value="<?php echo htmlspecialchars($pt['Sifat'] ?? 'Internal'); ?>" placeholder="Cth: Internal / Eksternal">
                             </div>
@@ -1666,6 +1672,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     <input type="text" name="pt_kegiatan[]" class="form-control" required placeholder="Cth: Menghadiri Undangan Bemnus">
                 </div>
                 <div class="form-group">
+                    <label>Tempat Kegiatan</label>
+                    <input type="text" name="pt_tempat[]" class="form-control" required placeholder="Cth: Aula Kampus / Zoom Meeting">
+                </div>
+                <div class="form-group">
                     <label>Sifat</label>
                     <input type="text" name="pt_sifat[]" class="form-control" value="Internal" placeholder="Cth: Internal / Eksternal">
                 </div>
@@ -1784,6 +1794,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         if (ptData) {
             div.querySelector('input[name="pt_name[]"]').value = ptData['Nama Program Kerja'] || '';
             div.querySelector('input[name="pt_kegiatan[]"]').value = ptData['Nama Kegiatan'] || '';
+            div.querySelector('input[name="pt_tempat[]"]').value = ptData['Tempat Kegiatan'] || ptData['Tempat'] || '';
             div.querySelector('input[name="pt_sifat[]"]').value = ptData['Sifat'] || 'Internal';
             div.querySelector('input[name="pt_tema[]"]').value = ptData['Tema Kegiatan'] || '';
             div.querySelector('input[name="pt_tanggal[]"]').value = ptData['Tanggal Kegiatan'] || '';
