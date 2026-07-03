@@ -514,6 +514,13 @@ if ($edit_id > 0) {
                     $pts[$i]['dokumentasi'] = [];
                 }
             }
+            // Migrate: ensure Tempat Kegiatan key exists in all entries
+            foreach ($pts as &$pt_item) {
+                if (!isset($pt_item['Tempat Kegiatan'])) {
+                    $pt_item['Tempat Kegiatan'] = $pt_item['Tempat'] ?? '';
+                }
+            }
+            unset($pt_item);
         }
     }
 }
@@ -521,6 +528,7 @@ if (empty($pts)) {
     $pts = [[
         'Nama Program Kerja' => '',
         'Nama Kegiatan' => '',
+        'Tempat Kegiatan' => '',
         'Sifat' => 'Internal',
         'Tema Kegiatan' => '',
         'Tujuan' => '',
