@@ -49,30 +49,29 @@ $years_str = $periode_row ? ($periode_row['tahun_mulai'] . '/' . $periode_row['t
 
 $download_name = "LPJ_".str_replace(' ', '_', $k_name)."_Triwulan_".$triwulan;
 
-// Helper to format currency
-function formatRupiah($value) {
-    return 'Rp ' . number_format($value, 0, ',', '.');
-}
-
 // Helper to resolve absolute upload paths to public web URLs
-function getLpjImageUrl($filePath) {
-    if (empty($filePath)) return '';
-    if (strpos($filePath, 'http') === 0 || strpos($filePath, 'data:') === 0) {
-        return $filePath;
+if (!function_exists('getLpjImageUrl')) {
+    function getLpjImageUrl($filePath) {
+        if (empty($filePath)) return '';
+        if (strpos($filePath, 'http') === 0 || strpos($filePath, 'data:') === 0) {
+            return $filePath;
+        }
+        $uploadsPos = strpos($filePath, 'uploads/');
+        if ($uploadsPos !== false) {
+            $relPath = substr($filePath, $uploadsPos + 8);
+            return baseUrl('uploads/' . $relPath);
+        }
+        return uploadUrl($filePath);
     }
-    $uploadsPos = strpos($filePath, 'uploads/');
-    if ($uploadsPos !== false) {
-        $relPath = substr($filePath, $uploadsPos + 8);
-        return baseUrl('uploads/' . $relPath);
-    }
-    return uploadUrl($filePath);
 }
 
 // Helper to parse points string or array
-function parsePoints($val) {
-    if (empty($val)) return [];
-    if (is_array($val)) return $val;
-    return array_filter(array_map('trim', explode("\n", $val)));
+if (!function_exists('parsePoints')) {
+    function parsePoints($val) {
+        if (empty($val)) return [];
+        if (is_array($val)) return $val;
+        return array_filter(array_map('trim', explode("\n", $val)));
+    }
 }
 ?>
 <!DOCTYPE html>
