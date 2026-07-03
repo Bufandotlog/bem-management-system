@@ -13,7 +13,7 @@ require_once __DIR__ . '/path-detection.php';
 // ============================================
 // 2. KONSTANTA APLIKASI
 // ============================================
-defined('SITE_NAME') || define('SITE_NAME', 'BEM Kabinet Astawidya');
+defined('SITE_NAME') || define('SITE_NAME', 'BPM Kabinet Astawidya');
 
 // ============================================
 // 3. SESSION

@@ -47,7 +47,7 @@
     overflow: hidden;
     
     /* Border tetap ada agar foto terlihat */
-    border: 3px solid rgba(74, 144, 226, 0.5);
+    border: 3px solid rgba(226, 60, 60, 0.5);
     
     /* Bayangan pada foto */
     box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
@@ -55,8 +55,8 @@
 }
 
 .sambutan-foto:hover {
-    border-color: rgba(74, 144, 226, 0.8);
-    box-shadow: 0 25px 40px -10px rgba(74, 144, 226, 0.3);
+    border-color: rgba(226, 60, 60, 0.8);
+    box-shadow: 0 25px 40px -10px rgba(226, 60, 60, 0.3);
 }
 
 .sambutan-foto img {

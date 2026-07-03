@@ -102,7 +102,7 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 // Dapatkan URI untuk dibangkitkan oleh QR JS Client-side
-$totpUri = totpGetUri($secret, $admin_username, 'BEM Admin');
+$totpUri = totpGetUri($secret, $admin_username, 'BPM Admin');
 ?>
 <div class="top-bar">
     <div class="page-title">
@@ -116,7 +116,7 @@ $totpUri = totpGetUri($secret, $admin_username, 'BEM Admin');
         <div style="font-size:4rem;margin-bottom:20px;">✅</div>
         <h2 style="color:#4CAF50;margin-bottom:10px;">2FA Aktif!</h2>
         <p style="color:#888;margin-bottom:30px;">Setiap login kamu akan diminta kode 6 digit dari authenticator.</p>
-        <a href="dashboard.php" style="display:inline-block;padding:12px 30px;background:#4A90E2;color:white;border-radius:8px;text-decoration:none;font-weight:600;">Ke Dashboard</a>
+        <a href="dashboard.php" style="display:inline-block;padding:12px 30px;background:#E23C3C;color:white;border-radius:8px;text-decoration:none;font-weight:600;">Ke Dashboard</a>
     </div>
 <?php else: ?>
     <?php if ($totpEnabled): ?>
@@ -131,16 +131,16 @@ $totpUri = totpGetUri($secret, $admin_username, 'BEM Admin');
     <?php endif; ?>
 
     <div style="background:#1a1a2e;border-radius:12px;padding:24px;margin-bottom:16px;">
-        <h3 style="color:#4A90E2;margin-bottom:12px;font-size:1rem;">
-            <span style="background:#4A90E2;color:white;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;margin-right:8px;">1</span>
+        <h3 style="color:#E23C3C;margin-bottom:12px;font-size:1rem;">
+            <span style="background:#E23C3C;color:white;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;margin-right:8px;">1</span>
             Install Authenticator App
         </h3>
         <p style="color:#888;font-size:13px;">Download salah satu: <strong style="color:#ccc;">Google Authenticator</strong>, <strong style="color:#ccc;">Authy</strong>, atau <strong style="color:#ccc;">Aegis</strong></p>
     </div>
 
     <div style="background:#1a1a2e;border-radius:12px;padding:24px;margin-bottom:16px;">
-        <h3 style="color:#4A90E2;margin-bottom:12px;font-size:1rem;">
-            <span style="background:#4A90E2;color:white;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;margin-right:8px;">2</span>
+        <h3 style="color:#E23C3C;margin-bottom:12px;font-size:1rem;">
+            <span style="background:#E23C3C;color:white;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;margin-right:8px;">2</span>
             Scan QR Code atau Masukkan Manual
         </h3>
         <!-- Kontainer QR Code dengan Javascript Library -->
@@ -151,7 +151,7 @@ $totpUri = totpGetUri($secret, $admin_username, 'BEM Admin');
         </div>
         <p style="color:#666;font-size:12px;text-align:center;">Atau masukkan secret key ini secara manual di Aegis:</p>
         <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;">
-            <div id="manualSecret" style="background:#222;border-radius:8px;padding:12px;text-align:center;font-family:monospace;font-size:1.2rem;letter-spacing:4px;color:#4A90E2;word-break:break-all;">
+            <div id="manualSecret" style="background:#222;border-radius:8px;padding:12px;text-align:center;font-family:monospace;font-size:1.2rem;letter-spacing:4px;color:#E23C3C;word-break:break-all;">
                 <?php echo htmlspecialchars(strtoupper($secret), ENT_QUOTES, 'UTF-8'); ?>
             </div>
             <button type="button" id="copySecretBtn" style="padding:12px;background:#333;color:white;border:none;border-radius:8px;cursor:pointer;" title="Salin Key">
@@ -162,8 +162,8 @@ $totpUri = totpGetUri($secret, $admin_username, 'BEM Admin');
     </div>
 
     <div style="background:#1a1a2e;border-radius:12px;padding:24px;margin-bottom:16px;">
-        <h3 style="color:#4A90E2;margin-bottom:12px;font-size:1rem;">
-            <span style="background:#4A90E2;color:white;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;margin-right:8px;">3</span>
+        <h3 style="color:#E23C3C;margin-bottom:12px;font-size:1rem;">
+            <span style="background:#E23C3C;color:white;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;margin-right:8px;">3</span>
             Verifikasi Kode dari Aegis
         </h3>
         <p style="color:#888;font-size:13px;margin-bottom:16px;">Masukkan kode 6 digit yang tampil di Aegis setelah menambahkan akun:</p>
@@ -172,7 +172,7 @@ $totpUri = totpGetUri($secret, $admin_username, 'BEM Admin');
             <div style="display:flex;gap:12px;align-items:center;">
                 <input type="text" name="totp_code" maxlength="6" pattern="\d{6}" inputmode="numeric" placeholder="000000" required autofocus
                     style="flex:1;padding:14px;background:#222;border:1px solid #333;border-radius:8px;color:white;font-size:1.5rem;letter-spacing:8px;text-align:center;font-family:monospace;">
-                <button type="submit" style="padding:14px 24px;background:#4A90E2;color:white;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;">
+                <button type="submit" style="padding:14px 24px;background:#E23C3C;color:white;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;">
                     Verifikasi
                 </button>
             </div>
@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 var url = canvas.toDataURL("image/png");
                 var a = document.createElement("a");
                 a.href = url;
-                a.download = "BEM_Astawidya_2FA_<?php echo htmlspecialchars($admin_username, ENT_QUOTES, 'UTF-8'); ?>.png";
+                a.download = "BPM_Astawidya_2FA_<?php echo htmlspecialchars($admin_username, ENT_QUOTES, 'UTF-8'); ?>.png";
                 a.click();
             } else {
                 alert("Proses QR Code belum selesai. Coba lagi sepersekian detik.");

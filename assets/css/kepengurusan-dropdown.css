@@ -30,7 +30,7 @@
 }
 
 .page-kepengurusan .periode-label i {
-    color: var(--biru-primary);
+    color: var(--merah-primary);
     margin-right: 8px;
     font-size: 0.9rem;
 }
@@ -49,7 +49,7 @@
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
     
-    border: 1.5px solid rgba(74, 144, 226, 0.25);
+    border: 1.5px solid rgba(226, 60, 60, 0.25);
     border-radius: 60px;
     color: white;
     font-size: 1.1rem;
@@ -60,7 +60,7 @@
     /* Enhanced shadow for depth */
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
                 0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-                0 0 20px rgba(74, 144, 226, 0.2);
+                0 0 20px rgba(226, 60, 60, 0.2);
     
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     letter-spacing: 0.3px;
@@ -110,10 +110,10 @@
     background: rgba(15, 25, 40, 0.5);
     backdrop-filter: blur(14px) saturate(200%);
     -webkit-backdrop-filter: blur(14px) saturate(200%);
-    border-color: rgba(74, 144, 226, 0.5);
+    border-color: rgba(226, 60, 60, 0.5);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-                0 0 30px rgba(74, 144, 226, 0.4);
+                0 0 30px rgba(226, 60, 60, 0.4);
     transform: translateY(-2px);
 }
 
@@ -122,12 +122,12 @@
     background: rgba(20, 30, 45, 0.6);
     backdrop-filter: blur(16px) saturate(200%);
     -webkit-backdrop-filter: blur(16px) saturate(200%);
-    border-color: rgba(74, 144, 226, 0.7);
+    border-color: rgba(226, 60, 60, 0.7);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2),
+    box-shadow: 0 0 0 4px rgba(226, 60, 60, 0.2),
                 0 8px 30px rgba(0, 0, 0, 0.5),
-                0 0 30px rgba(74, 144, 226, 0.4);
+                0 0 30px rgba(226, 60, 60, 0.4);
 }
 
 /* Trigger text */
@@ -143,17 +143,17 @@
 
 /* Arrow icon with glass effect */
 .page-kepengurusan .dropdown-arrow {
-    color: var(--biru-primary);
+    color: var(--merah-primary);
     font-size: 1rem;
     transition: all 0.4s ease;
-    filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.6));
+    filter: drop-shadow(0 0 8px rgba(226, 60, 60, 0.6));
     opacity: 0.9;
 }
 
 .page-kepengurusan .custom-dropdown-trigger[aria-expanded="true"] .dropdown-arrow {
     transform: rotate(180deg);
-    color: var(--biru-secondary);
-    filter: drop-shadow(0 0 12px rgba(74, 144, 226, 0.8));
+    color: var(--emas-secondary);
+    filter: drop-shadow(0 0 12px rgba(226, 60, 60, 0.8));
 }
 
 /* ===== DROPDOWN MENU WITH MAXIMUM GLASS EFFECT ===== */
@@ -168,7 +168,7 @@
     backdrop-filter: blur(20px) saturate(200%);
     -webkit-backdrop-filter: blur(20px) saturate(200%);
     
-    border: 1.5px solid rgba(74, 144, 226, 0.4);
+    border: 1.5px solid rgba(226, 60, 60, 0.4);
     border-top: none;
     border-bottom-left-radius: 30px;
     border-bottom-right-radius: 30px;
@@ -181,7 +181,7 @@
     /* Enhanced shadow for glass effect */
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
                 0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-                0 0 40px rgba(74, 144, 226, 0.3);
+                0 0 40px rgba(226, 60, 60, 0.3);
     
     z-index: 1001;
     max-height: 350px;
@@ -221,13 +221,13 @@
 }
 
 .page-kepengurusan .custom-dropdown-menu::-webkit-scrollbar-thumb {
-    background: rgba(74, 144, 226, 0.5);
+    background: rgba(226, 60, 60, 0.5);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .page-kepengurusan .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
-    background: rgba(74, 144, 226, 0.7);
+    background: rgba(226, 60, 60, 0.7);
 }
 
 /* Dropdown items with subtle glass */
@@ -235,7 +235,7 @@
     padding: 15px 20px;
     cursor: pointer;
     transition: all 0.3s ease;
-    border-bottom: 1px solid rgba(74, 144, 226, 0.1);
+    border-bottom: 1px solid rgba(226, 60, 60, 0.1);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -272,7 +272,7 @@
 }
 
 .page-kepengurusan .custom-dropdown-item:hover {
-    background: rgba(74, 144, 226, 0.15);
+    background: rgba(226, 60, 60, 0.15);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     padding-left: 25px;
@@ -280,12 +280,12 @@
 }
 
 .page-kepengurusan .custom-dropdown-item.selected {
-    background: rgba(74, 144, 226, 0.2);
+    background: rgba(226, 60, 60, 0.2);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     color: white;
     font-weight: 500;
-    border-left: 4px solid var(--biru-primary);
+    border-left: 4px solid var(--merah-primary);
 }
 
 /* Item content */
@@ -299,7 +299,7 @@
 
 .page-kepengurusan .item-nama {
     font-weight: 600;
-    color: var(--biru-soft);
+    color: var(--emas-soft);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -323,10 +323,10 @@
 }
 
 .page-kepengurusan .selected-icon {
-    color: var(--biru-primary);
+    color: var(--merah-primary);
     font-size: 1rem;
     margin-left: 10px;
-    filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.6));
+    filter: drop-shadow(0 0 8px rgba(226, 60, 60, 0.6));
     opacity: 0.9;
 }
 
@@ -345,15 +345,15 @@
     width: 20px;
     height: 20px;
     border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--biru-primary);
-    border-right-color: var(--biru-primary);
+    border-top-color: var(--merah-primary);
+    border-right-color: var(--merah-primary);
     border-radius: 50%;
     animation: button-loading-spinner 0.8s linear infinite;
     position: absolute;
     right: 25px;
     top: 50%;
     transform: translateY(-50%);
-    filter: drop-shadow(0 0 5px rgba(74, 144, 226, 0.5));
+    filter: drop-shadow(0 0 5px rgba(226, 60, 60, 0.5));
 }
 
 @keyframes button-loading-spinner {

@@ -6,8 +6,8 @@
 :root {
     --sidebar-width: 280px;
     --topbar-height: 56px;
-    --accent:        #4A90E2; /* Biru tetap sebagai aksen minimal */
-    --accent-soft:   #8BB9F0;
+    --accent:        #E23C3C; /* Biru tetap sebagai aksen minimal */
+    --accent-soft:   #F0D095;
     --sidebar-bg:    #111;
     --sidebar-border:#333;
     --bg-dark:       #0a0a0a;

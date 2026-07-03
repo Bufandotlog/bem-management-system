@@ -1,7 +1,7 @@
-# DOKUMENTASI TEKNIS & ALUR KERJA SISTEM PERSURATAN BEM
-## Sistem Manajemen Administrasi BEM (Astawidya)
+# DOKUMENTASI TEKNIS & ALUR KERJA SISTEM PERSURATAN BPM
+## Sistem Manajemen Administrasi BPM (Astawidya)
 
-Dokumen ini menjelaskan secara mendalam arsitektur teknis, alur data, skema database, dan logika pemrograman khusus yang menggerakkan **Modul Persuratan** pada Sistem BEM. Dokumen ini ditujukan bagi pengembang (*developer*) yang ingin memelihara atau memperluas fitur persuratan ini di masa depan.
+Dokumen ini menjelaskan secara mendalam arsitektur teknis, alur data, skema database, dan logika pemrograman khusus yang menggerakkan **Modul Persuratan** pada Sistem BPM. Dokumen ini ditujukan bagi pengembang (*developer*) yang ingin memelihara atau memperluas fitur persuratan ini di masa depan.
 
 ---
 
@@ -83,13 +83,13 @@ Saat tombol "Cetak" ditekan:
 4. **Rendering Lampiran PDF via PDF.js:**
    * Halaman cetak memuat pustaka **PDF.js v2.16.105** secara asinkron.
    * Berkas PDF luar dipanggil menggunakan path relatif aman: `../uploads/` + `nama_file`.
-   * PDF.js membaca berkas PDF halaman demi halaman, merendernya ke elemen `<canvas>` HTML5, dan menyisipkannya langsung di bagian bawah halaman surat resmi BEM secara otomatis saat dokumen dicetak.
+   * PDF.js membaca berkas PDF halaman demi halaman, merendernya ke elemen `<canvas>` HTML5, dan menyisipkannya langsung di bagian bawah halaman surat resmi BPM secara otomatis saat dokumen dicetak.
 
 #### Langkah 4: Fitur Salin Redaksi WhatsApp (`arsip-surat.php`)
 Saat sekretaris mengklik ikon WhatsApp untuk menyalin pesan:
 1. JavaScript mengambil objek data surat lengkap (dalam bentuk JSON).
 2. Teks di dalam bidang "Konteks" yang ditulis menggunakan *Mini Rich Text Editor* disanitasi menggunakan ekspresi reguler (Regex) untuk **menghapus seluruh tag HTML** (seperti `<span>`, `<div>`, dll.) dan sampah metadata editor (seperti `data-path-to-node`).
-3. JavaScript merangkai pesan rapi lengkap dengan ornamen emoji jadwal, detail waktu, tempat pelaksanaan, dan link tanda tangan resmi BEM, lalu menyalinnya ke clipboard sistem pengguna.
+3. JavaScript merangkai pesan rapi lengkap dengan ornamen emoji jadwal, detail waktu, tempat pelaksanaan, dan link tanda tangan resmi BPM, lalu menyalinnya ke clipboard sistem pengguna.
 
 ---
 
@@ -100,7 +100,7 @@ Di bawah ini adalah daftar kunci (*keys*) yang tersimpan di dalam JSON kolom `ko
 | Kunci (*Key*) | Tipe Data | Kegunaan / Keterangan |
 | :--- | :--- | :--- |
 | `sapaan_tujuan` | `string` | Sapaan penerima (cth: "Bapak/Ibu", "Saudara/i"). |
-| `nama_kegiatan` | `string` | Nama kegiatan utama BEM (cth: "BEM CUP 2026"). |
+| `nama_kegiatan` | `string` | Nama kegiatan utama BPM (cth: "BPM CUP 2026"). |
 | `tema` | `string` | Tema resmi kegiatan. |
 | `pelaksanaan_hari_tanggal` | `string` | Hari & Tanggal acara (cth: "Sabtu, 30 Mei 2026"). |
 | `pelaksanaan_waktu` | `string` | Waktu kegiatan (cth: "08.00 s.d Selesai"). |
@@ -114,7 +114,7 @@ Di bawah ini adalah daftar kunci (*keys*) yang tersimpan di dalam JSON kolom `ko
 | `use_ttd_presma` | `string/int` | Flag boolean (`"1"` atau `"0"`) untuk menampilkan TTD Presiden Mahasiswa. |
 | `lampiran_files` | `array` | Daftar nama berkas PDF luar yang diunggah. |
 | `lampiran_internal_ids` | `array` | Daftar ID tabel `barang_master` yang dipinjam secara resmi. |
-| `rundown_internal_ids` | `array` | Daftar ID Rundown acara internal BEM yang terhubung. |
+| `rundown_internal_ids` | `array` | Daftar ID Rundown acara internal BPM yang terhubung. |
 
 ---
 
@@ -168,4 +168,4 @@ function cleanHtmlForWA(htmlString) {
 
 ---
 
-Dengan memahami arsitektur di atas, pengembangan dan penambahan format surat baru di dalam **Sistem BEM (Astawidya)** dapat diselesaikan dengan cepat, aman, dan tanpa mengganggu stabilitas data yang sudah ada!
+Dengan memahami arsitektur di atas, pengembangan dan penambahan format surat baru di dalam **Sistem BPM (Astawidya)** dapat diselesaikan dengan cepat, aman, dan tanpa mengganggu stabilitas data yang sudah ada!

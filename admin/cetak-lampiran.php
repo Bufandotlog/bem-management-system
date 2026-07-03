@@ -100,7 +100,7 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
     --card-bg: rgba(15, 18, 23, 0.95);
     --input-bg: #0a0c10;
     --border-color: #2a3545;
-    --accent-color: #4A90E2;
+    --accent-color: #E23C3C;
 }
 
 .cetak-lampiran-container {
@@ -172,7 +172,7 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
 
 .form-group input:focus {
     border-color: var(--accent-color);
-    box-shadow: 0 0 15px rgba(74, 144, 226, 0.2);
+    box-shadow: 0 0 15px rgba(226, 60, 60, 0.2);
     outline: none;
 }
 
@@ -187,13 +187,13 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
 .tpl-item { padding: 12px 18px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.tpl-item:hover { background: rgba(74, 144, 226, 0.1); }
-.tpl-item-label { font-weight: 700; color: #8BB9F0; font-size: 0.9rem; }
+.tpl-item:hover { background: rgba(226, 60, 60, 0.1); }
+.tpl-item-label { font-weight: 700; color: #F0D095; font-size: 0.9rem; }
 
 /* Date Range */
 .date-range-wrap { display: flex; gap: 10px; align-items: center; }
 .date-range-wrap input { flex: 1; }
-.preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 10px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
+.preview-bar { background: rgba(226,60,60,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 10px; color: #F0D095; border-left: 4px solid var(--accent-color); }
 
 .items-table {
     width: 100%;
@@ -253,7 +253,7 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
     justify-content: center;
 }
 .qty-btn:hover {
-    background: rgba(74,144,226,0.2);
+    background: rgba(226,60,60,0.2);
     color: #fff;
 }
 .barang-qty {

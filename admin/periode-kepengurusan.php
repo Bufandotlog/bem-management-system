@@ -179,7 +179,7 @@ $periode_aktif = dbFetchOne("SELECT * FROM periode_kepengurusan WHERE is_active 
 <!-- Page Header -->
 <div class="page-header">
     <h1><i class="fas fa-calendar-alt"></i> Periode Kepengurusan</h1>
-    <p>Kelola periode kepengurusan BEM dari tahun ke tahun</p>
+    <p>Kelola periode kepengurusan BPM dari tahun ke tahun</p>
 </div>
 
 <?php flashMessage(); ?>
@@ -398,7 +398,7 @@ $periode_aktif = dbFetchOne("SELECT * FROM periode_kepengurusan WHERE is_active 
     <div class="card-body">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;">
             <div style="background:#1a1a1a;padding:20px;border-radius:8px;">
-                <h4 style="color:#4A90E2;margin-top:0;"><i class="fas fa-check-circle"></i> Periode Aktif</h4>
+                <h4 style="color:#E23C3C;margin-top:0;"><i class="fas fa-check-circle"></i> Periode Aktif</h4>
                 <p>Periode yang sedang ditampilkan di website. Admin biasa hanya bisa mengelola periode aktif ini.</p>
             </div>
             <div style="background:#1a1a1a;padding:20px;border-radius:8px;">

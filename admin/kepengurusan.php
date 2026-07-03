@@ -107,8 +107,8 @@ $periode_info = htmlspecialchars(
 <!-- Page Header -->
 <div class="page-header">
     <h1>Manajemen Kepengurusan</h1>
-    <p>Kelola struktur organisasi BEM Kabinet Astawidya</p>
-    <div style="margin-top: 10px; padding: 8px 15px; background: rgba(74,144,226,0.1); border-radius: 5px; display: inline-block;">
+    <p>Kelola struktur organisasi BPM Kabinet Astawidya</p>
+    <div style="margin-top: 10px; padding: 8px 15px; background: rgba(226,60,60,0.1); border-radius: 5px; display: inline-block;">
         <i class="fas fa-calendar-alt" style="color: var(--primary);"></i>
         <span style="color: var(--text-light);"><?php echo $periode_info; ?></span>
         <?php if ($user_can_access_all): ?>
@@ -124,7 +124,7 @@ $periode_info = htmlspecialchars(
 <!-- Statistik Cards -->
 <div class="stats-grid" style="margin-bottom: 2rem;">
     <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(74,144,226,0.1);">
+        <div class="stat-icon" style="background: rgba(226,60,60,0.1);">
             <i class="fas fa-users" style="color: var(--primary);"></i>
         </div>
         <div class="stat-content">
@@ -134,7 +134,7 @@ $periode_info = htmlspecialchars(
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(74,144,226,0.1);">
+        <div class="stat-icon" style="background: rgba(226,60,60,0.1);">
             <i class="fas fa-user-friends" style="color: var(--primary);"></i>
         </div>
         <div class="stat-content">
@@ -144,7 +144,7 @@ $periode_info = htmlspecialchars(
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(74,144,226,0.1);">
+        <div class="stat-icon" style="background: rgba(226,60,60,0.1);">
             <i class="fas fa-building" style="color: var(--primary);"></i>
         </div>
         <div class="stat-content">
@@ -154,7 +154,7 @@ $periode_info = htmlspecialchars(
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(74,144,226,0.1);">
+        <div class="stat-icon" style="background: rgba(226,60,60,0.1);">
             <i class="fas fa-users-cog" style="color: var(--primary);"></i>
         </div>
         <div class="stat-content">
@@ -188,7 +188,7 @@ $periode_info = htmlspecialchars(
 
         <!-- Ketua -->
         <div class="bph-card">
-            <h3><i class="fas fa-crown"></i> Ketua BEM</h3>
+            <h3><i class="fas fa-crown"></i> Ketua BPM</h3>
             <?php if ($bph['ketua']): ?>
                 <div class="bph-info">
                     <img src="<?php echo !empty($bph['ketua']['foto']) ? uploadUrl($bph['ketua']['foto']) : $default_avatar; ?>" class="bph-photo">

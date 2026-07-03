@@ -122,7 +122,7 @@ $download_name = "LAMPIRAN PINJAM BARANG - $acara - $tahun";
             z-index: 1000;
         }
         .btn {
-            background: #4A90E2; color: #fff; border: none; padding: 10px 20px; font-size: 16px;
+            background: #E23C3C; color: #fff; border: none; padding: 10px 20px; font-size: 16px;
             border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin: 0 5px;
         }
         .btn-warning { background: #f39c12; }

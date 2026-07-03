@@ -1,16 +1,16 @@
 /* ============================================
    VISI MISI ADMIN CSS
-   BEM Kabinet Astawidya — v2.0
+   BPM Kabinet Astawidya — v2.0
    Seragam dengan halaman admin lainnya
    ============================================ */
 
 /* ===== ROOT VARIABLES ===== */
 :root {
-    --primary:       #4A90E2;
-    --primary-light: #6BA5E8;
-    --primary-dark:  #1a2f4a;
-    --primary-soft:  #8BB9F0;
-    --primary-glow:  rgba(74, 144, 226, 0.25);
+    --primary:       #E23C3C;
+    --primary-light: #DFB15B;
+    --primary-dark:  #4a1a1a;
+    --primary-soft:  #F0D095;
+    --primary-glow:  rgba(226, 60, 60, 0.25);
 
     --success:     #4CAF50;
     --warning:     #ff9800;
@@ -293,7 +293,7 @@
     font-size: 0.72rem;
     font-weight: 700;
     flex-shrink: 0;
-    border: 1px solid rgba(74, 144, 226, 0.3);
+    border: 1px solid rgba(226, 60, 60, 0.3);
 }
 
 /* ===== BUTTONS ===== */

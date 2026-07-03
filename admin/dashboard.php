@@ -26,7 +26,7 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
 <div class="page-header">
     <div>
         <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ($admin_role === 'kominfo' ? 'Kominfo' : ($admin_role === 'admin' ? 'Admin' : ''))); ?></h1>
-        <p>Selamat datang di panel kendali BEM Kabinet Astawidya</p>
+        <p>Selamat datang di panel kendali BPM Kabinet Astawidya</p>
     </div>
     <div class="date-display">
         <i class="far fa-calendar-alt"></i>
@@ -40,7 +40,7 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
     <!-- STATISTIK KABINET (Admin/Superadmin) -->
     <?php if ($showGeneralStats): ?>
     <div class="stats-group">
-        <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #8BB9F0; display: flex; align-items: center; gap: 10px;">
+        <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #F0D095; display: flex; align-items: center; gap: 10px;">
             <i class="fas fa-university"></i> Statistik Kabinet
         </h2>
         <div class="stats-grid">
@@ -71,12 +71,12 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
     <!-- STATISTIK PERSURATAN (Sekretaris/Superadmin) -->
     <?php if ($showLetterStats): ?>
     <div class="stats-group">
-        <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #4A90E2; display: flex; align-items: center; gap: 10px;">
+        <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #E23C3C; display: flex; align-items: center; gap: 10px;">
             <i class="fas fa-envelope-open-text"></i> Statistik Persuratan (Sekretariat)
         </h2>
         <div class="stats-grid">
-            <div class="stat-card" style="border-left: 4px solid #4A90E2;">
-                <div class="stat-icon" style="background: rgba(74, 144, 226, 0.1); color: #4A90E2;"><i class="fas fa-paper-plane"></i></div>
+            <div class="stat-card" style="border-left: 4px solid #E23C3C;">
+                <div class="stat-icon" style="background: rgba(226, 60, 60, 0.1); color: #E23C3C;"><i class="fas fa-paper-plane"></i></div>
                 <div class="stat-value"><?php echo $totalSuratL; ?></div>
                 <div class="stat-label">Surat Keluar</div>
             </div>
@@ -132,7 +132,7 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
     <div class="card">
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
             <span><i class="fas fa-folder-open"></i> Arsip Surat Terbaru</span>
-            <a href="arsip-surat.php" style="font-size: 0.8rem; color: #4A90E2; text-decoration: none;">Lihat Semua <i class="fas fa-arrow-right"></i></a>
+            <a href="arsip-surat.php" style="font-size: 0.8rem; color: #E23C3C; text-decoration: none;">Lihat Semua <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="card-body" style="padding: 0;">
             <table class="admin-table" style="margin: 0; border: none;">
@@ -149,7 +149,7 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
                                 </div>
                             </td>
                             <td style="text-align:right; padding: 10px 15px;">
-                                <span class="badge" style="background: <?php echo $surat['jenis_surat']==='L' ? '#4A90E2' : ($surat['jenis_surat']==='D' ? '#673AB7' : '#f39c12'); ?>; font-size:0.6rem;">
+                                <span class="badge" style="background: <?php echo $surat['jenis_surat']==='L' ? '#E23C3C' : ($surat['jenis_surat']==='D' ? '#673AB7' : '#f39c12'); ?>; font-size:0.6rem;">
                                     <?php echo $surat['jenis_surat']; ?>
                                 </span>
                             </td>
@@ -173,7 +173,7 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
     <?php endif; ?>
     
     <?php if ($isSuperadmin || $admin_role === 'sekretaris' || $admin_role === 'admin'): ?>
-        <a href="buat-surat.php" class="action-card" style="background: rgba(74, 144, 226, 0.1); border-color: rgba(74, 144, 226, 0.3);"><i class="fas fa-file-signature"></i><span>Buat Surat</span></a>
+        <a href="buat-surat.php" class="action-card" style="background: rgba(226, 60, 60, 0.1); border-color: rgba(226, 60, 60, 0.3);"><i class="fas fa-file-signature"></i><span>Buat Surat</span></a>
         <a href="arsip-surat.php" class="action-card" style="background: rgba(103, 58, 183, 0.1); border-color: rgba(103, 58, 183, 0.3);"><i class="fas fa-search"></i><span>Cari Arsip</span></a>
     <?php endif; ?>
 

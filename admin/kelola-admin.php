@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'tamba
                     if ($enable_2fa) {
                         $newAdminSecret   = $secret;
                         $newAdminUsername = $username;
-                        $newAdminQrUrl    = totpGetUri($secret, $username, 'BEM Admin');
+                        $newAdminQrUrl    = totpGetUri($secret, $username, 'BPM Admin');
                         $success = "Admin '{$username}' berhasil dibuat! Bagikan QR/secret di bawah ke admin tersebut.";
                     } else {
                         $success = "Admin '{$username}' berhasil dibuat TANPA 2FA aktif.";
@@ -380,8 +380,8 @@ if (isset($_SESSION['flash'])) {
 
 <?php /* ===== TAMPILKAN QR CODE SETELAH BUAT AKUN BARU / RESET 2FA ===== */ ?>
 <?php if ($newAdminSecret && $newAdminQrUrl): ?>
-<div style="background:#1a1a2e;border:2px solid #4A90E2;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
-    <h3 style="color:#4A90E2;margin-bottom:.5rem;font-size:1rem;">
+<div style="background:#1a1a2e;border:2px solid #E23C3C;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+    <h3 style="color:#E23C3C;margin-bottom:.5rem;font-size:1rem;">
         <i class="fas fa-qrcode"></i> Setup 2FA untuk: <strong><?php echo htmlspecialchars($newAdminUsername, ENT_QUOTES, 'UTF-8'); ?></strong>
     </h3>
     <p style="color:#f44336;font-size:.85rem;margin-bottom:1rem;">
@@ -400,7 +400,7 @@ if (isset($_SESSION['flash'])) {
         <div style="flex:1;min-width:220px;">
             <p style="color:#aaa;font-size:.85rem;margin-bottom:.5rem;">Atau masukkan secret key manual:</p>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                <div style="background:#111;border:1px solid #333;border-radius:8px;padding:1rem;font-family:monospace;font-size:1.1rem;letter-spacing:4px;color:#4A90E2;word-break:break-all;flex:1;text-align:center;">
+                <div style="background:#111;border:1px solid #333;border-radius:8px;padding:1rem;font-family:monospace;font-size:1.1rem;letter-spacing:4px;color:#E23C3C;word-break:break-all;flex:1;text-align:center;">
                     <?php echo htmlspecialchars(strtoupper($newAdminSecret), ENT_QUOTES, 'UTF-8'); ?>
                 </div>
                 <button type="button" id="copySecretBtn" style="padding:16px;background:#333;color:white;border:none;border-radius:8px;cursor:pointer;" title="Salin Key">
@@ -490,12 +490,12 @@ if (isset($_SESSION['flash'])) {
                     <?php endif; ?>
                 </div>
 
-                <div class="form-group" style="background:rgba(74,144,226,.08);border:1px solid rgba(74,144,226,.3);border-radius:8px;padding:1rem;">
-                    <label style="margin-bottom: 5px; color:#4A90E2;"><i class="fas fa-shield-alt"></i> Pengaturan Keamanan</label>
+                <div class="form-group" style="background:rgba(226,60,60,.08);border:1px solid rgba(226,60,60,.3);border-radius:8px;padding:1rem;">
+                    <label style="margin-bottom: 5px; color:#E23C3C;"><i class="fas fa-shield-alt"></i> Pengaturan Keamanan</label>
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
                         <input type="checkbox" name="enable_2fa" value="1"> <strong>Aktifkan 2FA Langsung</strong>
                     </label>
-                    <small style="display:block; margin-top:5px; color:#8BB9F0;">Jika dicentang, sistem akan men-generate Secret Key & QR Code saat akun dibuat. Lepas centang jika Admin ingin menyetel 2FA-nya sendiri nanti secara mandiri di profilnya.</small>
+                    <small style="display:block; margin-top:5px; color:#F0D095;">Jika dicentang, sistem akan men-generate Secret Key & QR Code saat akun dibuat. Lepas centang jika Admin ingin menyetel 2FA-nya sendiri nanti secara mandiri di profilnya.</small>
                 </div>
 
                 <button type="submit" class="btn-primary" style="width:100%;padding:12px;">
@@ -541,7 +541,7 @@ if (isset($_SESSION['flash'])) {
                                 <td>
                                     <strong><?php echo htmlspecialchars($admin['username']); ?></strong>
                                     <?php if ($isSelf): ?>
-                                        <span class="badge" style="background:#4A90E2;color:white;margin-left:5px;">Anda</span>
+                                        <span class="badge" style="background:#E23C3C;color:white;margin-left:5px;">Anda</span>
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($admin['nama']); ?></td>
@@ -555,7 +555,7 @@ if (isset($_SESSION['flash'])) {
                                             <i class="fas fa-crown"></i> Superadmin
                                         </span>
                                     <?php elseif ($roleVal === 'admin'): ?>
-                                        <span class="badge" style="background:#4A90E2;color:white;">
+                                        <span class="badge" style="background:#E23C3C;color:white;">
                                             <i class="fas fa-user-shield"></i> Admin
                                         </span>
                                     <?php elseif ($isRowSekretaris): ?>
@@ -570,7 +570,7 @@ if (isset($_SESSION['flash'])) {
                                 </td>
                                 <td>
                                     <?php if ($admin['periode_id']): ?>
-                                        <span class="badge" style="background:#1a2f4a;color:#8BB9F0;">
+                                        <span class="badge" style="background:#4a1a1a;color:#F0D095;">
                                             <?php echo htmlspecialchars($admin['periode_nama'] ?? 'Periode '.$admin['periode_id']); ?>
                                         </span>
                                     <?php elseif ($admin['role'] === 'superadmin' || $admin['can_access_all']): ?>
@@ -655,9 +655,9 @@ if (isset($_SESSION['flash'])) {
                     <li><i class="fas fa-check-circle"></i> Bisa mengganti periode yang dikelola</li>
                 </ul>
             </div>
-            <div class="access-card admin" style="border: 1px solid rgba(74, 144, 226, 0.3);">
-                <div class="access-icon" style="color: #4A90E2;"><i class="fas fa-user-shield"></i></div>
-                <h3 class="access-title" style="color: #4A90E2;">Admin</h3>
+            <div class="access-card admin" style="border: 1px solid rgba(226, 60, 60, 0.3);">
+                <div class="access-icon" style="color: #E23C3C;"><i class="fas fa-user-shield"></i></div>
+                <h3 class="access-title" style="color: #E23C3C;">Admin</h3>
                 <ul class="access-list">
                     <li><i class="fas fa-check-circle"></i> Hanya bisa mengelola SATU periode</li>
                     <li><i class="fas fa-check-circle"></i> Akses gabungan Kominfo & Sekretaris</li>
@@ -853,7 +853,7 @@ window.handleAdminAction = function(id, action, username, isActive, currentRole,
         modalTitle.innerHTML = 'Reset Password';
         modalMessage.innerHTML = 'Masukkan password baru untuk admin <b>' + username + '</b>:';
         pwArea.style.display = 'block';
-        confirmBtn.style.background = '#4A90E2';
+        confirmBtn.style.background = '#E23C3C';
     } else if (action === 'ubah_role') {
         modalTitle.innerHTML = 'Ubah Role Admin';
         modalMessage.innerHTML = 'Ubah peran untuk akun <b>' + username + '</b>:';

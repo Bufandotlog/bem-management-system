@@ -1,16 +1,16 @@
 /* ============================================
    BERITA HAPUS ADMIN CSS
-   BEM Kabinet Astawidya
+   BPM Kabinet Astawidya
    Desain Modern & Responsif untuk Halaman Hapus Berita
    ============================================ */
 
 /* ===== ROOT VARIABLES ===== */
 :root {
-    --primary: #4A90E2;
-    --primary-light: #6BA5E8;
-    --primary-dark: #1a2f4a;
-    --primary-soft: #8BB9F0;
-    --primary-glow: rgba(74, 144, 226, 0.3);
+    --primary: #E23C3C;
+    --primary-light: #DFB15B;
+    --primary-dark: #4a1a1a;
+    --primary-soft: #F0D095;
+    --primary-glow: rgba(226, 60, 60, 0.3);
     
     --danger: #f44336;
     --danger-dark: #8b1e1e;

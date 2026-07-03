@@ -30,8 +30,8 @@ if (!$data) {
 }
 
 $judul = [
-    'ketua'           => 'Ketua BEM',
-    'wakil_ketua'     => 'Wakil Ketua BEM',
+    'ketua'           => 'Ketua BPM',
+    'wakil_ketua'     => 'Wakil Ketua BPM',
     'sekretaris_umum' => 'Sekretaris Umum',
     'bendahara_umum'  => 'Bendahara Umum',
 ];

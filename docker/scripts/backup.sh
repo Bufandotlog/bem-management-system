@@ -1,17 +1,17 @@
 #!/bin/bash
 # ============================================================
-# backup.sh - BEM ASTAWIDYA Database Backup
-# Cron: 0 2 * * * /opt/bem/scripts/backup.sh
+# backup.sh - BPM ASTAWIDYA Database Backup
+# Cron: 0 2 * * * /opt/bpm/scripts/backup.sh
 # ============================================================
 
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────
-BACKUP_DIR="/var/www/html/bem/backups"
-COMPOSE_DIR="/var/www/html/bem"
+BACKUP_DIR="/var/www/html/bpm/backups"
+COMPOSE_DIR="/var/www/html/bpm"
 KEEP_DAYS=14       # Simpan backup 14 hari terakhir
 DATE=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="/var/www/html/bem/logs/backup.log"
+LOG_FILE="/var/www/html/bpm/logs/backup.log"
 
 # Ambil credentials dari .env
 source "${COMPOSE_DIR}/.env"
@@ -22,7 +22,7 @@ log() {
 }
 
 # ── Mulai Backup ──────────────────────────────────────────────
-log "=== Mulai backup BEM database ==="
+log "=== Mulai backup BPM database ==="
 
 # Buat folder backup jika belum ada
 mkdir -p "$BACKUP_DIR"
@@ -31,7 +31,7 @@ mkdir -p "$BACKUP_DIR"
 BACKUP_FILE="${BACKUP_DIR}/db_${DATE}.sql.gz"
 
 log "Dumping database '${DB_NAME}'..."
-docker exec bem_db mysqldump \
+docker exec bpm_db mysqldump \
     -u root \
     -p"${DB_ROOT_PASS}" \
     --single-transaction \

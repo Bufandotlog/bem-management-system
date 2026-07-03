@@ -1,16 +1,16 @@
 /* ============================================
    KABINET ADMIN CSS
-   BEM Kabinet Astawidya — v3.0
+   BPM Kabinet Astawidya — v3.0
    Seragam & mobile-first
    ============================================ */
 
 /* ===== ROOT VARIABLES ===== */
 :root {
-    --primary:       #4A90E2;
-    --primary-light: #6BA5E8;
-    --primary-dark:  #1a2f4a;
-    --primary-soft:  #8BB9F0;
-    --primary-glow:  rgba(74, 144, 226, 0.25);
+    --primary:       #E23C3C;
+    --primary-light: #DFB15B;
+    --primary-dark:  #4a1a1a;
+    --primary-soft:  #F0D095;
+    --primary-glow:  rgba(226, 60, 60, 0.25);
 
     --warning:     #ffaa00;
     --warning-dark:#2a2a1a;
@@ -102,8 +102,8 @@
     gap: 0.5rem;
     margin-top: 0.75rem;
     padding: 0.5rem 1rem;
-    background: rgba(74, 144, 226, 0.08);
-    border: 1px solid rgba(74, 144, 226, 0.2);
+    background: rgba(226, 60, 60, 0.08);
+    border: 1px solid rgba(226, 60, 60, 0.2);
     border-radius: var(--radius-md);
     font-size: 0.85rem;
     color: #ccc;
@@ -342,7 +342,7 @@
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    border: 1px solid rgba(74,144,226,0.3);
+    border: 1px solid rgba(226,60,60,0.3);
 }
 
 .current-image img {

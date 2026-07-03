@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="form-group">
             <label>Nomor Surat</label>
-            <input type="text" name="nomor_surat" class="form-control" required placeholder="Contoh: 123/L/BEM/IV/2026" value="<?php echo htmlspecialchars($edit_data['nomor_surat']); ?>">
+            <input type="text" name="nomor_surat" class="form-control" required placeholder="Contoh: 123/L/BPM/IV/2026" value="<?php echo htmlspecialchars($edit_data['nomor_surat']); ?>">
         </div>
 
         <div class="form-group">
@@ -143,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>Upload File Surat (PDF/Gambar)</label>
             <?php if($is_edit && !empty($edit_data['file_surat'])): ?>
                 <div style="margin-bottom:10px; font-size:0.9rem;">
-                    <i class="fas fa-file-pdf"></i> File Saat ini: <a href="<?php echo uploadUrl($edit_data['file_surat']); ?>" target="_blank" style="color:#8BB9F0;">Lihat Arsip Terlampir</a>
+                    <i class="fas fa-file-pdf"></i> File Saat ini: <a href="<?php echo uploadUrl($edit_data['file_surat']); ?>" target="_blank" style="color:#F0D095;">Lihat Arsip Terlampir</a>
                 </div>
             <?php endif; ?>
             <input type="file" name="file_surat" class="form-control" accept="image/*,.pdf">
@@ -167,7 +167,7 @@ function updateLabels(val) {
     if (val === 'M' || val === 'I') {
         labelTgl.innerText = 'Tanggal Diterima';
         labelTujuan.innerText = 'Asal Instansi (Pengirim)';
-        inputTujuan.placeholder = 'Universitas Majalengka / BEM...';
+        inputTujuan.placeholder = 'Universitas Majalengka / BPM...';
     } else {
         labelTgl.innerText = 'Tanggal Dikirim';
         labelTujuan.innerText = 'Tujuan (Kepada Yth)';

@@ -94,12 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>
 .delete-confirmation{max-width:600px;margin:50px auto;text-align:center;padding:20px}
 .delete-confirmation h1{color:var(--text-light,#fff);font-size:2rem;margin-bottom:30px;display:flex;align-items:center;justify-content:center;gap:10px}
-.delete-confirmation h1 i{color:var(--primary,#4A90E2)}
+.delete-confirmation h1 i{color:var(--primary,#E23C3C)}
 .warning-box{background:#2a1a1a;border:2px solid #f44336;border-radius:15px;padding:30px;margin:30px 0;box-shadow:0 10px 30px rgba(244,67,54,.2)}
 .warning-box>i{font-size:3rem;color:#f44336;margin-bottom:20px}
 .warning-box p{margin:15px 0;color:#ccc;font-size:1.1rem;line-height:1.6}
 .image-preview{margin:20px 0;padding:15px;background:#1a1a1a;border-radius:10px;border:1px solid #333}
-.preview-img{max-width:100%;max-height:200px;border-radius:8px;border:3px solid var(--primary,#4A90E2)}
+.preview-img{max-width:100%;max-height:200px;border-radius:8px;border:3px solid var(--primary,#E23C3C)}
 .deskripsi{color:#888;font-size:.95rem;font-style:italic}
 .form-actions{display:flex;gap:15px;justify-content:center;margin-top:30px}
 .btn-danger{background:#f44336;color:white;padding:12px 30px;border:none;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:all .3s ease}

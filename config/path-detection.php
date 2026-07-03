@@ -137,7 +137,7 @@ function resolveBaseUrl() {
 if (php_sapi_name() === 'cli') {
     $rootDir = dirname(__DIR__);
     // CLI mode: gunakan fallback yang lebih aman
-    $baseUrlCli = $_ENV['BASE_URL'] ?? 'http://localhost/bem/';
+    $baseUrlCli = $_ENV['BASE_URL'] ?? 'http://localhost/bpm/';
     // Pastikan trailing slash
     $baseUrlCli = rtrim($baseUrlCli, '/') . '/';
     defined('BASE_URL')    || define('BASE_URL',    $baseUrlCli);

@@ -22,7 +22,7 @@ $berita_list = dbFetchAll("
     <div class="caption-content">
         <h1 class="caption-title"><span>BERITA</span></h1>
         <p class="caption-narasi">
-            adalah ruang narasi resmi BEM Budi Utomo Nasional Kabinet Astawidya,
+            adalah ruang narasi resmi BPM Budi Utomo Nasional Kabinet Astawidya,
             tempat kata-kata bertumbuh menjadi informasi, dan peristiwa kampus
             menjelma cerita yang bermakna. Di sini, kabar terkini, aspirasi mahasiswa,
             serta jejak setiap langkah perjuangan dihimpun dan disajikan secara

@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $jenis_surat   = $_POST['jenis_surat'] === 'D' ? 'D' : 'L';
         $nomor_urut    = sanitizeText($_POST['nomor_urut'], 10);
         $kode_keg      = strtoupper(str_replace(' ', '', sanitizeText($_POST['kode_kegiatan'], 50)));
-        $nomor_surat   = "{$nomor_urut}/{$jenis_surat}/{$kode_keg}/BEM/{$bulan_romawi}/{$tahun}";
+        $nomor_surat   = "{$nomor_urut}/{$jenis_surat}/{$kode_keg}/BPM/{$bulan_romawi}/{$tahun}";
         $tanggal_dikirim_raw = sanitizeText($_POST['tanggal_dikirim'] ?? '', 50);
         $tanggal_dikirim = null;
         if (!empty($tanggal_dikirim_raw) && $tanggal_dikirim_raw !== 'Belum Di kirim') {
@@ -253,7 +253,7 @@ if ($is_edit || $is_clone) {
 :root {
     --primary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     --secondary-bg: #0f1217;
-    --accent-color: #4A90E2;
+    --accent-color: #E23C3C;
     --card-bg: rgba(15, 18, 23, 0.95);
     --input-bg: #0a0c10;
     --border-color: #2a3545;
@@ -293,16 +293,16 @@ if ($is_edit || $is_clone) {
 }
 
 .buat-surat-container .card:hover {
-    border-color: rgba(74, 144, 226, 0.4);
+    border-color: rgba(226, 60, 60, 0.4);
 }
 
 .buat-surat-container .card-header {
-    background: rgba(74, 144, 226, 0.05);
+    background: rgba(226, 60, 60, 0.05);
     padding: 20px 24px;
     border-bottom: 1px solid var(--border-color);
     font-weight: 600;
     font-size: 1.1rem;
-    color: #8BB9F0;
+    color: #F0D095;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -345,7 +345,7 @@ if ($is_edit || $is_clone) {
 .buat-surat-container textarea:focus {
     border-color: var(--accent-color);
     outline: none;
-    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.15), 0 0 20px rgba(74, 144, 226, 0.1);
+    box-shadow: 0 0 0 4px rgba(226, 60, 60, 0.15), 0 0 20px rgba(226, 60, 60, 0.1);
     transform: translateY(-1px);
 }
 
@@ -414,12 +414,12 @@ if ($is_edit || $is_clone) {
 .buat-surat-container .tpl-item:last-child { border-bottom: none; }
 
 .buat-surat-container .tpl-item:hover {
-    background: rgba(74, 144, 226, 0.1);
+    background: rgba(226, 60, 60, 0.1);
 }
 
 .buat-surat-container .tpl-item-label {
     font-weight: 700;
-    color: #8BB9F0;
+    color: #F0D095;
     font-size: 0.9rem;
     margin-bottom: 2px;
 }
@@ -447,8 +447,8 @@ if ($is_edit || $is_clone) {
 }
 
 .buat-surat-container .switch-container:hover {
-    background: rgba(74, 144, 226, 0.05);
-    border-color: rgba(74, 144, 226, 0.3);
+    background: rgba(226, 60, 60, 0.05);
+    border-color: rgba(226, 60, 60, 0.3);
 }
 
 .buat-surat-container .switch-label {
@@ -534,7 +534,7 @@ if ($is_edit || $is_clone) {
 }
 
 .buat-surat-container .btn-outline:hover {
-    background: rgba(74, 144, 226, 0.1);
+    background: rgba(226, 60, 60, 0.1);
     transform: translateY(-1px);
 }
 
@@ -548,15 +548,15 @@ if ($is_edit || $is_clone) {
     .buat-surat-container .date-range-wrap { flex-direction: column; align-items: stretch; }
     .buat-surat-container .date-range-wrap span { display: none; } /* Sembunyikan kata 'sampai' di mobile */
 }
-.buat-surat-container .preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 15px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
+.buat-surat-container .preview-bar { background: rgba(226,60,60,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 15px; color: #F0D095; border-left: 4px solid var(--accent-color); }
 
 /* Mini RTE Editor */
 .rte-mini-wrap { border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; transition: border-color 0.2s; }
-.rte-mini-wrap:focus-within { border-color: var(--accent-color); box-shadow: 0 0 8px rgba(74,144,226,0.15); }
+.rte-mini-wrap:focus-within { border-color: var(--accent-color); box-shadow: 0 0 8px rgba(226,60,60,0.15); }
 .rte-mini-toolbar { display: flex; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); }
 .rte-mini-btn { width: 32px; height: 28px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #aaa; cursor: pointer; font-size: 0.85rem; transition: all 0.15s; }
-.rte-mini-btn:hover { background: rgba(74,144,226,0.15); color: #4A90E2; border-color: rgba(74,144,226,0.3); }
-.rte-mini-btn:active, .rte-mini-btn.active { background: rgba(74,144,226,0.2); color: #4A90E2; border-color: #4A90E2; }
+.rte-mini-btn:hover { background: rgba(226,60,60,0.15); color: #E23C3C; border-color: rgba(226,60,60,0.3); }
+.rte-mini-btn:active, .rte-mini-btn.active { background: rgba(226,60,60,0.2); color: #E23C3C; border-color: #E23C3C; }
 .rte-mini-editor { min-height: 42px; padding: 10px 14px; color: #fff; font-size: 0.95rem; line-height: 1.5; outline: none; font-weight: bold; }
 .rte-mini-editor:empty::before { content: attr(data-placeholder); color: #555; pointer-events: none; font-weight: normal; }
 .rte-mini-editor b, .rte-mini-editor strong { color: #fff; }
@@ -569,7 +569,7 @@ if ($is_edit || $is_clone) {
 .drum-item.sel { color: #fff; font-weight: 700; opacity: 1; transform: scale(1.1); filter: blur(0); }
 .drum-item.near1 { opacity: 0.6; filter: blur(0.5px); }
 .drum-item.near2 { opacity: 0.3; filter: blur(1px); }
-.drum-highlight { position: absolute; top: 64px; left: 4px; right: 4px; height: 40px; background: rgba(74, 144, 226, 0.15); border-radius: 8px; border: 1px solid rgba(74, 144, 226, 0.3); pointer-events: none; z-index: 5; }
+.drum-highlight { position: absolute; top: 64px; left: 4px; right: 4px; height: 40px; background: rgba(226, 60, 60, 0.15); border-radius: 8px; border: 1px solid rgba(226, 60, 60, 0.3); pointer-events: none; z-index: 5; }
 .drum-group { display: flex; align-items: center; gap: 8px; }
 .drum-arrow { background: #1a1a1a; border: 1px solid #333; color: #777; font-size: 0.8rem; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: all 0.2s; display: block; width: 100%; }
 .drum-arrow-up { margin-bottom: 5px; }
@@ -612,7 +612,7 @@ if ($is_edit || $is_clone) {
 
 .buat-surat-container .drop-zone:hover {
     border-color: var(--accent-color);
-    background: rgba(74, 144, 226, 0.05);
+    background: rgba(226, 60, 60, 0.05);
 }
 
 .buat-surat-container .drop-zone i { font-size: 2.5rem; color: var(--accent-color); margin-bottom: 15px; }
@@ -667,7 +667,7 @@ if ($is_edit || $is_clone) {
             <div class="card-header"><i class="fas fa-fingerprint"></i> Identitas Surat</div>
             <div class="card-body">
                 <?php if($is_group && $is_edit): ?>
-                    <div style="background: rgba(74, 144, 226, 0.1); border-left: 4px solid var(--accent-color); padding: 12px 18px; border-radius: 12px; margin-bottom: 24px; font-size: 0.9rem; color: #8BB9F0;">
+                    <div style="background: rgba(226, 60, 60, 0.1); border-left: 4px solid var(--accent-color); padding: 12px 18px; border-radius: 12px; margin-bottom: 24px; font-size: 0.9rem; color: #F0D095;">
                         <i class="fas fa-info-circle"></i> <strong>Multi-Recipient Group</strong> — Mengedit surat ini akan memperbarui <strong><?php echo $group_count - 1; ?> salinan</strong> lainnya secara otomatis.
                     </div>
                 <?php endif; ?>
@@ -995,7 +995,7 @@ if ($is_edit || $is_clone) {
                             <?php foreach($konten['lampiran_files'] as $idx => $filePath): 
                                 $fileName = basename($filePath);
                             ?>
-                                <div class="preview-bar" id="existing-file-<?php echo $idx; ?>" style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; background: rgba(74, 144, 226, 0.05); border-color: rgba(74, 144, 226, 0.2);">
+                                <div class="preview-bar" id="existing-file-<?php echo $idx; ?>" style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; background: rgba(226, 60, 60, 0.05); border-color: rgba(226, 60, 60, 0.2);">
                                     <span><i class="fas fa-check-circle" style="color:var(--accent-color);"></i> <?php echo htmlspecialchars($fileName); ?></span>
                                     <button type="button" onclick="removeExistingFile('<?php echo htmlspecialchars($filePath); ?>', 'existing-file-<?php echo $idx; ?>')" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1rem;"><i class="fas fa-times"></i></button>
                                 </div>
@@ -1092,10 +1092,10 @@ if ($is_edit || $is_clone) {
             <div class="card-body">
                 <div class="grid-2">
                     <div class="switch-container"><span class="switch-label"><i class="fas fa-user-tie"></i> Sertakan TTD WAREK III</span><label class="switch"><input type="checkbox" name="use_ttd_warek" value="1" <?php echo ($edit_data['use_ttd_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container"><span class="switch-label"><i class="fas fa-user-graduate"></i> Sertakan TTD PRESMA BEM</span><label class="switch"><input type="checkbox" name="use_ttd_presma" value="1" <?php echo ($edit_data['use_ttd_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
+                    <div class="switch-container"><span class="switch-label"><i class="fas fa-user-graduate"></i> Sertakan TTD PRESMA BPM</span><label class="switch"><input type="checkbox" name="use_ttd_presma" value="1" <?php echo ($edit_data['use_ttd_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
                     <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap PANITIA</span><label class="switch"><input type="checkbox" name="use_cap_panitia" value="1" <?php echo ($edit_data['use_cap_panitia'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
                     <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap WAREK</span><label class="switch"><input type="checkbox" name="use_cap_warek" value="1" <?php echo ($edit_data['use_cap_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap BEM</span><label class="switch"><input type="checkbox" name="use_cap_presma" value="1" <?php echo ($edit_data['use_cap_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
+                    <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap BPM</span><label class="switch"><input type="checkbox" name="use_cap_presma" value="1" <?php echo ($edit_data['use_cap_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
                 </div>
             </div>
         </div>
@@ -1578,7 +1578,7 @@ if (dropZone && fileInput) {
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.style.borderColor = 'var(--accent-color)';
-        dropZone.style.background = 'rgba(74, 144, 226, 0.1)';
+        dropZone.style.background = 'rgba(226, 60, 60, 0.1)';
     });
 
     ['dragleave', 'drop'].forEach(evt => {

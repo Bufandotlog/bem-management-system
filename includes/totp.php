@@ -154,7 +154,7 @@ function totpVerify(string $secret, string $code, int $window = 1, ?int $lastUse
  * @param  string $issuer   Nama aplikasi (tampil di authenticator app)
  * @return string URL QR code image
  */
-function totpGetQrUrl(string $secret, string $username, string $issuer = 'BEM Admin'): string {
+function totpGetQrUrl(string $secret, string $username, string $issuer = 'BPM Admin'): string {
     $issuer   = rawurlencode($issuer);
     $username = rawurlencode($username);
     $secret   = strtoupper($secret);
@@ -174,7 +174,7 @@ function totpGetQrUrl(string $secret, string $username, string $issuer = 'BEM Ad
  * @param  string $issuer
  * @return string otpauth URI
  */
-function totpGetUri(string $secret, string $username, string $issuer = 'BEM Admin'): string {
+function totpGetUri(string $secret, string $username, string $issuer = 'BPM Admin'): string {
     $issuer   = rawurlencode($issuer);
     $username = rawurlencode($username);
     $secret   = strtoupper($secret);

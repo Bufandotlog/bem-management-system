@@ -12,7 +12,7 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 1000;
-    border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+    border-bottom: 1px solid rgba(226, 60, 60, 0.2);
 }
 
 .nav-container {
@@ -35,7 +35,7 @@
 }
 
 .logo i {
-    color: var(--biru-primary);
+    color: var(--merah-primary);
     font-size: 2rem;
 }
 
@@ -48,7 +48,7 @@
 
 .logo-img.rounded {
     border-radius: 50%;
-    border: 2px solid var(--biru-soft);
+    border: 2px solid var(--emas-soft);
     padding: 2px;
 }
 
@@ -74,7 +74,7 @@
     left: 0;
     width: 0;
     height: 2px;
-    background: var(--biru-secondary);
+    background: var(--emas-secondary);
     transition: width var(--transition-fast);
 }
 
@@ -87,7 +87,7 @@
     display: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: var(--biru-primary);
+    color: var(--merah-primary);
     transition: color 0.3s ease;
 }
 
@@ -109,7 +109,7 @@
         background: rgba(0, 0, 0, 0.3) !important;
         backdrop-filter: blur(20px) !important;
         -webkit-backdrop-filter: blur(20px) !important;
-        border-bottom: 1px solid rgba(74, 144, 226, 0.3) !important;
+        border-bottom: 1px solid rgba(226, 60, 60, 0.3) !important;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 
         /* Layout */
@@ -142,8 +142,8 @@
 
     .nav-menu.active a:hover,
     .nav-menu.active li.active a {
-        background: rgba(74, 144, 226, 0.15);
-        color: var(--biru-secondary) !important;
+        background: rgba(226, 60, 60, 0.15);
+        color: var(--emas-secondary) !important;
     }
 
     /* Ganti underline dengan background highlight */
@@ -153,6 +153,6 @@
 
     /* Icon hamburger berubah warna saat aktif */
     .menu-toggle.active {
-        color: var(--biru-secondary);
+        color: var(--emas-secondary);
     }
 }

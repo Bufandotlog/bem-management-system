@@ -54,7 +54,7 @@ $isHomePage = ($current_page == 'index.php');
     <link rel="manifest" href="<?php echo baseUrl('assets/images/favicon/site.webmanifest'); ?>">
     
     <!-- Theme Color -->
-    <meta name="theme-color" content="#4A90E2">
+    <meta name="theme-color" content="#E23C3C">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
     <!-- CSS - Gunakan assetUrl() -->
@@ -72,7 +72,7 @@ $isHomePage = ($current_page == 'index.php');
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Meta tags untuk SEO -->
-    <meta name="description" content="Website resmi BEM Kabinet <?php echo htmlspecialchars($kabinet['nama'] ?? 'ASTAWIDYA'); ?> - <?php echo htmlspecialchars($kabinet['arti'] ?? ''); ?>">
+    <meta name="description" content="Website resmi BPM Kabinet <?php echo htmlspecialchars($kabinet['nama'] ?? 'ASTAWIDYA'); ?> - <?php echo htmlspecialchars($kabinet['arti'] ?? ''); ?>">
     <meta property="og:title" content="<?php echo SITE_NAME; ?>">
     <meta property="og:image" content="<?php echo !empty($kabinet['logo']) ? uploadUrl($kabinet['logo']) : assetUrl('images/og-default.jpg'); ?>">
 </head>
@@ -84,7 +84,7 @@ $isHomePage = ($current_page == 'index.php');
             <?php if (!empty($kabinet['foto_bersama'])): ?>
                 <!-- PERBAIKAN: Gunakan uploadUrl() -->
                 <img src="<?php echo uploadUrl($kabinet['foto_bersama']); ?>" 
-                     alt="Foto Bersama BEM Kabinet <?php echo htmlspecialchars($kabinet['nama'] ?? 'ASTAWIDYA'); ?>"
+                     alt="Foto Bersama BPM Kabinet <?php echo htmlspecialchars($kabinet['nama'] ?? 'ASTAWIDYA'); ?>"
                      loading="lazy">
             <?php else: ?>
                 <!-- PERBAIKAN: Gunakan assetUrl() -->
@@ -99,10 +99,10 @@ $isHomePage = ($current_page == 'index.php');
         <?php if ($isHomePage): ?>
         <div class="hero-content">
             <h1 class="hero-title">
-                KABINET <span class="biru"><?php echo htmlspecialchars($kabinet['nama'] ?? 'ASTAWIDYA'); ?></span>
+                KABINET <span class="merah"><?php echo htmlspecialchars($kabinet['nama'] ?? 'ASTAWIDYA'); ?></span>
             </h1>
             <p class="hero-sub">
-                BEM BUDI UTOMO NASIONAL 
+                BPM BUDI UTOMO NASIONAL 
                 <?php 
                 $periode = '';
                 if (!empty($kabinet['tahun_mulai']) && !empty($kabinet['tahun_selesai'])) {
@@ -131,13 +131,13 @@ $isHomePage = ($current_page == 'index.php');
                     <?php if (!empty($kabinet['logo'])): ?>
                         <!-- PERBAIKAN: Gunakan uploadUrl() -->
                         <img src="<?php echo uploadUrl($kabinet['logo']); ?>" 
-                             alt="Logo BEM" 
+                             alt="Logo BPM" 
                              class="logo-img"
                              loading="lazy">
                     <?php else: ?>
                         <i class="fas fa-university"></i>
                     <?php endif; ?>
-                    <span>BEM <span class="text-biru">INST</span>BUNAS</span>
+                    <span>BPM <span class="text-merah">INST</span>BUNAS</span>
                 </a>
             </div>
             

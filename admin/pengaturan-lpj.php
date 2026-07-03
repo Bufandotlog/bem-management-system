@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
     if (!csrfVerify()) {
         $error = "Token CSRF tidak valid.";
     } else {
-        $nama_lembaga = sanitizeText($_POST['lpj_nama_lembaga'] ?? 'BEM INSTBUNAS Majalengka');
+        $nama_lembaga = sanitizeText($_POST['lpj_nama_lembaga'] ?? 'BPM INSTBUNAS Majalengka');
         $font_name = sanitizeText($_POST['lpj_font_name'] ?? 'Times New Roman');
         $font_size = (int)($_POST['lpj_font_size'] ?? 12);
         $font_size_heading = (int)($_POST['lpj_font_size_heading'] ?? 14);
@@ -78,7 +78,7 @@ foreach ($db_pengaturan as $p) {
     $pengaturan[$p['kunci']] = $p['nilai'];
 }
 
-$val_nama_lembaga = $pengaturan['lpj_nama_lembaga'] ?? 'BEM INSTBUNAS Majalengka';
+$val_nama_lembaga = $pengaturan['lpj_nama_lembaga'] ?? 'BPM INSTBUNAS Majalengka';
 $val_font_name = $pengaturan['lpj_font_name'] ?? 'Times New Roman';
 $val_font_size = (int)($pengaturan['lpj_font_size'] ?? 12);
 $val_font_size_heading = (int)($pengaturan['lpj_font_size_heading'] ?? 14);
@@ -153,7 +153,7 @@ $kementerian_list = dbFetchAll("SELECT * FROM kementerian WHERE periode_id = ? O
                     </div>
                 </div>
 
-                <h4 style="margin: 15px 0 10px 0; color: #8BB9F0; font-size: 0.95rem;"><i class="fas fa-border-all"></i> Margin Halaman (dalam CM)</h4>
+                <h4 style="margin: 15px 0 10px 0; color: #F0D095; font-size: 0.95rem;"><i class="fas fa-border-all"></i> Margin Halaman (dalam CM)</h4>
                 <div style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex: 1;">
                         <label>Atas (Top)</label>
@@ -173,7 +173,7 @@ $kementerian_list = dbFetchAll("SELECT * FROM kementerian WHERE periode_id = ? O
                     </div>
                 </div>
 
-                <h4 style="margin: 15px 0 10px 0; color: #8BB9F0; font-size: 0.95rem;"><i class="fas fa-table"></i> Kolom Tabel Anggaran Aktif</h4>
+                <h4 style="margin: 15px 0 10px 0; color: #F0D095; font-size: 0.95rem;"><i class="fas fa-table"></i> Kolom Tabel Anggaran Aktif</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                     <label class="switch-container" style="padding: 10px 14px; margin-bottom: 0;">
                         <span class="switch-label">Tanggal</span>
@@ -241,7 +241,7 @@ $kementerian_list = dbFetchAll("SELECT * FROM kementerian WHERE periode_id = ? O
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                 <span style="font-weight: bold; color: #fff; font-size: 0.95rem;"><?php echo htmlspecialchars($k['nama']); ?></span>
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <label style="font-size: 0.75rem; color: #8BB9F0; margin-bottom: 0;">Urutan Bab:</label>
+                                    <label style="font-size: 0.75rem; color: #F0D095; margin-bottom: 0;">Urutan Bab:</label>
                                     <input type="number" name="kementerian[<?php echo $k['id']; ?>][urutan]" class="form-control" style="width: 65px; padding: 4px 8px; text-align: center;" value="<?php echo (int)$k['urutan']; ?>" required>
                                 </div>
                             </div>

@@ -1,5 +1,5 @@
 /**
- * MAIN SCRIPT - JavaScript untuk website BEM Kabinet Astawidya
+ * MAIN SCRIPT - JavaScript untuk website BPM Kabinet Astawidya
  */
 
 import { initMobileMenu } from './modules/mobile-menu.js';

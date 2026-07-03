@@ -70,7 +70,7 @@ $items = dbFetchAll("SELECT * FROM barang_master ORDER BY nama_barang ASC");
     --card-bg: rgba(15, 18, 23, 0.95);
     --input-bg: #0a0c10;
     --border-color: #2a3545;
-    --accent-color: #4A90E2;
+    --accent-color: #E23C3C;
 }
 
 .master-barang-container {

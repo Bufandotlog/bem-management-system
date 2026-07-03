@@ -1,7 +1,7 @@
 <?php
 // arsip-periode.php - Halaman daftar semua periode kepengurusan (Publik)
 include 'header.php';
-$page_title = 'Arsip Kepengurusan BEM';
+$page_title = 'Arsip Kepengurusan BPM';
 
 // ===========================================
 // AMBIL SEMUA PERIODE DARI DATABASE
@@ -61,7 +61,7 @@ foreach ($semua_periode as $p) {
             <i class="fas fa-archive"></i> ARSIP KEPENGURUSAN
         </h1>
         <p class="arsip-subtitle">
-            Jejak sejarah kepengurusan BEM Budi Utomo Nasional dari masa ke masa
+            Jejak sejarah kepengurusan BPM Budi Utomo Nasional dari masa ke masa
         </p>
     </div>
 </div>
@@ -109,7 +109,7 @@ foreach ($semua_periode as $p) {
             
             <?php if (!empty($statistik[$periode_aktif['id']]['foto_ketua'])): ?>
             <div class="featured-image">
-                <img src="<?= uploadUrl($statistik[$periode_aktif['id']]['foto_ketua']) ?>" alt="Ketua BEM">
+                <img src="<?= uploadUrl($statistik[$periode_aktif['id']]['foto_ketua']) ?>" alt="Ketua BPM">
             </div>
             <?php endif; ?>
         </a>
@@ -199,7 +199,7 @@ foreach ($semua_periode as $p) {
             <i class="fas fa-info-circle"></i>
             <h4>Tentang Arsip Kepengurusan</h4>
             <p>
-                Halaman ini menampilkan seluruh periode kepengurusan BEM 
+                Halaman ini menampilkan seluruh periode kepengurusan BPM 
                 yang pernah ada. Klik pada salah satu periode untuk melihat 
                 detail struktur organisasi, foto, dan informasi lengkap 
                 kepengurusan pada masa tersebut.

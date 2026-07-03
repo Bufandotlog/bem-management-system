@@ -5,11 +5,11 @@
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>BEM Kabinet Astawidya</h3>
-                <p>Mewujudkan BEM yang responsif, aspiratif, dan inovatif dalam membangun mahasiswa yang berkarakter, berkualitas, dan bermanfaat bagi masyarakat..</p>
+                <h3>BPM Kabinet Astawidya</h3>
+                <p>Mewujudkan BPM yang responsif, aspiratif, dan inovatif dalam membangun mahasiswa yang berkarakter, berkualitas, dan bermanfaat bagi masyarakat..</p>
                 <div class="social-links">
-                    <a href="https://www.instagram.com/beminstbunas?igsh=MTQ3ZmxndmJhZ24xMA=="><i class="fab fa-instagram"></i></a>
-                    <a href="https://www.tiktok.com/@bem.instbunas?is_from_webapp=1&sender_device=pc"><i class="fab fa-tiktok"></i></a>
+                    <a href="https://www.instagram.com/bpminstbunas?igsh=MTQ3ZmxndmJhZ24xMA=="><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@bpm.instbunas?is_from_webapp=1&sender_device=pc"><i class="fab fa-tiktok"></i></a>
                     <!-- <a href="#"><i class="fab fa-twitter"></i></a>
                     <a href="#"><i class="fab fa-youtube"></i></a> -->
                 </div>
@@ -25,11 +25,11 @@
                 <h3>Kontak</h3>
                 <p><i class="fas fa-map-marker-alt"></i> Jl. Siliwangi No. 121, Desa Heuleut, Kecamatan Kadipaten, Kabupaten Majalengka, Jawa Barat, 45452</p>
                 <p><i class="fas fa-phone"></i> +62 838-0585-3345</p>
-                <p><i class="fas fa-envelope"></i> beminstbunasastawidya@gmail.com</p>
+                <p><i class="fas fa-envelope"></i> bpminstbunasastawidya@gmail.com</p>
             </div>
         </div>
         <div class="copyright">
-            <p>&copy; 2025 BEM Kabinet Astawidya.BFN.v1.2.26. Hak Cipta Dilindungi.</p>
+            <p>&copy; 2025 BPM Kabinet Astawidya.BFN.v1.2.26. Hak Cipta Dilindungi.</p>
         </div>
     </footer>
 

@@ -101,12 +101,12 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verifikasi 2FA - BEM Admin</title>
+    <title>Verifikasi 2FA - BPM Admin</title>
     <link rel="stylesheet" href="css/login.css?v=<?php echo $cssVer; ?>">
     <style>
         .totp-input{font-size:2rem;letter-spacing:12px;text-align:center;font-family:monospace}
         .back-link{display:block;text-align:center;margin-top:16px;color:#666;font-size:.8rem;text-decoration:none}
-        .back-link:hover{color:#4A90E2}
+        .back-link:hover{color:#E23C3C}
         .totp-hint{color:#666;font-size:.8rem;text-align:center;margin-top:8px;line-height:1.5}
     </style>
 </head>
@@ -114,7 +114,7 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
 <div class="login-container">
     <div class="login-card">
         <div class="login-header">
-            <h2 style="color:#4A90E2;margin-bottom:8px;">&#x1F6E1; Verifikasi 2FA</h2>
+            <h2 style="color:#E23C3C;margin-bottom:8px;">&#x1F6E1; Verifikasi 2FA</h2>
             <p>Masukkan kode 6 digit dari Aegis / Authenticator</p>
         </div>
         <?php if ($error): ?>

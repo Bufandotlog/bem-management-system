@@ -12,11 +12,11 @@ if (!$kontak_data) {
     $kontak_data = [
         'alamat' => 'Jl. Siliwangi No. 121, Desa Heuleut, Kecamatan Kadipaten, Kabupaten Majalengka, Jawa Barat, 45452',
         'telepon' => json_encode(['+62 838-0585-3345', '+62 857-2209-0532']),
-        'email' => 'beminstbunasastawidya@gmail.com',
+        'email' => 'bpminstbunasastawidya@gmail.com',
         'jam_kerja' => json_encode(['senin_jumat' => '09.00 - 16.00', 'sabtu' => '09.00 - 12.00', 'minggu' => 'Libur']),
         'sosial_media' => json_encode([
-            'instagram' => 'https://www.instagram.com/beminstbunas',
-            'tiktok' => 'https://www.tiktok.com/@bem.instbunas',
+            'instagram' => 'https://www.instagram.com/bpminstbunas',
+            'tiktok' => 'https://www.tiktok.com/@bpm.instbunas',
             'twitter' => '#',
             'youtube' => '#',
             'linkedin' => '#'

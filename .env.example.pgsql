@@ -8,4 +8,4 @@ DB_PASS="your_supabase_password"
 DB_NAME=postgres
 
 APP_ENV=development
-BASE_URL=http://localhost/bem/
+BASE_URL=http://localhost/bpm/

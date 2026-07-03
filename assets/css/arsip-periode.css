@@ -1,6 +1,6 @@
 /* ===== ARSIP PAGE STYLES ===== */
 .arsip-header {
-    background: linear-gradient(135deg, #0a0a0a, #1a2f4a);
+    background: linear-gradient(135deg, #0a0a0a, #4a1a1a);
     padding: 80px 20px;
     text-align: center;
     position: relative;
@@ -14,7 +14,7 @@
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(74,144,226,0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(226,60,60,0.1) 0%, transparent 70%);
     animation: rotate 30s linear infinite;
 }
 
@@ -34,11 +34,11 @@
     font-size: 3rem;
     color: white;
     margin-bottom: 15px;
-    text-shadow: 0 5px 15px rgba(74,144,226,0.3);
+    text-shadow: 0 5px 15px rgba(226,60,60,0.3);
 }
 
 .arsip-title i {
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
     margin-right: 10px;
 }
 
@@ -77,7 +77,7 @@
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(74, 144, 226, 0.25);
+    border: 1px solid rgba(226, 60, 60, 0.25);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
     border-radius: 20px;
@@ -90,11 +90,11 @@
 }
 
 .featured-card:hover {
-    border-color: var(--biru-primary, #4A90E2);
+    border-color: var(--merah-primary, #E23C3C);
     transform: translateY(-5px);
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 30px 60px rgba(74, 144, 226, 0.25),
-                0 0 0 1px rgba(74, 144, 226, 0.3),
+    box-shadow: 0 30px 60px rgba(226, 60, 60, 0.25),
+                0 0 0 1px rgba(226, 60, 60, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -119,7 +119,7 @@
 
 .featured-tahun {
     font-size: 1.2rem;
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
     font-weight: 600;
     margin-bottom: 15px;
 }
@@ -147,15 +147,15 @@
     padding: 8px 15px;
     border-radius: 25px;
     font-size: 0.9rem;
-    border: 1px solid rgba(74, 144, 226, 0.2);
+    border: 1px solid rgba(226, 60, 60, 0.2);
 }
 
 .stat-item i {
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
 }
 
 .featured-link {
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -175,8 +175,8 @@
     height: 150px;
     border-radius: 50%;
     overflow: hidden;
-    border: 4px solid var(--biru-primary, #4A90E2);
-    box-shadow: 0 10px 30px rgba(74,144,226,0.4);
+    border: 4px solid var(--merah-primary, #E23C3C);
+    box-shadow: 0 10px 30px rgba(226,60,60,0.4);
 }
 
 .featured-image img {
@@ -197,7 +197,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    border-bottom: 2px solid rgba(74, 144, 226, 0.2);
+    border-bottom: 2px solid rgba(226, 60, 60, 0.2);
     padding-bottom: 15px;
 
     /* Override gradient text dari berita.css */
@@ -211,7 +211,7 @@
 }
 
 .arsip-grid-section .section-title i {
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
 }
 
 .arsip-grid-section .section-title span::before,
@@ -230,7 +230,7 @@
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(74, 144, 226, 0.25);
+    border: 1px solid rgba(226, 60, 60, 0.25);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
     border-radius: 15px;
@@ -241,10 +241,10 @@
 
 .periode-card:hover {
     transform: translateY(-5px);
-    border-color: var(--biru-primary, #4A90E2);
+    border-color: var(--merah-primary, #E23C3C);
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 15px 30px rgba(74, 144, 226, 0.25),
-                0 0 0 1px rgba(74, 144, 226, 0.3),
+    box-shadow: 0 15px 30px rgba(226, 60, 60, 0.25),
+                0 0 0 1px rgba(226, 60, 60, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -292,7 +292,7 @@
     height: 80px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.05);
-    border: 3px solid var(--biru-primary, #4A90E2);
+    border: 3px solid var(--merah-primary, #E23C3C);
     overflow: hidden;
     position: absolute;
     bottom: -40px;
@@ -314,7 +314,7 @@
 
 .default-thumbnail i {
     font-size: 2rem;
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
 }
 
 .periode-card-body {
@@ -328,7 +328,7 @@
 }
 
 .periode-tahun {
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
     font-weight: 600;
     margin-bottom: 15px;
     font-size: 0.9rem;
@@ -353,7 +353,7 @@
 }
 
 .stat-row i {
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
     width: 20px;
 }
 
@@ -371,7 +371,7 @@
 }
 
 .view-link {
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
     font-size: 0.9rem;
     display: flex;
     align-items: center;
@@ -396,7 +396,7 @@
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(74, 144, 226, 0.25);
+    border: 1px solid rgba(226, 60, 60, 0.25);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
     border-radius: 15px;
@@ -406,7 +406,7 @@
 
 .info-card i {
     font-size: 3rem;
-    color: var(--biru-primary, #4A90E2);
+    color: var(--merah-primary, #E23C3C);
     margin-bottom: 15px;
 }
 
@@ -434,7 +434,7 @@
 
 .empty-state i {
     font-size: 4rem;
-    color: rgba(74, 144, 226, 0.3);
+    color: rgba(226, 60, 60, 0.3);
     margin-bottom: 20px;
 }
 

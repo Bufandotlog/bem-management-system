@@ -100,7 +100,7 @@ function timeAgo(string $datetime): string {
 <?php flashMessage(); ?>
 
 <!-- Info sesi aktif -->
-<div style="margin-bottom:1.5rem;padding:.85rem 1rem;background:rgba(74,144,226,.08);border:1px solid rgba(74,144,226,.3);border-radius:8px;font-size:13px;color:#8BB9F0;">
+<div style="margin-bottom:1.5rem;padding:.85rem 1rem;background:rgba(226,60,60,.08);border:1px solid rgba(226,60,60,.3);border-radius:8px;font-size:13px;color:#F0D095;">
     <i class="fas fa-info-circle"></i>
     Kamu memiliki <strong><?php echo count($sesi_aktif); ?></strong> sesi aktif.
     Sesi bertanda <span style="color:#4caf50;font-weight:600;">★ Ini Kamu</span> adalah sesi yang sedang digunakan sekarang.
@@ -127,13 +127,13 @@ function timeAgo(string $datetime): string {
     ?>
     <div style="background:#1a1a2e;border:1px solid <?php echo $borderColor; ?>;border-radius:10px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
         <!-- Icon perangkat -->
-        <div style="width:40px;height:40px;border-radius:50%;background:rgba(74,144,226,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(226,60,60,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <?php
             $ua = $sesi['device_info'] ?? '';
             $icon = (str_contains($ua,'iPhone') || str_contains($ua,'Android') || str_contains($ua,'iPad'))
                 ? 'fa-mobile-alt' : 'fa-desktop';
             ?>
-            <i class="fas <?php echo $icon; ?>" style="color:#4A90E2;font-size:1.1rem;"></i>
+            <i class="fas <?php echo $icon; ?>" style="color:#E23C3C;font-size:1.1rem;"></i>
         </div>
 
         <!-- Info perangkat -->
@@ -184,7 +184,7 @@ function timeAgo(string $datetime): string {
 </div>
 
 <div style="margin-top:1.5rem;">
-    <a href="pengaturan.php" style="display:inline-flex;align-items:center;gap:6px;color:#4A90E2;font-size:13px;text-decoration:none;">
+    <a href="pengaturan.php" style="display:inline-flex;align-items:center;gap:6px;color:#E23C3C;font-size:13px;text-decoration:none;">
         <i class="fas fa-arrow-left"></i> Kembali ke Pengaturan
     </a>
 </div>

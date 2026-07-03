@@ -133,7 +133,7 @@ $totalBerita = count($semuaBerita);
 
                     <td>
                         <span style="font-size:.85rem;">
-                            <i class="fas fa-calendar-alt" style="color:#4A90E2;margin-right:4px;"></i>
+                            <i class="fas fa-calendar-alt" style="color:#E23C3C;margin-right:4px;"></i>
                             <?php echo $namaPeriode; ?>
                         </span>
                     </td>
@@ -221,7 +221,7 @@ $totalBerita = count($semuaBerita);
             <!-- Info periode di card mobile -->
             <div class="news-card-meta">
                 <div class="news-card-meta-item">
-                    <i class="fas fa-crown" style="color:#4A90E2;"></i>
+                    <i class="fas fa-crown" style="color:#E23C3C;"></i>
                     <?php echo $namaPeriode; ?>
                 </div>
                 <div class="news-card-meta-item">

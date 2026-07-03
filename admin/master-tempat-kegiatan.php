@@ -105,7 +105,7 @@ $items_peminjaman = dbFetchAll("SELECT * FROM tempat_master ORDER BY nama_tempat
     --card-bg: rgba(15, 18, 23, 0.95);
     --input-bg: #0a0c10;
     --border-color: #2a3545;
-    --accent-color: #4A90E2;
+    --accent-color: #E23C3C;
 }
 
 .master-barang-container {
@@ -279,7 +279,7 @@ $items_peminjaman = dbFetchAll("SELECT * FROM tempat_master ORDER BY nama_tempat
 }
 
 .btn-outline:hover {
-    background: rgba(74, 144, 226, 0.1);
+    background: rgba(226, 60, 60, 0.1);
 }
 
 .btn-icon {
@@ -313,7 +313,7 @@ $items_peminjaman = dbFetchAll("SELECT * FROM tempat_master ORDER BY nama_tempat
     border-color: #2ecc71;
 }
 
-.preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-bottom: 20px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
+.preview-bar { background: rgba(226,60,60,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-bottom: 20px; color: #F0D095; border-left: 4px solid var(--accent-color); }
 
 </style>
 

@@ -120,7 +120,7 @@ $sosmed = array_merge([
 <!-- ===== PAGE HEADER ===== -->
 <div class="page-header">
     <h1><i class="fas fa-address-book"></i> Edit Data Kontak</h1>
-    <p>Kelola informasi kontak BEM Kabinet <?php echo htmlspecialchars($kabinet['nama'] ?? 'Astawidya'); ?></p>
+    <p>Kelola informasi kontak BPM Kabinet <?php echo htmlspecialchars($kabinet['nama'] ?? 'Astawidya'); ?></p>
 </div>
 
 <?php flashMessage(); ?>
@@ -137,7 +137,7 @@ $sosmed = array_merge([
             <label for="alamat">Alamat Lengkap</label>
             <textarea id="alamat" name="alamat" rows="4"
                       placeholder="Jl. Siliwangi No. 121, Desa Heuleut, Kecamatan Kadipaten..."><?php echo htmlspecialchars($kontak['alamat'] ?? ''); ?></textarea>
-            <small>Alamat lengkap sekretariat BEM. Boleh dikosongkan.</small>
+            <small>Alamat lengkap sekretariat BPM. Boleh dikosongkan.</small>
         </div>
     </div>
 
@@ -170,8 +170,8 @@ $sosmed = array_merge([
             <label for="email">Alamat Email</label>
             <input type="email" id="email" name="email"
                    value="<?php echo htmlspecialchars($kontak['email'] ?? ''); ?>"
-                   placeholder="bem@example.com">
-            <small>Email resmi BEM. Boleh dikosongkan.</small>
+                   placeholder="bpm@example.com">
+            <small>Email resmi BPM. Boleh dikosongkan.</small>
         </div>
     </div>
 

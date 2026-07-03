@@ -1,5 +1,5 @@
 # PANDUAN TEKNIS LOKAL & DOKUMENTASI ARSITEKTUR KODE
-## Sistem Manajemen Administrasi BEM (Astawidya)
+## Sistem Manajemen Administrasi BPM (Astawidya)
 
 Dokumen ini menyajikan panduan lengkap mengenai cara kerja sistem, cara menjalankan dan mengelolanya secara lokal di PC/laptop Anda, serta penjelasan detail untuk setiap berkas (*file-by-file*) dalam arsitektur aplikasi ini.
 
@@ -28,16 +28,16 @@ Untuk menjalankan aplikasi ini secara lokal, pastikan perangkat Anda telah memen
 #### Langkah-Langkah Menjalankan di Lokal
 
 ##### Langkah 1: Mempersiapkan Folder Proyek
-1. Salin seluruh direktori proyek ini ke dalam folder root web server Anda (misal `C:/xampp/htdocs/bem/` di XAMPP, atau `/var/www/html/bem/` di Linux).
+1. Salin seluruh direktori proyek ini ke dalam folder root web server Anda (misal `C:/xampp/htdocs/bpm/` di XAMPP, atau `/var/www/html/bpm/` di Linux).
 2. Pastikan folder `/uploads/` memiliki izin baca dan tulis yang cukup (di Linux/macOS: `chmod -R 777 uploads/`). Folder ini digunakan untuk menyimpan berkas Kop Surat, tanda tangan elektronik pengurus, lampiran PDF eksternal, dan gambar berita.
 
 ##### Langkah 2: Pembuatan & Impor Database
 Sistem ini dirancang secara *hybrid* dan dapat berjalan di atas MySQL maupun PostgreSQL.
 * **Jika menggunakan MySQL (Laragon/XAMPP):**
-  1. Buka phpMyAdmin, buat database baru bernama `bem_astawidya`.
+  1. Buka phpMyAdmin, buat database baru bernama `bpm_astawidya`.
   2. Impor berkas skema MySQL dari: `databases/schema_mysql.sql`.
 * **Jika menggunakan PostgreSQL (Lokal/Supabase):**
-  1. Buka pgAdmin, buat database baru bernama `bem_astawidya`.
+  1. Buka pgAdmin, buat database baru bernama `bpm_astawidya`.
   2. Jalankan kueri SQL dari berkas skema PostgreSQL: `databases/schema_pgsql.sql`.
 
 ##### Langkah 3: Konfigurasi Environment File (`.env`)
@@ -52,7 +52,7 @@ Buka berkas `.env` tersebut dan sesuaikan konfigurasinya:
 DB_CONNECTION=pgsql # Ubah menjadi 'mysql' jika menggunakan XAMPP/Laragon
 DB_HOST=127.0.0.1
 DB_PORT=5432 # Gunakan 3306 untuk MySQL
-DB_DATABASE=bem_astawidya
+DB_DATABASE=bpm_astawidya
 DB_USERNAME=postgres # Sesuaikan dengan username database Anda
 DB_PASSWORD=password_anda # Sesuaikan dengan password database Anda
 DB_SSL_MODE=disable
@@ -82,7 +82,7 @@ Cara tercepat tanpa konfigurasi *Virtual Host* yang rumit adalah menggunakan bui
 
 ### Bagian 2: Panduan Mengelola Sistem (Administration & Management)
 
-Sistem BEM (Astawidya) didesain agar mudah dioperasikan secara mandiri dari halaman admin:
+Sistem BPM (Astawidya) didesain agar mudah dioperasikan secara mandiri dari halaman admin:
 
 1. **Mengaktifkan Periode Kepengurusan (Langkah Wajib Pertama)**
    * Masuk ke **Periode Kepengurusan** (`/admin/periode-kepengurusan.php`).
@@ -90,7 +90,7 @@ Sistem BEM (Astawidya) didesain agar mudah dioperasikan secara mandiri dari hala
 
 2. **Mengisi Data Master (Inventaris & Lokasi)**
    * Sebelum Anda membuat surat peminjaman barang atau menyusun susunan acara (rundown), isi terlebih dahulu master data berikut:
-     * **Master Barang** (`/admin/master-barang.php`): Menyimpan daftar inventaris BEM (cth: Sound System, Proyektor).
+     * **Master Barang** (`/admin/master-barang.php`): Menyimpan daftar inventaris BPM (cth: Sound System, Proyektor).
      * **Master Tempat** (`/admin/master-tempat.php`): Daftar lokasi kegiatan (cth: Aula, Gedung Serbaguna).
      * **Master Penanggung Jawab** (`/admin/master-penanggung-jawab.php`): Nama & jabatan penanggung jawab sesi rundown.
 
@@ -140,10 +140,10 @@ Halaman-halaman publik yang dapat diakses oleh mahasiswa umum tanpa perlu login.
 
 | Nama Berkas | Fungsi dan Kegunaan |
 | :--- | :--- |
-| `index.php` | Beranda utama yang menampilkan sekilas visi misi kabinet, daftar berita terbaru, struktur organisasi BEM, dan formulir hubungi kami. |
-| `berita.php` | Menampilkan seluruh daftar berita/artikel/pengumuman resmi BEM dengan fitur pencarian dan paginasi. |
+| `index.php` | Beranda utama yang menampilkan sekilas visi misi kabinet, daftar berita terbaru, struktur organisasi BPM, dan formulir hubungi kami. |
+| `berita.php` | Menampilkan seluruh daftar berita/artikel/pengumuman resmi BPM dengan fitur pencarian dan paginasi. |
 | `berita-detail.php` | Menampilkan konten penuh suatu berita dengan tampilan premium, responsif, dan ramah SEO. |
-| `kepengurusan.php` | Halaman publik yang menampilkan bagan visual interaktif struktur organisasi BEM (Kabinet, BPH, Kementerian, dan Anggota). |
+| `kepengurusan.php` | Halaman publik yang menampilkan bagan visual interaktif struktur organisasi BPM (Kabinet, BPH, Kementerian, dan Anggota). |
 | `kontak.php` | Halaman yang berisi info kontak resmi kesekretariatan dan formulir bagi mahasiswa umum untuk mengirim pesan atau saran. |
 | `config.php` | Berkas bootstrap root yang memuat `/config/app.php` agar berkas di root direktori dapat terhubung ke basis data. |
 | `header.php` & `footer.php` | Tata letak (layout) navigasi atas dan bawah untuk halaman publik dengan desain premium, responsif, dan mendukung *dark mode*. |
@@ -163,7 +163,7 @@ Berisi seluruh sistem manajemen administrasi surat menyurat, rundown, inventaris
 * `dashboard.php`: Pusat visual administrasi yang menampilkan grafik statistik surat masuk/keluar, lampiran, rundown, serta aktivitas log terbaru.
 * `audit-log.php`: Halaman pelacak log keamanan untuk melacak semua operasi database (Siapa melakukan apa, kapan, dan dari IP mana).
 * `backup-database.php`: Fitur sekali-klik untuk mengunduh cadangan database `.sql` langsung dari browser.
-* `ganti-periode.php`: Fitur sakelar cepat untuk beralih data ke tahun kepengurusan BEM lainnya.
+* `ganti-periode.php`: Fitur sakelar cepat untuk beralih data ke tahun kepengurusan BPM lainnya.
 
 ##### C. Pembuatan & Cetak Surat Resmi (Core Module)
 * `buat-surat.php`: Form pembuatan surat keluar dan surat dalam tercanggih. Dilengkapi:
@@ -175,22 +175,22 @@ Berisi seluruh sistem manajemen administrasi surat menyurat, rundown, inventaris
   * Fitur **"Salin Redaksi"** (menyalin teks surat rapi ber-emoji bebas HTML tag untuk langsung ditempel ke WhatsApp/sosial media).
   * Pencarian instan dan filter surat berdasarkan periode/jenis.
   * Fitur hapus, edit, duplikat (clone), dan ekspor massal.
-* `cetak-surat.php`: Halaman pratampilan cetak surat resmi BEM. Menggunakan CSS `@media print` presisi tinggi untuk tata letak kertas A4 standar surat resmi. Menggunakan library **PDF.js v2.16.105** di sisi browser untuk merender secara otomatis lampiran-lampiran PDF luar yang diunggah sekretaris agar tercetak menyatu di halaman akhir surat.
+* `cetak-surat.php`: Halaman pratampilan cetak surat resmi BPM. Menggunakan CSS `@media print` presisi tinggi untuk tata letak kertas A4 standar surat resmi. Menggunakan library **PDF.js v2.16.105** di sisi browser untuk merender secara otomatis lampiran-lampiran PDF luar yang diunggah sekretaris agar tercetak menyatu di halaman akhir surat.
 
 ##### D. Manajemen Lampiran Peminjaman & Rundown (Visual Module)
 * `arsip-lampiran.php`: Halaman manajemen arsip dokumen lampiran peminjaman barang/tempat.
 * `cetak-lampiran.php` & `cetak-lampiran-pdf.php`: Form penyuntingan visual dan render cetak lampiran daftar barang yang dipinjam lengkap dengan tabel garis batas profesional dan pencegahan pemotongan baris tabel antar halaman.
-* `arsip-rundown.php`: Pengarsipan dan daftar susunan acara (rundown) seluruh program kerja BEM.
+* `arsip-rundown.php`: Pengarsipan dan daftar susunan acara (rundown) seluruh program kerja BPM.
 * `cetak-rundown.php` & `cetak-rundown-pdf.php`: Editor susunan acara interaktif berbasis baris acara (hari/tanggal, durasi waktu, nama agenda, lokasi, dan penanggung jawab) serta pencetakan dokumen PDF.
 
 ##### E. Pengaturan, Master Data & Konten Publik
 * `pengaturan.php`: Mengonfigurasi data nama organisasi, nama perguruan tinggi, alamat kesekretariatan, serta tanda tangan & stempel Warek III / Presiden Mahasiswa.
 * `pengaturan-surat.php`: Menyimpan data saran template cepat (perihal, tujuan, tempat) agar pengetikan surat sangat efisien.
-* `periode-kepengurusan.php`: Membuat, mengaktifkan, dan menonaktifkan tahun periode kepengurusan BEM.
+* `periode-kepengurusan.php`: Membuat, mengaktifkan, dan menonaktifkan tahun periode kepengurusan BPM.
 * `visi-misi.php`: Mengelola teks visi & misi resmi organisasi untuk ditampilkan di halaman beranda publik.
 * `upload-struktur.php`: Mengunggah diagram gambar struktur organisasi kabinet.
-* `berita.php` & `berita-edit.php` & `berita-hapus.php`: Manajemen CRUD artikel portal berita mahasiswa BEM.
-* `kabinet.php`: Mengelola nama kabinet dan mengunggah logo resmi kabinet BEM.
+* `berita.php` & `berita-edit.php` & `berita-hapus.php`: Manajemen CRUD artikel portal berita mahasiswa BPM.
+* `kabinet.php`: Mengelola nama kabinet dan mengunggah logo resmi kabinet BPM.
 * `/master-...php`: Modul master data (barang, tempat, penanggung jawab, dll.) untuk menyuplai data pilihan pada rundown dan lampiran.
 
 ---

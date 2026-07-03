@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     --card-bg: rgba(15, 18, 23, 0.95);
     --input-bg: #0a0c10;
     --border-color: #2a3545;
-    --accent-color: #4A90E2;
+    --accent-color: #E23C3C;
 }
 
 .cetak-rundown-container {
@@ -189,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 .form-group input:focus, .form-group select:focus {
     border-color: var(--accent-color);
-    box-shadow: 0 0 15px rgba(74, 144, 226, 0.2);
+    box-shadow: 0 0 15px rgba(226, 60, 60, 0.2);
     outline: none;
 }
 
@@ -239,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 .btn-add-row {
-    background: rgba(74, 144, 226, 0.1);
+    background: rgba(226, 60, 60, 0.1);
     color: var(--accent-color);
     border: 1px dashed var(--accent-color);
     padding: 12px;
@@ -253,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 .btn-add-row:hover {
-    background: rgba(74, 144, 226, 0.2);
+    background: rgba(226, 60, 60, 0.2);
 }
 
 .btn-remove-row {
@@ -398,7 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     justify-content: center;
 }
 .qty-btn:hover {
-    background: rgba(74,144,226,0.2);
+    background: rgba(226,60,60,0.2);
     color: #fff;
     background: rgba(255,255,255,0.1);
 }
@@ -546,7 +546,7 @@ input.barang-qty::-webkit-outer-spin-button {
 .tpl-search-input:focus {
     border-color: var(--accent-color);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    box-shadow: 0 0 0 3px rgba(226, 60, 60, 0.1);
 }
 .tpl-results {
     position: absolute;
@@ -576,7 +576,7 @@ input.barang-qty::-webkit-outer-spin-button {
     font-size: 0.9rem;
 }
 .tpl-item:last-child { border-bottom: none; }
-.tpl-item:hover { background: rgba(74, 144, 226, 0.1); color: var(--accent-color); }
+.tpl-item:hover { background: rgba(226, 60, 60, 0.1); color: var(--accent-color); }
 </style>
 
 <div class="cetak-rundown-container">
@@ -614,7 +614,7 @@ input.barang-qty::-webkit-outer-spin-button {
             <div class="info-grid">
                 <div class="form-group">
                     <label>Nama Acara / Kegiatan</label>
-                    <input type="text" name="nama_acara" id="nama_acara" required placeholder="Contoh: BEM CUP" oninput="updateDayNumbers()" value="<?php echo $edit_data ? htmlspecialchars($edit_data['nama_acara']) : ''; ?>">
+                    <input type="text" name="nama_acara" id="nama_acara" required placeholder="Contoh: BPM CUP" oninput="updateDayNumbers()" value="<?php echo $edit_data ? htmlspecialchars($edit_data['nama_acara']) : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Tahun Periode</label>
@@ -872,7 +872,7 @@ function addRow(dayId, afterRow = null) {
         <td class="row-num" style="text-align: center; font-weight: bold; font-size: 1.1rem; color: #555;">${tbody.querySelectorAll('tr.main-row').length + 1}</td>
         <td class="time-col" data-label="WAKTU / DURASI" style="width: 200px;">
             <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 10px; text-align: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);">
-                <div style="font-size: 1.1rem; color: var(--accent-color); font-weight: 800; margin-bottom: 12px; letter-spacing: 1px; text-shadow: 0 0 10px rgba(74, 144, 226, 0.3);" class="waktu-display">00.00 - 00.00</div>
+                <div style="font-size: 1.1rem; color: var(--accent-color); font-weight: 800; margin-bottom: 12px; letter-spacing: 1px; text-shadow: 0 0 10px rgba(226, 60, 60, 0.3);" class="waktu-display">00.00 - 00.00</div>
                 <input type="hidden" name="waktu[${dayId}][]" class="waktu-hidden" value="00.00 - 00.00">
                 <input type="hidden" name="is_parallel[${dayId}][]" class="is-parallel-hidden" value="0">
                 <div class="durasi-controls" style="display: flex; gap: 8px; justify-content: center;">
@@ -938,7 +938,7 @@ function addRow(dayId, afterRow = null) {
                     <button type="button" class="btn-insert-row" onclick="insertRowAfter(this, ${dayId})" title="Sisipkan Baris Baru di Bawah">
                         <i class="fas fa-plus-circle"></i>
                     </button>
-                    <button type="button" class="btn-add-parallel" onclick="addParallelRow(this, ${dayId})" title="Tambah Baris Paralel (Kegiatan Bersamaan)" style="background: rgba(74, 144, 226, 0.1); color: var(--accent-color); border: none; border-radius: 8px; width: 36px; height: 36px; cursor: pointer; transition: 0.3s;">
+                    <button type="button" class="btn-add-parallel" onclick="addParallelRow(this, ${dayId})" title="Tambah Baris Paralel (Kegiatan Bersamaan)" style="background: rgba(226, 60, 60, 0.1); color: var(--accent-color); border: none; border-radius: 8px; width: 36px; height: 36px; cursor: pointer; transition: 0.3s;">
                         <i class="fas fa-layer-group"></i>
                     </button>
                     <button type="button" class="btn-remove-row" onclick="removeRow(this, ${dayId})" title="Hapus Baris Ini">
@@ -980,7 +980,7 @@ function addParallelRow(btn, dayId) {
         <td data-label="ACARA">
             <input type="hidden" name="waktu[${dayId}][]" class="waktu-hidden" value="00.00 - 00.00">
             <input type="hidden" name="is_parallel[${dayId}][]" class="is-parallel-hidden" value="1">
-            <input type="text" name="acara[${dayId}][]" placeholder="Kegiatan Paralel..." required style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; border-color: rgba(74, 144, 226, 0.4); box-shadow: inset 0 0 10px rgba(74, 144, 226, 0.05);">
+            <input type="text" name="acara[${dayId}][]" placeholder="Kegiatan Paralel..." required style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; border-color: rgba(226, 60, 60, 0.4); box-shadow: inset 0 0 10px rgba(226, 60, 60, 0.05);">
         </td>
         <td data-label="KET / TEMPAT">
             <div style="display: flex; gap: 5px;">

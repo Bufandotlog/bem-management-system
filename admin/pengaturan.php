@@ -159,12 +159,12 @@ function renderAlert($msg) {
 
 <div class="role-badge">
     <i class="fas fa-user-tag"></i>
-    <span>Login sebagai: <strong style="color:<?php echo $is_superadmin ? 'gold' : '#4A90E2'; ?>">
+    <span>Login sebagai: <strong style="color:<?php echo $is_superadmin ? 'gold' : '#E23C3C'; ?>">
         <?php echo $is_superadmin ? 'Superadmin' : 'Admin Biasa'; ?>
     </strong></span>
     <?php if (!$is_superadmin && $periode_user): ?>
     <span style="color:#aaa;">— Periode:
-        <span style="color:#8BB9F0;"><?php echo htmlspecialchars($periode_user['nama']); ?>
+        <span style="color:#F0D095;"><?php echo htmlspecialchars($periode_user['nama']); ?>
         (<?php echo (int)$periode_user['tahun_mulai']; ?>/<?php echo (int)$periode_user['tahun_selesai']; ?>)</span>
     </span>
     <?php endif; ?>
@@ -296,12 +296,12 @@ function renderAlert($msg) {
     <p style="color:#aaa;font-size:.9rem;margin-bottom:1rem;">
         Lihat semua perangkat yang sedang terhubung ke akun kamu dan putuskan akses yang mencurigakan.
     </p>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:rgba(74,144,226,.08);border:1px solid rgba(74,144,226,.2);border-radius:8px;margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:rgba(226,60,60,.08);border:1px solid rgba(226,60,60,.2);border-radius:8px;margin-bottom:1rem;">
         <div>
-            <div style="font-size:1.4rem;font-weight:600;color:#4A90E2;"><?php echo $totalSesi; ?></div>
+            <div style="font-size:1.4rem;font-weight:600;color:#E23C3C;"><?php echo $totalSesi; ?></div>
             <div style="font-size:.8rem;color:#888;">Sesi Aktif Tercatat</div>
         </div>
-        <i class="fas fa-mobile-alt" style="font-size:1.8rem;color:rgba(74,144,226,.4);"></i>
+        <i class="fas fa-mobile-alt" style="font-size:1.8rem;color:rgba(226,60,60,.4);"></i>
     </div>
     <a href="kelola-perangkat.php" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;width:100%;justify-content:center;text-decoration:none;">
         <i class="fas fa-cog"></i> Kelola Perangkat
@@ -331,7 +331,7 @@ function renderAlert($msg) {
     </div>
     <div class="info-item">
         <label>Role</label>
-        <span style="color:<?php echo $is_superadmin ? 'gold' : '#4A90E2'; ?>">
+        <span style="color:<?php echo $is_superadmin ? 'gold' : '#E23C3C'; ?>">
             <?php echo $is_superadmin ? 'Superadmin' : 'Admin'; ?>
         </span>
     </div>
@@ -350,7 +350,7 @@ function renderAlert($msg) {
     <?php if (!$is_superadmin && $periode_user): ?>
     <div class="info-item">
         <label>Periode</label>
-        <span style="color:#8BB9F0;"><?php echo htmlspecialchars($periode_user['nama']); ?></span>
+        <span style="color:#F0D095;"><?php echo htmlspecialchars($periode_user['nama']); ?></span>
     </div>
     <?php endif; ?>
 </div>

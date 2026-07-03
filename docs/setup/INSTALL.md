@@ -1,5 +1,5 @@
 # 🛠️ Panduan Instalasi & Setup Teknis
-## Sistem Manajemen BEM (Astawidya)
+## Sistem Manajemen BPM (Astawidya)
 
 Panduan ini berisi langkah-masing instruksi teknis untuk menjalankan sistem di lingkungan **Lokal (PostgreSQL)** maupun **Hosting/Production (MySQL)**.
 
@@ -18,15 +18,15 @@ Sebelum memulai, pastikan perangkat Anda memenuhi spesifikasi berikut:
 ## 📥 Langkah 1: Persiapan Source Code
 1. **Clone Repository** atau download file ZIP:
    ```bash
-   git clone https://github.com/bufan354/bembudiutomo.git
-   cd bembudiutomo
+   git clone https://github.com/bufan354/bpmbudiutomo.git
+   cd bpmbudiutomo
    ```
 2. **Izin Folder (PENTING)**:
    Pastikan folder root dapat ditulis oleh web server agar sistem bisa membuat folder `uploads/` secara otomatis.
    ```bash
    # Contoh di Linux/Ubuntu
-   sudo chown -R www-data:www-data /var/www/html/bembudiutomo
-   chmod -R 755 /var/www/html/bembudiutomo
+   sudo chown -R www-data:www-data /var/www/html/bpmbudiutomo
+   chmod -R 755 /var/www/html/bpmbudiutomo
    ```
 
 ---
@@ -35,7 +35,7 @@ Sebelum memulai, pastikan perangkat Anda memenuhi spesifikasi berikut:
 Pilih salah satu sesuai kebutuhan Anda:
 
 ### A. Menggunakan MySQL (Hosting/InfinityFree)
-1. Buat database baru melalui Control Panel hosting Anda (misal: `bem_db`).
+1. Buat database baru melalui Control Panel hosting Anda (misal: `bpm_db`).
 2. Buka menu **phpMyAdmin** > Pilih database tersebut.
 3. Klik tab **Import** > Pilih file: `databases/schema_mysql.sql`.
 4. Klik **Go** dan tunggu hingga selesai.

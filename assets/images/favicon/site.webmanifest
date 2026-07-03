@@ -1,6 +1,6 @@
 {
-    "name": "BEM Kabinet Astawidya",
-    "short_name": "BEM",
+    "name": "BPM Kabinet Astawidya",
+    "short_name": "BPM",
     "icons": [
         {
             "src": "/assets/images/favicon/web-app-manifest-192x192.png",
@@ -15,8 +15,8 @@
             "purpose": "any maskable"
         }
     ],
-    "theme_color": "#4A90E2",
-    "background_color": "#1A2F4A",
+    "theme_color": "#E23C3C",
+    "background_color": "#4A1A1A",
     "display": "standalone",
     "start_url": "/"
 }

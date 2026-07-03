@@ -119,14 +119,14 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin - BEM Kabinet Astawidya</title>
+    <title>Login Admin - BPM Kabinet Astawidya</title>
     <link rel="stylesheet" href="css/login.css?v=<?php echo $cssVer; ?>">
 </head>
 <body>
 <div class="login-container">
     <div class="login-card">
         <div class="login-header">
-            <h1>BEM Admin</h1>
+            <h1>BPM Admin</h1>
             <p>Kabinet Astawidya 2025/2026</p>
         </div>
 
@@ -164,7 +164,7 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
         </form>
 
         <div class="login-footer">
-            &copy; 2025 BEM Kabinet Astawidya
+            &copy; 2025 BPM Kabinet Astawidya
         </div>
     </div>
 </div>

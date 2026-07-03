@@ -5,7 +5,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root'); // Ganti dengan user MariaDB Anda
 define('DB_PASS', '057801'); // Ganti dengan password MariaDB Anda
-define('DB_NAME', 'bem_astawidya');
+define('DB_NAME', 'bpm_astawidya');
 
 // Membuat koneksi
 function getConnection() {

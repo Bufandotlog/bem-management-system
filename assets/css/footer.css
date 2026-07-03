@@ -3,7 +3,7 @@ footer {
     background: rgba(10, 10, 10, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-top: 3px solid var(--biru-secondary);
+    border-top: 3px solid var(--emas-secondary);
     padding: 3rem 2rem 1rem;
     
     /* Pastikan di atas hero */
@@ -23,7 +23,7 @@ footer {
 }
 
 .footer-section h3 {
-    color: var(--biru-primary);
+    color: var(--merah-primary);
     margin-bottom: 1rem;
     font-size: 1.2rem;
     text-shadow: 0 2px 5px rgba(0,0,0,0.3);
@@ -38,7 +38,7 @@ footer {
 }
 
 .footer-section a:hover {
-    color: var(--biru-soft);
+    color: var(--emas-soft);
     transform: translateX(5px);
 }
 
@@ -57,18 +57,18 @@ footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--biru-secondary);
+    color: var(--emas-secondary);
     transition: all 0.3s ease;
     position: relative;
-    border: 1px solid rgba(74, 144, 226, 0.3);
+    border: 1px solid rgba(226, 60, 60, 0.3);
 }
 
 .social-links a:hover {
-    background: var(--biru-primary);
+    background: var(--merah-primary);
     color: var(--bg-dark);
     transform: translateY(-5px);
-    border-color: var(--biru-primary);
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+    border-color: var(--merah-primary);
+    box-shadow: 0 5px 15px rgba(226, 60, 60, 0.4);
 }
 
 .copyright {
@@ -87,24 +87,24 @@ footer {
     right: 30px;
     width: 50px;
     height: 50px;
-    background: rgba(74, 144, 226, 0.2);
+    background: rgba(226, 60, 60, 0.2);
     backdrop-filter: blur(5px);
-    border: 1px solid var(--biru-primary);
+    border: 1px solid var(--merah-primary);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--biru-soft);
+    color: var(--emas-soft);
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 100;
 }
 
 .back-to-top:hover {
-    background: var(--biru-primary);
+    background: var(--merah-primary);
     color: white;
     transform: scale(1.1) translateY(-5px);
-    box-shadow: 0 5px 20px rgba(74, 144, 226, 0.4);
+    box-shadow: 0 5px 20px rgba(226, 60, 60, 0.4);
 }
 
 /* Responsive */

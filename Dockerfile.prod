@@ -1,12 +1,12 @@
 # ============================================================
-# BEM ASTAWIDYA - Dockerfile Production
+# BPM ASTAWIDYA - Dockerfile Production
 # PHP 8.2-FPM (lebih ringan, tanpa Apache)
 # ============================================================
 
 FROM php:8.2-fpm-alpine
 
-LABEL maintainer="BEM ASTAWIDYA"
-LABEL description="BEM Management System - Production Image"
+LABEL maintainer="BPM ASTAWIDYA"
+LABEL description="BPM Management System - Production Image"
 
 # ── System dependencies ──────────────────────────────────
 RUN apk add --no-cache \
@@ -19,7 +19,7 @@ RUN apk add --no-cache \
     libpng-dev \
     libwebp-dev \
     freetype-dev \
-    # Python untuk bem_lpj_manager.py
+    # Python untuk bpm_lpj_manager.py
     python3 \
     py3-pip \
     # Tools lainnya
@@ -78,7 +78,7 @@ RUN mkdir -p uploads/lpj uploads/surat uploads/foto logs \
         Dockerfile \
         Dockerfile.prod \
     # Pastikan script python bisa dieksekusi
-    && cp -r scratch /tmp/bem_scratch || true
+    && cp -r scratch /tmp/bpm_scratch || true
 
 # Expose PHP-FPM port
 EXPOSE 9000

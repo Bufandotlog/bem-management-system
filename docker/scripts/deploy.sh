@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# deploy.sh - BEM ASTAWIDYA VPS Setup & Deploy Script
+# deploy.sh - BPM ASTAWIDYA VPS Setup & Deploy Script
 # Jalankan sekali di VPS sebagai user: bufan
 # Usage: bash deploy.sh
 # ============================================================
@@ -14,9 +14,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-APP_DIR="/var/www/html/bem"
-REPO_URL="https://github.com/Bufandotlog/bem-management-system"
-DOMAIN="bembudiutomo.my.id"
+APP_DIR="/var/www/html/bpm"
+REPO_URL="https://github.com/Bufandotlog/bpm-management-system"
+DOMAIN="bpmbudiutomo.my.id"
 
 log()  { echo -e "${GREEN}[✅]${NC} $1"; }
 warn() { echo -e "${YELLOW}[⚠️ ]${NC} $1"; }
@@ -28,7 +28,7 @@ info() { echo -e "${BLUE}[ℹ️ ]${NC} $1"; }
 # ─────────────────────────────────────────────────────────────
 echo ""
 echo "=================================================="
-echo " 🚀 BEM ASTAWIDYA - VPS Deployment Setup"
+echo " 🚀 BPM ASTAWIDYA - VPS Deployment Setup"
 echo "=================================================="
 echo ""
 
@@ -170,7 +170,7 @@ server {
         allow all;
     }
     location / {
-        return 200 'BEM Server OK';
+        return 200 'BPM Server OK';
         add_header Content-Type text/plain;
     }
 }
@@ -210,7 +210,7 @@ NGINX_TEMP
         certbot/certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
-        --email "bembudiutomo@gmail.com" \
+        --email "bpmbudiutomo@gmail.com" \
         --agree-tos \
         --no-eff-email \
         --non-interactive \
@@ -250,7 +250,7 @@ if [ -n "$DUMP_FILE" ]; then
     if [[ "$do_import" =~ ^[Yy]$ ]]; then
         info "Import database..."
         source .env
-        zcat "$DUMP_FILE" | docker exec -i bem_db mysql \
+        zcat "$DUMP_FILE" | docker exec -i bpm_db mysql \
             -u root -p"${DB_ROOT_PASS}" \
             "${DB_NAME}"
         log "Import database berhasil!"

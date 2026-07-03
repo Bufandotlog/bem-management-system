@@ -1,7 +1,7 @@
 
 
 # ============================================================
-# BEM ASTAWIDYA - Production Docker Compose
+# BPM ASTAWIDYA - Production Docker Compose
 # VPS: 202.134.242.217 | RAM: 1GB | Ubuntu 24.04
 # ============================================================
 
@@ -12,7 +12,7 @@ services:
   # ──────────────────────────────────────────────
   db:
     image: mariadb:10.11-jammy
-    container_name: bem_db
+    container_name: bpm_db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
@@ -23,7 +23,7 @@ services:
       - db_data:/var/lib/mysql
       - ./databases/schema_mysql.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
     networks:
-      - bem_internal
+      - bpm_internal
     # Tuning RAM rendah untuk VPS 1GB
     command: >
       --innodb-buffer-pool-size=64M
@@ -49,7 +49,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: bem_app
+    container_name: bpm_app
     restart: unless-stopped
     depends_on:
       db:
@@ -69,7 +69,7 @@ services:
       - ./logs:/var/www/html/logs
       - ./scratch:/var/www/html/scratch:ro
     networks:
-      - bem_internal
+      - bpm_internal
     # Mencegah app pakai RAM berlebihan
     mem_limit: 256m
     memswap_limit: 256m
@@ -79,7 +79,7 @@ services:
   # ──────────────────────────────────────────────
   nginx:
     image: nginx:1.25-alpine
-    container_name: bem_nginx
+    container_name: bpm_nginx
     restart: unless-stopped
     depends_on:
       - app
@@ -100,8 +100,8 @@ services:
       # Logs
       - ./logs/nginx:/var/log/nginx
     networks:
-      - bem_internal
-      - bem_external
+      - bpm_internal
+      - bpm_external
     mem_limit: 64m
 
   # ──────────────────────────────────────────────
@@ -109,14 +109,14 @@ services:
   # ──────────────────────────────────────────────
   certbot:
     image: certbot/certbot:latest
-    container_name: bem_certbot
+    container_name: bpm_certbot
     volumes:
       - ./certbot_www:/var/www/certbot
       - ./certbot_conf:/etc/letsencrypt
     # Jalankan manual pertama kali, lalu cron akan handle renewal
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
     networks:
-      - bem_external
+      - bpm_external
 
 # ──────────────────────────────────────────────
 # VOLUMES
@@ -130,9 +130,9 @@ volumes:
 # ──────────────────────────────────────────────
 networks:
   # Internal: app <-> db, nginx <-> app
-  bem_internal:
+  bpm_internal:
     driver: bridge
     internal: true
   # External: nginx bisa reach internet (certbot)
-  bem_external:
+  bpm_external:
     driver: bridge

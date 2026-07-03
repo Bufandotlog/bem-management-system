@@ -1,6 +1,6 @@
 {
-    "name": "bufan/bem-platform",
-    "description": "Platform Sekretariat BEM",
+    "name": "bufan/bpm-platform",
+    "description": "Platform Sekretariat BPM",
     "type": "project",
     "require": {
         "php": ">=8.1",

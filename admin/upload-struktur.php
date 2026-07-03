@@ -53,11 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_gambar'
         $upload_result = uploadFile($_FILES['gambar'], 'struktur_organisasi');
 
         if ($upload_result) {
-            $judul     = sanitizeText($_POST['judul']     ?? 'Struktur Organisasi BEM', 200);
+            $judul     = sanitizeText($_POST['judul']     ?? 'Struktur Organisasi BPM', 200);
             $deskripsi = sanitizeText($_POST['deskripsi'] ?? '', 500);
             $user_id   = (int) ($_SESSION['admin_id'] ?? 1);
 
-            if (empty($judul)) $judul = 'Struktur Organisasi BEM';
+            if (empty($judul)) $judul = 'Struktur Organisasi BPM';
 
             if ($struktur && !empty($struktur['gambar'])) {
                 deleteFile($struktur['gambar']);
@@ -120,7 +120,7 @@ $periode_info = htmlspecialchars(
 <div class="upload-container">
     <div class="upload-header">
         <h1><i class="bi bi-image"></i> Upload Struktur Organisasi</h1>
-        <p>Upload gambar struktur organisasi BEM untuk ditampilkan di halaman kepengurusan</p>
+        <p>Upload gambar struktur organisasi BPM untuk ditampilkan di halaman kepengurusan</p>
         <div class="periode-info">
             <i class="bi bi-calendar"></i>
             <span><?php echo $periode_info; ?></span>
@@ -157,7 +157,7 @@ $periode_info = htmlspecialchars(
                                class="form-control"
                                id="judul"
                                name="judul"
-                               value="<?php echo htmlspecialchars($struktur['judul'] ?? 'Struktur Organisasi BEM Kabinet Astawidya', ENT_QUOTES, 'UTF-8'); ?>"
+                               value="<?php echo htmlspecialchars($struktur['judul'] ?? 'Struktur Organisasi BPM Kabinet Astawidya', ENT_QUOTES, 'UTF-8'); ?>"
                                placeholder="Masukkan judul gambar">
                         <div class="form-text">
                             <i class="bi bi-info-circle"></i>

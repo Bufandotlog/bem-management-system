@@ -16,8 +16,8 @@
     -webkit-backdrop-filter: blur(16px);
     padding: 3rem;
     border-radius: 20px;
-    border: 1px solid rgba(74, 144, 226, 0.25);
-    border-left: 4px solid var(--biru-primary);
+    border: 1px solid rgba(226, 60, 60, 0.25);
+    border-left: 4px solid var(--merah-primary);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
     box-sizing: border-box;
@@ -42,12 +42,12 @@
 .kontak-item i {
     width: 50px;
     height: 50px;
-    background: var(--biru-transparan);
+    background: var(--merah-transparan);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--biru-primary);
+    color: var(--merah-primary);
     font-size: 1.5rem;
     flex-shrink: 0;
 }
@@ -75,7 +75,7 @@
     -webkit-backdrop-filter: blur(16px);
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(74, 144, 226, 0.25);
+    border: 1px solid rgba(226, 60, 60, 0.25);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08);
     min-width: 0;

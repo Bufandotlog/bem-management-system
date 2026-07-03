@@ -108,11 +108,11 @@
     text-shadow: 0 5px 15px rgba(0,0,0,0.7);
 }
 
-.hero-title .biru {
-    color: var(--biru-primary) !important;
+.hero-title .merah {
+    color: var(--merah-primary) !important;
     font-weight: 900;
     letter-spacing: -2px;
-    text-shadow: 0 0 20px var(--biru-primary), 0 5px 15px rgba(0,0,0,0.7);
+    text-shadow: 0 0 20px var(--merah-primary), 0 5px 15px rgba(0,0,0,0.7);
 }
 
 /* Subtitle styling */
@@ -154,12 +154,12 @@
 }
 
 .scroll-hint:hover {
-    color: var(--biru-soft);
+    color: var(--emas-soft);
     /* ✅ Tidak override transform animasi */
 }
 
 .scroll-hint i {
-    color: var(--biru-soft);
+    color: var(--emas-soft);
     font-size: 1.8rem;
 }
 

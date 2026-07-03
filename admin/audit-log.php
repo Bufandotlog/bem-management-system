@@ -40,7 +40,7 @@ if (isset($_GET['download']) && $_GET['download'] === 'csv') {
     // Bersihkan buffer sebelum mengirim header
     if (ob_get_level()) ob_end_clean();
 
-    $filename = 'audit-log-bem-' . date('Y-m-d') . '.csv';
+    $filename = 'audit-log-bpm-' . date('Y-m-d') . '.csv';
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Pragma: no-cache');
@@ -143,7 +143,7 @@ $stats = dbFetchAll(
 function actionStyle(string $action): array {
     return match(strtoupper($action)) {
         'CREATE'  => ['color'=>'#4caf50', 'icon'=>'fa-plus-circle',    'bg'=>'rgba(76,175,80,.1)'],
-        'UPDATE'  => ['color'=>'#4A90E2', 'icon'=>'fa-edit',           'bg'=>'rgba(74,144,226,.1)'],
+        'UPDATE'  => ['color'=>'#E23C3C', 'icon'=>'fa-edit',           'bg'=>'rgba(226,60,60,.1)'],
         'DELETE'  => ['color'=>'#f44336', 'icon'=>'fa-trash',          'bg'=>'rgba(244,67,54,.1)'],
         'LOGIN'   => ['color'=>'#8bc34a', 'icon'=>'fa-sign-in-alt',    'bg'=>'rgba(139,195,74,.1)'],
         'LOGOUT'  => ['color'=>'#ff9800', 'icon'=>'fa-sign-out-alt',   'bg'=>'rgba(255,152,0,.1)'],
@@ -175,10 +175,10 @@ $downloadToken = csrfToken();
         </div>
     </div>
     <?php endforeach; ?>
-    <div style="flex:1;min-width:120px;padding:.75rem 1rem;background:rgba(74,144,226,.08);border:1px solid rgba(74,144,226,.2);border-radius:10px;">
-        <div style="font-size:1.4rem;font-weight:600;color:#4A90E2;"><?php echo $total; ?></div>
+    <div style="flex:1;min-width:120px;padding:.75rem 1rem;background:rgba(226,60,60,.08);border:1px solid rgba(226,60,60,.2);border-radius:10px;">
+        <div style="font-size:1.4rem;font-weight:600;color:#E23C3C;"><?php echo $total; ?></div>
         <div style="font-size:.75rem;color:var(--color-text-secondary);margin-top:2px;">
-            <i class="fas fa-filter" style="color:#4A90E2;margin-right:4px;"></i>
+            <i class="fas fa-filter" style="color:#E23C3C;margin-right:4px;"></i>
             Total (filter)
         </div>
     </div>
@@ -208,7 +208,7 @@ $downloadToken = csrfToken();
                    style="width:100%;padding:8px 10px;background:#111;border:1px solid #333;color:white;border-radius:6px;font-size:.85rem;box-sizing:border-box;">
         </div>
         <div style="display:flex;gap:.5rem;">
-            <button type="submit" style="padding:8px 16px;background:#4A90E2;color:white;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;">
+            <button type="submit" style="padding:8px 16px;background:#E23C3C;color:white;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;">
                 <i class="fas fa-search"></i> Filter
             </button>
             <a href="audit-log.php" style="padding:8px 16px;background:#333;color:#aaa;border-radius:6px;text-decoration:none;font-size:.85rem;">
@@ -267,7 +267,7 @@ $downloadToken = csrfToken();
                     </td>
                     <td style="padding:.6rem 1rem;color:#888;">
                         <?php if ($log['target_table']): ?>
-                            <code style="background:#111;padding:2px 6px;border-radius:4px;font-size:.75rem;color:#8BB9F0;">
+                            <code style="background:#111;padding:2px 6px;border-radius:4px;font-size:.75rem;color:#F0D095;">
                                 <?php echo htmlspecialchars($log['target_table']); ?>
                             </code>
                             <?php if ($log['target_id']): ?>
@@ -304,7 +304,7 @@ $downloadToken = csrfToken();
                 $active = $i === $page;
             ?>
             <a href="<?php echo htmlspecialchars($baseUrl . '&p=' . $i); ?>"
-               style="padding:4px 10px;border-radius:5px;text-decoration:none;<?php echo $active ? 'background:#4A90E2;color:white;' : 'background:#222;color:#888;'; ?>">
+               style="padding:4px 10px;border-radius:5px;text-decoration:none;<?php echo $active ? 'background:#E23C3C;color:white;' : 'background:#222;color:#888;'; ?>">
                 <?php echo $i; ?>
             </a>
             <?php endfor; ?>

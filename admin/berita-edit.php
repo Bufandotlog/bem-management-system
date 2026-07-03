@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
     <h1><i class="fas fa-<?php echo $id ? 'edit' : 'plus-circle'; ?>"></i>
         <?php echo $id ? 'Edit' : 'Tambah'; ?> Berita
     </h1>
-    <p><?php echo $id ? 'Perbarui' : 'Tulis'; ?> berita untuk website BEM</p>
+    <p><?php echo $id ? 'Perbarui' : 'Tulis'; ?> berita untuk website BPM</p>
 </div>
 
 <?php flashMessage(); ?>
@@ -197,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
             <div id="gambar-preview-container" style="display:none;margin-top:15px;">
                 <p>Preview Gambar Baru:</p>
                 <img id="gambar-preview" src="#" alt="Preview"
-                     style="max-width:200px;max-height:150px;border:2px solid #4A90E2;padding:5px;border-radius:5px;">
+                     style="max-width:200px;max-height:150px;border:2px solid #E23C3C;padding:5px;border-radius:5px;">
             </div>
         </div>
     </div>
@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
         </div>
 
         <div class="form-group" style="margin-top: 1.5rem; display: none;" id="footnote-list-container">
-            <label style="color: var(--biru-soft); font-weight: 600;"><i class="fas fa-image"></i> Catatan Foto / Footnote Gambar Konten</label>
+            <label style="color: var(--emas-soft); font-weight: 600;"><i class="fas fa-image"></i> Catatan Foto / Footnote Gambar Konten</label>
             <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 10px; line-height: 1.4;">
                 Berikut adalah gambar-gambar yang disematkan di dalam konten berita. Anda dapat memasukkan/mengubah catatan kaki (footnote) untuk masing-masing gambar di bawah ini:
             </p>
@@ -399,7 +399,7 @@ function updateFootnoteInputs() {
         
         const label = document.createElement('div');
         label.style.fontSize = '0.8rem';
-        label.style.color = 'var(--biru-soft)';
+        label.style.color = 'var(--emas-soft)';
         label.style.marginBottom = '6px';
         label.style.fontWeight = '500';
         label.innerText = `Catatan Foto #${index + 1}`;

@@ -164,7 +164,7 @@ $selected_periode_data = dbFetchOne(
     <div class="card-body">
         <div class="info-grid">
             <div class="info-item">
-                <h4 style="color:#4A90E2;"><i class="fas fa-check-circle"></i> Manfaat</h4>
+                <h4 style="color:#E23C3C;"><i class="fas fa-check-circle"></i> Manfaat</h4>
                 <ul>
                     <li>Superadmin bisa preview periode lain</li>
                     <li>Cek data periode lama tanpa mengaktifkannya</li>

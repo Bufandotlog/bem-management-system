@@ -21,7 +21,7 @@ $ketua = dbFetchOne(
 // Parse sambutan dari deskripsi (format: pembuka|paragraf1|paragraf2)
 $sambutan = [
     'pembuka' => 'Assalamu\'alaikum warahmatullahi wabarakatuh,',
-    'paragraf1' => 'Selamat datang di website resmi BEM Kabinet Astawidya. Kabinet ini hadir dengan semangat Astawidya — delapan arah kejayaan — untuk mewujudkan kampus yang progresif, kritis, dan humanis. Mari bergandengan tangan, berkarya nyata untuk mahasiswa dan bangsa.',
+    'paragraf1' => 'Selamat datang di website resmi BPM Kabinet Astawidya. Kabinet ini hadir dengan semangat Astawidya — delapan arah kejayaan — untuk mewujudkan kampus yang progresif, kritis, dan humanis. Mari bergandengan tangan, berkarya nyata untuk mahasiswa dan bangsa.',
     'paragraf2' => 'Website ini adalah wadah informasi dan komunikasi kita semua. Silakan eksplorasi program kerja, struktur kepengurusan, dan berbagai kegiatan kami.'
 ];
 
@@ -41,7 +41,7 @@ if ($ketua && !empty($ketua['deskripsi'])) {
 // Ambil visi misi (global, tidak terikat periode)
 $visi_misi_data = dbFetchOne("SELECT * FROM visi_misi WHERE id = 1");
 $visi_misi = [
-    'visi' => $visi_misi_data['visi'] ?? 'Mewujudkan BEM yang responsif, aspiratif, dan inovatif dalam membangun mahasiswa yang berkarakter, berkualitas, dan bermanfaat bagi masyarakat.',
+    'visi' => $visi_misi_data['visi'] ?? 'Mewujudkan BPM yang responsif, aspiratif, dan inovatif dalam membangun mahasiswa yang berkarakter, berkualitas, dan bermanfaat bagi masyarakat.',
     'misi' => json_decode($visi_misi_data['misi'] ?? '[]', true)
 ];
 
@@ -53,7 +53,7 @@ if (empty($visi_misi['misi'])) {
         'Membangun sinergi dengan seluruh elemen kampus',
         'Mengembangkan potensi dan kreativitas mahasiswa',
         'Menjalin kerjasama dengan berbagai pihak eksternal',
-        'Mengoptimalkan peran BEM sebagai jembatan aspirasi'
+        'Mengoptimalkan peran BPM sebagai jembatan aspirasi'
     ];
 }
 
@@ -81,7 +81,7 @@ $berita_terbaru = dbFetchAll("SELECT * FROM berita ORDER BY tanggal DESC LIMIT 3
             <h2>Sambutan<br><span class="text-merah">Presiden Mahasiswa</span></h2>
             <div class="jabatan">
                 <?php echo htmlspecialchars($ketua['nama'] ?? 'Dede Anggi Muhyidin'); ?> • 
-                Ketua BEM 
+                Ketua BPM 
                 <?php 
                 if ($periode_aktif) {
                     echo htmlspecialchars($periode_aktif['nama']) . ' ' . $periode_aktif['tahun_mulai'];

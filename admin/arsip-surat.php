@@ -199,16 +199,16 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
 
 $css = "
 .surat-actions { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
-.btn-buat { background: #4A90E2; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; display:inline-flex; align-items:center; gap:8px; }
+.btn-buat { background: #E23C3C; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; display:inline-flex; align-items:center; gap:8px; }
 .btn-buat:hover { background: #357ABD; }
 .tab-container { display: flex; gap: 10px; margin-bottom: 20px; }
-.tab-btn { padding: 10px 20px; background: #1a1a2e; color: #8BB9F0; text-decoration: none; border-radius: 5px; border: 1px solid #4A90E2; }
-.tab-btn:hover { background: #4A90E2; color: white; }
-.tab-btn.active { background: #4A90E2; color: white; font-weight: bold; }
+.tab-btn { padding: 10px 20px; background: #1a1a2e; color: #F0D095; text-decoration: none; border-radius: 5px; border: 1px solid #E23C3C; }
+.tab-btn:hover { background: #E23C3C; color: white; }
+.tab-btn.active { background: #E23C3C; color: white; font-weight: bold; }
 
 /* Grouping Styles */
-.group-parent { background: rgba(74, 144, 226, 0.05) !important; }
-.group-toggle { cursor: pointer; color: #4A90E2; font-size: 1.1rem; transition: transform 0.2s; display: inline-block; vertical-align: middle; margin-right: 5px; }
+.group-parent { background: rgba(226, 60, 60, 0.05) !important; }
+.group-toggle { cursor: pointer; color: #E23C3C; font-size: 1.1rem; transition: transform 0.2s; display: inline-block; vertical-align: middle; margin-right: 5px; }
 .group-toggle.open { transform: rotate(90deg); }
 .child-row { display: none; background: rgba(0, 0, 0, 0.2) !important; }
 .child-row.show { display: table-row; }
@@ -219,9 +219,9 @@ $css = "
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    background: rgba(74, 144, 226, 0.1);
-    border: 1px solid rgba(74, 144, 226, 0.3);
-    color: #4A90E2;
+    background: rgba(226, 60, 60, 0.1);
+    border: 1px solid rgba(226, 60, 60, 0.3);
+    color: #E23C3C;
     padding: 12px 16px;
     border-radius: 8px;
     cursor: pointer;
@@ -231,7 +231,7 @@ $css = "
     margin-top: 10px;
 }
 .btn-accordion-toggle:hover {
-    background: rgba(74, 144, 226, 0.2);
+    background: rgba(226, 60, 60, 0.2);
 }
 .btn-accordion-toggle .chevron-icon {
     transition: transform 0.3s ease;
@@ -278,28 +278,28 @@ $css = "
     }
 }
 .child-indicator { display: inline-block; width: 20px; height: 1px; background: #333; margin-right: 10px; vertical-align: middle; position: relative; top: -2px; }
-.badge-count { background: #4A90E2; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px; vertical-align: middle; }
+.badge-count { background: #E23C3C; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px; vertical-align: middle; }
 .btn-copy { background: #673AB7; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; transition: background 0.2s; }
 .btn-copy:hover { background: #5E35B1; }
 
 /* CSS untuk indikator */
 .indicator-badge { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; white-space: nowrap; width: 100%; box-sizing: border-box; font-weight: 500; text-decoration: none; margin-top: 4px; transition: background 0.2s; }
 .badge-manual { background: rgba(255,255,255,0.05); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
-.badge-sistem { background: rgba(74,144,226,0.1); color: #4A90E2; border: 1px solid rgba(74,144,226,0.2); }
+.badge-sistem { background: rgba(226,60,60,0.1); color: #E23C3C; border: 1px solid rgba(226,60,60,0.2); }
 .badge-recipient { background: rgba(46,125,50,0.1); color: #2E7D32; border: 1px solid rgba(46,125,50,0.2); }
-.badge-link { background: rgba(139,185,240,0.05); color: #8BB9F0; border: 1px solid rgba(139,185,240,0.3); }
-.badge-link:hover { background: rgba(139,185,240,0.15); }
+.badge-link { background: rgba(240,208,149,0.05); color: #F0D095; border: 1px solid rgba(240,208,149,0.3); }
+.badge-link:hover { background: rgba(240,208,149,0.15); }
 .badge-multi { background: rgba(156,39,176,0.1); color: #9C27B0; border: 1px solid rgba(156,39,176,0.2); }
 @media (min-width: 769px) {
     .indicator-badge { width: fit-content; justify-content: flex-start; }
 }
 
 /* Upload Drop Zone */
-.upload-drop-zone { border: 2px dashed rgba(74,144,226,0.4); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; background: rgba(255,255,255,0.02); overflow: hidden; }
-.upload-drop-zone:hover, .upload-drop-zone.dragover { background: rgba(74,144,226,0.08); border-color: #4A90E2; }
+.upload-drop-zone { border: 2px dashed rgba(226,60,60,0.4); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; background: rgba(255,255,255,0.02); overflow: hidden; }
+.upload-drop-zone:hover, .upload-drop-zone.dragover { background: rgba(226,60,60,0.08); border-color: #E23C3C; }
 .upload-drop-zone input[type='file'] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 2; }
 .upload-preview { max-width: 100%; max-height: 120px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: block; margin: 0 auto 15px; }
-.upload-icon { font-size: 2.5rem; color: #4A90E2; margin-bottom: 10px; display: block; }
+.upload-icon { font-size: 2.5rem; color: #E23C3C; margin-bottom: 10px; display: block; }
 
 /* CSS untuk fitur bulk select */
 .bulk-checkbox-column { display: none; }
@@ -318,7 +318,7 @@ $css = "
     width: 110px;
     padding: 5px 8px;
     background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(74,144,226,0.3);
+    border: 1px solid rgba(226,60,60,0.3);
     border-radius: 8px;
     color: #fff;
     font-size: 0.8rem;
@@ -330,8 +330,8 @@ $css = "
 }
 .inline-tgl-form input[type='text']:focus {
     outline: none;
-    border-color: #4A90E2;
-    box-shadow: 0 0 6px rgba(74,144,226,0.3);
+    border-color: #E23C3C;
+    box-shadow: 0 0 6px rgba(226,60,60,0.3);
 }
 .btn-tgl-save {
     background: rgba(46,204,113,0.15);
@@ -355,9 +355,9 @@ $css = "
     font-size: 0.85rem;
 }
 .tgl-display.has-date {
-    background: rgba(74,144,226,0.1);
-    border: 1px solid rgba(74,144,226,0.2);
-    color: #4A90E2;
+    background: rgba(226,60,60,0.1);
+    border: 1px solid rgba(226,60,60,0.2);
+    color: #E23C3C;
 }
 .tgl-display.no-date {
     background: rgba(243,156,18,0.1);
@@ -506,7 +506,7 @@ $css = "
                                         <span><?php echo htmlspecialchars($display_val); ?></span>
                                         <a href="javascript:void(0)" class="btn-tgl-reset" title="Edit Tanggal"
                                            onclick="var t=prompt('Edit Tanggal Dikirim (DD/MM/YYYY):','<?php echo $display_val; ?>'); if(t) window.location='arsip-surat.php?jenis=<?php echo $jenis; ?>&set_tgl=<?php echo $parent['id']; ?>&tanggal='+encodeURIComponent(t)+'&csrf_token=<?php echo csrfToken(); ?>';">
-                                            <i class="fas fa-edit" style="color:#4A90E2;"></i>
+                                            <i class="fas fa-edit" style="color:#E23C3C;"></i>
                                         </a>
                                         <a href="arsip-surat.php?jenis=<?php echo $jenis; ?>&reset_tgl=<?php echo $parent['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" 
                                            class="btn-tgl-reset" title="Hapus Tanggal"
@@ -638,7 +638,7 @@ $css = "
                                             <span><?php echo htmlspecialchars($c_display_val); ?></span>
                                             <a href="javascript:void(0)" class="btn-tgl-reset" title="Edit Tanggal"
                                                onclick="var t=prompt('Edit Tanggal Dikirim (DD/MM/YYYY):','<?php echo $c_display_val; ?>'); if(t) window.location='arsip-surat.php?jenis=<?php echo $jenis; ?>&set_tgl=<?php echo $child['id']; ?>&tanggal='+encodeURIComponent(t)+'&csrf_token=<?php echo csrfToken(); ?>';">
-                                                <i class="fas fa-edit" style="color:#4A90E2;"></i>
+                                                <i class="fas fa-edit" style="color:#E23C3C;"></i>
                                             </a>
                                             <a href="arsip-surat.php?jenis=<?php echo $jenis; ?>&reset_tgl=<?php echo $child['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" 
                                                class="btn-tgl-reset" title="Hapus Tanggal"
@@ -671,7 +671,7 @@ $css = "
                                     </div>
                                 </td>
                                 <td data-label="Perihal" style="color: #888; font-size: 0.85rem;"><span><?php echo htmlspecialchars((string)$child['perihal']); ?></span></td>
-                                <td data-label="Dituju Kepada" style="border-left: 2px solid #4A90E2; padding-left: 15px;">
+                                <td data-label="Dituju Kepada" style="border-left: 2px solid #E23C3C; padding-left: 15px;">
                                     <div><?php echo nl2br(htmlspecialchars((string)$child['tujuan'])); ?></div>
                                 </td>
                                 <td data-label="Aksi" class="td-aksi" style="text-align:center; vertical-align:middle;">
@@ -733,7 +733,7 @@ $css = "
         </div>
         <div class="modal-body">
             <p>Apakah Anda yakin ingin menghapus arsip surat nomor:</p>
-            <p style="margin-top:10px; color:#4A90E2; font-weight:bold;" id="nomorSuratHapus"></p>
+            <p style="margin-top:10px; color:#E23C3C; font-weight:bold;" id="nomorSuratHapus"></p>
             <p style="margin-top:10px; font-size:0.85rem; color:#888;">Tindakan ini permanen dan akan menghapus file fisik surat di server.</p>
         </div>
         <div class="modal-footer">
@@ -843,7 +843,7 @@ function copyRedaksi(data, btn) {
     }
 
     let perihal = stripHtml(data.perihal);
-    let kegiatan = stripHtml(data.kegiatan || "Kegiatan BEM");
+    let kegiatan = stripHtml(data.kegiatan || "Kegiatan BPM");
     let tujuan = stripHtml(data.tujuan);
     let tujuanShort = stripHtml(data.tujuan_short);
     

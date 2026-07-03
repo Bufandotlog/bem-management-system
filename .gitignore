@@ -21,10 +21,10 @@ uploads/umum/*
 
 # ============================================
 # 3. Scratch — Development & Debug Scripts
-#    KECUALI bem_lpj_manager.py (dipakai produksi)
+#    KECUALI bpm_lpj_manager.py (dipakai produksi)
 # ============================================
 scratch/*
-!scratch/bem_lpj_manager.py
+!scratch/bpm_lpj_manager.py
 
 # ============================================
 # 4. Utility Scripts (Berbahaya di produksi)

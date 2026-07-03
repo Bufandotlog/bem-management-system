@@ -1,5 +1,5 @@
 -- ============================================
--- Backup Database: BEM Management System (POSTGRESQL)
+-- Backup Database: BPM Management System (POSTGRESQL)
 -- Versi: 1.1 (Template Lengkap + Modul Baru)
 -- Tanggal: 2026-05-04 07:02:03 WIB
 -- ============================================
@@ -20,7 +20,7 @@ CREATE TABLE "periode_kepengurusan" (
 
 -- Data awal untuk periode
 INSERT INTO "periode_kepengurusan" ("nama", "tahun_mulai", "tahun_selesai", "is_active") VALUES
-('BEM ASTAWIDYA', 2026, 2027, TRUE);
+('BPM ASTAWIDYA', 2026, 2027, TRUE);
 
 -- ----------------------------------------
 -- 2. Tabel `users`
@@ -44,7 +44,7 @@ CREATE TABLE "users" (
 
 -- Data awal untuk superadmin (password: admin1234)
 INSERT INTO "users" ("username", "password", "nama", "email", "role", "can_access_all", "is_active", "periode_id") VALUES
-('superadmin', '$2y$12$R.S9vG0h1D3rX9Y9E.W6Y.f7.G0h1D3rX9Y9E.W6Y.f7.G0h1D3r', 'Super Administrator', 'admin@bem.com', 'superadmin', TRUE, TRUE, 1);
+('superadmin', '$2y$12$R.S9vG0h1D3rX9Y9E.W6Y.f7.G0h1D3rX9Y9E.W6Y.f7.G0h1D3r', 'Super Administrator', 'admin@bpm.com', 'superadmin', TRUE, TRUE, 1);
 
 -- ----------------------------------------
 -- 3. Tabel `kabinet`

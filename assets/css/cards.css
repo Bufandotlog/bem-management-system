@@ -16,7 +16,7 @@
     -webkit-backdrop-filter: blur(8px);
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(74, 144, 226, 0.2);
+    border: 1px solid rgba(226, 60, 60, 0.2);
     opacity: 0;
     transform: translateY(30px);
     transition: opacity 0.6s ease, transform 0.6s ease, 
@@ -30,10 +30,10 @@
 
 .card:hover {
     transform: translateY(-10px);
-    border-color: var(--biru-primary);
+    border-color: var(--merah-primary);
     background: rgba(17, 17, 17, 0.9);
     backdrop-filter: blur(12px);
-    box-shadow: 0 15px 40px rgba(74, 144, 226, 0.2);
+    box-shadow: 0 15px 40px rgba(226, 60, 60, 0.2);
 }
 
 .card-image {
@@ -64,7 +64,7 @@
 .card-content h3 {
     font-size: 1.4rem;
     margin-bottom: 0.8rem;
-    color: var(--biru-secondary);
+    color: var(--emas-secondary);
     line-height: 1.4;
     text-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
@@ -85,7 +85,7 @@
 }
 
 .card-meta i {
-    color: var(--biru-soft);
+    color: var(--emas-soft);
 }
 
 .card-content p {
@@ -98,10 +98,10 @@
 .btn {
     display: inline-block;
     padding: 0.9rem 1.8rem;
-    background: rgba(74, 144, 226, 0.1);
+    background: rgba(226, 60, 60, 0.1);
     color: var(--text-light);
     text-decoration: none;
-    border: 2px solid var(--biru-primary);
+    border: 2px solid var(--merah-primary);
     border-radius: 30px;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -111,10 +111,10 @@
 }
 
 .btn:hover {
-    background: var(--biru-primary);
+    background: var(--merah-primary);
     color: var(--bg-dark);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+    box-shadow: 0 5px 15px rgba(226, 60, 60, 0.4);
 }
 
 .btn-small {
@@ -135,7 +135,7 @@
     -webkit-backdrop-filter: blur(8px);
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(74, 144, 226, 0.2);
+    border: 1px solid rgba(226, 60, 60, 0.2);
     transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
     display: flex;
     flex-direction: column;
@@ -148,10 +148,10 @@
 
 .home-news-card:hover {
     transform: translateY(-10px);
-    border-color: var(--biru-primary);
+    border-color: var(--merah-primary);
     background: rgba(17, 17, 17, 0.9);
     backdrop-filter: blur(12px);
-    box-shadow: 0 15px 40px rgba(74, 144, 226, 0.2);
+    box-shadow: 0 15px 40px rgba(226, 60, 60, 0.2);
 }
 
 .home-news-image {
@@ -182,7 +182,7 @@
 .home-news-content h3 {
     font-size: 1.6rem;
     margin-bottom: 1rem;
-    color: var(--biru-secondary);
+    color: var(--emas-secondary);
     line-height: 1.4;
     text-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }

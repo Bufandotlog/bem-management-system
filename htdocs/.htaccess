@@ -1,5 +1,5 @@
 # ==============================================
-# .htaccess - BEM Kabinet Astawidya
+# .htaccess - BPM Kabinet Astawidya
 # Letakkan di: htdocs/ (root project, sejajar index.php)
 # VERSI: 4.1 - Perbaikan: hapus FilesMatch uploads yang tidak efektif
 # ==============================================
@@ -137,7 +137,7 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteCond %{HTTP_REFERER} !^$
-    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?bembudiutomo\.page\.gd [NC]
+    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?bpmbudiutomo\.page\.gd [NC]
     RewriteRule \.(jpg|jpeg|png|gif|webp|svg)$ - [F,L]
 </IfModule>
 

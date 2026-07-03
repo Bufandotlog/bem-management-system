@@ -1,16 +1,16 @@
 /* ============================================
    BERITA EDIT ADMIN CSS
-   BEM Kabinet Astawidya
+   BPM Kabinet Astawidya
    Desain Modern & Responsif untuk Form Edit Berita (Textarea Biasa)
    ============================================ */
 
 /* ===== ROOT VARIABLES ===== */
 :root {
-    --primary: #4A90E2;
-    --primary-light: #6BA5E8;
-    --primary-dark: #1a2f4a;
-    --primary-soft: #8BB9F0;
-    --primary-glow: rgba(74, 144, 226, 0.3);
+    --primary: #E23C3C;
+    --primary-light: #DFB15B;
+    --primary-dark: #4a1a1a;
+    --primary-soft: #F0D095;
+    --primary-glow: rgba(226, 60, 60, 0.3);
     
     --success: #4CAF50;
     --warning: #ff9800;
@@ -28,8 +28,8 @@
     --text-dim: #666;
     
     --border-color: #333;
-    --border-hover: #4A90E2;
-    --border-focus: #6BA5E8;
+    --border-hover: #E23C3C;
+    --border-focus: #DFB15B;
     
     --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -631,9 +631,9 @@
 }
 
 .btn-delete-form {
-    background: #1a2f4a;
-    color: #4A90E2;
-    border: 1px solid #4A90E2;
+    background: #4a1a1a;
+    color: #E23C3C;
+    border: 1px solid #E23C3C;
     padding: 5px 15px;
     border-radius: 4px;
     cursor: pointer;
@@ -642,7 +642,7 @@
 }
 
 .btn-delete-form:hover {
-    background: #4A90E2;
+    background: #E23C3C;
     color: white;
 }
 
@@ -652,7 +652,7 @@
     background: #1a1a1a;
     padding: 15px;
     border-radius: 8px;
-    border: 1px dashed #4A90E2;
+    border: 1px dashed #E23C3C;
 }
 
 /* ===== CUSTOM QUILL EDITOR DARK THEME ===== */

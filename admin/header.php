@@ -96,7 +96,7 @@ if (isset($page_css)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - BEM Kabinet Astawidya</title>
+    <title>Admin - BPM Kabinet Astawidya</title>
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -107,7 +107,7 @@ if (isset($page_css)) {
     <link rel="icon" type="image/png" sizes="96x96" href="<?php echo baseUrl('assets/images/favicon/favicon-96x96.png'); ?>">
     <link rel="apple-touch-icon" sizes="180x180"    href="<?php echo baseUrl('assets/images/favicon/apple-touch-icon.png'); ?>">
     <link rel="manifest" href="<?php echo baseUrl('assets/images/favicon/site.webmanifest'); ?>">
-    <meta name="theme-color" content="#4A90E2">
+    <meta name="theme-color" content="#E23C3C">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(baseUrl('admin/css/admin.css') . '?v=' . $adminCssVer, ENT_QUOTES, 'UTF-8'); ?>">
@@ -193,13 +193,13 @@ if (isset($page_css)) {
                 .group-ribbon-mobile {
                     display: block;
                     width: 100%;
-                    background: linear-gradient(to right, rgba(74, 144, 226, 0.2), rgba(74, 144, 226, 0.1));
-                    color: #4A90E2;
+                    background: linear-gradient(to right, rgba(226, 60, 60, 0.2), rgba(226, 60, 60, 0.1));
+                    color: #E23C3C;
                     text-align: center;
                     font-size: 0.65rem;
                     padding: 6px 0;
                     margin-top: 10px;
-                    border-top: 1px solid rgba(74, 144, 226, 0.1);
+                    border-top: 1px solid rgba(226, 60, 60, 0.1);
                     cursor: pointer;
                     transition: all 0.3s ease;
                     text-transform: uppercase;
@@ -208,13 +208,13 @@ if (isset($page_css)) {
                     border-radius: 0 0 14px 14px;
                 }
                 .group-ribbon-mobile:hover {
-                    background: rgba(74, 144, 226, 0.3);
+                    background: rgba(226, 60, 60, 0.3);
                 }
 
                 .responsive-card-table td::before { 
                     content: attr(data-label); 
                     font-weight: 600; 
-                    color: #4A90E2;
+                    color: #E23C3C;
                     font-size: 0.7rem;
                     text-transform: uppercase;
                     flex: 0 0 90px;
@@ -292,12 +292,12 @@ if (isset($page_css)) {
                     margin-top: 8px !important;
                     padding: 6px 0 !important;
                     border-radius: 6px !important;
-                    background: rgba(74, 144, 226, 0.1) !important;
-                    border: 1px solid rgba(74, 144, 226, 0.2) !important;
+                    background: rgba(226, 60, 60, 0.1) !important;
+                    border: 1px solid rgba(226, 60, 60, 0.2) !important;
                 }
                 .group-ribbon-mobile:hover {
-                    background: rgba(74, 144, 226, 0.2) !important;
-                    border-color: rgba(74, 144, 226, 0.4) !important;
+                    background: rgba(226, 60, 60, 0.2) !important;
+                    border-color: rgba(226, 60, 60, 0.4) !important;
                 }
                 .child-nomor-surat { padding-left: 45px !important; }
                 .child-nomor-surat::before {
@@ -349,14 +349,14 @@ if (isset($page_css)) {
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .switch-container:hover { background: rgba(255,255,255,0.06); border-color: rgba(74,144,226,0.4); transform: translateY(-1px); }
+        .switch-container:hover { background: rgba(255,255,255,0.06); border-color: rgba(226,60,60,0.4); transform: translateY(-1px); }
         .switch-label { font-size: 0.92rem; color: #ddd; display: flex; align-items: center; gap: 12px; }
-        .switch-label i { color: #4A90E2; font-size: 1rem; width: 20px; text-align: center; }
+        .switch-label i { color: #E23C3C; font-size: 1rem; width: 20px; text-align: center; }
         .switch { position: relative; display: inline-block; width: 48px; height: 24px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #222; transition: .3s; border-radius: 34px; border: 1.5px solid #444; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 2.5px; background-color: #666; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: #4A90E2; border-color: #4A90E2; }
+        input:checked + .slider { background-color: #E23C3C; border-color: #E23C3C; }
         input:checked + .slider:before { transform: translateX(23px); background-color: white; box-shadow: 0 0 8px rgba(255,255,255,0.4); }
 
         /* === Sidebar Dropdown (inline critical) === */
@@ -410,7 +410,7 @@ if (isset($page_css)) {
             <i class="fas fa-bars"></i>
         </button>
         <div class="mobile-brand">
-            <span>BEM Admin</span>
+            <span>BPM Admin</span>
             <?php if (isset($periode_data)): ?>
             <small><?php echo htmlspecialchars($periode_data['nama'] ?? 'Astawidya', ENT_QUOTES, 'UTF-8'); ?></small>
             <?php endif; ?>
@@ -429,7 +429,7 @@ if (isset($page_css)) {
         </button>
 
         <div class="sidebar-header">
-            <h2>BEM Admin</h2>
+            <h2>BPM Admin</h2>
             <p>Kabinet Astawidya</p>
         </div>
 
@@ -451,14 +451,14 @@ if (isset($page_css)) {
 
         <?php
         // Map halaman ke status aktif untuk menu sidebar
-        $info_bem_pages = [
+        $info_bpm_pages = [
             'berita.php', 'berita-edit.php', 'berita-hapus.php',
             'kepengurusan.php', 'kepengurusan-edit.php', 'kepengurusan-hapus.php',
             'kabinet.php', 'visi-misi.php', 'kontak.php',
             'upload-struktur.php', 'upload-struktur-hapus.php',
             'kementerian-anggota.php', 'kementerian-edit.php', 'kementerian-hapus.php'
         ];
-        $is_info_bem_active = in_array($current_page, $info_bem_pages);
+        $is_info_bpm_active = in_array($current_page, $info_bpm_pages);
         
         $surat_pages = [
             'arsip-surat.php', 'buat-surat.php', 'pengaturan-surat.php', 'cetak-surat.php', 'arsip-manual.php', 'catat-surat-masuk.php'
@@ -498,12 +498,12 @@ if (isset($page_css)) {
                 <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
             </a>
 
-            <!-- Informasi BEM (Dropdown) -->
+            <!-- Informasi BPM (Dropdown) -->
             <?php if (!$isSekretaris || $isSuperadmin): ?>
-            <div class="sidebar-dropdown <?php echo $is_info_bem_active ? 'active open' : ''; ?>">
+            <div class="sidebar-dropdown <?php echo $is_info_bpm_active ? 'active open' : ''; ?>">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
                     <i class="fas fa-university"></i>
-                    <span>Informasi BEM</span>
+                    <span>Informasi BPM</span>
                     <i class="fas fa-chevron-right chevron-icon"></i>
                 </button>
                 <div class="sidebar-dropdown-menu">
@@ -759,7 +759,7 @@ if (isset($page_css)) {
     from { transform: translateY(-20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
-.header-modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; color: #4A90E2; }
+.header-modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; color: #E23C3C; }
 .header-modal-header h4 { margin: 0; font-size: 1.2rem; }
 .header-modal-body p { color: #ccc; margin: 0; }
 .header-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }

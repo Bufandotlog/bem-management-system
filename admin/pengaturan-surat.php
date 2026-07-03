@@ -206,7 +206,7 @@ $def_warek_img  = $pengaturan['ttd_warek_image'] ?? '';
 $ketua = getKetua($periode_id);
 $fallback_presma = $ketua ? $ketua['nama_lengkap'] : '';
 $def_presma_name = $pengaturan['ttd_presma_name'] ?? $fallback_presma;
-$def_presma_jab  = $pengaturan['ttd_presma_jabatan'] ?? 'Ketua BEM INSTBUNAS Majalengka';
+$def_presma_jab  = $pengaturan['ttd_presma_jabatan'] ?? 'Ketua BPM INSTBUNAS Majalengka';
 $def_presma_img  = $pengaturan['ttd_presma_image'] ?? '';
 $def_cap_panitia = $pengaturan['cap_panitia_image'] ?? '';
 $def_cap_warek   = $pengaturan['cap_warek_image'] ?? '';
@@ -218,7 +218,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
     .admin-table { border-collapse: separate; border-spacing: 0; width: 100%; }
     .admin-table tr td { border-bottom: 1px solid #2a3545; padding: 12px 10px; }
     .admin-table tr:last-child td { border-bottom: none; }
-    .admin-table thead tr th { border-bottom: 2px solid #4A90E2; padding-bottom: 10px; }
+    .admin-table thead tr th { border-bottom: 2px solid #E23C3C; padding-bottom: 10px; }
 
     /* ===== ACCORDION STYLES ===== */
     .accordion-item {
@@ -234,20 +234,20 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
         align-items: center;
         padding: 16px 20px;
         cursor: pointer;
-        background: rgba(74, 144, 226, 0.05);
+        background: rgba(226, 60, 60, 0.05);
         transition: background 0.2s;
     }
-    .accordion-header:hover { background: rgba(74, 144, 226, 0.1); }
+    .accordion-header:hover { background: rgba(226, 60, 60, 0.1); }
     .accordion-header h3 {
         margin: 0;
         font-size: 1.1rem;
-        color: #8BB9F0;
+        color: #F0D095;
         display: flex;
         align-items: center;
         gap: 8px;
     }
     .accordion-header .badge-count {
-        background: #4A90E2;
+        background: #E23C3C;
         color: white;
         padding: 2px 8px;
         border-radius: 20px;
@@ -256,7 +256,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
     }
     .accordion-header .chevron {
         transition: transform 0.3s ease;
-        color: #4A90E2;
+        color: #E23C3C;
         font-size: 1.2rem;
     }
     .accordion-header.open .chevron { transform: rotate(180deg); }
@@ -270,19 +270,19 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
 
     /* ===== CARD DENGAN BORDER BIRU ===== */
     .blue-border-card {
-        border: 1px solid #4A90E2;
+        border: 1px solid #E23C3C;
         border-radius: 16px;
         background: #0f1217;
         overflow: hidden;
         transition: box-shadow 0.2s;
     }
-    .blue-border-card:hover { box-shadow: 0 8px 20px rgba(74, 144, 226, 0.2); }
+    .blue-border-card:hover { box-shadow: 0 8px 20px rgba(226, 60, 60, 0.2); }
     .blue-border-card .card-header {
-        background: rgba(74, 144, 226, 0.1);
-        border-bottom: 1px solid #4A90E2;
+        background: rgba(226, 60, 60, 0.1);
+        border-bottom: 1px solid #E23C3C;
         padding: 16px;
         font-weight: bold;
-        color: #4A90E2;
+        color: #E23C3C;
     }
     .blue-border-card .card-body { padding: 20px; }
 
@@ -301,36 +301,36 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
         transition: all 0.2s;
     }
     .upload-card:hover {
-        border-color: #4A90E2;
-        box-shadow: 0 4px 12px rgba(74,144,226,0.2);
+        border-color: #E23C3C;
+        box-shadow: 0 4px 12px rgba(226,60,60,0.2);
     }
     .upload-card-header {
-        background: rgba(74, 144, 226, 0.1);
+        background: rgba(226, 60, 60, 0.1);
         padding: 12px 16px;
         font-weight: bold;
-        color: #4A90E2;
+        color: #E23C3C;
         border-bottom: 1px solid #2a3545;
     }
     .upload-card-header i { margin-right: 8px; }
     .upload-card-body { padding: 20px; }
     .upload-area { margin-top: 15px; }
     .drop-zone {
-        border: 2px dashed #4A90E2;
+        border: 2px dashed #E23C3C;
         border-radius: 12px;
         padding: 20px 16px;
         text-align: center;
         cursor: pointer;
         transition: all 0.2s;
-        background: rgba(74,144,226,0.02);
+        background: rgba(226,60,60,0.02);
         margin-bottom: 12px;
     }
     .drop-zone.dragover {
-        background: rgba(74,144,226,0.1);
-        border-color: #8BB9F0;
+        background: rgba(226,60,60,0.1);
+        border-color: #F0D095;
     }
     .drop-zone .upload-icon {
         font-size: 2.5rem;
-        color: #4A90E2;
+        color: #E23C3C;
         margin-bottom: 8px;
     }
     .drop-zone p {
@@ -349,7 +349,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
         margin-top: 8px;
         transition: background 0.2s;
     }
-    .btn-select-file:hover { background: #4A90E2; }
+    .btn-select-file:hover { background: #E23C3C; }
     .preview-container {
         display: flex;
         align-items: center;
@@ -432,7 +432,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
         .admin-table td::before {
             content: attr(data-label);
             font-weight: bold;
-            color: #8BB9F0;
+            color: #F0D095;
             min-width: 110px;
             font-size: 0.8rem;
             text-transform: uppercase;
@@ -493,7 +493,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                     </div>
                 </div>
                 <div class="upload-card">
-                    <div class="upload-card-header"><i class="fas fa-user-graduate"></i> Presiden Mahasiswa (BEM)</div>
+                    <div class="upload-card-header"><i class="fas fa-user-graduate"></i> Presiden Mahasiswa (BPM)</div>
                     <div class="upload-card-body">
                         <div class="form-group"><label>Nama Presma</label><input type="text" name="ttd_presma_name" class="form-control" value="<?php echo htmlspecialchars($def_presma_name); ?>" required></div>
                         <div class="form-group"><label>Jabatan</label><input type="text" name="ttd_presma_jabatan" class="form-control" value="<?php echo htmlspecialchars($def_presma_jab); ?>" required></div>
@@ -515,7 +515,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
             </div>
 
             <hr style="border:1px solid #2a3545; margin:40px 0;">
-            <h3 style="margin-top:0; color:#8BB9F0; margin-bottom:20px;"><i class="fas fa-stamp"></i> Pengaturan Stempel / Cap Instansi</h3>
+            <h3 style="margin-top:0; color:#F0D095; margin-bottom:20px;"><i class="fas fa-stamp"></i> Pengaturan Stempel / Cap Instansi</h3>
             <div class="upload-grid stempel-grid">
                 <div class="upload-card">
                     <div class="upload-card-header"><i class="fas fa-users"></i> Cap PANITIA KEGIATAN</div>
@@ -552,7 +552,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                     </div>
                 </div>
                 <div class="upload-card">
-                    <div class="upload-card-header"><i class="fas fa-gavel"></i> Cap BEM / BEMCUP</div>
+                    <div class="upload-card-header"><i class="fas fa-gavel"></i> Cap BPM / BPMCUP</div>
                     <div class="upload-card-body">
                         <div class="upload-area" data-target="cap_presma">
                             <div class="drop-zone" id="dropzone_cap_presma">
@@ -577,8 +577,8 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
 </div>
 
 <!-- ========== 2. DATABASE PANITIA TETAP ========== -->
-<div class="card" style="margin-bottom:30px; border: 1px solid #4A90E2;">
-    <div class="card-header" style="background: rgba(74, 144, 226, 0.1); color: #4A90E2;"><i class="fas fa-users-cog"></i> Database Tanda Tangan Kepanitiaan (Ketuplak & Sekretaris)</div>
+<div class="card" style="margin-bottom:30px; border: 1px solid #E23C3C;">
+    <div class="card-header" style="background: rgba(226, 60, 60, 0.1); color: #E23C3C;"><i class="fas fa-users-cog"></i> Database Tanda Tangan Kepanitiaan (Ketuplak & Sekretaris)</div>
     <div class="card-body">
         <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 20px;">Simpan data Ketua dan Sekretaris Pelaksana di sini agar saat pembuatan surat nanti Anda tinggal memilih dari dropdown.</p>
         <div style="display:flex; gap:30px; flex-wrap:wrap;">
@@ -634,7 +634,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                                 <tr><td colspan="3" style="text-align:center;">Belum ada panitia tersimpan.</td></tr>
                             <?php else: foreach ($list_panitia as $pt): ?>
                                 <tr>
-                                    <td data-label="Nama & Jabatan"><div style="font-weight:bold; color:#fff;"><?php echo htmlspecialchars($pt['nama']); ?></div><div style="font-size:0.75rem; color:#4A90E2;"><?php echo $pt['jabatan'] === 'ketua' ? 'Ketua Pelaksana' : 'Sekretaris'; ?></div></td>
+                                    <td data-label="Nama & Jabatan"><div style="font-weight:bold; color:#fff;"><?php echo htmlspecialchars($pt['nama']); ?></div><div style="font-size:0.75rem; color:#E23C3C;"><?php echo $pt['jabatan'] === 'ketua' ? 'Ketua Pelaksana' : 'Sekretaris'; ?></div></td>
                                     <td data-label="Pratinjau TTD" style="text-align:center;">
                                         <?php if (!empty($pt['file_ttd'])): ?>
                                             <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block;">
@@ -670,7 +670,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                 <?php if ($edit_data): ?><input type="hidden" name="template_id" value="<?php echo $edit_data['id']; ?>"><?php endif; ?>
                 
                 <div class="form-group">
-                    <label style="color:#8BB9F0;">Jenis Template</label>
+                    <label style="color:#F0D095;">Jenis Template</label>
                     <select name="jenis" class="form-control" required id="jenis_select">
                         <option value="perihal" <?php echo ($edit_data['jenis'] ?? '') === 'perihal' ? 'selected' : ''; ?>>Perihal (Subjek Surat)</option>
                         <option value="tujuan" <?php echo ($edit_data['jenis'] ?? '') === 'tujuan' ? 'selected' : ''; ?>>Tujuan (Kepada Yth)</option>
@@ -684,8 +684,8 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                     <small>Ditampilkan sebagai opsi di dropdown form.</small>
                 </div>
                 <div class="form-group" id="wrap_kode_keg" style="<?php echo ($edit_data['jenis'] ?? '') === 'kegiatan' ? '' : 'display:none;'; ?>">
-                    <label>Kode Kegiatan (Cth: BEMCUP)</label>
-                    <input type="text" name="perihal_default" class="form-control" placeholder="BEMCUP" value="<?php echo htmlspecialchars($edit_data['perihal_default'] ?? ''); ?>" oninput="this.value = this.value.replace(/\s+/g, '').toUpperCase()" style="text-transform: uppercase;">
+                    <label>Kode Kegiatan (Cth: BPMCUP)</label>
+                    <input type="text" name="perihal_default" class="form-control" placeholder="BPMCUP" value="<?php echo htmlspecialchars($edit_data['perihal_default'] ?? ''); ?>" oninput="this.value = this.value.replace(/\s+/g, '').toUpperCase()" style="text-transform: uppercase;">
                     <small>Kode ini akan muncul di nomor surat (001/L/[KODE]/...).</small>
                 </div>
                 <div class="form-group" id="wrap_isi_teks" style="<?php echo in_array(($edit_data['jenis'] ?? ''), ['kegiatan','tempat']) ? 'display:none;' : ''; ?>">

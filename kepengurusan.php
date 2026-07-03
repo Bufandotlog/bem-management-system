@@ -271,7 +271,7 @@ function fotoUrl($filename, $fallback = 'images/default-avatar.jpg') {
             <?php if ($struktur && !empty($struktur['gambar'])): ?>
                 <!-- ✅ FIX: uploadUrl() bukan UPLOAD_URL . $path -->
                 <img src="<?php echo uploadUrl($struktur['gambar']); ?>"
-                     alt="<?php echo htmlspecialchars($struktur['judul'] ?? 'Struktur Organisasi BEM'); ?>"
+                     alt="<?php echo htmlspecialchars($struktur['judul'] ?? 'Struktur Organisasi BPM'); ?>"
                      class="caption-image"
                      loading="lazy">
                 <?php if (!empty($struktur['deskripsi'])): ?>
@@ -295,7 +295,7 @@ function fotoUrl($filename, $fallback = 'images/default-avatar.jpg') {
         </div>
 
         <p class="caption-narasi">
-            Struktur organisasi BEM Institut Teknologi dan Bisnis Universitas Nasional
+            Struktur organisasi BPM Institut Teknologi dan Bisnis Universitas Nasional
             <?php if ($periode_terpilih): ?>
                 Kabinet <?php echo htmlspecialchars($periode_terpilih['nama']); ?>
                 periode <?php echo $periode_terpilih['tahun_mulai']; ?>/<?php echo $periode_terpilih['tahun_selesai']; ?>

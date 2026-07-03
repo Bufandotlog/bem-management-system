@@ -446,7 +446,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mkdir(UPLOAD_PATH . '/lpj', 0777, true);
             }
             
-            $manager_script = escapeshellarg(__DIR__ . '/../scratch/bem_lpj_manager.py');
+            $manager_script = escapeshellarg(__DIR__ . '/../scratch/bpm_lpj_manager.py');
             $command = "python3 {$manager_script} generate " . escapeshellarg($output_filepath) . " " . escapeshellarg($tmp_json_path) . " 2>&1";
             $output = shell_exec($command);
             
@@ -545,7 +545,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         transition: all 0.2s;
     }
     .autofill-indicator.autofilled {
-        color: #8BB9F0;
+        color: #F0D095;
     }
     .autofill-indicator.modified {
         color: #ffc107;
@@ -575,12 +575,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         white-space: nowrap;
     }
     .step-progress .step.active {
-        color: #4A90E2;
+        color: #E23C3C;
         font-weight: bold;
-        border-bottom-color: #4A90E2;
+        border-bottom-color: #E23C3C;
     }
     .step-progress .step.completed {
-        color: #8BB9F0;
+        color: #F0D095;
     }
 
     /* ===== WIZARD PANELS ===== */
@@ -621,9 +621,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: rgba(74, 144, 226, 0.05);
-        border: 1px dashed #4A90E2;
-        color: #4A90E2;
+        background: rgba(226, 60, 60, 0.05);
+        border: 1px dashed #E23C3C;
+        color: #E23C3C;
         padding: 8px 16px;
         font-size: 0.8rem;
         font-weight: 600;
@@ -634,9 +634,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         width: fit-content;
     }
     .btn-add-row-mini:hover {
-        background: rgba(74, 144, 226, 0.15);
+        background: rgba(226, 60, 60, 0.15);
         color: #fff;
-        border-color: #4A90E2;
+        border-color: #E23C3C;
     }
 
     .form-row-grid {
@@ -653,9 +653,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     }
 
     .btn-add-row {
-        background: rgba(74, 144, 226, 0.1);
-        border: 1px dashed #4A90E2;
-        color: #4A90E2;
+        background: rgba(226, 60, 60, 0.1);
+        border: 1px dashed #E23C3C;
+        color: #E23C3C;
         padding: 12px;
         text-align: center;
         border-radius: 8px;
@@ -665,7 +665,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         font-weight: bold;
     }
     .btn-add-row:hover {
-        background: rgba(74, 144, 226, 0.2);
+        background: rgba(226, 60, 60, 0.2);
     }
 
     /* ===== CARD MULTI-POIN STYLES ===== */
@@ -695,7 +695,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         position: relative;
     }
     .multipoint-row:hover {
-        border-color: #4A90E2;
+        border-color: #E23C3C;
         background: #171d26;
     }
     .multipoint-row.dragging {
@@ -741,8 +741,8 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         transition: all 0.1s;
     }
     .btn-reorder:hover:not(:disabled) {
-        color: #4A90E2;
-        background: rgba(74, 144, 226, 0.1);
+        color: #E23C3C;
+        background: rgba(226, 60, 60, 0.1);
     }
     .btn-reorder:disabled {
         opacity: 0.2;
@@ -779,7 +779,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         transition: all 0.15s;
     }
     .point-input:focus {
-        border-bottom-color: #4A90E2;
+        border-bottom-color: #E23C3C;
     }
     .point-actions {
         display: flex;
@@ -809,9 +809,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     }
     .btn-add-point {
         align-self: flex-start;
-        background: rgba(74, 144, 226, 0.05);
-        border: 1px dashed #4A90E2;
-        color: #4A90E2;
+        background: rgba(226, 60, 60, 0.05);
+        border: 1px dashed #E23C3C;
+        color: #E23C3C;
         border-radius: 6px;
         padding: 6px 12px;
         font-size: 0.78rem;
@@ -824,7 +824,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         margin-top: 4px;
     }
     .btn-add-point:hover {
-        background: rgba(74, 144, 226, 0.15);
+        background: rgba(226, 60, 60, 0.15);
     }
     .multipoint-row-confirm {
         display: flex;
@@ -890,7 +890,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         transition: all 0.2s ease;
     }
     .anggota-row:hover {
-        border-color: #4A90E2;
+        border-color: #E23C3C;
         background: #171d26;
     }
     .anggota-row input.anggota-item-input {
@@ -924,9 +924,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         color: #ff6b6b !important;
     }
     #btnAddAnggota {
-        background: rgba(74, 144, 226, 0.1) !important;
-        border: 1px dashed #4A90E2 !important;
-        color: #4A90E2 !important;
+        background: rgba(226, 60, 60, 0.1) !important;
+        border: 1px dashed #E23C3C !important;
+        color: #E23C3C !important;
         padding: 6px 12px !important;
         border-radius: 6px !important;
         cursor: pointer;
@@ -935,7 +935,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         margin-top: 5px;
     }
     #btnAddAnggota:hover {
-        background: rgba(74, 144, 226, 0.2) !important;
+        background: rgba(226, 60, 60, 0.2) !important;
     }
 
     .admin-form, .page-header, .step-progress, .alert {
@@ -980,8 +980,8 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         }
     }
     .new-photo-row:hover {
-        border-color: #4A90E2;
-        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.15);
+        border-color: #E23C3C;
+        box-shadow: 0 4px 15px rgba(226, 60, 60, 0.15);
     }
     .new-photo-row .btn-remove-img {
         position: absolute;
@@ -1022,9 +1022,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         color: #888;
     }
     .photo-upload-zone:hover {
-        border-color: #4A90E2;
-        background: rgba(74, 144, 226, 0.05);
-        color: #4A90E2;
+        border-color: #E23C3C;
+        background: rgba(226, 60, 60, 0.05);
+        color: #E23C3C;
     }
     .photo-upload-zone input[type="file"] {
         position: absolute;
@@ -1048,7 +1048,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     .photo-upload-zone .upload-spinner {
         display: none;
         font-size: 1.5rem;
-        color: #4A90E2;
+        color: #E23C3C;
         z-index: 3;
     }
     .photo-upload-zone .upload-icon {
@@ -1072,8 +1072,8 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         font-size: 0.9rem !important;
     }
     .new-photo-row input.proker-new-photo-caption:focus {
-        border-color: #4A90E2 !important;
-        box-shadow: 0 0 8px rgba(74,144,226,0.2) !important;
+        border-color: #E23C3C !important;
+        box-shadow: 0 0 8px rgba(226,60,60,0.2) !important;
         outline: none !important;
     }
     
@@ -1085,7 +1085,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         margin-top: 5px;
     }
     .photo-caption-input:focus {
-        border-color: #4A90E2 !important;
+        border-color: #E23C3C !important;
         outline: none !important;
     }
     
@@ -1112,7 +1112,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     }
     .submit-overlay .spinner {
         font-size: 3rem;
-        color: #4A90E2;
+        color: #E23C3C;
         margin-bottom: 20px;
     }
     .submit-overlay h3 {
@@ -1288,7 +1288,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             </div>
                             <div class="form-group">
                                 <label>Nama Kegiatan</label>
-                                <input type="text" name="pt_kegiatan[]" class="form-control" value="<?php echo htmlspecialchars($pt['Nama Kegiatan'] ?? ''); ?>" required placeholder="Cth: Menghadiri Undangan Bemnus">
+                                <input type="text" name="pt_kegiatan[]" class="form-control" value="<?php echo htmlspecialchars($pt['Nama Kegiatan'] ?? ''); ?>" required placeholder="Cth: Menghadiri Undangan Bpmnus">
                             </div>
                             <div class="form-group">
                                 <label>Sifat</label>
@@ -1339,7 +1339,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         <!-- Realisasi Anggaran Sub-section -->
                         <hr style="border: 0; border-top: 1px solid #2a3545; margin: 20px 0;">
                         <div class="proker-sub-section">
-                            <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-wallet"></i> Realisasi Anggaran Proker</h4>
+                            <h4 style="color: #F0D095; margin-bottom: 10px;"><i class="fas fa-wallet"></i> Realisasi Anggaran Proker</h4>
                             
                             <div class="form-group" style="margin-bottom: 15px;">
                                 <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc;">
@@ -1375,7 +1375,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                                             <td><input type="text" class="form-control pt-bud-uraian" value="<?php echo htmlspecialchars($ang['uraian'] ?? ''); ?>" placeholder="Uraian" required oninput="serializeProkerBudgetTable(this)"></td>
                                             <td><input type="number" step="1" class="form-control pt-bud-debet" value="<?php echo (float)($ang['debet'] ?? 0); ?>" oninput="serializeProkerBudgetTable(this)"></td>
                                             <td><input type="number" step="1" class="form-control pt-bud-kredit" value="<?php echo (float)($ang['kredit'] ?? 0); ?>" oninput="serializeProkerBudgetTable(this)"></td>
-                                            <td style="text-align: right; font-weight: bold; color: #8BB9F0; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
+                                            <td style="text-align: right; font-weight: bold; color: #F0D095; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
                                             <td style="text-align: center;">
                                                 <?php if ($a_idx > 0): ?>
                                                     <button type="button" class="btn-remove-img" style="width: 28px; height: 28px; background: #dc3545;" onclick="removeBudgetRow(this)"><i class="fas fa-times"></i></button>
@@ -1406,12 +1406,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         <!-- Dokumentasi Kegiatan Sub-section -->
                         <hr style="border: 0; border-top: 1px solid #2a3545; margin: 20px 0;">
                         <div class="proker-sub-section">
-                            <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-camera"></i> Dokumentasi Kegiatan</h4>
+                            <h4 style="color: #F0D095; margin-bottom: 10px;"><i class="fas fa-camera"></i> Dokumentasi Kegiatan</h4>
                             
                             <div class="proker-existing-photos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
                                 <?php foreach ($pt_dokumentasi_list as $photo): ?>
                                     <div class="photo-item" data-path="<?php echo htmlspecialchars($photo['file_path']); ?>" style="background: rgba(0,0,0,0.3); border: 1px solid #2a3545; border-radius: 8px; padding: 10px; text-align: center; position: relative;">
-                                        <img src="<?php echo file_exists($photo['file_path']) ? str_replace('/var/www/html/bem/', BASE_URL, $photo['file_path']) : uploadUrl(basename($photo['file_path'])); ?>" style="max-height: 80px; max-width: 100%; border-radius: 4px; object-fit: contain; margin-bottom: 8px;">
+                                        <img src="<?php echo file_exists($photo['file_path']) ? str_replace('/var/www/html/bpm/', BASE_URL, $photo['file_path']) : uploadUrl(basename($photo['file_path'])); ?>" style="max-height: 80px; max-width: 100%; border-radius: 4px; object-fit: contain; margin-bottom: 8px;">
                                         <input type="text" class="form-control photo-caption-input" style="font-size: 0.8rem; padding: 4px 8px;" value="<?php echo htmlspecialchars($photo['caption'] ?? 'Dokumentasi'); ?>" oninput="serializeProkerPhotos(this)">
                                         <button type="button" class="btn-remove-img" style="position: absolute; top: 5px; right: 5px; width: 24px; height: 24px;" onclick="removeExistingPhoto(this)"><i class="fas fa-trash"></i></button>
                                     </div>
@@ -1663,7 +1663,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 </div>
                 <div class="form-group">
                     <label>Nama Kegiatan</label>
-                    <input type="text" name="pt_kegiatan[]" class="form-control" required placeholder="Cth: Menghadiri Undangan Bemnus">
+                    <input type="text" name="pt_kegiatan[]" class="form-control" required placeholder="Cth: Menghadiri Undangan Bpmnus">
                 </div>
                 <div class="form-group">
                     <label>Sifat</label>
@@ -1714,7 +1714,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <!-- Realisasi Anggaran Sub-section -->
             <hr style="border: 0; border-top: 1px solid #2a3545; margin: 20px 0;">
             <div class="proker-sub-section">
-                <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-wallet"></i> Realisasi Anggaran Proker</h4>
+                <h4 style="color: #F0D095; margin-bottom: 10px;"><i class="fas fa-wallet"></i> Realisasi Anggaran Proker</h4>
                 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc;">
@@ -1744,7 +1744,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                                 <td><input type="text" class="form-control pt-bud-uraian" value="Saldo Awal" placeholder="Uraian" required oninput="serializeProkerBudgetTable(this)"></td>
                                 <td><input type="number" step="1" class="form-control pt-bud-debet" value="0" oninput="serializeProkerBudgetTable(this)"></td>
                                 <td><input type="number" step="1" class="form-control pt-bud-kredit" value="0" oninput="serializeProkerBudgetTable(this)"></td>
-                                <td style="text-align: right; font-weight: bold; color: #8BB9F0; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
+                                <td style="text-align: right; font-weight: bold; color: #F0D095; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
                                 <td style="text-align: center;"></td>
                             </tr>
                         </tbody>
@@ -1770,7 +1770,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <!-- Dokumentasi Kegiatan Sub-section -->
             <hr style="border: 0; border-top: 1px solid #2a3545; margin: 20px 0;">
             <div class="proker-sub-section">
-                <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-camera"></i> Dokumentasi Kegiatan</h4>
+                <h4 style="color: #F0D095; margin-bottom: 10px;"><i class="fas fa-camera"></i> Dokumentasi Kegiatan</h4>
                 
                 <div class="proker-existing-photos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;"></div>
                 <input type="hidden" name="pt_existing_dok[]" class="pt-existing-dok-hidden" value="[]">
@@ -1829,7 +1829,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         <td><input type="text" class="form-control pt-bud-uraian" value="${escapeHtml(tx.uraian)}" placeholder="Uraian" required oninput="serializeProkerBudgetTable(this)"></td>
                         <td><input type="number" step="1" class="form-control pt-bud-debet" value="${tx.debet || 0}" oninput="serializeProkerBudgetTable(this)"></td>
                         <td><input type="number" step="1" class="form-control pt-bud-kredit" value="${tx.kredit || 0}" oninput="serializeProkerBudgetTable(this)"></td>
-                        <td style="text-align: right; font-weight: bold; color: #8BB9F0; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
+                        <td style="text-align: right; font-weight: bold; color: #F0D095; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
                         <td style="text-align: center;">
                             ${idx > 0 ? `<button type="button" class="btn-remove-img" style="width: 28px; height: 28px; background: #dc3545;" onclick="removeBudgetRow(this)"><i class="fas fa-times"></i></button>` : ''}
                         </td>
@@ -1964,7 +1964,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <td><input type="text" class="form-control pt-bud-uraian" placeholder="Uraian" required oninput="serializeProkerBudgetTable(this)"></td>
             <td><input type="number" step="1" class="form-control pt-bud-debet" value="0" oninput="serializeProkerBudgetTable(this)"></td>
             <td><input type="number" step="1" class="form-control pt-bud-kredit" value="0" oninput="serializeProkerBudgetTable(this)"></td>
-            <td style="text-align: right; font-weight: bold; color: #8BB9F0; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
+            <td style="text-align: right; font-weight: bold; color: #F0D095; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
             <td style="text-align: center;">
                 <button type="button" class="btn-remove-img" style="width: 28px; height: 28px; background: #dc3545;" onclick="removeBudgetRow(this)"><i class="fas fa-times"></i></button>
             </td>
@@ -2122,7 +2122,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 <td><input type="text" class="form-control pt-bud-uraian" value="${escapeHtml(item.uraian)}" placeholder="Uraian" required oninput="serializeProkerBudgetTable(this)"></td>
                 <td><input type="number" step="1" class="form-control pt-bud-debet" value="${item.debet}" oninput="serializeProkerBudgetTable(this)"></td>
                 <td><input type="number" step="1" class="form-control pt-bud-kredit" value="${item.kredit}" oninput="serializeProkerBudgetTable(this)"></td>
-                <td style="text-align: right; font-weight: bold; color: #8BB9F0; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
+                <td style="text-align: right; font-weight: bold; color: #F0D095; font-family: monospace;" class="pt-bud-saldo-text">Rp 0</td>
                 <td style="text-align: center;">
                     ${showDelete ? `<button type="button" class="btn-remove-img" style="width: 28px; height: 28px; background: #dc3545;" onclick="removeBudgetRow(this)"><i class="fas fa-times"></i></button>` : ''}
                 </td>
@@ -2518,7 +2518,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         alertDiv.className = 'alert alert-info';
                         alertDiv.style.padding = '10px 15px';
                         alertDiv.style.fontSize = '0.85rem';
-                        alertDiv.innerHTML = '<i class="fas fa-info-circle"></i> Data kepengurusan kementerian ini belum tersedia. Silakan isi secara manual atau hubungi BPH BEM.';
+                        alertDiv.innerHTML = '<i class="fas fa-info-circle"></i> Data kepengurusan kementerian ini belum tersedia. Silakan isi secara manual atau hubungi BPH BPM.';
                         alertDiv.style.display = 'block';
                     }
                     const container = document.getElementById('anggotaListContainer');

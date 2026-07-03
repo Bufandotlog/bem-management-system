@@ -1,5 +1,5 @@
 -- ============================================
--- Backup Database: BEM Management System (MYSQL)
+-- Backup Database: BPM Management System (MYSQL)
 -- Versi: 1.1 (Template Lengkap + Modul Baru)
 -- Tanggal: 2026-05-04 07:02:03 WIB
 -- ============================================
@@ -8,6 +8,7 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+07:00";
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------------------
 -- 1. Tabel `periode_kepengurusan`
@@ -26,7 +27,7 @@ CREATE TABLE `periode_kepengurusan` (
 
 -- Data awal untuk periode
 INSERT INTO `periode_kepengurusan` (`id`, `nama`, `tahun_mulai`, `tahun_selesai`, `is_active`) VALUES
-(1, 'BEM ASTAWIDYA', 2026, 2027, 1);
+(1, 'BPM ASTAWIDYA', 2026, 2027, 1);
 
 -- ----------------------------------------
 -- 2. Tabel `users`
@@ -54,7 +55,7 @@ CREATE TABLE `users` (
 
 -- Data awal untuk superadmin (password: admin1234)
 INSERT INTO `users` (`id`, `username`, `password`, `nama`, `email`, `role`, `can_access_all`, `is_active`) VALUES
-(1, 'superadmin', '$2y$12$R.S9vG0h1D3rX9Y9E.W6Y.f7.G0h1D3rX9Y9E.W6Y.f7.G0h1D3r', 'Super Administrator', 'admin@bem.com', 'superadmin', 1, 1);
+(1, 'superadmin', '$2y$12$R.S9vG0h1D3rX9Y9E.W6Y.f7.G0h1D3rX9Y9E.W6Y.f7.G0h1D3r', 'Super Administrator', 'admin@bpm.com', 'superadmin', 1, 1);
 
 -- ----------------------------------------
 -- 3. Tabel `kabinet`
@@ -380,4 +381,5 @@ CREATE TABLE `lpj_dokumen` (
   CONSTRAINT `fk_lpj_kementerian` FOREIGN KEY (`kementerian_id`) REFERENCES `kementerian` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;

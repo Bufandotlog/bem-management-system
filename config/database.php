@@ -62,12 +62,12 @@ if ($is_local) {
     defined('DB_HOST')       || define('DB_HOST',       $_ENV['DB_HOST']       ?? 'aws-1-ap-northeast-2.pooler.supabase.com');
     defined('DB_PORT')       || define('DB_PORT',       $_ENV['DB_PORT']       ?? '6543');
     defined('DB_USER')       || define('DB_USER',       $_ENV['DB_USER']       ?? 'postgres.prskplzwcdnzdrdszkzy');
-    defined('DB_PASS')       || define('DB_PASS',       $_ENV['DB_PASS']       ?? 'Bem Budi Utomo Nasional');
+    defined('DB_PASS')       || define('DB_PASS',       $_ENV['DB_PASS']       ?? 'Bpm Budi Utomo Nasional');
     defined('DB_NAME')       || define('DB_NAME',       $_ENV['DB_NAME']       ?? 'postgres');
     
     // BASE_URL akan di-handle oleh path-detection.php via resolveBaseUrl()
     // Namun kita beri fallback jika dipanggil sebelum path-detection
-    defined('BASE_URL')      || define('BASE_URL',      $_ENV['BASE_URL']      ?? 'http://localhost/bem/');
+    defined('BASE_URL')      || define('BASE_URL',      $_ENV['BASE_URL']      ?? 'http://localhost/bpm/');
 } else {
     // --- KONFIGURASI PRODUKSI (MYSQL) ---
     defined('DB_CONNECTION') || define('DB_CONNECTION', $_ENV['DB_CONNECTION'] ?? 'mysql');
@@ -75,7 +75,7 @@ if ($is_local) {
     defined('DB_PORT')       || define('DB_PORT',       $_ENV['DB_PORT']       ?? '3306');
     defined('DB_USER')       || define('DB_USER',       $_ENV['DB_USER']       ?? 'if0_41167793');
     defined('DB_PASS')       || define('DB_PASS',       $_ENV['DB_PASS']       ?? 'rtmiqtTCfJo');
-    defined('DB_NAME')       || define('DB_NAME',       $_ENV['DB_NAME']       ?? 'if0_41167793_bem_astawidya');
+    defined('DB_NAME')       || define('DB_NAME',       $_ENV['DB_NAME']       ?? 'if0_41167793_bpm_astawidya');
     
     // Otomatis deteksi domain di server jika tidak ada di .env
     if (!defined('BASE_URL')) {
