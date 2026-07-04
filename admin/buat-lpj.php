@@ -645,6 +645,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         margin-bottom: 35px;
         position: relative;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: border-color 0.3s, box-shadow 0.3s;
     }
     .dynamic-row .btn-remove-row {
         position: absolute;
@@ -660,6 +661,126 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     }
     .dynamic-row .btn-remove-row:hover {
         background: #c82333;
+    }
+
+    /* ===== REORDER BUTTONS FOR PROKER ROWS ===== */
+    .dynamic-row .row-reorder-controls {
+        display: flex;
+        gap: 6px;
+        position: absolute;
+        top: 15px;
+        right: 120px;
+        z-index: 5;
+    }
+    .dynamic-row .btn-reorder-row {
+        background: rgba(74, 144, 226, 0.1);
+        border: 1px solid rgba(74, 144, 226, 0.3);
+        color: #4A90E2;
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+    }
+    .dynamic-row .btn-reorder-row:hover:not(:disabled) {
+        background: rgba(74, 144, 226, 0.25);
+        color: #fff;
+    }
+    .dynamic-row .btn-reorder-row:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    .dynamic-row .row-number-badge {
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: #4A90E2;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: bold;
+        padding: 2px 12px;
+        border-radius: 12px;
+        z-index: 5;
+    }
+
+    /* ===== PROKER SEARCH BAR ===== */
+    .proker-search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #0f1217;
+        border: 1px solid #2a3545;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+        transition: border-color 0.2s;
+    }
+    .proker-search-bar:focus-within {
+        border-color: #4A90E2;
+        box-shadow: 0 0 10px rgba(74, 144, 226, 0.15);
+    }
+    .proker-search-bar i {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    .proker-search-bar input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #fff;
+        font-size: 0.88rem;
+    }
+    .proker-search-bar input::placeholder {
+        color: #555;
+    }
+    .proker-search-bar .search-clear {
+        background: transparent;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        font-size: 0.85rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: none;
+    }
+    .proker-search-bar .search-clear:hover {
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
+    }
+    .proker-search-count {
+        font-size: 0.78rem;
+        color: #666;
+        white-space: nowrap;
+    }
+    .dynamic-row.search-hidden {
+        display: none !important;
+    }
+
+    /* ===== VALIDATION HIGHLIGHT & SHAKE ===== */
+    @keyframes shakeHighlight {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+        20%, 40%, 60%, 80% { transform: translateX(3px); }
+    }
+    .validation-error {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 12px rgba(220, 53, 69, 0.35) !important;
+        animation: shakeHighlight 0.5s ease;
+    }
+    .validation-error-label {
+        color: #dc3545 !important;
+        font-weight: bold;
+    }
+    .validation-error-msg {
+        display: block;
+        color: #dc3545;
+        font-size: 0.78rem;
+        margin-top: 4px;
+        animation: fadeIn 0.2s ease-out;
     }
 
     .btn-add-row-mini {
@@ -1187,7 +1308,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     <div class="step" data-step="2">2. Keanggotaan</div>
     <div class="step" data-step="3">3. Proker Terlaksana</div>
     <div class="step" data-step="4">4. Proker Belum Terlaksana</div>
-    <div class="step" data-step="5">5. Evaluasi</div>
+    <div class="step step-evaluasi" data-step="5" style="display: <?php echo ($selected_triwulan === 'MUBESMA') ? 'block' : 'none'; ?>;">5. Evaluasi</div>
 </div>
 
 <form method="POST" enctype="multipart/form-data" id="lpjForm" class="admin-form">
@@ -1305,6 +1426,13 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="card-header"><i class="fas fa-check-double"></i> Langkah 3: Program Kerja yang Terealisasi</div>
             <div class="card-body">
                 <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px;">Masukkan program kerja yang telah berhasil dilaksanakan pada triwulan ini. Minimal harus ada 1 proker terlaksana.</p>
+                
+                <div class="proker-search-bar" id="ptSearchBar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="ptSearchInput" placeholder="Cari nama program kerja terlaksana..." oninput="filterProkerRows('pt')">
+                    <span class="proker-search-count" id="ptSearchCount"></span>
+                    <button type="button" class="search-clear" id="ptSearchClear" onclick="clearProkerSearch('pt')">&times;</button>
+                </div>
                 
                 <div id="ptContainer">
                     <?php
@@ -1488,6 +1616,13 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="card-body">
                 <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px;">Masukkan program kerja yang belum terlaksana atau tertunda beserta target rencana atau alasan kendala.</p>
                 
+                <div class="proker-search-bar" id="pbtSearchBar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="pbtSearchInput" placeholder="Cari nama program kerja belum terlaksana..." oninput="filterProkerRows('pbt')">
+                    <span class="proker-search-count" id="pbtSearchCount"></span>
+                    <button type="button" class="search-clear" id="pbtSearchClear" onclick="clearProkerSearch('pbt')">&times;</button>
+                </div>
+                
                 <div id="pbtContainer">
                     <?php
                     $pbts = json_decode($edit_data['proker_belum_terlaksana'] ?? '', true) ?: [];
@@ -1547,8 +1682,8 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     </div>
     
 
-    <!-- STEP 5: EVALUASI KINERJA & ANGGOTA -->
-    <div class="wizard-panel" data-step="5">
+    <!-- STEP 5: EVALUASI KINERJA & ANGGOTA (Only for MUBESMA) -->
+    <div class="wizard-panel wizard-panel-evaluasi" data-step="5" style="display: none;">
         <div class="card">
             <div class="card-header"><i class="fas fa-users-cog"></i> Langkah 5: Evaluasi Kinerja Pribadi & Anggota</div>
             <div class="card-body">
@@ -1599,16 +1734,43 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 <script>
     window.initialEvaluasiAnggota = <?php echo json_encode(json_decode($edit_data['evaluasi_anggota_internal'] ?? '', true) ?: []); ?>;
     let currentStep = 1;
-    const totalSteps = 5;
     
     let lastFetchedKementerianId = <?php echo $edit_data ? (int)$edit_data['kementerian_id'] : 'null'; ?>;
 
+    // Dynamic totalSteps: 5 if MUBESMA, 4 otherwise
+    function isMubesma() {
+        const sel = document.getElementById('triwulanSelect');
+        return sel && sel.value === 'MUBESMA';
+    }
+    function getTotalSteps() {
+        return isMubesma() ? 5 : 4;
+    }
+
+    // Show/hide evaluasi tab and panel based on triwulan
+    function updateEvaluasiVisibility() {
+        const mubesma = isMubesma();
+        const evalStep = document.querySelector('.step-evaluasi');
+        const evalPanel = document.querySelector('.wizard-panel-evaluasi');
+        if (evalStep) evalStep.style.display = mubesma ? 'block' : 'none';
+        // If currently on step 5 and not mubesma, go back to step 4
+        if (!mubesma && currentStep === 5) {
+            showStep(4);
+        }
+    }
+
     function showStep(step) {
+        const totalSteps = getTotalSteps();
+        // Clamp step to valid range
+        if (step > totalSteps) step = totalSteps;
+        if (step < 1) step = 1;
+
         document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.step-progress .step').forEach(s => s.classList.remove('active'));
         
-        document.querySelector(`.wizard-panel[data-step="${step}"]`).classList.add('active');
-        document.querySelector(`.step-progress .step[data-step="${step}"]`).classList.add('active');
+        const targetPanel = document.querySelector(`.wizard-panel[data-step="${step}"]`);
+        const targetStep = document.querySelector(`.step-progress .step[data-step="${step}"]`);
+        if (targetPanel) targetPanel.classList.add('active');
+        if (targetStep) targetStep.classList.add('active');
         
         // Handle Prev/Next buttons
         const btnPrev = document.getElementById('btnPrev');
@@ -1641,34 +1803,92 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             }
         }
         
-        if (step === 5) {
+        if (step === 5 && isMubesma()) {
             syncEvaluasiAnggota(false);
         }
+
+        // Scroll to top of form
+        window.scrollTo({ top: document.getElementById('stepProgress').offsetTop - 20, behavior: 'smooth' });
     }
     
+    // --- Enhanced Validation with Auto-Scroll & Highlight ---
+    function clearAllValidationErrors() {
+        document.querySelectorAll('.validation-error').forEach(el => {
+            el.classList.remove('validation-error');
+        });
+        document.querySelectorAll('.validation-error-msg').forEach(el => el.remove());
+        document.querySelectorAll('.validation-error-label').forEach(el => {
+            el.classList.remove('validation-error-label');
+        });
+    }
+
+    function markFieldInvalid(field, message) {
+        field.classList.add('validation-error');
+        // Find label
+        const formGroup = field.closest('.form-group');
+        if (formGroup) {
+            const label = formGroup.querySelector('label');
+            if (label) label.classList.add('validation-error-label');
+            // Add error message if not already present
+            if (!formGroup.querySelector('.validation-error-msg')) {
+                const msg = document.createElement('small');
+                msg.className = 'validation-error-msg';
+                msg.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + message;
+                field.parentNode.insertBefore(msg, field.nextSibling);
+            }
+        }
+        // Remove error on input
+        field.addEventListener('input', function onFix() {
+            if (field.value.trim()) {
+                field.classList.remove('validation-error');
+                if (formGroup) {
+                    const label = formGroup.querySelector('label');
+                    if (label) label.classList.remove('validation-error-label');
+                    const msg = formGroup.querySelector('.validation-error-msg');
+                    if (msg) msg.remove();
+                }
+                field.removeEventListener('input', onFix);
+            }
+        }, { passive: true });
+    }
+
+    function markMultipointInvalid(wrapper, message) {
+        wrapper.classList.add('validation-error');
+        const formGroup = wrapper.closest('.form-group');
+        if (formGroup) {
+            const label = formGroup.querySelector('label');
+            if (label) label.classList.add('validation-error-label');
+            if (!formGroup.querySelector('.validation-error-msg')) {
+                const msg = document.createElement('small');
+                msg.className = 'validation-error-msg';
+                msg.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + message;
+                wrapper.parentNode.insertBefore(msg, wrapper.nextSibling);
+            }
+        }
+    }
+
     function nextStep() {
+        const totalSteps = getTotalSteps();
         if (currentStep < totalSteps) {
-            // Validate basic inputs in current step before moving forward
+            clearAllValidationErrors();
+
             const activePanel = document.querySelector(`.wizard-panel[data-step="${currentStep}"]`);
             const inputs = activePanel.querySelectorAll('input[required], select[required], textarea[required]');
+            let firstInvalid = null;
             let valid = true;
+
             inputs.forEach(input => {
+                // Skip hidden inputs and inputs inside hidden containers
+                if (input.type === 'hidden' || input.offsetParent === null) return;
                 if (!input.value.trim()) {
-                    input.style.borderColor = '#dc3545';
+                    markFieldInvalid(input, 'Kolom ini wajib diisi.');
                     valid = false;
-                } else {
-                    input.style.borderColor = '#2a3545';
+                    if (!firstInvalid) firstInvalid = input;
                 }
             });
-            
-            if (!valid) {
-                alert('Silakan lengkapi kolom yang wajib diisi terlebih dahulu.');
-                return;
-            }
 
             // Custom Validation for Step 3 (Proker Terlaksana)
             if (currentStep === 3) {
-                let multipointValid = true;
                 const ptRows = activePanel.querySelectorAll('.pt-row');
                 ptRows.forEach(row => {
                     const tujuanHidden = row.querySelector('.pt-tujuan-hidden');
@@ -1693,28 +1913,35 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     const filledEvaluasi = evaluasiPoints.filter(p => p.trim() !== '');
                     
                     if (filledTujuan.length === 0) {
-                        multipointValid = false;
+                        valid = false;
                         const tWrapper = tujuanHidden.closest('.multipoint-wrapper');
-                        if (tWrapper) tWrapper.style.borderColor = '#dc3545';
-                    } else {
-                        const tWrapper = tujuanHidden.closest('.multipoint-wrapper');
-                        if (tWrapper) tWrapper.style.borderColor = '#2a3545';
+                        if (tWrapper) {
+                            markMultipointInvalid(tWrapper, 'Minimal 1 tujuan kegiatan wajib diisi.');
+                            if (!firstInvalid) firstInvalid = tWrapper;
+                        }
                     }
                     
                     if (filledEvaluasi.length === 0) {
-                        multipointValid = false;
+                        valid = false;
                         const eWrapper = evaluasiHidden.closest('.multipoint-wrapper');
-                        if (eWrapper) eWrapper.style.borderColor = '#dc3545';
-                    } else {
-                        const eWrapper = evaluasiHidden.closest('.multipoint-wrapper');
-                        if (eWrapper) eWrapper.style.borderColor = '#2a3545';
+                        if (eWrapper) {
+                            markMultipointInvalid(eWrapper, 'Minimal 1 evaluasi & saran wajib diisi.');
+                            if (!firstInvalid) firstInvalid = eWrapper;
+                        }
                     }
                 });
-                
-                if (!multipointValid) {
-                    alert('Setiap program kerja wajib memiliki minimal 1 Tujuan dan 1 Evaluasi & Saran.');
-                    return;
+            }
+            
+            if (!valid) {
+                // Auto-scroll to the first invalid field
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Focus if it's an input
+                    setTimeout(() => {
+                        if (firstInvalid.focus) firstInvalid.focus();
+                    }, 400);
                 }
+                return;
             }
             
             // Mark step as completed
@@ -1733,6 +1960,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     document.querySelectorAll('.step-progress .step').forEach(stepNode => {
         stepNode.addEventListener('click', function() {
             const clickedStep = parseInt(this.getAttribute('data-step'));
+            // Skip if evaluasi step (5) and not mubesma
+            if (clickedStep === 5 && !isMubesma()) return;
+            const totalSteps = getTotalSteps();
             // Only allow jumping to steps if basic validation passes
             if (clickedStep < currentStep || this.classList.contains('completed') || clickedStep === currentStep + 1) {
                 showStep(clickedStep);
@@ -1827,7 +2057,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         const div = document.createElement('div');
         div.className = 'dynamic-row pt-row';
         div.innerHTML = `
-            <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove(); reindexProkers();">Hapus Proker</button>
+            <div class="row-number-badge"></div>
+            <div class="row-reorder-controls">
+                <button type="button" class="btn-reorder-row" onclick="moveRowUp(this, 'pt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                <button type="button" class="btn-reorder-row" onclick="moveRowDown(this, 'pt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+            </div>
+            <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove(); reindexProkers(); updateRowReorderButtons('pt');">Hapus Proker</button>
             <div class="form-row-grid">
                 <div class="form-group">
                     <label>Nama Program Kerja</label>
@@ -2044,6 +2279,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         }
         
         reindexProkers();
+        updateRowReorderButtons('pt');
         initializeAllMultipoints();
     }
 
@@ -2053,7 +2289,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         const div = document.createElement('div');
         div.className = 'dynamic-row pbt-row';
         div.innerHTML = `
-            <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove();">Hapus</button>
+            <div class="row-number-badge"></div>
+            <div class="row-reorder-controls">
+                <button type="button" class="btn-reorder-row" onclick="moveRowUp(this, 'pbt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                <button type="button" class="btn-reorder-row" onclick="moveRowDown(this, 'pbt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+            </div>
+            <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove(); updateRowReorderButtons('pbt');">Hapus</button>
             <div class="form-row-grid">
                 <div class="form-group">
                     <label>Nama Kegiatan</label>
@@ -2110,6 +2351,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             div.querySelector('input[name="pbt_anggaran[]"]').value = pbtData['Anggaran'] || pbtData['Anggaran Rencana'] || '';
             div.querySelector('textarea[name="pbt_dokumentasi[]"]').value = pbtData['Dokumentasi'] || pbtData['Hambatan & Kendala Dokumentasi'] || '';
         }
+        updateRowReorderButtons('pbt');
     }
     
     function formatRupiahJs(number) {
@@ -2451,7 +2693,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 input.name = `pt_new_dok_caption_${index}[]`;
             });
             calculateProkerBudgetBalance(row);
+            // Update row number badge
+            const badge = row.querySelector('.row-number-badge');
+            if (badge) badge.textContent = 'Proker #' + (index + 1);
         });
+        updateRowReorderButtons('pt');
+        updateRowReorderButtons('pbt');
     }
 
     function serializeAllProkerData() {
@@ -2509,6 +2756,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 
     document.getElementById('triwulanSelect').addEventListener('change', function() {
         const triwulan = this.value;
+        updateEvaluasiVisibility();
         if (triwulan === 'MUBESMA') {
             checkAndFetchMubesma();
         }
@@ -3070,6 +3318,50 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     document.addEventListener('DOMContentLoaded', () => {
         reindexProkers();
         initializeAllMultipoints();
+        updateEvaluasiVisibility();
+        updateRowReorderButtons('pt');
+        updateRowReorderButtons('pbt');
+
+        // Also add row-number-badges to initial PHP-rendered pbt rows
+        document.querySelectorAll('#pbtContainer .pbt-row').forEach((row, idx) => {
+            if (!row.querySelector('.row-number-badge')) {
+                const badge = document.createElement('div');
+                badge.className = 'row-number-badge';
+                badge.textContent = 'Proker #' + (idx + 1);
+                row.insertBefore(badge, row.firstChild);
+            }
+            if (!row.querySelector('.row-reorder-controls')) {
+                const controls = document.createElement('div');
+                controls.className = 'row-reorder-controls';
+                controls.innerHTML = `
+                    <button type="button" class="btn-reorder-row" onclick="moveRowUp(this, 'pbt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                    <button type="button" class="btn-reorder-row" onclick="moveRowDown(this, 'pbt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+                `;
+                row.insertBefore(controls, row.firstChild);
+            }
+        });
+
+        // Also add row-number-badges and reorder controls to initial PHP-rendered pt rows
+        document.querySelectorAll('#ptContainer .pt-row').forEach((row, idx) => {
+            if (!row.querySelector('.row-number-badge')) {
+                const badge = document.createElement('div');
+                badge.className = 'row-number-badge';
+                badge.textContent = 'Proker #' + (idx + 1);
+                row.insertBefore(badge, row.firstChild);
+            }
+            if (!row.querySelector('.row-reorder-controls')) {
+                const controls = document.createElement('div');
+                controls.className = 'row-reorder-controls';
+                controls.innerHTML = `
+                    <button type="button" class="btn-reorder-row" onclick="moveRowUp(this, 'pt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                    <button type="button" class="btn-reorder-row" onclick="moveRowDown(this, 'pt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+                `;
+                row.insertBefore(controls, row.firstChild);
+            }
+        });
+
+        updateRowReorderButtons('pt');
+        updateRowReorderButtons('pbt');
 
         // Setup btnAddAnggota
         const btnAdd = document.getElementById('btnAddAnggota');
@@ -3089,6 +3381,114 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         
         syncEvaluasiAnggota(true);
     });
+
+    // ===== PROKER ROW REORDER FUNCTIONS =====
+    function moveRowUp(btn, type) {
+        const row = btn.closest('.dynamic-row');
+        const container = type === 'pt' ? document.getElementById('ptContainer') : document.getElementById('pbtContainer');
+        const prev = row.previousElementSibling;
+        if (prev && prev.classList.contains('dynamic-row')) {
+            container.insertBefore(row, prev);
+            reindexProkers();
+            // Smooth scroll to moved row
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Brief highlight effect
+            row.style.borderColor = '#4A90E2';
+            row.style.boxShadow = '0 0 15px rgba(74, 144, 226, 0.4)';
+            setTimeout(() => {
+                row.style.borderColor = '';
+                row.style.boxShadow = '';
+            }, 600);
+        }
+    }
+
+    function moveRowDown(btn, type) {
+        const row = btn.closest('.dynamic-row');
+        const container = type === 'pt' ? document.getElementById('ptContainer') : document.getElementById('pbtContainer');
+        const next = row.nextElementSibling;
+        if (next && next.classList.contains('dynamic-row')) {
+            container.insertBefore(next, row);
+            reindexProkers();
+            // Smooth scroll to moved row
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Brief highlight effect
+            row.style.borderColor = '#4A90E2';
+            row.style.boxShadow = '0 0 15px rgba(74, 144, 226, 0.4)';
+            setTimeout(() => {
+                row.style.borderColor = '';
+                row.style.boxShadow = '';
+            }, 600);
+        }
+    }
+
+    function updateRowReorderButtons(type) {
+        const containerSel = type === 'pt' ? '#ptContainer' : '#pbtContainer';
+        const rowClass = type === 'pt' ? '.pt-row' : '.pbt-row';
+        const rows = document.querySelectorAll(`${containerSel} ${rowClass}`);
+        rows.forEach((row, index) => {
+            const upBtn = row.querySelector('.row-reorder-controls .btn-reorder-row:first-child');
+            const downBtn = row.querySelector('.row-reorder-controls .btn-reorder-row:last-child');
+            if (upBtn) upBtn.disabled = (index === 0);
+            if (downBtn) downBtn.disabled = (index === rows.length - 1);
+            // Update badge for pbt rows
+            const badge = row.querySelector('.row-number-badge');
+            if (badge) badge.textContent = 'Proker #' + (index + 1);
+        });
+    }
+
+    // ===== PROKER SEARCH/FILTER FUNCTIONS =====
+    function filterProkerRows(type) {
+        const input = document.getElementById(type === 'pt' ? 'ptSearchInput' : 'pbtSearchInput');
+        const clearBtn = document.getElementById(type === 'pt' ? 'ptSearchClear' : 'pbtSearchClear');
+        const countSpan = document.getElementById(type === 'pt' ? 'ptSearchCount' : 'pbtSearchCount');
+        const containerSel = type === 'pt' ? '#ptContainer' : '#pbtContainer';
+        const rowClass = type === 'pt' ? '.pt-row' : '.pbt-row';
+        const query = input.value.trim().toLowerCase();
+
+        clearBtn.style.display = query ? 'inline-block' : 'none';
+
+        const rows = document.querySelectorAll(`${containerSel} ${rowClass}`);
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            if (!query) {
+                row.classList.remove('search-hidden');
+                visibleCount++;
+                return;
+            }
+            // Search in name fields
+            const nameInput = type === 'pt' 
+                ? row.querySelector('input[name="pt_name[]"]') 
+                : row.querySelector('input[name="pbt_name[]"]');
+            const kegiatanInput = type === 'pt' 
+                ? row.querySelector('input[name="pt_kegiatan[]"]') 
+                : null;
+
+            let text = '';
+            if (nameInput) text += (nameInput.value || '').toLowerCase();
+            if (kegiatanInput) text += ' ' + (kegiatanInput.value || '').toLowerCase();
+
+            if (text.includes(query)) {
+                row.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                row.classList.add('search-hidden');
+            }
+        });
+
+        if (query) {
+            countSpan.textContent = `${visibleCount} dari ${rows.length} ditampilkan`;
+        } else {
+            countSpan.textContent = '';
+        }
+    }
+
+    function clearProkerSearch(type) {
+        const input = document.getElementById(type === 'pt' ? 'ptSearchInput' : 'pbtSearchInput');
+        input.value = '';
+        filterProkerRows(type);
+        input.focus();
+    }
 </script>
 
 <!-- Submit loading overlay -->
