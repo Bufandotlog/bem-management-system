@@ -234,7 +234,8 @@ $success = '';
 
 // Handle Form Submission (Draft or Submit)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrfVerify()) {
+    try {
+        if (!csrfVerify()) {
         $error = "Token CSRF tidak valid.";
     } else {
         $kementerian_id = (int)($_POST['kementerian_id'] ?? 0);
@@ -516,6 +517,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Gagal membuat dokumen Word (.docx). Output: " . $output;
             }
         }
+        }
+    } catch (Throwable $e) {
+        $error = "Terjadi kesalahan internal saat menyimpan: " . $e->getMessage();
+        error_log("[LPJ Save Error] " . $e->getMessage() . "\n" . $e->getTraceAsString());
     }
 }
 
