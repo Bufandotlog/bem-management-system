@@ -1720,7 +1720,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     
 
     <!-- STEP 5: EVALUASI KINERJA & ANGGOTA (Only for MUBESMA) -->
-    <div class="wizard-panel wizard-panel-evaluasi" data-step="5" style="display: none;">
+    <div class="wizard-panel wizard-panel-evaluasi" data-step="5">
         <div class="card">
             <div class="card-header"><i class="fas fa-users-cog"></i> Langkah 5: Evaluasi Kinerja Pribadi & Anggota</div>
             <div class="card-body">
