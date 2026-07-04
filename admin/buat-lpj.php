@@ -431,11 +431,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($existing_lpj) {
                 $lpj_id = $existing_lpj['id'];
-                dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
-                    [$status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "sssssssssi");
+                try {
+                    dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
+                        [$status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "sssssssssi");
+                } catch (Throwable $e) {
+                    if (strpos($e->getMessage(), 'evaluasi_kinerja_pribadi') !== false) {
+                        try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_kinerja_pribadi TEXT NULL"); } catch(Throwable $te){}
+                        try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_anggota_internal TEXT NULL"); } catch(Throwable $te){}
+                        dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
+                            [$status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "sssssssssi");
+                    } else {
+                        throw $e;
+                    }
+                }
             } else {
-                dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iissssssssss");
+                try {
+                    dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iissssssssss");
+                } catch (Throwable $e) {
+                    if (strpos($e->getMessage(), 'evaluasi_kinerja_pribadi') !== false) {
+                        try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_kinerja_pribadi TEXT NULL"); } catch(Throwable $te){}
+                        try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_anggota_internal TEXT NULL"); } catch(Throwable $te){}
+                        dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iissssssssss");
+                    } else {
+                        throw $e;
+                    }
+                }
                 $lpj_id = dbLastId();
             }
             
