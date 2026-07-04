@@ -745,6 +745,7 @@ def generate_lpj(output_path, config_data):
     pref_d = "VII." if is_mubesma else "D."
     pref_e = "VIII." if is_mubesma else "E."
     pref_f = "IX." if is_mubesma else "F."
+    pref_penutup = "X." if is_mubesma else "D."
     
     if triwulan_str == "MUBESMA":
         add_minister_cover(doc, kementrian_str, years_str)
@@ -1196,46 +1197,46 @@ def generate_lpj(output_path, config_data):
                 
         pass
         
-    # D. PROGRAM KERJA YANG BELUM TERLAKSANA
-    p_hdr_d = doc.add_paragraph()
-    p_hdr_d.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p_hdr_d.paragraph_format.space_before = Pt(12)
-    p_hdr_d.paragraph_format.space_after = Pt(6)
-    p_hdr_d.paragraph_format.keep_with_next = True
-    format_run(p_hdr_d.add_run(f"{pref_d} PROGRAM KERJA YANG BELUM TERLAKSANA"), size_pt=12, bold=True)
-    
-    pbt_list = config_data.get("proker_belum_terlaksana", [])
-    if not pbt_list:
-        p_pbt_empty = doc.add_paragraph()
-        p_pbt_empty.paragraph_format.left_indent = Cm(0.5)
-        format_run(p_pbt_empty.add_run("(Tidak ada program kerja belum terlaksana)"), size_pt=11, italic=True)
-    
-    for idx, pk in enumerate(pbt_list, 1):
-        p_name = doc.add_paragraph()
-        p_name.paragraph_format.space_before = Pt(12)
-        p_name.paragraph_format.space_after = Pt(6)
-        p_name.paragraph_format.keep_with_next = True
-        p_name.paragraph_format.left_indent = Cm(0.5)
-        
-        name_str = clean_proker_name(pk.get('Nama Kegiatan', pk.get('Nama Program Kerja', 'Proker')))
-        format_run(p_name.add_run(f"{idx}. {name_str}"), size_pt=12, bold=True)
-        
-        table = doc.add_table(rows=9, cols=3)
-        fields = [
-            ("Nama Kegiatan", clean_proker_name(pk.get("Nama Kegiatan", pk.get("Nama Program Kerja", "")))),
-            ("Sifat", pk.get("Sifat", "—")),
-            ("Tema Kegiatan", pk.get("Tema Kegiatan", "—")),
-            ("Tujuan Kegiatan", pk.get("Tujuan Kegiatan", pk.get("Tujuan", "—"))),
-            ("Tanggal Kegiatan", pk.get("Tanggal Kegiatan", "—")),
-            ("Penanggung Jawab", pk.get("Penanggung Jawab", "—")),
-            ("Peserta Kegiatan", pk.get("Peserta Kegiatan", "—")),
-            ("Anggaran", pk.get("Anggaran", "—")),
-            ("Dokumentasi", pk.get("Dokumentasi", "—"))
-        ]
-        render_table_rows(table, fields, indent_cm=INDENT_PROKER, bold_label=False, prefix_alpha=True)
-        doc.add_paragraph()
-        
     if is_mubesma:
+        # D. PROGRAM KERJA YANG BELUM TERLAKSANA
+        p_hdr_d = doc.add_paragraph()
+        p_hdr_d.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_d.paragraph_format.space_before = Pt(12)
+        p_hdr_d.paragraph_format.space_after = Pt(6)
+        p_hdr_d.paragraph_format.keep_with_next = True
+        format_run(p_hdr_d.add_run(f"{pref_d} PROGRAM KERJA YANG BELUM TERLAKSANA"), size_pt=12, bold=True)
+        
+        pbt_list = config_data.get("proker_belum_terlaksana", [])
+        if not pbt_list:
+            p_pbt_empty = doc.add_paragraph()
+            p_pbt_empty.paragraph_format.left_indent = Cm(0.5)
+            format_run(p_pbt_empty.add_run("(Tidak ada program kerja belum terlaksana)"), size_pt=11, italic=True)
+        
+        for idx, pk in enumerate(pbt_list, 1):
+            p_name = doc.add_paragraph()
+            p_name.paragraph_format.space_before = Pt(12)
+            p_name.paragraph_format.space_after = Pt(6)
+            p_name.paragraph_format.keep_with_next = True
+            p_name.paragraph_format.left_indent = Cm(0.5)
+            
+            name_str = clean_proker_name(pk.get('Nama Kegiatan', pk.get('Nama Program Kerja', 'Proker')))
+            format_run(p_name.add_run(f"{idx}. {name_str}"), size_pt=12, bold=True)
+            
+            table = doc.add_table(rows=9, cols=3)
+            fields = [
+                ("Nama Kegiatan", clean_proker_name(pk.get("Nama Kegiatan", pk.get("Nama Program Kerja", "")))),
+                ("Sifat", pk.get("Sifat", "—")),
+                ("Tema Kegiatan", pk.get("Tema Kegiatan", "—")),
+                ("Tujuan Kegiatan", pk.get("Tujuan Kegiatan", pk.get("Tujuan", "—"))),
+                ("Tanggal Kegiatan", pk.get("Tanggal Kegiatan", "—")),
+                ("Penanggung Jawab", pk.get("Penanggung Jawab", "—")),
+                ("Peserta Kegiatan", pk.get("Peserta Kegiatan", "—")),
+                ("Anggaran", pk.get("Anggaran", "—")),
+                ("Dokumentasi", pk.get("Dokumentasi", "—"))
+            ]
+            render_table_rows(table, fields, indent_cm=INDENT_PROKER, bold_label=False, prefix_alpha=True)
+            doc.add_paragraph()
+            
         # E. EVALUASI KINERJA PRIBADI
         p_hdr_e = doc.add_paragraph()
         p_hdr_e.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -1305,6 +1306,78 @@ def generate_lpj(output_path, config_data):
             p_eval_anggota.paragraph_format.left_indent = Cm(0.5)
             run_ea = p_eval_anggota.add_run("—")
             format_run(run_ea, size_pt=11)
+            
+    # PENUTUP SECTION
+    doc.add_paragraph() # Add some spacing
+    
+    p_hdr_penutup = doc.add_paragraph()
+    p_hdr_penutup.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_hdr_penutup.paragraph_format.space_before = Pt(12)
+    p_hdr_penutup.paragraph_format.space_after = Pt(6)
+    p_hdr_penutup.paragraph_format.keep_with_next = True
+    format_run(p_hdr_penutup.add_run(f"{pref_penutup} PENUTUP"), size_pt=12, bold=True)
+    
+    penutup_text = config_data.get("penutup", "").strip()
+    if not penutup_text:
+        penutup_text = "Demikian Laporan Pertanggungjawaban ini kami susun sebagai bentuk pertanggungjawaban atas amanah yang telah diberikan selama satu periode kepengurusan. Kami menyadari masih banyak kekurangan dalam pelaksanaan program kerja maupun dalam koordinasi internal, namun hal tersebut menjadi bahan evaluasi dan pembelajaran untuk ke depannya.\n\nTerima kasih kepada seluruh pihak yang telah mendukung dan bekerja sama, baik dari internal maupun pihak eksternal. Semoga apa yang telah dijalankan dapat memberikan manfaat bagi mahasiswa dan lingkungan kampus secara luas."
+        
+    for line in penutup_text.split("\n"):
+        line_clean = line.strip()
+        if not line_clean:
+            doc.add_paragraph()
+            continue
+        p_penutup = doc.add_paragraph()
+        p_penutup.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        p_penutup.paragraph_format.line_spacing = 1.15
+        p_penutup.paragraph_format.space_after = Pt(4)
+        p_penutup.paragraph_format.left_indent = Cm(0.5)
+        p_penutup.paragraph_format.first_line_indent = Cm(1.0)
+        format_run(p_penutup.add_run(line_clean), size_pt=12)
+        
+    # Signature Block
+    doc.add_paragraph()
+    doc.add_paragraph()
+    
+    import datetime
+    months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+    now = datetime.datetime.now()
+    tgl_str = f"Majalengka, {now.day} {months[now.month - 1]} {now.year}"
+    
+    p_sig = doc.add_paragraph()
+    p_sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig.paragraph_format.line_spacing = 1.15
+    format_run(p_sig.add_run(tgl_str), size_pt=12)
+    
+    p_sig_dept = doc.add_paragraph()
+    p_sig_dept.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_dept.paragraph_format.line_spacing = 1.15
+    
+    kementrian_formatted = format_kementerian_title(kementrian_str)
+    # The user wants just the name, but the screenshot says "Departemen Adkesma". 
+    # Let's use the formatted kementerian name or original.
+    org_prefix = "Kementerian" if "bem" in output_path.lower() else "Departemen"
+    clean_k_name = kementrian_str.replace("Kementerian ", "").replace("Menteri ", "").replace("Departemen ", "")
+    format_run(p_sig_dept.add_run(f"{org_prefix} {clean_k_name}"), size_pt=12)
+    
+    p_sig_ket = doc.add_paragraph()
+    p_sig_ket.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_ket.paragraph_format.line_spacing = 1.15
+    format_run(p_sig_ket.add_run("Ketua,\n\n\n\n\n"), size_pt=12)
+    
+    ketua_name = config_data.get("keanggotaan", {}).get("ketua", "Nama Ketua")
+    
+    p_sig_name = doc.add_paragraph()
+    p_sig_name.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_name.paragraph_format.line_spacing = 1.15
+    run_name = p_sig_name.add_run(ketua_name)
+    run_name.underline = True
+    format_run(run_name, size_pt=12, bold=True)
+    
+    p_sig_nim = doc.add_paragraph()
+    p_sig_nim.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_nim.paragraph_format.line_spacing = 1.15
+    # Since we don't have NIM in the form, we'll leave a placeholder or just NIM if we don't know it.
+    format_run(p_sig_nim.add_run("NIM: ...................."), size_pt=12)
         
     add_document_footer(doc, triwulan_str)
     doc.save(output_path)

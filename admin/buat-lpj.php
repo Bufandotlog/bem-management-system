@@ -242,6 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $triwulan = sanitizeText($_POST['triwulan'] ?? '');
         $status = sanitizeText($_POST['status'] ?? 'draft');
         $keadaan_objektif = sanitizeText($_POST['keadaan_objektif'] ?? '', 2000);
+        $penutup = sanitizeText($_POST['penutup'] ?? '', 2000);
         
         $anggota_post = $_POST['anggota_lain'] ?? '';
         $anggota_cleaned = [];
@@ -432,28 +433,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($existing_lpj) {
                 $lpj_id = $existing_lpj['id'];
                 try {
-                    dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
-                        [$status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "sssssssssi");
+                    dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, penutup = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
+                        [$status, $keanggotaan_json, $keadaan_objektif, $penutup, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "ssssssssssi");
                 } catch (Throwable $e) {
-                    if (strpos($e->getMessage(), 'evaluasi_kinerja_pribadi') !== false) {
+                    if (strpos($e->getMessage(), 'evaluasi_kinerja_pribadi') !== false || strpos($e->getMessage(), 'penutup') !== false) {
                         try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_kinerja_pribadi TEXT NULL"); } catch(Throwable $te){}
                         try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_anggota_internal TEXT NULL"); } catch(Throwable $te){}
-                        dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
-                            [$status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "sssssssssi");
+                        try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN penutup TEXT NULL"); } catch(Throwable $te){}
+                        dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, penutup = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
+                            [$status, $keanggotaan_json, $keadaan_objektif, $penutup, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "ssssssssssi");
                     } else {
                         throw $e;
                     }
                 }
             } else {
                 try {
-                    dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iissssssssss");
+                    dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, penutup, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $penutup, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iisssssssssss");
                 } catch (Throwable $e) {
-                    if (strpos($e->getMessage(), 'evaluasi_kinerja_pribadi') !== false) {
+                    if (strpos($e->getMessage(), 'evaluasi_kinerja_pribadi') !== false || strpos($e->getMessage(), 'penutup') !== false) {
                         try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_kinerja_pribadi TEXT NULL"); } catch(Throwable $te){}
                         try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN evaluasi_anggota_internal TEXT NULL"); } catch(Throwable $te){}
-                        dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iissssssssss");
+                        try { dbQuery("ALTER TABLE lpj_dokumen ADD COLUMN penutup TEXT NULL"); } catch(Throwable $te){}
+                        dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, penutup, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $penutup, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iisssssssssss");
                     } else {
                         throw $e;
                     }
@@ -482,6 +485,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'periode' => $p_name
                 ],
                 'keadaan_objektif' => $keadaan_objektif,
+                'penutup' => $penutup,
                 'keanggotaan' => $keanggotaan,
                 'tugas_pokok' => $k_tugas,
                 'fungsi' => $k_fungsi,
@@ -1378,6 +1382,12 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     <label>Keadaan Objektif / Deskripsi Fungsi</label>
                     <textarea name="keadaan_objektif" id="keadaanObjektif" rows="8" class="form-control" placeholder="Deskripsikan visi, strategi, dan keadaan objektif kementerian..." required><?php echo htmlspecialchars($edit_data['keadaan_objektif'] ?? ''); ?></textarea>
                     <small>Default akan terisi visi & fungsi dari pengaturan kementerian jika Anda memilih kementerian baru.</small>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Deskripsi Penutup LPJ</label>
+                    <textarea name="penutup" id="penutupText" rows="6" class="form-control" placeholder="Tuliskan kata penutup untuk laporan pertanggungjawaban..."><?php echo htmlspecialchars($edit_data['penutup'] ?? "Demikian Laporan Pertanggungjawaban ini kami susun sebagai bentuk pertanggungjawaban atas amanah yang telah diberikan selama satu periode kepengurusan. Kami menyadari masih banyak kekurangan dalam pelaksanaan program kerja maupun dalam koordinasi internal, namun hal tersebut menjadi bahan evaluasi dan pembelajaran untuk ke depannya.\n\nTerima kasih kepada seluruh pihak yang telah mendukung dan bekerja sama, baik dari internal maupun pihak eksternal. Semoga apa yang telah dijalankan dapat memberikan manfaat bagi mahasiswa dan lingkungan kampus secara luas."); ?></textarea>
+                    <small>Penutup ini akan dicetak pada bagian akhir dokumen LPJ.</small>
                 </div>
             </div>
         </div>
