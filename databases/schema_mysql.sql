@@ -371,6 +371,8 @@ CREATE TABLE `lpj_dokumen` (
   `anggaran` longtext DEFAULT NULL,
   `dokumentasi` longtext DEFAULT NULL,
   `file_path` varchar(255) DEFAULT NULL,
+  `evaluasi_kinerja_pribadi` text DEFAULT NULL,
+  `evaluasi_anggota_internal` longtext DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),

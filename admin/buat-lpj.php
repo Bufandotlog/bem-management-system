@@ -117,6 +117,17 @@ if (isset($_GET['ajax_kementerian_id'])) {
             }
         }
         
+        $evaluasi_kinerja_pribadi = '';
+        $evaluasi_anggota_internal = [];
+        
+        if ($lpj2) {
+            $evaluasi_kinerja_pribadi = $lpj2['evaluasi_kinerja_pribadi'] ?: '';
+            $evaluasi_anggota_internal = json_decode($lpj2['evaluasi_anggota_internal'] ?? '', true) ?: [];
+        } elseif ($lpj1) {
+            $evaluasi_kinerja_pribadi = $lpj1['evaluasi_kinerja_pribadi'] ?: '';
+            $evaluasi_anggota_internal = json_decode($lpj1['evaluasi_anggota_internal'] ?? '', true) ?: [];
+        }
+        
         echo json_encode([
             'deskripsi' => $keadaan_objektif ?: $deskripsi,
             'keanggotaan' => [
@@ -127,7 +138,9 @@ if (isset($_GET['ajax_kementerian_id'])) {
             ],
             'is_mubesma' => true,
             'proker_terlaksana' => $proker_terlaksana,
-            'proker_belum_terlaksana' => $proker_belum_terlaksana
+            'proker_belum_terlaksana' => $proker_belum_terlaksana,
+            'evaluasi_kinerja_pribadi' => $evaluasi_kinerja_pribadi,
+            'evaluasi_anggota_internal' => $evaluasi_anggota_internal
         ]);
         exit();
     }
@@ -369,6 +382,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        // Evaluasi Kinerja Pribadi
+        $evaluasi_kinerja_pribadi = sanitizeText($_POST['evaluasi_kinerja_pribadi'] ?? '');
+
+        // Evaluasi Anggota dan Internal Departemen
+        $eva_nama = $_POST['eva_nama'] ?? [];
+        $eva_kepribadian = $_POST['eva_kepribadian'] ?? [];
+        $eva_kinerja = $_POST['eva_kinerja'] ?? [];
+        
+        $evaluasi_anggota_internal = [];
+        for ($i = 0; $i < count($eva_nama); $i++) {
+            if (!empty($eva_nama[$i])) {
+                $evaluasi_anggota_internal[] = [
+                    'nama' => sanitizeText($eva_nama[$i]),
+                    'kepribadian' => sanitizeText($eva_kepribadian[$i] ?? ''),
+                    'kinerja' => sanitizeText($eva_kinerja[$i] ?? '')
+                ];
+            }
+        }
+        $evaluasi_anggota_internal_json = json_encode($evaluasi_anggota_internal);
+
         // Aggregate Anggaran and Dokumentasi globally for backward compatibility
         $anggaran = [];
         $dokumentasi = [];
@@ -397,11 +430,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($existing_lpj) {
                 $lpj_id = $existing_lpj['id'];
-                dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ? WHERE id = ?", 
-                    [$status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $lpj_id], "sssssssi");
+                dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
+                    [$status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "sssssssssi");
             } else {
-                dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json], "iissssssss");
+                dbQuery("INSERT INTO lpj_dokumen (periode_id, kementerian_id, triwulan, status, keanggotaan, keadaan_objektif, proker_terlaksana, proker_belum_terlaksana, anggaran, dokumentasi, evaluasi_kinerja_pribadi, evaluasi_anggota_internal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [$periode_id, $kementerian_id, $triwulan, $status, $keanggotaan_json, $keadaan_objektif, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json], "iissssssssss");
                 $lpj_id = dbLastId();
             }
             
@@ -434,7 +467,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'proker_terlaksana' => $proker_terlaksana,
                 'proker_belum_terlaksana' => $proker_belum_terlaksana,
                 'anggaran' => $anggaran,
-                'dokumentasi' => $dokumentasi
+                'dokumentasi' => $dokumentasi,
+                'evaluasi_kinerja_pribadi' => $evaluasi_kinerja_pribadi,
+                'evaluasi_anggota_internal' => $evaluasi_anggota_internal
             ];
             
             $tmp_json_path = tempnam(sys_get_temp_dir(), 'lpj_') . '.json';
@@ -1152,6 +1187,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     <div class="step" data-step="2">2. Keanggotaan</div>
     <div class="step" data-step="3">3. Proker Terlaksana</div>
     <div class="step" data-step="4">4. Proker Belum Terlaksana</div>
+    <div class="step" data-step="5">5. Evaluasi</div>
 </div>
 
 <form method="POST" enctype="multipart/form-data" id="lpjForm" class="admin-form">
@@ -1511,7 +1547,43 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     </div>
     
 
-    
+    <!-- STEP 5: EVALUASI KINERJA & ANGGOTA -->
+    <div class="wizard-panel" data-step="5">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-users-cog"></i> Langkah 5: Evaluasi Kinerja Pribadi & Anggota</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="evaluasiKinerjaPribadi" style="font-weight: bold;">Evaluasi Kinerja Pribadi</label>
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 10px;">Berikan deskripsi evaluasi kinerja pribadi Anda sebagai Menteri/Ketua selama periode triwulan berjalan.</p>
+                    <textarea name="evaluasi_kinerja_pribadi" id="evaluasiKinerjaPribadi" rows="5" class="form-control" placeholder="Tuliskan evaluasi kinerja pribadi secara rinci..."><?php echo htmlspecialchars($edit_data['evaluasi_kinerja_pribadi'] ?? ''); ?></textarea>
+                </div>
+                
+                <hr style="border: 0; border-top: 1px solid #3a4555; margin: 30px 0;">
+                
+                <div class="form-group">
+                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">Evaluasi Anggota & Internal Departemen</label>
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 15px;">Tabel evaluasi ini otomatis memuat nama-nama pengurus kementerian dari Langkah 2. Berikan penilaian deskriptif mengenai Kepribadian dan Kinerja masing-masing anggota.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <thead>
+                                <tr style="background-color: #2a3545; color: #fff;">
+                                    <th style="width: 50px; text-align: center; padding: 10px; border: 1px solid #3a4555;">No</th>
+                                    <th style="width: 250px; text-align: left; padding: 10px; border: 1px solid #3a4555;">Nama Anggota</th>
+                                    <th style="text-align: left; padding: 10px; border: 1px solid #3a4555;">Kepribadian</th>
+                                    <th style="text-align: left; padding: 10px; border: 1px solid #3a4555;">Kinerja</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evaluasiAnggotaTableBody">
+                                <!-- Will be populated dynamically by JavaScript syncEvaluasiAnggota() -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Wizard Actions Buttons -->
     <div style="display: flex; justify-content: space-between; margin-top: 30px;">
         <button type="button" class="btn-secondary" id="btnPrev" style="visibility: hidden;" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Sebelumnya</button>
@@ -1525,8 +1597,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 </form>
 
 <script>
+    window.initialEvaluasiAnggota = <?php echo json_encode(json_decode($edit_data['evaluasi_anggota_internal'] ?? '', true) ?: []); ?>;
     let currentStep = 1;
-    const totalSteps = 4;
+    const totalSteps = 5;
     
     let lastFetchedKementerianId = <?php echo $edit_data ? (int)$edit_data['kementerian_id'] : 'null'; ?>;
 
@@ -1566,6 +1639,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     fetchKepengurusan(kId);
                 }
             }
+        }
+        
+        if (step === 5) {
+            syncEvaluasiAnggota(false);
         }
     }
     
@@ -1662,6 +1739,87 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             }
         });
     });
+
+    function getAnggotaNamesFromStep2() {
+        const names = [];
+        const ketua = document.getElementById('anggotaKetua') ? document.getElementById('anggotaKetua').value.trim() : '';
+        const sekretaris = document.getElementById('anggotaSekretaris') ? document.getElementById('anggotaSekretaris').value.trim() : '';
+        const bendahara = document.getElementById('anggotaBendahara') ? document.getElementById('anggotaBendahara').value.trim() : '';
+        
+        if (ketua) names.push(ketua);
+        if (sekretaris) names.push(sekretaris);
+        if (bendahara) names.push(bendahara);
+        
+        document.querySelectorAll('.anggota-item-input').forEach(input => {
+            const val = input.value.trim();
+            if (val) {
+                names.push(val);
+            }
+        });
+        return names;
+    }
+
+    function syncEvaluasiAnggota(loadInitial = false) {
+        const tbody = document.getElementById('evaluasiAnggotaTableBody');
+        if (!tbody) return;
+        
+        // 1. Gather what is currently typed in Step 5's inputs
+        const currentVals = {};
+        tbody.querySelectorAll('tr').forEach(tr => {
+            const nameVal = tr.querySelector('.eva-name-input') ? tr.querySelector('.eva-name-input').value : '';
+            const kepVal = tr.querySelector('.eva-kep-input') ? tr.querySelector('.eva-kep-input').value : '';
+            const kinVal = tr.querySelector('.eva-kin-input') ? tr.querySelector('.eva-kin-input').value : '';
+            if (nameVal) {
+                currentVals[nameVal] = { kepribadian: kepVal, kinerja: kinVal };
+            }
+        });
+        
+        // 2. Gather list of names from Step 2
+        const names = getAnggotaNamesFromStep2();
+        
+        // 3. Clear and rebuild table body
+        tbody.innerHTML = '';
+        
+        if (names.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #aaa; padding: 15px;">Belum ada data anggota. Silakan isi data keanggotaan di Langkah 2.</td></tr>`;
+            return;
+        }
+        
+        names.forEach((name, index) => {
+            let kep = '';
+            let kin = '';
+            
+            // Match from currently typed values
+            if (currentVals[name]) {
+                kep = currentVals[name].kepribadian;
+                kin = currentVals[name].kinerja;
+            } 
+            // Match from initial data loaded on edit page or AJAX
+            else if (loadInitial && window.initialEvaluasiAnggota && window.initialEvaluasiAnggota.length > 0) {
+                const matched = window.initialEvaluasiAnggota.find(item => item.nama === name);
+                if (matched) {
+                    kep = matched.kepribadian || '';
+                    kin = matched.kinerja || '';
+                }
+            }
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="text-align: center; vertical-align: middle; padding: 10px; border: 1px solid #3a4555;">${index + 1}</td>
+                <td style="vertical-align: middle; padding: 10px; border: 1px solid #3a4555; font-weight: bold; color: #fff;">
+                    ${escapeHtml(name)}
+                    <input type="hidden" name="eva_nama[]" class="eva-name-input" value="${escapeHtml(name)}">
+                </td>
+                <td style="padding: 5px; border: 1px solid #3a4555;">
+                    <textarea name="eva_kepribadian[]" class="form-control eva-kep-input" rows="2" style="resize: vertical; width: 100%;" placeholder="Deskripsi kepribadian...">${escapeHtml(kep)}</textarea>
+                </td>
+                <td style="padding: 5px; border: 1px solid #3a4555;">
+                    <textarea name="eva_kinerja[]" class="form-control eva-kin-input" rows="2" style="resize: vertical; width: 100%;" placeholder="Deskripsi kinerja...">${escapeHtml(kin)}</textarea>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 
     // --- Schritt 3: Proker Terlaksana Dynamic Rows ---
     function addProkerTerlaksana(ptData = null) {
@@ -2923,11 +3081,13 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         }
 
         // Setup initial inputs input listener
-        document.querySelectorAll('.anggota-item-input').forEach(input => {
+        document.querySelectorAll('.field-keanggotaan, .anggota-item-input').forEach(input => {
             input.addEventListener('input', function() {
                 markAnggotaAsModified();
             });
         });
+        
+        syncEvaluasiAnggota(true);
     });
 </script>
 

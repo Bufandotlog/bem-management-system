@@ -798,6 +798,65 @@ if (!function_exists('parsePoints')) {
             </div>
         </div>
 
+        <!-- 5. EVALUASI KINERJA PRIBADI & INTERNAL DEPARTEMEN -->
+        <div class="page">
+            <div class="section-header">
+                <?php echo $is_mubesma ? "VIII. EVALUASI KINERJA PRIBADI" : "E. EVALUASI KINERJA PRIBADI"; ?>
+            </div>
+            <?php 
+            $eval_pribadi = trim($lpj['evaluasi_kinerja_pribadi'] ?? '');
+            $lines_p = array_filter(array_map('trim', explode("\n", $eval_pribadi)));
+            if (empty($lines_p)) {
+                $lines_p = ["—"];
+            }
+            foreach ($lines_p as $line): 
+            ?>
+                <p class="narrative-p"><?php echo htmlspecialchars($line); ?></p>
+            <?php endforeach; ?>
+
+            <div class="page-footer-label">
+                Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
+            </div>
+        </div>
+
+        <div class="page">
+            <div class="section-header">
+                <?php echo $is_mubesma ? "IX. EVALUASI ANGGOTA DAN INTERNAL DEPARTEMEN" : "F. EVALUASI ANGGOTA DAN INTERNAL DEPARTEMEN"; ?>
+            </div>
+            
+            <?php
+            $eval_anggota = json_decode($lpj['evaluasi_anggota_internal'] ?? '', true) ?: [];
+            if (empty($eval_anggota)):
+            ?>
+                <p class="narrative-p" style="font-style: italic; text-indent: 0; margin-left: 0.5cm;">(Tidak ada data evaluasi anggota)</p>
+            <?php else: ?>
+                <table class="budget-table" style="margin-left: 0.5cm; width: calc(100% - 0.5cm); margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 7%; text-align: center;">NO</th>
+                            <th style="width: 25%; text-align: center;">NAMA ANGGOTA</th>
+                            <th style="width: 34%; text-align: center;">KEPRIBADIAN</th>
+                            <th style="width: 34%; text-align: center;">KINERJA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($eval_anggota as $idx => $eva): ?>
+                            <tr>
+                                <td style="text-align: center; vertical-align: top;"><?php echo ($idx + 1); ?></td>
+                                <td style="text-align: justify; vertical-align: top; font-weight: bold;"><?php echo htmlspecialchars($eva['nama'] ?? '—'); ?></td>
+                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($eva['kepribadian'] ?? '—'); ?></td>
+                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($eva['kinerja'] ?? '—'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+
+            <div class="page-footer-label">
+                Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
+            </div>
+        </div>
+
     </div>
 
 </body>

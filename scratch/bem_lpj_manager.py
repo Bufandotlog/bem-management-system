@@ -587,6 +587,44 @@ def parse_docx(doc_path):
                 current_proker["dokumentasi"] = proker_docs
             continue
             
+    # Parse evaluasi kinerja pribadi
+    eval_pribadi_header_found = False
+    eval_pribadi_paras = []
+    for p in doc.paragraphs:
+        p_text = p.text.strip()
+        if not eval_pribadi_header_found and "evaluasi kinerja pribadi" in p_text.lower():
+            eval_pribadi_header_found = True
+            continue
+        if eval_pribadi_header_found:
+            # stop when we reach Section IX or F
+            if "evaluasi anggota dan internal" in p_text.lower() or p_text.startswith("IX.") or p_text.startswith("F.") or p_text.startswith("G.") or "ringkasan anggaran" in p_text.lower():
+                break
+            if p_text:
+                eval_pribadi_paras.append(p_text)
+    data["evaluasi_kinerja_pribadi"] = "\n\n".join(eval_pribadi_paras)
+
+    # Parse evaluasi anggota
+    eval_anggota_list = []
+    for table in doc.tables:
+        row0_text = [cell.text.strip().lower() for cell in table.rows[0].cells]
+        if "nama anggota" in row0_text and "kepribadian" in row0_text and "kinerja" in row0_text:
+            col_indices = {}
+            for h in ["nama anggota", "kepribadian", "kinerja"]:
+                for idx, hl in enumerate(row0_text):
+                    if h in hl:
+                        col_indices[h] = idx
+                        break
+            for r_idx in range(1, len(table.rows)):
+                row_cells = [cell.text.strip() for cell in table.rows[r_idx].cells]
+                if len(row_cells) > max(col_indices.values()):
+                    eval_anggota_list.append({
+                        "nama": row_cells[col_indices["nama anggota"]],
+                        "kepribadian": row_cells[col_indices["kepribadian"]],
+                        "kinerja": row_cells[col_indices["kinerja"]]
+                    })
+    if eval_anggota_list:
+        data["evaluasi_anggota_internal"] = eval_anggota_list
+
     # For global backward compatibility, let's aggregate anggaran summary from all prokers if not already set by BEM summary table
     if data["anggaran"] and data["anggaran_summary"]["debet"] == 0:
         total_deb = 0
@@ -705,6 +743,8 @@ def generate_lpj(output_path, config_data):
     pref_b = "II." if is_mubesma else "B."
     pref_c = "VI." if is_mubesma else "C."
     pref_d = "VII." if is_mubesma else "D."
+    pref_e = "VIII." if is_mubesma else "E."
+    pref_f = "IX." if is_mubesma else "F."
     
     if triwulan_str == "MUBESMA":
         add_minister_cover(doc, kementrian_str, years_str)
@@ -1188,6 +1228,76 @@ def generate_lpj(output_path, config_data):
         ]
         render_table_rows(table, fields, indent_cm=INDENT_PROKER, bold_label=False, prefix_alpha=True)
         doc.add_paragraph()
+        
+    # E. EVALUASI KINERJA PRIBADI
+    p_hdr_e = doc.add_paragraph()
+    p_hdr_e.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_hdr_e.paragraph_format.space_before = Pt(12)
+    p_hdr_e.paragraph_format.space_after = Pt(6)
+    p_hdr_e.paragraph_format.keep_with_next = True
+    format_run(p_hdr_e.add_run(f"{pref_e} EVALUASI KINERJA PRIBADI"), size_pt=12, bold=True)
+    
+    eval_pribadi = config_data.get("evaluasi_kinerja_pribadi", "")
+    p_eval_pribadi = doc.add_paragraph()
+    p_eval_pribadi.paragraph_format.left_indent = Cm(0.5)
+    p_eval_pribadi.paragraph_format.space_after = Pt(6)
+    p_eval_pribadi.paragraph_format.line_spacing = 1.15
+    if eval_pribadi:
+        run_ep = p_eval_pribadi.add_run(eval_pribadi)
+    else:
+        run_ep = p_eval_pribadi.add_run("—")
+    format_run(run_ep, size_pt=11)
+    
+    # F. EVALUASI ANGGOTA DAN INTERNAL DEPARTEMEN
+    p_hdr_f = doc.add_paragraph()
+    p_hdr_f.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_hdr_f.paragraph_format.space_before = Pt(12)
+    p_hdr_f.paragraph_format.space_after = Pt(6)
+    p_hdr_f.paragraph_format.keep_with_next = True
+    format_run(p_hdr_f.add_run(f"{pref_f} EVALUASI ANGGOTA DAN INTERNAL DEPARTEMEN"), size_pt=12, bold=True)
+    
+    eval_anggota = config_data.get("evaluasi_anggota_internal", [])
+    if eval_anggota:
+        table_eva = doc.add_table(rows=1, cols=4)
+        table_eva.style = 'Table Grid'
+        set_table_indent(table_eva, 0.5)
+        set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
+        
+        hdr_cells = table_eva.rows[0].cells
+        hdr_cells[0].text = 'No'
+        hdr_cells[1].text = 'Nama Anggota'
+        hdr_cells[2].text = 'Kepribadian'
+        hdr_cells[3].text = 'Kinerja'
+        
+        for cell in hdr_cells:
+            set_cell_shading(cell, "D3D3D3")
+            set_cell_margins(cell, top=100, bottom=100, left=120, right=120)
+            cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for run in cell.paragraphs[0].runs:
+                format_run(run, size_pt=11, bold=True)
+                
+        for idx_eva, agt in enumerate(eval_anggota, 1):
+            row_cells = table_eva.add_row().cells
+            set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
+            row_cells[0].text = str(idx_eva)
+            row_cells[1].text = agt.get('nama', '')
+            row_cells[2].text = agt.get('kepribadian', '')
+            row_cells[3].text = agt.get('kinerja', '')
+            
+            row_cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for i_cell, cell in enumerate(row_cells):
+                set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+                for paragraph in cell.paragraphs:
+                    paragraph.paragraph_format.line_spacing = 1.15
+                    paragraph.paragraph_format.space_after = Pt(2)
+                    for run in paragraph.runs:
+                        format_run(run, size_pt=10 if i_cell > 1 else 11)
+        doc.add_paragraph()
+    else:
+        p_eval_anggota = doc.add_paragraph()
+        p_eval_anggota.paragraph_format.left_indent = Cm(0.5)
+        run_ea = p_eval_anggota.add_run("—")
+        format_run(run_ea, size_pt=11)
         
     add_document_footer(doc, triwulan_str)
     doc.save(output_path)
@@ -1716,6 +1826,76 @@ def consolidate_lpj(output_path, file_list):
             ]
             render_table_rows(table, fields)
             master_doc.add_paragraph()
+            
+        # Evaluasi Kinerja Pribadi
+        p_sub5 = master_doc.add_paragraph()
+        p_sub5.paragraph_format.space_before = Pt(12)
+        p_sub5.paragraph_format.space_after = Pt(6)
+        p_sub5.paragraph_format.keep_with_next = True
+        sub5_title = "8. Evaluasi Kinerja Pribadi" if is_mubesma else "5. Evaluasi Kinerja Pribadi"
+        format_run(p_sub5.add_run(sub5_title), size_pt=12, bold=True)
+        
+        p_eval_prib = master_doc.add_paragraph()
+        p_eval_prib.paragraph_format.left_indent = Cm(0.5)
+        p_eval_prib.paragraph_format.space_after = Pt(6)
+        p_eval_prib.paragraph_format.line_spacing = 1.15
+        val_ep = pdata.get("evaluasi_kinerja_pribadi", "")
+        if val_ep:
+            run_ep = p_eval_prib.add_run(val_ep)
+        else:
+            run_ep = p_eval_prib.add_run("—")
+        format_run(run_ep, size_pt=11)
+        
+        # Evaluasi Anggota dan Internal Departemen
+        p_sub6 = master_doc.add_paragraph()
+        p_sub6.paragraph_format.space_before = Pt(12)
+        p_sub6.paragraph_format.space_after = Pt(6)
+        p_sub6.paragraph_format.keep_with_next = True
+        sub6_title = "9. Evaluasi Anggota dan Internal Departemen" if is_mubesma else "6. Evaluasi Anggota dan Internal Departemen"
+        format_run(p_sub6.add_run(sub6_title), size_pt=12, bold=True)
+        
+        eval_anggota = pdata.get("evaluasi_anggota_internal", [])
+        if eval_anggota:
+            table_eva = master_doc.add_table(rows=1, cols=4)
+            table_eva.style = 'Table Grid'
+            set_table_indent(table_eva, 0.5)
+            set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
+            
+            hdr_cells = table_eva.rows[0].cells
+            hdr_cells[0].text = 'No'
+            hdr_cells[1].text = 'Nama Anggota'
+            hdr_cells[2].text = 'Kepribadian'
+            hdr_cells[3].text = 'Kinerja'
+            
+            for cell in hdr_cells:
+                set_cell_shading(cell, "D3D3D3")
+                set_cell_margins(cell, top=100, bottom=100, left=120, right=120)
+                cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for run in cell.paragraphs[0].runs:
+                    format_run(run, size_pt=11, bold=True)
+                    
+            for idx_eva, agt in enumerate(eval_anggota, 1):
+                row_cells = table_eva.add_row().cells
+                set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
+                row_cells[0].text = str(idx_eva)
+                row_cells[1].text = agt.get('nama', '')
+                row_cells[2].text = agt.get('kepribadian', '')
+                row_cells[3].text = agt.get('kinerja', '')
+                
+                row_cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for i_cell, cell in enumerate(row_cells):
+                    set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+                    for paragraph in cell.paragraphs:
+                        paragraph.paragraph_format.line_spacing = 1.15
+                        paragraph.paragraph_format.space_after = Pt(2)
+                        for run in paragraph.runs:
+                            format_run(run, size_pt=10 if i_cell > 1 else 11)
+            master_doc.add_paragraph()
+        else:
+            p_eval_agt = master_doc.add_paragraph()
+            p_eval_agt.paragraph_format.left_indent = Cm(0.5)
+            run_ea = p_eval_agt.add_run("—")
+            format_run(run_ea, size_pt=11)
             
         master_doc.add_page_break()
         

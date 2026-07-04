@@ -312,6 +312,8 @@ CREATE TABLE "lpj_dokumen" (
   "anggaran" TEXT,
   "dokumentasi" TEXT,
   "file_path" VARCHAR(255),
+  "evaluasi_kinerja_pribadi" TEXT,
+  "evaluasi_anggota_internal" TEXT,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
