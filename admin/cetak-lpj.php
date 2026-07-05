@@ -85,6 +85,12 @@ if (!function_exists('parsePoints')) {
         return array_filter(array_map('trim', explode("\n", $val)));
     }
 }
+
+if (!function_exists('cleanPointPrefix')) {
+    function cleanPointPrefix($val) {
+        return preg_replace('/^\d+[\.\s-]*/', '', trim($val));
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -205,6 +211,17 @@ if (!function_exists('parsePoints')) {
             margin-bottom: 6px;
             text-align: justify;
             line-height: 1.15;
+        }
+
+        .list-item-justify {
+            display: block;
+            padding-left: 0.5cm;
+            text-indent: -0.5cm;
+            margin-bottom: 4px;
+            text-align: justify;
+        }
+        .list-item-justify:last-child {
+            margin-bottom: 0;
         }
 
         /* Tables */
@@ -581,7 +598,8 @@ if (!function_exists('parsePoints')) {
                                         echo htmlspecialchars($tujuans[0]);
                                     } else {
                                         foreach ($tujuans as $t_idx => $t_val) {
-                                            echo ($t_idx + 1) . '. ' . htmlspecialchars($t_val) . '<br>';
+                                            $t_val_clean = cleanPointPrefix($t_val);
+                                            echo '<div class="list-item-justify">' . ($t_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($t_val_clean) . '</div>';
                                         }
                                     }
                                     ?>
@@ -607,7 +625,8 @@ if (!function_exists('parsePoints')) {
                                         echo htmlspecialchars($pesertas[0]);
                                     } else {
                                         foreach ($pesertas as $p_idx => $p_val) {
-                                            echo ($p_idx + 1) . '. ' . htmlspecialchars($p_val) . '<br>';
+                                            $p_val_clean = cleanPointPrefix($p_val);
+                                            echo '<div class="list-item-justify">' . ($p_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($p_val_clean) . '</div>';
                                         }
                                     }
                                     ?>
@@ -623,7 +642,8 @@ if (!function_exists('parsePoints')) {
                                         echo htmlspecialchars($evals[0]);
                                     } else {
                                         foreach ($evals as $e_idx => $e_val) {
-                                            echo ($e_idx + 1) . '. ' . htmlspecialchars($e_val) . '<br>';
+                                            $e_val_clean = cleanPointPrefix($e_val);
+                                            echo '<div class="list-item-justify">' . ($e_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($e_val_clean) . '</div>';
                                         }
                                     }
                                     ?>
@@ -749,7 +769,8 @@ if (!function_exists('parsePoints')) {
                                         echo htmlspecialchars($tujuans[0]);
                                     } else {
                                         foreach ($tujuans as $t_idx => $t_val) {
-                                            echo ($t_idx + 1) . '. ' . htmlspecialchars($t_val) . '<br>';
+                                            $t_val_clean = cleanPointPrefix($t_val);
+                                            echo '<div class="list-item-justify">' . ($t_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($t_val_clean) . '</div>';
                                         }
                                     }
                                     ?>
@@ -775,7 +796,8 @@ if (!function_exists('parsePoints')) {
                                         echo htmlspecialchars($pesertas[0]);
                                     } else {
                                         foreach ($pesertas as $p_idx => $p_val) {
-                                            echo ($p_idx + 1) . '. ' . htmlspecialchars($p_val) . '<br>';
+                                            $p_val_clean = cleanPointPrefix($p_val);
+                                            echo '<div class="list-item-justify">' . ($p_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($p_val_clean) . '</div>';
                                         }
                                     }
                                     ?>
