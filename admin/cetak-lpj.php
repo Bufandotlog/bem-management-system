@@ -880,11 +880,15 @@ if (!function_exists('parsePoints')) {
                 $ketua_name = $keanggotaan_decoded['ketua'] ?? 'Nama Ketua';
                 $k_name = $lpj['kementerian_nama'] ?? 'Kementerian';
                 
+                $months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                $now_month = $months[(int)date('n') - 1];
+                $tgl_str = "Majalengka, " . date('d') . " " . $now_month . " " . date('Y');
+                
                 // Clean kementerian name
                 $clean_k_name = str_replace(['Kementerian ', 'Menteri ', 'Departemen '], '', $k_name);
                 $org_prefix = (strpos($_SERVER['REQUEST_URI'], '/bpm/') !== false) ? 'Departemen' : 'Menteri';
                 ?>
-                <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;">Majalengka, [Tanggal] [bulan] [tahun]</p>
+                <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;"><?php echo $tgl_str; ?></p>
                 <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;">Ketua Umum</p>
                 <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;"><?php echo "$org_prefix $clean_k_name,"; ?></p>
                 <br><br><br><br>
