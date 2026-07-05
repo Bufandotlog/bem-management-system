@@ -72,6 +72,7 @@ services:
       - ./scratch:/var/www/html/scratch:ro
     networks:
       - bem_internal
+      - bem_external
     # Mencegah app pakai RAM berlebihan
     mem_limit: 256m
     memswap_limit: 256m
