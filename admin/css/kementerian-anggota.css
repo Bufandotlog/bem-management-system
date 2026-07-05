@@ -242,9 +242,20 @@
     background: var(--bg-input-hover);
 }
 
-.anggota-fields input[type="text"]:focus {
+.anggota-fields input[type="text"]:focus,
+.anggota-fields select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px var(--primary-glow);
+    background: var(--bg-input-hover);
+}
+
+.anggota-fields select option {
+    background: var(--bg-input);
+    color: var(--text-light);
+}
+
+.anggota-fields select:hover {
+    border-color: #444;
     background: var(--bg-input-hover);
 }
 
