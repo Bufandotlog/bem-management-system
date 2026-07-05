@@ -10,7 +10,7 @@ if (isset($_GET['format']) && $_GET['format'] === 'json') {
     $selected_periode = isset($_GET['periode']) ? (int)$_GET['periode'] : 0;
 
     if (!$selected_periode) {
-        $periode_aktif    = dbFetchOne("SELECT * FROM periode_kepengurusan WHERE is_active = 1");
+        $periode_aktif    = dbFetchOne("SELECT id FROM periode_kepengurusan WHERE is_active = 1");
         $selected_periode = (int)($periode_aktif['id'] ?? 0);
     }
     
@@ -18,7 +18,17 @@ if (isset($_GET['format']) && $_GET['format'] === 'json') {
         echo json_encode(['error' => 'Kementerian ID tidak valid.']);
         exit();
     }
-    
+
+    // IDOR Prevention: Validasi kementerian milik periode yang diminta
+    $kemCheck = dbFetchOne(
+        "SELECT id FROM kementerian WHERE id = ? AND periode_id = ?",
+        [$kementerian_id, $selected_periode], "ii"
+    );
+    if (!$kemCheck) {
+        echo json_encode(['error' => 'Kementerian tidak ditemukan.']);
+        exit();
+    }
+
     $members = dbFetchAll(
         "SELECT nama, jabatan FROM anggota_kementerian 
          WHERE kementerian_id = ? AND periode_id = ? ORDER BY urutan",

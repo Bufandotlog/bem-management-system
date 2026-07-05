@@ -25,6 +25,14 @@ $isLocked     = $lockedUntil > 0 && time() < $lockedUntil;
 $lockWaitMins = $isLocked ? ceil(($lockedUntil - time()) / 60) : 0;
 $error = '';
 
+// IP-based lockout (persistent — tidak bisa dihapus dengan clear cookies)
+$ipMaxAttempts = 15;  // 15 kali gagal dari IP yang sama dalam 30 menit
+$ipAttempts    = countIpFailedAttempts(30);
+if (!$isLocked && $ipAttempts >= $ipMaxAttempts) {
+    $isLocked     = true;
+    $lockWaitMins = 30;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Exponential Delay (Exponential Backoff) based on previous failed attempts in session
@@ -44,12 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } else {
         // Cloudflare Turnstile Verification
+        // Skip di development karena Site Key hanya valid untuk domain produksi
+        $appEnv = defined('APP_ENV') ? APP_ENV : ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
         $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
         $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
         $turnstileSecret = $_ENV['TURNSTILE_SECRET_KEY'] ?? getenv('TURNSTILE_SECRET_KEY') ?: '';
 
         $turnstileSuccess = true;
-        if (!empty($turnstileSiteKey) && !empty($turnstileSecret)) {
+        if ($appEnv !== 'development' && !empty($turnstileSiteKey) && !empty($turnstileSecret)) {
             $turnstileSuccess = false;
             $postData = http_build_query([
                 'secret'   => $turnstileSecret,
@@ -86,6 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$turnstileSuccess) {
                 $error = 'Verifikasi Captcha (Turnstile) gagal. Silakan coba lagi.';
+                // Audit log: catat kegagalan Turnstile ke database
+                $attemptUsername = trim(substr($_POST['username'] ?? '', 0, 100));
+                recordFailedAttempt('turnstile_failed', $attemptUsername ?: null);
+                auditLog('TURNSTILE_FAIL', null, null, 'Turnstile verification failed for IP: ' . getClientIp() . ($attemptUsername ? " user: {$attemptUsername}" : ''));
             }
         }
 
@@ -107,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($user && !$user['is_active']) {
                     $error = 'Username atau password salah.';
                     $_SESSION['login_attempts'] = $attempts + 1;
+                    recordFailedAttempt('login_failed', $username);
 
                 } elseif ($user && password_verify($password, $user['password'])) {
 
@@ -154,9 +169,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $newAttempts = $attempts + 1;
                     $_SESSION['login_attempts'] = $newAttempts;
+                    recordFailedAttempt('login_failed', $username);
                     if ($newAttempts >= $maxAttempts) {
                         $_SESSION['login_locked_until'] = time() + $lockoutTime;
                         $error = "Terlalu banyak percobaan gagal. Akun dikunci selama 15 menit.";
+                        recordFailedAttempt('lockout', $username);
+                        auditLog('LOCKOUT', null, null, 'Account locked for IP: ' . getClientIp() . " user: {$username}");
                     } else {
                         $remaining = $maxAttempts - $newAttempts;
                         $error = "Username atau password salah. Sisa percobaan: {$remaining}.";
@@ -177,8 +195,9 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
     <title>Login Admin - BEM Kabinet Astawidya</title>
     <link rel="stylesheet" href="css/login.css?v=<?php echo $cssVer; ?>">
     <?php
+    $appEnvFront = defined('APP_ENV') ? APP_ENV : ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
     $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
-    $hasTurnstile = !empty($turnstileSiteKey) && !$isLocked;
+    $hasTurnstile = ($appEnvFront !== 'development') && !empty($turnstileSiteKey) && !$isLocked;
     if ($hasTurnstile):
     ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

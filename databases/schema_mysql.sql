@@ -382,4 +382,23 @@ CREATE TABLE `lpj_dokumen` (
   CONSTRAINT `fk_lpj_kementerian` FOREIGN KEY (`kementerian_id`) REFERENCES `kementerian` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------------------
+-- 15. Tabel `login_attempts_ip`
+-- Tracking gagal login per IP (anti brute-force persistent)
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS `login_attempts_ip`;
+CREATE TABLE `login_attempts_ip` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ip_address` varchar(45) NOT NULL,
+  `username` varchar(100) DEFAULT NULL,
+  `attempt_type` enum('login_failed','turnstile_failed','lockout') NOT NULL DEFAULT 'login_failed',
+  `user_agent` varchar(500) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_ip_address` (`ip_address`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_ip_created` (`ip_address`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;

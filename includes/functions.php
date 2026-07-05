@@ -60,6 +60,87 @@ try {
     }
 }
 
+// Auto-migration: Pastikan tabel login_attempts_ip ada
+try {
+    dbQuery("SELECT 1 FROM login_attempts_ip LIMIT 1");
+} catch (Exception $e) {
+    try {
+        dbQuery("CREATE TABLE IF NOT EXISTS login_attempts_ip (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            ip_address VARCHAR(45) NOT NULL,
+            username VARCHAR(100) DEFAULT NULL,
+            attempt_type ENUM('login_failed','turnstile_failed','lockout') NOT NULL DEFAULT 'login_failed',
+            user_agent VARCHAR(500) DEFAULT NULL,
+            created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP(),
+            PRIMARY KEY (id),
+            KEY idx_ip_address (ip_address),
+            KEY idx_created_at (created_at),
+            KEY idx_ip_created (ip_address, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Exception $ex) {
+        // Abaikan jika database belum siap
+    }
+}
+
+// ============================================
+// FUNGSI IP-BASED LOGIN TRACKING
+// ============================================
+
+/**
+ * Ambil IP address klien (mendukung proxy/Cloudflare).
+ */
+function getClientIp(): string {
+    $ip = $_SERVER['HTTP_CF_CONNECTING_IP']
+       ?? $_SERVER['HTTP_X_FORWARDED_FOR']
+       ?? $_SERVER['REMOTE_ADDR']
+       ?? '0.0.0.0';
+    return mb_substr(trim(explode(',', $ip)[0]), 0, 45);
+}
+
+/**
+ * Catat percobaan login gagal berdasarkan IP ke database.
+ *
+ * @param string $type   'login_failed', 'turnstile_failed', atau 'lockout'
+ * @param string|null $username Username yang dicoba (jika ada)
+ */
+function recordFailedAttempt(string $type = 'login_failed', ?string $username = null): void {
+    try {
+        $ip = getClientIp();
+        $ua = mb_substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
+        dbQuery(
+            "INSERT INTO login_attempts_ip (ip_address, username, attempt_type, user_agent) VALUES (?, ?, ?, ?)",
+            [$ip, $username, $type, $ua], "ssss"
+        );
+
+        // Cleanup: hapus record > 24 jam (1% chance per request)
+        if (rand(1, 100) === 1) {
+            dbQuery("DELETE FROM login_attempts_ip WHERE created_at < NOW() - INTERVAL 24 HOUR");
+        }
+    } catch (Exception $e) {
+        error_log("recordFailedAttempt: " . $e->getMessage());
+    }
+}
+
+/**
+ * Hitung jumlah percobaan login gagal dari IP tertentu dalam rentang waktu.
+ *
+ * @param int $windowMinutes Rentang waktu (menit)
+ * @return int Jumlah percobaan gagal
+ */
+function countIpFailedAttempts(int $windowMinutes = 30): int {
+    try {
+        $ip = getClientIp();
+        $row = dbFetchOne(
+            "SELECT COUNT(*) AS cnt FROM login_attempts_ip
+             WHERE ip_address = ? AND created_at > NOW() - INTERVAL ? MINUTE",
+            [$ip, $windowMinutes], "si"
+        );
+        return (int)($row['cnt'] ?? 0);
+    } catch (Exception $e) {
+        return 0;
+    }
+}
+
 
 // ============================================
 // FUNGSI HELPER PATH & URL (unchanged)

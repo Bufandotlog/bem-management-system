@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Kesalahan Server</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a, #1a2f4a);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .error-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px 20px;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f44336, #ff7043);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        .error-title {
+            font-size: 1.5rem;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+        .error-desc {
+            color: #888;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .btn-home {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #4A90E2;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-home:hover {
+            background: #6BA5E8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <div class="error-code">500</div>
+        <h1 class="error-title">Kesalahan Server</h1>
+        <p class="error-desc">
+            Maaf, terjadi kesalahan pada server kami.
+            Tim teknis telah diberitahu dan sedang menangani masalah ini.
+            Silakan coba lagi beberapa saat kemudian.
+        </p>
+        <a href="/" class="btn-home">← Kembali ke Beranda</a>
+    </div>
+</body>
+</html>
