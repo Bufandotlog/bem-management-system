@@ -1338,31 +1338,19 @@ def generate_lpj(output_path, config_data):
     doc.add_paragraph()
     doc.add_paragraph()
     
-    import datetime
-    months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-    now = datetime.datetime.now()
-    tgl_str = f"Majalengka, {now.day} {months[now.month - 1]} {now.year}"
-    
-    p_sig = doc.add_paragraph()
-    p_sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig.paragraph_format.line_spacing = 1.15
-    format_run(p_sig.add_run(tgl_str), size_pt=12)
-    
-    p_sig_dept = doc.add_paragraph()
-    p_sig_dept.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig_dept.paragraph_format.line_spacing = 1.15
-    
-    kementrian_formatted = format_kementerian_title(kementrian_str)
-    # The user wants just the name, but the screenshot says "Departemen Adkesma". 
-    # Let's use the formatted kementerian name or original.
-    org_prefix = "Kementerian" if "bem" in output_path.lower() else "Departemen"
     clean_k_name = kementrian_str.replace("Kementerian ", "").replace("Menteri ", "").replace("Departemen ", "")
-    format_run(p_sig_dept.add_run(f"{org_prefix} {clean_k_name}"), size_pt=12)
+    org_prefix = "Kementerian" if "bem" in output_path.lower() else "Departemen"
+    title_str = f"Ketua Umum {org_prefix} {clean_k_name},"
     
     p_sig_ket = doc.add_paragraph()
     p_sig_ket.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     p_sig_ket.paragraph_format.line_spacing = 1.15
-    format_run(p_sig_ket.add_run("Ketua,\n\n\n\n\n"), size_pt=12)
+    format_run(p_sig_ket.add_run(title_str + "
+
+
+
+
+"), size_pt=12)
     
     ketua_name = config_data.get("keanggotaan", {}).get("ketua", "Nama Ketua")
     
@@ -1372,12 +1360,6 @@ def generate_lpj(output_path, config_data):
     run_name = p_sig_name.add_run(ketua_name)
     run_name.underline = True
     format_run(run_name, size_pt=12, bold=True)
-    
-    p_sig_nim = doc.add_paragraph()
-    p_sig_nim.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig_nim.paragraph_format.line_spacing = 1.15
-    # Since we don't have NIM in the form, we'll leave a placeholder or just NIM if we don't know it.
-    format_run(p_sig_nim.add_run("NIM: ...................."), size_pt=12)
         
     add_document_footer(doc, triwulan_str)
     doc.save(output_path)

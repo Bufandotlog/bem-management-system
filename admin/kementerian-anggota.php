@@ -187,9 +187,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" name="nama[]"
                            value="<?php echo htmlspecialchars($a['nama'], ENT_QUOTES, 'UTF-8'); ?>"
                            placeholder="Nama Lengkap" required>
-                    <input type="text" name="jabatan[]"
-                           value="<?php echo htmlspecialchars($a['jabatan'], ENT_QUOTES, 'UTF-8'); ?>"
-                           placeholder="Jabatan" required>
+                    <select name="jabatan[]" required style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 15px; color: var(--text-main); font-size: 0.95rem;">
+                        <option value="">-- Pilih Jabatan --</option>
+                        <?php 
+                        $jab_opts = [
+                            "Ketua Umum " . $kementerian['nama'],
+                            "Sekretaris " . $kementerian['nama'],
+                            "Bendahara " . $kementerian['nama'],
+                            "Anggota " . $kementerian['nama']
+                        ];
+                        foreach($jab_opts as $opt) {
+                            $sel = ($a['jabatan'] === $opt) ? 'selected' : '';
+                            echo '<option value="'.htmlspecialchars($opt, ENT_QUOTES, 'UTF-8').'" '.$sel.'>'.htmlspecialchars($opt, ENT_QUOTES, 'UTF-8').'</option>';
+                        }
+                        if (!in_array($a['jabatan'], $jab_opts) && !empty($a['jabatan'])) {
+                            echo '<option value="'.htmlspecialchars($a['jabatan'], ENT_QUOTES, 'UTF-8').'" selected>'.htmlspecialchars($a['jabatan'], ENT_QUOTES, 'UTF-8').' (Custom)</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="anggota-foto-input">
@@ -221,7 +236,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="anggota-fields">
                     <input type="text" name="nama[]" placeholder="Nama Lengkap" required>
-                    <input type="text" name="jabatan[]" placeholder="Jabatan" required>
+                    <select name="jabatan[]" required style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 15px; color: var(--text-main); font-size: 0.95rem;">
+                        <option value="">-- Pilih Jabatan --</option>
+                        <?php 
+                        $jab_opts = [
+                            "Ketua Umum " . $kementerian['nama'],
+                            "Sekretaris " . $kementerian['nama'],
+                            "Bendahara " . $kementerian['nama'],
+                            "Anggota " . $kementerian['nama']
+                        ];
+                        foreach($jab_opts as $opt) {
+                            echo '<option value="'.htmlspecialchars($opt, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($opt, ENT_QUOTES, 'UTF-8').'</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
                 <div class="anggota-foto-input">
                     <input type="file" name="foto[]" accept="image/*">
@@ -263,7 +291,13 @@ function tambahAnggota() {
         `</div>` +
         `<div class="anggota-fields">` +
             `<input type="text" name="nama[]" placeholder="Nama Lengkap" required>` +
-            `<input type="text" name="jabatan[]" placeholder="Jabatan" required>` +
+            `<select name="jabatan[]" required style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 15px; color: var(--text-main); font-size: 0.95rem;">` +
+                `<option value="">-- Pilih Jabatan --</option>` +
+                `<option value="Ketua Umum <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?>">Ketua Umum <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?></option>` +
+                `<option value="Sekretaris <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?>">Sekretaris <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?></option>` +
+                `<option value="Bendahara <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?>">Bendahara <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?></option>` +
+                `<option value="Anggota <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?>">Anggota <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?></option>` +
+            `</select>` +
         `</div>` +
         `<div class="anggota-foto-input">` +
             `<input type="file" name="foto[]" accept="image/*">` +
