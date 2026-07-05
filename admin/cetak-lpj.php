@@ -877,7 +877,7 @@ if (!function_exists('parsePoints')) {
             
             <div style="margin-top: 30px; margin-right: 0.5cm; float: right; text-align: right; width: 6cm;">
                 <?php
-                $ketua_name = $keanggotaan_decoded['ketua'] ?? 'Nama Ketua';
+                $ketua_name = $keanggotaan['ketua'] ?? 'Nama Ketua';
                 $k_name = $lpj['kementerian_nama'] ?? 'Kementerian';
                 
                 $months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
