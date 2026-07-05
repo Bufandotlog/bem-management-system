@@ -800,8 +800,9 @@ if (!function_exists('parsePoints')) {
                 Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
             </div>
         </div>
+        <?php endif; ?>
 
-        <!-- 5. EVALUASI KINERJA PRIBADI & INTERNAL MENTERI -->
+        <!-- 5. EVALUASI KINERJA PRIBADI & INTERNAL MENTERI & PENUTUP -->
         <div class="page">
             <div class="section-header">
                 <?php echo $is_mubesma ? "VIII. EVALUASI KINERJA PRIBADI" : "E. EVALUASI KINERJA PRIBADI"; ?>
@@ -817,13 +818,7 @@ if (!function_exists('parsePoints')) {
                 <p class="narrative-p"><?php echo htmlspecialchars($line); ?></p>
             <?php endforeach; ?>
 
-            <div class="page-footer-label">
-                Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
-            </div>
-        </div>
-
-        <div class="page">
-            <div class="section-header">
+            <div class="section-header" style="margin-top: 30px;">
                 <?php echo $is_mubesma ? "IX. EVALUASI ANGGOTA DAN INTERNAL MENTERI" : "F. EVALUASI ANGGOTA DAN INTERNAL MENTERI"; ?>
             </div>
             
@@ -855,15 +850,8 @@ if (!function_exists('parsePoints')) {
                 </table>
             <?php endif; ?>
 
-            <div class="page-footer-label">
-                Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- PENUTUP SECTION -->
-        <div class="page" style="page-break-before: always;">
-            <div class="section-header">
+            <!-- PENUTUP SECTION -->
+            <div class="section-header" style="margin-top: 30px;">
                 <?php echo $is_mubesma ? "X. PENUTUP" : "D. PENUTUP"; ?>
             </div>
             <?php 

@@ -263,7 +263,7 @@ def render_table_rows(table, fields, indent_cm=0, bold_label=True, prefix_alpha=
             cell.text = str(f_val) if f_val else "—"
             
         # Formatting
-        for cell_item in row.cells:
+        for c_idx, cell_item in enumerate(row.cells):
             set_cell_margins(cell_item, top=60, bottom=60, left=100, right=100)
             for p in cell_item.paragraphs:
                 p.paragraph_format.line_spacing = 1.15
@@ -273,9 +273,9 @@ def render_table_rows(table, fields, indent_cm=0, bold_label=True, prefix_alpha=
                 else:
                     p.paragraph_format.space_after = Pt(0)
                 
-                if cell_item == row.cells[1]:
+                if c_idx == 1:
                     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                elif cell_item == row.cells[2]:
+                elif c_idx == 2:
                     p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 else:
                     p.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -1240,7 +1240,6 @@ def generate_lpj(output_path, config_data):
                 ("Dokumentasi", pk.get("Dokumentasi", "—"))
             ]
             render_table_rows(table, fields, indent_cm=INDENT_PROKER, bold_label=False, prefix_alpha=True)
-            doc.add_paragraph()
             
     # E. EVALUASI KINERJA PRIBADI
     p_hdr_e = doc.add_paragraph()
@@ -1317,7 +1316,6 @@ def generate_lpj(output_path, config_data):
                     paragraph.paragraph_format.space_after = Pt(2)
                     for run in paragraph.runs:
                         format_run(run, size_pt=10 if i_cell > 1 else 11)
-        doc.add_paragraph()
     else:
         p_eval_anggota = doc.add_paragraph()
         p_eval_anggota.paragraph_format.left_indent = Cm(0.5)
@@ -1325,8 +1323,6 @@ def generate_lpj(output_path, config_data):
         format_run(run_ea, size_pt=11)
             
     # PENUTUP SECTION
-    doc.add_paragraph() # Add some spacing
-    
     p_hdr_penutup = doc.add_paragraph()
     p_hdr_penutup.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_hdr_penutup.paragraph_format.space_before = Pt(12)
@@ -1353,9 +1349,6 @@ def generate_lpj(output_path, config_data):
         format_run(p_penutup.add_run(line_clean), size_pt=12)
         
     # Signature Block
-    doc.add_paragraph()
-    doc.add_paragraph()
-    
     import re
     clean_k_name = re.sub(r'^(Kementerian|Menteri|Departemen)\s+', '', kementrian_str, flags=re.IGNORECASE)
     if not clean_k_name or clean_k_name.lower() == 'kementerian':
@@ -1369,6 +1362,7 @@ def generate_lpj(output_path, config_data):
     
     p_sig_date = doc.add_paragraph()
     p_sig_date.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_date.paragraph_format.space_before = Pt(36)
     p_sig_date.paragraph_format.line_spacing = 1.15
     format_run(p_sig_date.add_run(tgl_str), size_pt=12)
     
@@ -1920,7 +1914,6 @@ def consolidate_lpj(output_path, file_list):
                 ("Dokumentasi", pk.get("Dokumentasi", "—"))
             ]
             render_table_rows(table, fields)
-            master_doc.add_paragraph()
             
         # Evaluasi Kinerja Pribadi
         p_sub5 = master_doc.add_paragraph()
@@ -1997,7 +1990,6 @@ def consolidate_lpj(output_path, file_list):
                         paragraph.paragraph_format.space_after = Pt(2)
                         for run in paragraph.runs:
                             format_run(run, size_pt=10 if i_cell > 1 else 11)
-            master_doc.add_paragraph()
         else:
             p_eval_agt = master_doc.add_paragraph()
             p_eval_agt.paragraph_format.left_indent = Cm(0.5)
