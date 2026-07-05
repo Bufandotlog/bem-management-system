@@ -64,6 +64,8 @@ services:
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
       DEBUG_TOKEN: ${DEBUG_TOKEN}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
     volumes:
       - ./uploads:/var/www/html/uploads
       - ./logs:/var/www/html/logs
