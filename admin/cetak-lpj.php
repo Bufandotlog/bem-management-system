@@ -883,9 +883,10 @@ if (!function_exists('parsePoints')) {
                 // Clean kementerian name
                 $clean_k_name = str_replace(['Kementerian ', 'Menteri ', 'Departemen '], '', $k_name);
                 $org_prefix = (strpos($_SERVER['REQUEST_URI'], '/bpm/') !== false) ? 'Departemen' : 'Menteri';
-                $title_str = "Ketua Umum $org_prefix $clean_k_name,";
                 ?>
-                <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;"><?php echo $title_str; ?></p>
+                <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;">Majalengka, [Tanggal] [bulan] [tahun]</p>
+                <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;">Ketua Umum</p>
+                <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;"><?php echo "$org_prefix $clean_k_name,"; ?></p>
                 <br><br><br><br>
                 <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif; font-weight: bold; text-decoration: underline;"><?php echo htmlspecialchars($ketua_name); ?></p>
             </div>

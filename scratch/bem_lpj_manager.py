@@ -1340,12 +1340,21 @@ def generate_lpj(output_path, config_data):
     
     clean_k_name = kementrian_str.replace("Kementerian ", "").replace("Menteri ", "").replace("Departemen ", "")
     org_prefix = "Kementerian" if "bem" in output_path.lower() else "Departemen"
-    title_str = f"Ketua Umum {org_prefix} {clean_k_name},"
     
-    p_sig_ket = doc.add_paragraph()
-    p_sig_ket.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig_ket.paragraph_format.line_spacing = 1.15
-    format_run(p_sig_ket.add_run(title_str + "\n\n\n\n\n"), size_pt=12)
+    p_sig_date = doc.add_paragraph()
+    p_sig_date.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_date.paragraph_format.line_spacing = 1.15
+    format_run(p_sig_date.add_run("Majalengka, [Tanggal] [bulan] [tahun]"), size_pt=12)
+    
+    p_sig_ket1 = doc.add_paragraph()
+    p_sig_ket1.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_ket1.paragraph_format.line_spacing = 1.15
+    format_run(p_sig_ket1.add_run("Ketua Umum"), size_pt=12)
+
+    p_sig_ket2 = doc.add_paragraph()
+    p_sig_ket2.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_sig_ket2.paragraph_format.line_spacing = 1.15
+    format_run(p_sig_ket2.add_run(f"{org_prefix} {clean_k_name},\\n\\n\\n\\n\\n"), size_pt=12)
     
     ketua_name = config_data.get("keanggotaan", {}).get("ketua", "Nama Ketua")
     
