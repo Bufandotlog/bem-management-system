@@ -178,7 +178,8 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
     <link rel="stylesheet" href="css/login.css?v=<?php echo $cssVer; ?>">
     <?php
     $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
-    if (!empty($turnstileSiteKey)):
+    $hasTurnstile = !empty($turnstileSiteKey) && !$isLocked;
+    if ($hasTurnstile):
     ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <?php endif; ?>
@@ -203,32 +204,53 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
             </div>
         <?php endif; ?>
 
-        <form method="POST" autocomplete="off">
+        <form method="POST" autocomplete="off" id="loginForm" class="<?php echo $hasTurnstile ? 'form-locked' : ''; ?>">
             <input type="hidden" name="csrf_token"
                    value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
+
+            <?php if ($hasTurnstile): ?>
+            <div class="turnstile-notice" id="turnstileNotice">
+                ⚠ Selesaikan verifikasi keamanan terlebih dahulu
+            </div>
+            <?php endif; ?>
+
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username"
-                       maxlength="100" required autofocus
+                       maxlength="100" required <?php echo $hasTurnstile ? '' : 'autofocus'; ?>
                        <?php echo $isLocked ? 'disabled' : ''; ?>>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password"
-                       maxlength="200" required
-                       <?php echo $isLocked ? 'disabled' : ''; ?>>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password"
+                           maxlength="200" required
+                           <?php echo $isLocked ? 'disabled' : ''; ?>>
+                    <button type="button" class="toggle-password" id="togglePassword" aria-label="Tampilkan password" tabindex="-1">
+                        <!-- Eye icon (show) -->
+                        <svg id="eyeShow" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                        <!-- Eye-off icon (hide) - hidden by default -->
+                        <svg id="eyeHide" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+                            <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 001 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             
-            <?php
-            $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
-            if (!empty($turnstileSiteKey) && !$isLocked):
-            ?>
+            <?php if ($hasTurnstile): ?>
             <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
-                <div class="cf-turnstile" data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey, ENT_QUOTES, 'UTF-8'); ?>" data-theme="dark"></div>
+                <div class="cf-turnstile"
+                     data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey, ENT_QUOTES, 'UTF-8'); ?>"
+                     data-theme="dark"
+                     data-callback="onTurnstileSuccess"
+                     data-error-callback="onTurnstileError"
+                     data-expired-callback="onTurnstileExpired"></div>
             </div>
             <?php endif; ?>
 
-            <button type="submit" class="btn-login"
+            <button type="submit" class="btn-login" id="btnLogin"
                     <?php echo $isLocked ? 'disabled' : ''; ?>>
                 <?php echo $isLocked ? "Dikunci ({$lockWaitMins} menit)" : 'Login'; ?>
             </button>
@@ -239,5 +261,64 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
         </div>
     </div>
 </div>
+
+<script>
+// ── Password Toggle ──────────────────────────────
+(function() {
+    var toggle = document.getElementById('togglePassword');
+    var input  = document.getElementById('password');
+    var eyeShow = document.getElementById('eyeShow');
+    var eyeHide = document.getElementById('eyeHide');
+
+    if (toggle && input) {
+        toggle.addEventListener('click', function() {
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeShow.style.display = 'none';
+                eyeHide.style.display = 'block';
+                toggle.setAttribute('aria-label', 'Sembunyikan password');
+            } else {
+                input.type = 'password';
+                eyeShow.style.display = 'block';
+                eyeHide.style.display = 'none';
+                toggle.setAttribute('aria-label', 'Tampilkan password');
+            }
+        });
+    }
+})();
+
+// ── Turnstile Callbacks ──────────────────────────
+function onTurnstileSuccess(token) {
+    var form   = document.getElementById('loginForm');
+    var notice = document.getElementById('turnstileNotice');
+    if (form) {
+        form.classList.remove('form-locked');
+        document.getElementById('username').focus();
+    }
+    if (notice) notice.style.display = 'none';
+}
+
+function onTurnstileError() {
+    var form   = document.getElementById('loginForm');
+    var notice = document.getElementById('turnstileNotice');
+    if (form) form.classList.add('form-locked');
+    if (notice) {
+        notice.textContent = '✖ Verifikasi gagal. Silakan muat ulang halaman.';
+        notice.style.color = '#f44336';
+        notice.style.display = 'block';
+    }
+}
+
+function onTurnstileExpired() {
+    var form   = document.getElementById('loginForm');
+    var notice = document.getElementById('turnstileNotice');
+    if (form) form.classList.add('form-locked');
+    if (notice) {
+        notice.textContent = '⚠ Verifikasi kedaluwarsa. Selesaikan ulang verifikasi.';
+        notice.style.color = '#FF9800';
+        notice.style.display = 'block';
+    }
+}
+</script>
 </body>
 </html>
