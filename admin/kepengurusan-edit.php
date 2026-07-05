@@ -309,7 +309,7 @@ $posisiEncoded = urlencode($posisi);
     <div class="form-section">
         <h2><i class="fas fa-info-circle"></i> Informasi Dasar</h2>
         <div class="form-group">
-            <label><?php echo in_array($posisi, ['sekretaris_umum', 'bendahara_umum']) ? 'Nama Departemen' : 'Nama Lengkap'; ?></label>
+            <label><?php echo in_array($posisi, ['sekretaris_umum', 'bendahara_umum']) ? 'Nama Menteri' : 'Nama Lengkap'; ?></label>
             <input type="text" name="nama"
                    value="<?php echo htmlspecialchars($data['nama'] ?? ''); ?>"
                    placeholder="Masukkan nama..." required>

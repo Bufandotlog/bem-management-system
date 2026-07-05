@@ -191,7 +191,8 @@ if (!function_exists('parsePoints')) {
             text-align: justify;
             text-indent: 1cm;
             line-height: 1.5;
-            margin-bottom: 12px;
+            margin-top: 0;
+            margin-bottom: 0;
             margin-left: 0.5cm;
         }
 
@@ -219,6 +220,7 @@ if (!function_exists('parsePoints')) {
             vertical-align: top;
             padding: 4px 6px;
             line-height: 1.2;
+            text-align: justify;
         }
         .borderless-table td.col-label {
             width: 4.8cm;
@@ -799,7 +801,7 @@ if (!function_exists('parsePoints')) {
             </div>
         </div>
 
-        <!-- 5. EVALUASI KINERJA PRIBADI & INTERNAL DEPARTEMEN -->
+        <!-- 5. EVALUASI KINERJA PRIBADI & INTERNAL MENTERI -->
         <div class="page">
             <div class="section-header">
                 <?php echo $is_mubesma ? "VIII. EVALUASI KINERJA PRIBADI" : "E. EVALUASI KINERJA PRIBADI"; ?>
@@ -822,7 +824,7 @@ if (!function_exists('parsePoints')) {
 
         <div class="page">
             <div class="section-header">
-                <?php echo $is_mubesma ? "IX. EVALUASI ANGGOTA DAN INTERNAL DEPARTEMEN" : "F. EVALUASI ANGGOTA DAN INTERNAL DEPARTEMEN"; ?>
+                <?php echo $is_mubesma ? "IX. EVALUASI ANGGOTA DAN INTERNAL MENTERI" : "F. EVALUASI ANGGOTA DAN INTERNAL MENTERI"; ?>
             </div>
             
             <?php
@@ -889,7 +891,7 @@ if (!function_exists('parsePoints')) {
                 if (empty($clean_k_name) || strtolower($clean_k_name) === 'kementerian') {
                     $clean_k_name = 'Luar Kampus'; // Fallback for empty
                 }
-                $org_prefix = (strpos($_SERVER['REQUEST_URI'], '/bpm/') !== false) ? 'Departemen' : 'Menteri';
+                $org_prefix = 'Menteri';
                 ?>
                 <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;"><?php echo $tgl_str; ?></p>
                 <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;">Ketua Umum</p>

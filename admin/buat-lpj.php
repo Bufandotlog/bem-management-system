@@ -387,7 +387,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Evaluasi Kinerja Pribadi
         $evaluasi_kinerja_pribadi = sanitizeText($_POST['evaluasi_kinerja_pribadi'] ?? '');
 
-        // Evaluasi Anggota dan Internal Departemen
+        // Evaluasi Anggota dan Internal Menteri
         $eva_nama = $_POST['eva_nama'] ?? [];
         $eva_kepribadian = $_POST['eva_kepribadian'] ?? [];
         $eva_kinerja = $_POST['eva_kinerja'] ?? [];
@@ -1404,7 +1404,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 $keanggotaan_val = json_decode($edit_data['keanggotaan'] ?? '', true) ?: [];
                 ?>
                 <div class="form-group">
-                    <label>Ketua Menteri / Kepala Departemen</label>
+                    <label>Ketua Menteri / Kepala Menteri</label>
                     <input type="text" name="anggota_ketua" id="anggotaKetua" class="form-control field-keanggotaan" value="<?php echo htmlspecialchars($keanggotaan_val['ketua'] ?? ''); ?>" required placeholder="Nama Ketua Menteri...">
                     <div class="autofill-indicator" id="indicator_ketua"></div>
                 </div>
@@ -1733,7 +1733,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 <hr style="border: 0; border-top: 1px solid #3a4555; margin: 30px 0;">
                 
                 <div class="form-group">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">Evaluasi Anggota & Internal Departemen</label>
+                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">Evaluasi Anggota & Internal Menteri</label>
                     <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 15px;">Tabel evaluasi ini otomatis memuat nama-nama pengurus kementerian dari Langkah 2. Berikan penilaian deskriptif mengenai Kepribadian dan Kinerja masing-masing anggota.</p>
                     
                     <div class="table-responsive">

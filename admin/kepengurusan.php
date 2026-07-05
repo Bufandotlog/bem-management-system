@@ -150,7 +150,7 @@ $periode_info = htmlspecialchars(
         <div class="stat-content">
             <div class="stat-value"><?php echo $total_kementerian; ?></div>
             <div class="stat-label">Kementerian</div>
-            <div class="stat-detail">Total departemen</div>
+            <div class="stat-detail">Total menteri</div>
         </div>
     </div>
     <div class="stat-card">
