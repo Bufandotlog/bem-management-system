@@ -27,6 +27,13 @@ if (!$periode_id) {
     $periode_id    = (int)($periode_aktif['id'] ?? 0);
 }
 
+// Validasi periode exists (IDOR prevention)
+$periode_check = dbFetchOne("SELECT id FROM periode_kepengurusan WHERE id = ?", [$periode_id], "i");
+if (!$periode_check) {
+    header('Location: kepengurusan.php');
+    exit;
+}
+
 // ===========================================
 // AMBIL DATA PARENT (BPH / KEMENTERIAN)
 // ===========================================
@@ -35,30 +42,21 @@ $anggota_table = '';
 $foreign_key   = '';
 
 if ($type === 'bph') {
-    // Jika ada periode_id, filter dengan periode — jika tidak, cari hanya by id
-    $parent = $periode_id
-        ? dbFetchOne(
-            "SELECT * FROM struktur_bph WHERE id = ? AND periode_id = ?",
-            [$id, $periode_id], "ii"
-          )
-        : dbFetchOne(
-            "SELECT * FROM struktur_bph WHERE id = ?",
-            [$id], "i"
-          );
+    // Pastikan parent BPH cocok dengan periode_id yang valid
+    $parent = dbFetchOne(
+        "SELECT * FROM struktur_bph WHERE id = ? AND periode_id = ?",
+        [$id, $periode_id], "ii"
+    );
 
     $anggota_table = 'anggota_bph';
     $foreign_key   = 'bph_id';
 
 } else {
-    $parent = $periode_id
-        ? dbFetchOne(
-            "SELECT * FROM kementerian WHERE id = ? AND periode_id = ?",
-            [$id, $periode_id], "ii"
-          )
-        : dbFetchOne(
-            "SELECT * FROM kementerian WHERE id = ?",
-            [$id], "i"
-          );
+    // Pastikan parent kementerian cocok dengan periode_id yang valid
+    $parent = dbFetchOne(
+        "SELECT * FROM kementerian WHERE id = ? AND periode_id = ?",
+        [$id, $periode_id], "ii"
+    );
 
     $anggota_table = 'anggota_kementerian';
     $foreign_key   = 'kementerian_id';
@@ -69,25 +67,27 @@ if (!$parent) {
     exit;
 }
 
+// Filter out dummy/test data (IDOR / Data exposure prevention)
+if (stripos($parent['nama'] ?? '', 'dummy') !== false || stripos($parent['nama'] ?? '', 'test') !== false ||
+    (isset($parent['posisi']) && stripos($parent['posisi'], 'dummy') !== false) ||
+    (isset($parent['jabatan']) && stripos($parent['jabatan'], 'dummy') !== false)) {
+    header('Location: kepengurusan.php');
+    exit;
+}
+
 // Gunakan periode_id dari data parent jika belum ada (extra safety)
 if (!$periode_id && !empty($parent['periode_id'])) {
     $periode_id = (int)$parent['periode_id'];
 }
 
 // ===========================================
-// AMBIL ANGGOTA
+// AMBIL ANGGOTA (Hanya field non-sensitif untuk keamanan data / PII protection)
 // ===========================================
-$anggota_list = $periode_id
-    ? dbFetchAll(
-        "SELECT * FROM {$anggota_table}
-         WHERE {$foreign_key} = ? AND periode_id = ? ORDER BY urutan",
-        [$parent['id'], $periode_id], "ii"
-      )
-    : dbFetchAll(
-        "SELECT * FROM {$anggota_table}
-         WHERE {$foreign_key} = ? ORDER BY urutan",
-        [$parent['id']], "i"
-      );
+$anggota_list = dbFetchAll(
+    "SELECT nama, jabatan, foto FROM {$anggota_table}
+     WHERE {$foreign_key} = ? AND periode_id = ? ORDER BY urutan",
+    [$parent['id'], $periode_id], "ii"
+);
 
 // ===========================================
 // TENTUKAN TIPE HEADER
