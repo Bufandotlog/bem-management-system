@@ -45,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Cloudflare Turnstile Verification
         $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
-        $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? '';
-        $turnstileSecret = $_ENV['TURNSTILE_SECRET_KEY'] ?? '';
+        $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
+        $turnstileSecret = $_ENV['TURNSTILE_SECRET_KEY'] ?? getenv('TURNSTILE_SECRET_KEY') ?: '';
 
         $turnstileSuccess = true;
         if (!empty($turnstileSiteKey) && !empty($turnstileSecret)) {
@@ -177,7 +177,7 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
     <title>Login Admin - BEM Kabinet Astawidya</title>
     <link rel="stylesheet" href="css/login.css?v=<?php echo $cssVer; ?>">
     <?php
-    $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? '';
+    $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
     if (!empty($turnstileSiteKey)):
     ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -220,7 +220,7 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
             </div>
             
             <?php
-            $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? '';
+            $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
             if (!empty($turnstileSiteKey) && !$isLocked):
             ?>
             <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
