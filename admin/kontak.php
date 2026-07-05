@@ -30,16 +30,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emailRaw = sanitizeText($_POST['email'] ?? '', 100);
     $email    = filter_var($emailRaw, FILTER_VALIDATE_EMAIL) ? $emailRaw : '';
 
-    // map_embed — hanya izinkan iframe dari Google Maps, buang apapun selain itu
+    // map_embed — parsing robust untuk Google Maps
     $map_raw   = trim($_POST['map_embed'] ?? '');
     $map_embed = '';
+    
     if (!empty($map_raw)) {
-        // Ekstrak src dari iframe Google Maps saja
+        // Cek apakah input berupa iframe penuh
         if (preg_match('~<iframe[^>]+src=["\']([^"\']*google\.com/maps[^"\']*)["\'][^>]*>~i', $map_raw, $m)) {
-            $mapSrc    = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
-            $map_embed = '<iframe src="' . $mapSrc . '" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>';
+            $mapSrc = $m[1];
+        // Cek apakah input berupa URL langsung
+        } elseif (preg_match('~^https?://(www\.)?google\.com/maps/embed.*~i', $map_raw)) {
+            $mapSrc = $map_raw;
+        // Cek apakah input kepotong depannya (mulai dengan pb=)
+        } elseif (str_starts_with($map_raw, 'pb=')) {
+            // Bersihkan sisa tag HTML jika ikut terbawa di belakang
+            $cleanPb = preg_replace('~["\'].*~', '', $map_raw);
+            $mapSrc = 'https://www.google.com/maps/embed?' . $cleanPb;
+        } else {
+            $mapSrc = '';
         }
-        // Jika bukan iframe Google Maps yang valid → simpan kosong
+
+        if (!empty($mapSrc)) {
+            // Sanitasi URL akhir dan bentuk iframe standar
+            $mapSrc = htmlspecialchars($mapSrc, ENT_QUOTES, 'UTF-8');
+            $map_embed = '<iframe src="' . $mapSrc . '" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>';
+        } else {
+            $error = "Format Google Maps tidak valid. Pastikan Anda menyalin seluruh kode embed iframe.";
+        }
     }
 
     // Batasi max 10 nomor telepon, sanitasi setiap item
@@ -70,23 +87,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $jam_json     = json_encode($jam_kerja);
     $sosmed_json  = json_encode($sosial_media);
 
-    if (!$kontak) {
-        dbQuery(
-            "INSERT INTO kontak (id, alamat, telepon, email, jam_kerja, sosial_media, map_embed) VALUES (1,?,?,?,?,?,?)",
-            [$alamat, $telepon_json, $email, $jam_json, $sosmed_json, $map_embed],
-            "ssssss"
-        );
-    } else {
-        dbQuery(
-            "UPDATE kontak SET alamat=?, telepon=?, email=?, jam_kerja=?, sosial_media=?, map_embed=? WHERE id=1",
-            [$alamat, $telepon_json, $email, $jam_json, $sosmed_json, $map_embed],
-            "ssssss"
-        );
-    }
+    if (empty($error)) {
+        if (!$kontak) {
+            dbQuery(
+                "INSERT INTO kontak (id, alamat, telepon, email, jam_kerja, sosial_media, map_embed) VALUES (1,?,?,?,?,?,?)",
+                [$alamat, $telepon_json, $email, $jam_json, $sosmed_json, $map_embed],
+                "ssssss"
+            );
+        } else {
+            dbQuery(
+                "UPDATE kontak SET alamat=?, telepon=?, email=?, jam_kerja=?, sosial_media=?, map_embed=? WHERE id=1",
+                [$alamat, $telepon_json, $email, $jam_json, $sosmed_json, $map_embed],
+                "ssssss"
+            );
+        }
 
-    auditLog('UPDATE', 'kontak', 1, 'Edit data kontak');
-    redirect('admin/kontak.php', 'Data kontak berhasil diperbarui!', 'success');
-    exit();
+        auditLog('UPDATE', 'kontak', 1, 'Edit data kontak');
+        redirect('admin/kontak.php', 'Data kontak berhasil diperbarui!', 'success');
+        exit();
+    }
 }
 
 // ============================================
