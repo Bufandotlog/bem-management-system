@@ -27,6 +27,13 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    // Exponential Delay (Exponential Backoff) based on previous failed attempts in session
+    $attempts = $_SESSION['login_attempts'] ?? 0;
+    if ($attempts > 0) {
+        $delay = min(15, pow(2, $attempts - 1));
+        sleep($delay);
+    }
+
     $submittedToken = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $submittedToken)) {
         $error = 'Sesi tidak valid, silakan muat ulang halaman dan coba lagi.';
@@ -36,76 +43,124 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Terlalu banyak percobaan gagal. Coba lagi dalam {$lockWaitMins} menit.";
 
     } else {
-        $username = trim(substr($_POST['username'] ?? '', 0, 100));
-        $password = substr($_POST['password'] ?? '', 0, 200);
+        // Cloudflare Turnstile Verification
+        $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
+        $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? '';
+        $turnstileSecret = $_ENV['TURNSTILE_SECRET_KEY'] ?? '';
 
-        if (empty($username) || empty($password)) {
-            $error = 'Username dan password harus diisi.';
-        } else {
-            $user = dbFetchOne(
-                "SELECT id, nama, username, password, role,
-                        periode_id, can_access_all, is_active,
-                        totp_secret, totp_enabled
-                 FROM users WHERE username = ? LIMIT 1",
-                [$username], "s"
-            );
+        $turnstileSuccess = true;
+        if (!empty($turnstileSiteKey) && !empty($turnstileSecret)) {
+            $turnstileSuccess = false;
+            $postData = http_build_query([
+                'secret'   => $turnstileSecret,
+                'response' => $turnstileToken,
+                'remoteip' => $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? ''
+            ]);
 
-            if ($user && !$user['is_active']) {
-                $error = 'Username atau password salah.';
-                $_SESSION['login_attempts'] = $attempts + 1;
-
-            } elseif ($user && password_verify($password, $user['password'])) {
-
-                $_SESSION['login_attempts']     = 0;
-                $_SESSION['login_locked_until'] = 0;
-
-                // Jika tidak wajib 2FA (tidak enabled/secret kosong), langsung login
-                if (!$user['totp_enabled'] || empty($user['totp_secret'])) {
-                    session_regenerate_id(true);
-                    $_SESSION['admin_logged_in']      = true;
-                    $_SESSION['admin_id']             = $user['id'];
-                    $_SESSION['admin_name']           = $user['nama'];
-                    $_SESSION['admin_username']       = $user['username'];
-                    $_SESSION['admin_role']           = $user['role'];
-                    $_SESSION['admin_periode_id']     = $user['periode_id'];
-                    $_SESSION['admin_can_access_all'] = $user['can_access_all'];
-                    $_SESSION['2fa_verified']         = false;
-                    $_SESSION['_last_activity']       = time();
-                    $_SESSION['_auth_last_check']     = time();
-
-                    recordUserSession($user['id']);
-
-                    $ip = mb_substr(trim(explode(',',
-                        $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? ''
-                    )[0]), 0, 45);
-                    dbQuery("UPDATE users SET last_login = now(), last_ip = ? WHERE id = ?",
-                            [$ip, $user['id']], "si");
-
-                    auditLog('LOGIN', 'users', $user['id'], 'Login berhasil (2FA Bypassed)');
-
-                    redirect('admin/dashboard.php', "Selamat datang, {$user['nama']}!", 'success');
-                    exit();
-                } else {
-                    // 2FA aktif — arahkan ke verifikasi
-                    session_regenerate_id(true);
-                    $_SESSION['2fa_pending']    = true;
-                    $_SESSION['2fa_user_id']    = $user['id'];
-                    $_SESSION['2fa_attempts']   = 0;
-                    $_SESSION['_last_activity'] = time();
-                    // Fix: gunakan URL yang konsisten terhadap BASE_URL
-                    redirect('admin/2fa-verify.php');
-                    exit();
-                }
-
+            if (function_exists('curl_version')) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, "https://challenges.cloudflare.com/turnstile/v0/siteverify");
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+                $response = curl_exec($ch);
+                curl_close($ch);
             } else {
-                $newAttempts = $attempts + 1;
-                $_SESSION['login_attempts'] = $newAttempts;
-                if ($newAttempts >= $maxAttempts) {
-                    $_SESSION['login_locked_until'] = time() + $lockoutTime;
-                    $error = "Terlalu banyak percobaan gagal. Akun dikunci selama 15 menit.";
+                $opts = ['http' => [
+                    'method'  => 'POST',
+                    'header'  => 'Content-type: application/x-www-form-urlencoded',
+                    'content' => $postData,
+                    'timeout' => 5
+                ]];
+                $context  = stream_context_create($opts);
+                $response = @file_get_contents("https://challenges.cloudflare.com/turnstile/v0/siteverify", false, $context);
+            }
+
+            if ($response) {
+                $responseKeys = json_decode($response, true);
+                if (!empty($responseKeys["success"])) {
+                    $turnstileSuccess = true;
+                }
+            }
+
+            if (!$turnstileSuccess) {
+                $error = 'Verifikasi Captcha (Turnstile) gagal. Silakan coba lagi.';
+            }
+        }
+
+        if ($turnstileSuccess) {
+            $username = trim(substr($_POST['username'] ?? '', 0, 100));
+            $password = substr($_POST['password'] ?? '', 0, 200);
+
+            if (empty($username) || empty($password)) {
+                $error = 'Username dan password harus diisi.';
+            } else {
+                $user = dbFetchOne(
+                    "SELECT id, nama, username, password, role,
+                            periode_id, can_access_all, is_active,
+                            totp_secret, totp_enabled
+                     FROM users WHERE username = ? LIMIT 1",
+                    [$username], "s"
+                );
+
+                if ($user && !$user['is_active']) {
+                    $error = 'Username atau password salah.';
+                    $_SESSION['login_attempts'] = $attempts + 1;
+
+                } elseif ($user && password_verify($password, $user['password'])) {
+
+                    $_SESSION['login_attempts']     = 0;
+                    $_SESSION['login_locked_until'] = 0;
+
+                    // Jika tidak wajib 2FA (tidak enabled/secret kosong), langsung login
+                    if (!$user['totp_enabled'] || empty($user['totp_secret'])) {
+                        session_regenerate_id(true);
+                        $_SESSION['admin_logged_in']      = true;
+                        $_SESSION['admin_id']             = $user['id'];
+                        $_SESSION['admin_name']           = $user['nama'];
+                        $_SESSION['admin_username']       = $user['username'];
+                        $_SESSION['admin_role']           = $user['role'];
+                        $_SESSION['admin_periode_id']     = $user['periode_id'];
+                        $_SESSION['admin_can_access_all'] = $user['can_access_all'];
+                        $_SESSION['2fa_verified']         = false;
+                        $_SESSION['_last_activity']       = time();
+                        $_SESSION['_auth_last_check']     = time();
+
+                        recordUserSession($user['id']);
+
+                        $ip = mb_substr(trim(explode(',',
+                            $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? ''
+                        )[0]), 0, 45);
+                        dbQuery("UPDATE users SET last_login = now(), last_ip = ? WHERE id = ?",
+                                [$ip, $user['id']], "si");
+
+                        auditLog('LOGIN', 'users', $user['id'], 'Login berhasil (2FA Bypassed)');
+
+                        redirect('admin/dashboard.php', "Selamat datang, {$user['nama']}!", 'success');
+                        exit();
+                    } else {
+                        // 2FA aktif — arahkan ke verifikasi
+                        session_regenerate_id(true);
+                        $_SESSION['2fa_pending']    = true;
+                        $_SESSION['2fa_user_id']    = $user['id'];
+                        $_SESSION['2fa_attempts']   = 0;
+                        $_SESSION['_last_activity'] = time();
+                        // Fix: gunakan URL yang konsisten terhadap BASE_URL
+                        redirect('admin/2fa-verify.php');
+                        exit();
+                    }
+
                 } else {
-                    $remaining = $maxAttempts - $newAttempts;
-                    $error = "Username atau password salah. Sisa percobaan: {$remaining}.";
+                    $newAttempts = $attempts + 1;
+                    $_SESSION['login_attempts'] = $newAttempts;
+                    if ($newAttempts >= $maxAttempts) {
+                        $_SESSION['login_locked_until'] = time() + $lockoutTime;
+                        $error = "Terlalu banyak percobaan gagal. Akun dikunci selama 15 menit.";
+                    } else {
+                        $remaining = $maxAttempts - $newAttempts;
+                        $error = "Username atau password salah. Sisa percobaan: {$remaining}.";
+                    }
                 }
             }
         }
@@ -121,6 +176,12 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Admin - BEM Kabinet Astawidya</title>
     <link rel="stylesheet" href="css/login.css?v=<?php echo $cssVer; ?>">
+    <?php
+    $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? '';
+    if (!empty($turnstileSiteKey)):
+    ?>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <?php endif; ?>
 </head>
 <body>
 <div class="login-container">
@@ -157,6 +218,16 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
                        maxlength="200" required
                        <?php echo $isLocked ? 'disabled' : ''; ?>>
             </div>
+            
+            <?php
+            $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? '';
+            if (!empty($turnstileSiteKey) && !$isLocked):
+            ?>
+            <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+                <div class="cf-turnstile" data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey, ENT_QUOTES, 'UTF-8'); ?>" data-theme="dark"></div>
+            </div>
+            <?php endif; ?>
+
             <button type="submit" class="btn-login"
                     <?php echo $isLocked ? 'disabled' : ''; ?>>
                 <?php echo $isLocked ? "Dikunci ({$lockWaitMins} menit)" : 'Login'; ?>
