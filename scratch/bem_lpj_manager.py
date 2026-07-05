@@ -1345,12 +1345,7 @@ def generate_lpj(output_path, config_data):
     p_sig_ket = doc.add_paragraph()
     p_sig_ket.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     p_sig_ket.paragraph_format.line_spacing = 1.15
-    format_run(p_sig_ket.add_run(title_str + "
-
-
-
-
-"), size_pt=12)
+    format_run(p_sig_ket.add_run(title_str + "\n\n\n\n\n"), size_pt=12)
     
     ketua_name = config_data.get("keanggotaan", {}).get("ketua", "Nama Ketua")
     
