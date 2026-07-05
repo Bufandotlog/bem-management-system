@@ -1339,7 +1339,7 @@ def generate_lpj(output_path, config_data):
     doc.add_paragraph()
     
     import re
-    clean_k_name = re.sub(r'^(?i)(Kementerian|Menteri|Departemen)\s+', '', kementrian_str)
+    clean_k_name = re.sub(r'^(Kementerian|Menteri|Departemen)\s+', '', kementrian_str, flags=re.IGNORECASE)
     if not clean_k_name or clean_k_name.lower() == 'kementerian':
         clean_k_name = 'Luar Kampus'
     org_prefix = "Kementerian" if "bem" in output_path.lower() else "Departemen"
