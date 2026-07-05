@@ -885,7 +885,10 @@ if (!function_exists('parsePoints')) {
                 $tgl_str = "Majalengka, " . date('d') . " " . $now_month . " " . date('Y');
                 
                 // Clean kementerian name
-                $clean_k_name = str_replace(['Kementerian ', 'Menteri ', 'Departemen '], '', $k_name);
+                $clean_k_name = preg_replace('/^(Kementerian|Menteri|Departemen)\s+/i', '', $k_name);
+                if (empty($clean_k_name) || strtolower($clean_k_name) === 'kementerian') {
+                    $clean_k_name = 'Luar Kampus'; // Fallback for empty
+                }
                 $org_prefix = (strpos($_SERVER['REQUEST_URI'], '/bpm/') !== false) ? 'Departemen' : 'Menteri';
                 ?>
                 <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif;"><?php echo $tgl_str; ?></p>
