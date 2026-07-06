@@ -1,3 +1,8 @@
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 64M
+</IfModule>
+
 # ==============================================
 # .htaccess - BEM Kabinet Astawidya
 # Letakkan di: htdocs/ (root project, sejajar index.php)

@@ -350,7 +350,7 @@ $posisiEncoded = urlencode($posisi);
             <?php endif; ?>
             <label>Upload Foto Baru</label>
             <input type="file" name="foto" accept="image/*" id="inputFoto">
-            <small>Format: JPG, PNG, WebP. Maks 5MB. Kosongkan jika tidak ingin mengubah.</small>
+            <small>Format: JPG, PNG, WebP. Maks <?php echo round(MAX_FILE_SIZE/1024/1024, 2); ?>MB. Kosongkan jika tidak ingin mengubah.</small>
             <div class="new-foto-preview" id="previewFotoWrap">
                 <img id="previewFotoImg" alt="Preview">
             </div>
@@ -376,7 +376,7 @@ $posisiEncoded = urlencode($posisi);
             <?php endif; ?>
             <label>Upload Logo Baru</label>
             <input type="file" name="logo" accept="image/*" id="inputLogo">
-            <small>Format: JPG, PNG, WebP. Maks 5MB. Kosongkan jika tidak ingin mengubah.</small>
+            <small>Format: JPG, PNG, WebP. Maks <?php echo round(MAX_FILE_SIZE/1024/1024, 2); ?>MB. Kosongkan jika tidak ingin mengubah.</small>
             <div class="new-foto-preview" id="previewLogoWrap">
                 <img id="previewLogoImg" alt="Preview">
             </div>

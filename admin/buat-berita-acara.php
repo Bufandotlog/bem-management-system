@@ -188,8 +188,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = "Gagal mengunggah foto slot " . ($i + 1) . ". Format tidak didukung atau terjadi kesalahan server.";
                     }
                 } elseif ($file_err !== UPLOAD_ERR_NO_FILE) {
-                    if ($file_err === UPLOAD_ERR_INI_SIZE || $file_err === UPLOAD_ERR_FORM_SIZE) {
-                        $error = "Foto slot " . ($i + 1) . " terlalu besar. Ukuran maksimal file adalah 5MB.";
+                    if ($file_err === UPLOAD_ERR_INI_SIZE) {
+                        $server_limit = ini_get('upload_max_filesize');
+                        $error = "Foto slot " . ($i + 1) . " terlalu besar. (Batas Server: $server_limit, silahkan hubungi administrator).";
+                    } elseif ($file_err === UPLOAD_ERR_FORM_SIZE) {
+                        $maxMB = round(MAX_FILE_SIZE / 1024 / 1024, 2);
+                        $error = "Foto slot " . ($i + 1) . " terlalu besar. Ukuran maksimal file adalah {$maxMB}MB.";
                     } else {
                         $error = "Gagal mengunggah foto slot " . ($i + 1) . " (Kode Error: $file_err).";
                     }

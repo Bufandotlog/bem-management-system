@@ -306,8 +306,8 @@ $beda_selesai = $periode_aktif && $periode_aktif['tahun_selesai'] != ($kabinet['
 function previewFile(input, wrapId) {
     const file = input.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-        alert('Ukuran file terlalu besar! Maksimal 5MB.');
+    if (file.size > <?php echo MAX_FILE_SIZE; ?>) {
+        alert('Ukuran file terlalu besar! Maksimal <?php echo round(MAX_FILE_SIZE/1024/1024, 2); ?>MB.');
         input.value = '';
         document.getElementById(wrapId).style.display = 'none';
         return;

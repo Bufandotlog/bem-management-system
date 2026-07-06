@@ -265,8 +265,8 @@ function previewGambarBaru(input) {
         }
         reader.readAsDataURL(input.files[0]);
         const fileSize = input.files[0].size / 1024 / 1024;
-        if (fileSize > 5) {
-            alert('Ukuran file terlalu besar! Maksimal 5MB');
+        if (fileSize > <?php echo round(MAX_FILE_SIZE/1024/1024, 2); ?>) {
+            alert('Ukuran file terlalu besar! Maksimal <?php echo round(MAX_FILE_SIZE/1024/1024, 2); ?>MB');
             input.value = '';
             previewContainer.style.display = 'none';
         }
