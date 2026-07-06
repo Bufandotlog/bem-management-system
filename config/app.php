@@ -49,7 +49,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // ============================================
 // 4. KONFIGURASI UPLOAD FILE
 // ============================================
-defined('MAX_FILE_SIZE')      || define('MAX_FILE_SIZE',      5 * 1024 * 1024);
+defined('MAX_FILE_SIZE')      || define('MAX_FILE_SIZE',      10 * 1024 * 1024);
 defined('ALLOWED_EXTENSIONS') || define('ALLOWED_EXTENSIONS', ['jpg','jpeg','png','gif','webp','pdf']);
 defined('ALLOWED_MIME_TYPES') || define('ALLOWED_MIME_TYPES', [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf',
