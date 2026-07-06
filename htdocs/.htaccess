@@ -1,5 +1,5 @@
 <IfModule mod_php.c>
-    php_value upload_max_filesize 10M
+    php_value upload_max_filesize 20M
     php_value post_max_size 64M
 </IfModule>
 
