@@ -157,7 +157,82 @@ if (isset($_GET['ajax_kementerian_id'])) {
     exit();
 }
 
-$page_css = 'arsip-surat';
+if (isset($_GET['ajax_get_berita_acara_kementerian'])) {
+    require_once __DIR__ . '/config.php';
+    if (!isLoggedIn()) {
+        header('HTTP/1.1 401 Unauthorized');
+        echo json_encode(['error' => 'Unauthorized']);
+        exit();
+    }
+    header('Content-Type: application/json');
+    $k_id = (int)$_GET['ajax_get_berita_acara_kementerian'];
+    $periode_id = getUserPeriode();
+    $kem = dbFetchOne("SELECT nama FROM kementerian WHERE id = ?", [$k_id], "i");
+    $kem_nama = $kem ? $kem['nama'] : '';
+    
+    $bas = dbFetchAll("SELECT id, nomor_berita, nama_kegiatan, tanggal_kegiatan, konten_json FROM arsip_berita_acara WHERE periode_id = ? ORDER BY id DESC", [$periode_id], "i");
+    $filtered = [];
+    foreach ($bas as $ba) {
+        $konten = json_decode($ba['konten_json'], true);
+        if ($konten && isset($konten['pelaksana_tipe']) && $konten['pelaksana_tipe'] === $kem_nama) {
+            $filtered[] = [
+                'id' => $ba['id'],
+                'judul' => $ba['nomor_berita'] . ' - ' . $ba['nama_kegiatan'],
+                'nama_kegiatan' => $ba['nama_kegiatan'],
+                'tanggal' => $ba['tanggal_kegiatan']
+            ];
+        }
+    }
+    echo json_encode($filtered);
+    exit();
+}
+
+if (isset($_GET['ajax_get_berita_acara_id'])) {
+    require_once __DIR__ . '/config.php';
+    if (!isLoggedIn()) {
+        header('HTTP/1.1 401 Unauthorized');
+        echo json_encode(['error' => 'Unauthorized']);
+        exit();
+    }
+    header('Content-Type: application/json');
+    $ba_id = (int)$_GET['ajax_get_berita_acara_id'];
+    $periode_id = getUserPeriode();
+    $ba = dbFetchOne("SELECT * FROM arsip_berita_acara WHERE id = ? AND periode_id = ?", [$ba_id, $periode_id], "ii");
+    if ($ba) {
+        $konten = json_decode($ba['konten_json'], true) ?: [];
+        $dokumentasi = [];
+        if (!empty($konten['dokumentasi']) && is_array($konten['dokumentasi'])) {
+            foreach ($konten['dokumentasi'] as $dok) {
+                $img_path = $dok['image'] ?? '';
+                if (strpos($img_path, '/var/www/html') === false) {
+                    $file_path = UPLOAD_PATH . '/' . ltrim($img_path, '/');
+                } else {
+                    $file_path = $img_path;
+                }
+                $dokumentasi[] = [
+                    'file_path' => $file_path,
+                    'caption' => $dok['caption'] ?? 'Dokumentasi'
+                ];
+            }
+        }
+        
+        $res = [
+            'nama_kegiatan' => $ba['nama_kegiatan'],
+            'tempat' => $ba['tempat'],
+            'tanggal' => $konten['tanggal_kegiatan'] ?? '',
+            'tema' => $konten['tema_kegiatan'] ?? '',
+            'tujuan' => $konten['tujuan'] ?? [],
+            'program_kerja' => $konten['program_kerja'] ?? '',
+            'penanggung_jawab' => $konten['penanggung_jawab'] ?? '',
+            'dokumentasi' => $dokumentasi
+        ];
+        echo json_encode($res);
+    } else {
+        echo json_encode(['error' => 'Not found']);
+    }
+    exit();
+}
+
 require_once __DIR__ . '/header.php';
 
 function get_points_array($val) {
@@ -338,6 +413,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
+                $ba_id_val = isset($_POST['pt_ba_id'][$i]) ? (int)$_POST['pt_ba_id'][$i] : 0;
                 $proker_terlaksana[] = [
                     'Nama Program Kerja' => sanitizeText($pt_names[$i]),
                     'Nama Kegiatan' => sanitizeText($pt_kegiatans[$i] ?? ''),
@@ -351,7 +427,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'Evaluasi' => normalize_points_input($pt_evaluasis[$i] ?? ''),
                     'tidak_menggunakan_anggaran' => $tidak_menggunakan_anggaran,
                     'anggaran' => $anggaran_txs,
-                    'dokumentasi' => $dokumentasi_list
+                    'dokumentasi' => $dokumentasi_list,
+                    'berita_acara_id' => $ba_id_val
                 ];
             }
         }
@@ -462,6 +539,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 $lpj_id = dbLastId();
+            }
+            
+            // === TWO-WAY SYNC: LPJ → Berita Acara ===
+            // Untuk setiap proker terlaksana yang memiliki berita_acara_id,
+            // update data di arsip_berita_acara agar konsisten
+            foreach ($proker_terlaksana as $pt) {
+                $linked_ba_id = (int)($pt['berita_acara_id'] ?? 0);
+                if ($linked_ba_id > 0) {
+                    $ba_row = dbFetchOne("SELECT id, konten_json FROM arsip_berita_acara WHERE id = ?", [$linked_ba_id], "i");
+                    if ($ba_row) {
+                        $ba_konten = json_decode($ba_row['konten_json'], true) ?: [];
+                        
+                        // Sync field-field yang relevan dari LPJ ke BA
+                        $ba_konten['tema_kegiatan'] = $pt['Tema Kegiatan'] ?? ($ba_konten['tema_kegiatan'] ?? '');
+                        $ba_konten['program_kerja'] = $pt['Nama Program Kerja'] ?? ($ba_konten['program_kerja'] ?? '');
+                        $ba_konten['penanggung_jawab'] = $pt['Penanggung Jawab'] ?? ($ba_konten['penanggung_jawab'] ?? '');
+                        if (!empty($pt['Tujuan']) && is_array($pt['Tujuan'])) {
+                            $ba_konten['tujuan'] = $pt['Tujuan'];
+                        }
+                        
+                        $ba_konten_json = json_encode($ba_konten);
+                        $ba_nama_kegiatan = $pt['Nama Kegiatan'] ?? '';
+                        $ba_tempat = $pt['Tempat Kegiatan'] ?? '';
+                        
+                        dbQuery("UPDATE arsip_berita_acara SET nama_kegiatan = ?, tempat = ?, konten_json = ? WHERE id = ?", 
+                            [$ba_nama_kegiatan, $ba_tempat, $ba_konten_json, $linked_ba_id], "sssi");
+                    }
+                }
             }
             
             // Generate Word (.docx) Document
@@ -614,6 +719,23 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 ?>
 
 <style>
+    /* ===== DATE INPUT STYLING ===== */
+    input[type="date"].form-control {
+        color-scheme: dark;
+        background: #11151c;
+        border: 1px solid #35445b;
+        color: #e0e0e0;
+        border-radius: 4px;
+        padding: 8px 12px;
+    }
+    input[type="date"].form-control::-webkit-calendar-picker-indicator {
+        filter: invert(0.8);
+        cursor: pointer;
+    }
+    input[type="date"].form-control:focus {
+        border-color: #4A90E2;
+        outline: none;
+    }
     /* ===== AUTOFILL INDICATORS ===== */
     .autofill-indicator {
         font-size: 0.75rem;
@@ -1157,121 +1279,56 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         height: auto;
     }
 
-    /* New Photo Row Premium Styling */
-    .new-photo-row {
-        background: rgba(15, 18, 23, 0.6);
-        border: 1px solid #2a3545;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 12px;
+    /* New Photo Grid UI */
+    .photo-grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 12px;
-        position: relative;
-        transition: all 0.3s ease;
-    }
-    @media(min-width: 576px) {
-        .new-photo-row {
-            grid-template-columns: 160px 1fr;
-            align-items: center;
-        }
-    }
-    .new-photo-row:hover {
-        border-color: #4A90E2;
-        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.15);
-    }
-    .new-photo-row .btn-remove-img {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 28px;
-        height: 28px;
-        background: rgba(220, 53, 69, 0.15) !important;
-        border: 1px solid rgba(220, 53, 69, 0.4) !important;
-        color: #ff6b6b !important;
-        border-radius: 50% !important;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-    }
-    .new-photo-row .btn-remove-img:hover {
-        background: #dc3545 !important;
-        color: #fff !important;
-        transform: scale(1.05);
-    }
-    .photo-upload-zone {
-        border: 2px dashed #2a3545;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.2);
-        padding: 10px;
-        text-align: center;
-        cursor: pointer;
-        position: relative;
-        height: 110px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        transition: all 0.2s;
-        color: #888;
-    }
-    .photo-upload-zone:hover {
-        border-color: #4A90E2;
-        background: rgba(74, 144, 226, 0.05);
-        color: #4A90E2;
-    }
-    .photo-upload-zone input[type="file"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-        z-index: 2;
-    }
-    .photo-upload-zone .preview-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 1;
-    }
-    .photo-upload-zone .upload-spinner {
-        display: none;
-        font-size: 1.5rem;
-        color: #4A90E2;
-        z-index: 3;
-    }
-    .photo-upload-zone .upload-icon {
-        font-size: 1.6rem;
-        margin-bottom: 5px;
-        z-index: 1;
-    }
-    .photo-upload-zone .upload-text {
-        font-size: 0.75rem;
-        font-weight: 500;
-        z-index: 1;
+        gap: 20px;
     }
     
-    .new-photo-row input.proker-new-photo-caption {
-        background: #0f1217 !important;
-        border: 1px solid #2a3545 !important;
-        color: #fff !important;
-        padding: 10px 14px !important;
-        border-radius: 8px !important;
-        height: auto !important;
-        font-size: 0.9rem !important;
+    @media (min-width: 600px) {
+        .photo-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
-    .new-photo-row input.proker-new-photo-caption:focus {
-        border-color: #4A90E2 !important;
-        box-shadow: 0 0 8px rgba(74,144,226,0.2) !important;
-        outline: none !important;
+    
+    .photo-card {
+        background: #0d1015;
+        border: 1px solid #2a3545;
+        border-radius: 16px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: relative;
+    }
+    
+    .photo-preview-wrap {
+        width: 100%;
+        height: 150px;
+        border: 1px solid #2a3545;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #05070a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .photo-preview-wrap img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .photo-card-label {
+        font-size: 0.75rem; 
+        color: #aaa; 
+        margin-bottom: 5px; 
+        display: block; 
+        font-weight: bold; 
+        text-transform: uppercase;
     }
     
     /* Caption input for existing photos */
@@ -1462,7 +1519,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         <div class="card">
             <div class="card-header"><i class="fas fa-check-double"></i> Langkah 3: Program Kerja yang Terealisasi</div>
             <div class="card-body">
-                <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px;">Masukkan program kerja yang telah berhasil dilaksanakan pada triwulan ini. Minimal harus ada 1 proker terlaksana.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <p style="font-size: 0.85rem; color: #aaa; margin: 0;">Masukkan program kerja yang telah berhasil dilaksanakan pada triwulan ini. Minimal harus ada 1 proker terlaksana.</p>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openBaModal()"><i class="fas fa-file-import"></i> Ambil Data Berita Acara</button>
+                </div>
                 
                 <div class="proker-search-bar" id="ptSearchBar">
                     <i class="fas fa-search"></i>
@@ -1489,9 +1549,22 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         $pt_dokumentasi_json = json_encode($pt_dokumentasi_list);
                     ?>
                     <div class="dynamic-row pt-row">
-                        <?php if ($idx > 0): ?>
-                            <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove(); reindexProkers();">Hapus Proker</button>
-                        <?php endif; ?>
+                        <div class="row-number-badge">Proker #<?php echo $idx + 1; ?></div>
+                        <div class="proker-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed #35445b; padding-bottom: 10px;" onclick="toggleProker(this)">
+                            <div class="row-reorder-controls" style="position: static; display: flex; gap: 6px;">
+                                <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowUp(this, 'pt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                                <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowDown(this, 'pt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+                            </div>
+                            <div class="proker-summary" style="flex: 1; margin: 0 15px; color: #8BB9F0; font-size: 0.9rem; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none;"></div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <?php if ($idx > 0): ?>
+                                    <button type="button" class="btn-remove-row" style="position: static; margin: 0; padding: 5px 10px;" onclick="event.stopPropagation(); this.closest('.dynamic-row').remove(); reindexProkers(); updateRowReorderButtons('pt');">Hapus Proker</button>
+                                <?php endif; ?>
+                                <i class="fas fa-chevron-up toggle-icon" style="color: #4A90E2; font-size: 1.2rem; transition: transform 0.3s;"></i>
+                            </div>
+                        </div>
+                        <div class="proker-body">
+                        <input type="hidden" name="pt_ba_id[]" class="pt-ba-id-hidden" value="<?php echo (int)($pt['berita_acara_id'] ?? 0); ?>">
                         <div class="form-row-grid">
                             <div class="form-group">
                                 <label>Nama Program Kerja</label>
@@ -1525,7 +1598,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             </div>
                             <div class="form-group">
                                 <label>Tanggal Kegiatan</label>
-                                <input type="text" name="pt_tanggal[]" class="form-control" value="<?php echo htmlspecialchars($pt['Tanggal Kegiatan'] ?? ''); ?>" placeholder="Cth: 12 April 2026">
+                                <input type="date" name="pt_tanggal[]" class="form-control" value="<?php echo htmlspecialchars($pt['Tanggal Kegiatan'] ?? ''); ?>">
                             </div>
                         </div>
                         <div class="form-row-grid" style="margin-top: 10px;">
@@ -1623,12 +1696,20 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         <div class="proker-sub-section">
                             <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-camera"></i> Dokumentasi Kegiatan</h4>
                             
-                            <div class="proker-existing-photos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
-                                <?php foreach ($pt_dokumentasi_list as $photo): ?>
-                                    <div class="photo-item" data-path="<?php echo htmlspecialchars($photo['file_path']); ?>" style="background: rgba(0,0,0,0.3); border: 1px solid #2a3545; border-radius: 8px; padding: 10px; text-align: center; position: relative;">
-                                        <img src="<?php echo file_exists($photo['file_path']) ? str_replace('/var/www/html/bem/', BASE_URL, $photo['file_path']) : uploadUrl(basename($photo['file_path'])); ?>" style="max-height: 80px; max-width: 100%; border-radius: 4px; object-fit: contain; margin-bottom: 8px;">
-                                        <input type="text" class="form-control photo-caption-input" style="font-size: 0.8rem; padding: 4px 8px;" value="<?php echo htmlspecialchars($photo['caption'] ?? 'Dokumentasi'); ?>" oninput="serializeProkerPhotos(this)">
-                                        <button type="button" class="btn-remove-img" style="position: absolute; top: 5px; right: 5px; width: 24px; height: 24px;" onclick="removeExistingPhoto(this)"><i class="fas fa-trash"></i></button>
+                            <div class="proker-existing-photos-grid photo-grid" style="margin-bottom: 15px;">
+                                <?php foreach ($pt_dokumentasi_list as $p_idx => $photo): ?>
+                                    <div class="photo-item photo-card" data-path="<?php echo htmlspecialchars($photo['file_path']); ?>">
+                                        <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                            <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Foto Slot <?php echo $p_idx + 1; ?></label>
+                                            <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus Slot</button>
+                                        </div>
+                                        <div class="photo-preview-wrap">
+                                            <img src="<?php echo file_exists($photo['file_path']) ? str_replace('/var/www/html/bem/', BASE_URL, $photo['file_path']) : uploadUrl(basename($photo['file_path'])); ?>">
+                                        </div>
+                                        <div class="form-group" style="margin-top: 15px;">
+                                            <label class="photo-card-label">Caption Foto</label>
+                                            <input type="text" class="form-control photo-caption-input" style="font-size: 0.8rem; padding: 10px;" value="<?php echo htmlspecialchars($photo['caption'] ?? 'Dokumentasi'); ?>" oninput="serializeProkerPhotos(this)">
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -1636,6 +1717,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             
                             <div class="proker-new-photos-container" style="margin-top: 10px;"></div>
                             <div class="btn-add-row-mini" onclick="addProkerNewPhotoRow(this)"><i class="fas fa-plus"></i> Tambah Foto Baru</div>
+                        </div>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -1666,7 +1748,19 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     foreach ($pbts as $idx => $pbt):
                     ?>
                     <div class="dynamic-row pbt-row">
-                        <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove();">Hapus</button>
+                        <div class="row-number-badge">Proker #<?php echo $idx + 1; ?></div>
+                        <div class="proker-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed #35445b; padding-bottom: 10px;" onclick="toggleProker(this)">
+                            <div class="row-reorder-controls" style="position: static; display: flex; gap: 6px;">
+                                <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowUp(this, 'pbt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                                <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowDown(this, 'pbt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+                            </div>
+                            <div class="proker-summary" style="flex: 1; margin: 0 15px; color: #f39c12; font-size: 0.9rem; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none;"></div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button type="button" class="btn-remove-row" style="position: static; margin: 0; padding: 5px 10px;" onclick="event.stopPropagation(); this.closest('.dynamic-row').remove(); updateRowReorderButtons('pbt');">Hapus</button>
+                                <i class="fas fa-chevron-up toggle-icon" style="color: #4A90E2; font-size: 1.2rem; transition: transform 0.3s;"></i>
+                            </div>
+                        </div>
+                        <div class="proker-body">
                         <div class="form-row-grid">
                             <div class="form-group">
                                 <label>Nama Kegiatan</label>
@@ -1688,7 +1782,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             </div>
                             <div class="form-group">
                                 <label>Target Tanggal Rencana</label>
-                                <input type="text" name="pbt_tanggal[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Tanggal Kegiatan'] ?? ''); ?>" placeholder="Cth: Juni 2026">
+                                <input type="date" name="pbt_tanggal[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Tanggal Kegiatan'] ?? ''); ?>">
                             </div>
                         </div>
                         <div class="form-row-grid" style="margin-top: 10px;">
@@ -1708,6 +1802,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
                             <label>Hambatan & Kendala Dokumentasi</label>
                             <textarea name="pbt_dokumentasi[]" rows="2" class="form-control" placeholder="Jelaskan alasan kendala penundaan kegiatan..."><?php echo htmlspecialchars($pbt['Dokumentasi'] ?? ''); ?></textarea>
+                        </div>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -1766,9 +1861,28 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <button type="submit" class="btn-primary" id="btnSubmitForm" style="display: none;" onclick="submitLpj()"><i class="fas fa-paper-plane"></i> Simpan & Kirim LPJ</button>
         </div>
     </div>
-</form>
+    <!-- MODAL AMBIL DATA BERITA ACARA -->
+    <div id="baModal" class="submit-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999;">
+        <div class="submit-overlay-content" style="background:#1a202c; padding:30px; border-radius:12px; width:450px; max-width:90%; text-align:left;">
+            <h3 style="margin-top:0;"><i class="fas fa-file-import"></i> Pilih Berita Acara</h3>
+            <p style="font-size:0.9rem; color:#aaa; margin-bottom: 20px;">Pilih data dari arsip Berita Acara untuk ditambahkan sebagai Proker Terlaksana baru.</p>
+            <div class="form-group">
+                <select id="baSelect" class="form-control" style="font-size:0.9rem; padding:10px;">
+                    <option value="">-- Memuat Data... --</option>
+                </select>
+            </div>
+            <div style="margin-top: 25px; display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('baModal').style.display='none'">Batal</button>
+                <button type="button" class="btn-primary" id="btnImportBa" onclick="importBaData()">Gunakan Data</button>
+            </div>
+        </div>
+    </div>
+
+</div>
 
 <script>
+
+
     window.initialEvaluasiAnggota = <?php echo json_encode(json_decode($edit_data['evaluasi_anggota_internal'] ?? '', true) ?: []); ?>;
     let currentStep = 1;
     
@@ -2095,11 +2209,19 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         div.className = 'dynamic-row pt-row';
         div.innerHTML = `
             <div class="row-number-badge"></div>
-            <div class="row-reorder-controls">
-                <button type="button" class="btn-reorder-row" onclick="moveRowUp(this, 'pt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
-                <button type="button" class="btn-reorder-row" onclick="moveRowDown(this, 'pt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+            <div class="proker-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed #35445b; padding-bottom: 10px;" onclick="toggleProker(this)">
+                <div class="row-reorder-controls" style="position: static; display: flex; gap: 6px;">
+                    <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowUp(this, 'pt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                    <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowDown(this, 'pt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+                </div>
+                <div class="proker-summary" style="flex: 1; margin: 0 15px; color: #8BB9F0; font-size: 0.9rem; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none;"></div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="button" class="btn-remove-row" style="position: static; margin: 0; padding: 5px 10px;" onclick="event.stopPropagation(); this.closest('.dynamic-row').remove(); reindexProkers(); updateRowReorderButtons('pt');">Hapus Proker</button>
+                    <i class="fas fa-chevron-up toggle-icon" style="color: #4A90E2; font-size: 1.2rem; transition: transform 0.3s;"></i>
+                </div>
             </div>
-            <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove(); reindexProkers(); updateRowReorderButtons('pt');">Hapus Proker</button>
+            <div class="proker-body">
+            <input type="hidden" name="pt_ba_id[]" class="pt-ba-id-hidden" value="0">
             <div class="form-row-grid">
                 <div class="form-group">
                     <label>Nama Program Kerja</label>
@@ -2133,7 +2255,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 </div>
                 <div class="form-group">
                     <label>Tanggal Kegiatan</label>
-                    <input type="text" name="pt_tanggal[]" class="form-control" placeholder="Cth: 12 April 2026">
+                    <input type="date" name="pt_tanggal[]" class="form-control">
                 </div>
             </div>
             <div class="form-row-grid" style="margin-top: 10px;">
@@ -2220,7 +2342,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="proker-sub-section">
                 <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-camera"></i> Dokumentasi Kegiatan</h4>
                 
-                <div class="proker-existing-photos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;"></div>
+                <div class="proker-existing-photos-grid photo-grid" style="margin-bottom: 15px;"></div>
                 <input type="hidden" name="pt_existing_dok[]" class="pt-existing-dok-hidden" value="[]">
                 
                 <div class="proker-new-photos-container" style="margin-top: 10px;"></div>
@@ -2303,16 +2425,25 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 const basename = dok.file_path.split('/').pop();
                 const pathUrl = `../uploads/lpj/${basename}`;
                 const photoCard = document.createElement('div');
-                photoCard.className = 'photo-item';
+                photoCard.className = 'photo-item photo-card';
                 photoCard.dataset.path = dok.file_path;
-                photoCard.style.cssText = 'background: rgba(0,0,0,0.3); border: 1px solid #2a3545; border-radius: 8px; padding: 10px; text-align: center; position: relative;';
                 photoCard.innerHTML = `
-                    <img src="${pathUrl}" style="max-height: 80px; max-width: 100%; border-radius: 4px; object-fit: contain; margin-bottom: 8px;">
-                    <input type="text" class="form-control photo-caption-input" style="font-size: 0.8rem; padding: 4px 8px;" value="${escapeHtml(dok.caption)}" oninput="serializeProkerPhotos(this)">
-                    <button type="button" class="btn-remove-img" style="position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; background: #e74c3c; border: none; color: #fff; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="removeExistingPhoto(this)"><i class="fas fa-trash"></i></button>
+                    <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                        <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Foto Impor</label>
+                        <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus Slot</button>
+                    </div>
+                    <div class="photo-preview-wrap">
+                        <img src="${pathUrl}">
+                    </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label class="photo-card-label">Caption Foto</label>
+                        <input type="text" class="form-control photo-caption-input" style="font-size: 0.8rem; padding: 10px;" value="${escapeHtml(dok.caption)}" oninput="serializeProkerPhotos(this)">
+                    </div>
                 `;
                 photosGrid.appendChild(photoCard);
             });
+            div.querySelector('.proker-body').style.display = 'none'; // Auto-collapse newly added imported data
+            div.querySelector('.toggle-icon').style.transform = 'rotate(180deg)';
         }
         
         reindexProkers();
@@ -2327,11 +2458,18 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         div.className = 'dynamic-row pbt-row';
         div.innerHTML = `
             <div class="row-number-badge"></div>
-            <div class="row-reorder-controls">
-                <button type="button" class="btn-reorder-row" onclick="moveRowUp(this, 'pbt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
-                <button type="button" class="btn-reorder-row" onclick="moveRowDown(this, 'pbt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+            <div class="proker-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed #35445b; padding-bottom: 10px;" onclick="toggleProker(this)">
+                <div class="row-reorder-controls" style="position: static; display: flex; gap: 6px;">
+                    <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowUp(this, 'pbt')" title="Geser ke atas"><i class="fas fa-arrow-up"></i> Atas</button>
+                    <button type="button" class="btn-reorder-row" onclick="event.stopPropagation(); moveRowDown(this, 'pbt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
+                </div>
+                <div class="proker-summary" style="flex: 1; margin: 0 15px; color: #f39c12; font-size: 0.9rem; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none;"></div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="button" class="btn-remove-row" style="position: static; margin: 0; padding: 5px 10px;" onclick="event.stopPropagation(); this.closest('.dynamic-row').remove(); reindexProkers(); updateRowReorderButtons('pbt');">Hapus Proker</button>
+                    <i class="fas fa-chevron-up toggle-icon" style="color: #4A90E2; font-size: 1.2rem; transition: transform 0.3s;"></i>
+                </div>
             </div>
-            <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove(); updateRowReorderButtons('pbt');">Hapus</button>
+            <div class="proker-body">
             <div class="form-row-grid">
                 <div class="form-group">
                     <label>Nama Kegiatan</label>
@@ -2353,7 +2491,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 </div>
                 <div class="form-group">
                     <label>Target Tanggal Rencana</label>
-                    <input type="text" name="pbt_tanggal[]" class="form-control" placeholder="Cth: Juni 2026">
+                    <input type="date" name="pbt_tanggal[]" class="form-control">
                 </div>
             </div>
             <div class="form-row-grid" style="margin-top: 10px;">
@@ -2373,6 +2511,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
                 <label>Hambatan & Kendala Dokumentasi</label>
                 <textarea name="pbt_dokumentasi[]" rows="2" class="form-control" placeholder="Jelaskan alasan kendala penundaan kegiatan..."></textarea>
+            </div>
             </div>
         `;
         container.appendChild(div);
@@ -2673,21 +2812,31 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     function addProkerNewPhotoRow(btn) {
         const prokerCard = btn.closest('.pt-row');
         const container = prokerCard.querySelector('.proker-new-photos-container');
+        if (!container.classList.contains('photo-grid')) {
+            container.classList.add('photo-grid');
+        }
+        
+        const count = container.querySelectorAll('.new-photo-row').length + prokerCard.querySelectorAll('.photo-item').length + 1;
+        
         const div = document.createElement('div');
-        div.className = 'new-photo-row';
+        div.className = 'new-photo-row photo-card';
         div.innerHTML = `
-            <div class="photo-upload-zone">
-                <i class="fas fa-spinner fa-spin upload-spinner"></i>
-                <i class="fas fa-camera upload-icon"></i>
-                <span class="upload-text">Pilih Gambar</span>
-                <input type="file" class="proker-new-photo-file" accept="image/*" required onchange="handleNewPhotoUpload(this)">
-                <img class="preview-img" style="display: none;">
+            <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Foto Slot Baru</label>
+                <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="this.closest('.photo-card').remove(); reindexProkers();"><i class="fas fa-times"></i> Hapus Slot</button>
             </div>
-            <div style="display: flex; flex-direction: column; justify-content: center; width: 100%; box-sizing: border-box; padding-right: 25px;">
-                <label style="font-size: 0.78rem; color: #aaa; margin-bottom: 6px; font-weight: 600;">Keterangan Foto</label>
-                <input type="text" class="form-control proker-new-photo-caption" placeholder="Masukkan keterangan atau caption foto kegiatan..." required>
+            <div class="photo-preview-wrap">
+                <i class="fas fa-spinner fa-spin upload-spinner" style="display: none; position: absolute; z-index: 3; font-size: 2rem; color: #4A90E2;"></i>
+                <img class="preview-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21 15 16 10 5 21'/></svg>">
             </div>
-            <button type="button" class="btn-remove-img" onclick="this.parentElement.remove();"><i class="fas fa-times"></i></button>
+            <div class="form-group" style="margin-top: 15px;">
+                <label class="photo-card-label">Upload Foto</label>
+                <input type="file" class="form-control proker-new-photo-file" accept="image/*" required onchange="handleNewPhotoUpload(this)" style="background: #0f1217; padding: 6px;">
+            </div>
+            <div class="form-group">
+                <label class="photo-card-label">Caption Foto</label>
+                <input type="text" class="form-control proker-new-photo-caption" placeholder="Cth: Foto Bersama Pemateri" required>
+            </div>
         `;
         container.appendChild(div);
         reindexProkers();
@@ -2697,24 +2846,17 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         const file = input.files[0];
         if (!file) return;
         
-        const zone = input.closest('.photo-upload-zone');
+        const zone = input.closest('.photo-card');
         const spinner = zone.querySelector('.upload-spinner');
-        const icon = zone.querySelector('.upload-icon');
-        const text = zone.querySelector('.upload-text');
         const preview = zone.querySelector('.preview-img');
         
-        // Show spinner
-        spinner.style.display = 'inline-block';
-        icon.style.display = 'none';
-        text.style.display = 'none';
+        if (spinner) spinner.style.display = 'inline-block';
         
         const reader = new FileReader();
         reader.onload = function(e) {
-            // Hide spinner and show preview
-            spinner.style.display = 'none';
+            if (spinner) spinner.style.display = 'none';
             preview.src = e.target.result;
-            preview.style.display = 'block';
-        };
+        }
         reader.readAsDataURL(file);
     }
 
@@ -3525,6 +3667,192 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         input.value = '';
         filterProkerRows(type);
         input.focus();
+    }
+    // --- Schritt 4: Berita Acara Import Logic ---
+    function openBaModal() {
+        const kemSelect = document.getElementById('kementerianSelect');
+        const kemHidden = document.querySelector('input[name="kementerian_id"][type="hidden"]');
+        const kementerianId = (kemSelect && kemSelect.value) || (kemHidden && kemHidden.value);
+        if (!kementerianId) {
+            alert("Pilih Kementerian terlebih dahulu pada Langkah 1.");
+            return;
+        }
+        
+        document.getElementById('baModal').style.display = 'flex';
+        document.getElementById('baSelect').innerHTML = '<option value="">-- Memuat Data... --</option>';
+        
+        fetch('buat-lpj.php?ajax_get_berita_acara_kementerian=' + kementerianId)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                
+                // Kumpulkan semua berita_acara_id yang sudah ada di form LPJ
+                const usedBaIds = new Set();
+                document.querySelectorAll('#ptContainer .pt-row .pt-ba-id-hidden').forEach(input => {
+                    const val = parseInt(input.value);
+                    if (val > 0) usedBaIds.add(val);
+                });
+                
+                const sel = document.getElementById('baSelect');
+                sel.innerHTML = '<option value="">-- Pilih Berita Acara --</option>';
+                data.forEach(ba => {
+                    if (usedBaIds.has(ba.id)) {
+                        sel.innerHTML += `<option value="${ba.id}" disabled style="color: #666; background: #1a1a2e;">✓ ${escapeHtml(ba.judul)} (Sudah Tercatat di LPJ)</option>`;
+                    } else {
+                        sel.innerHTML += `<option value="${ba.id}">${escapeHtml(ba.judul)}</option>`;
+                    }
+                });
+                if (data.length === 0) {
+                    sel.innerHTML = '<option value="">-- Tidak ada data Berita Acara untuk kementerian ini --</option>';
+                }
+            }).catch(err => {
+                console.error(err);
+                document.getElementById('baSelect').innerHTML = '<option value="">-- Gagal memuat data --</option>';
+            });
+    }
+
+    function importBaData() {
+        const baSelect = document.getElementById('baSelect');
+        const baId = baSelect.value;
+        if (!baId) {
+            alert("Silakan pilih Berita Acara terlebih dahulu.");
+            return;
+        }
+        
+        const selectedOption = baSelect.options[baSelect.selectedIndex];
+        if (selectedOption && selectedOption.disabled) {
+            alert("Berita Acara ini sudah ditambahkan ke dalam LPJ!");
+            return;
+        }
+        
+        const rows = document.querySelectorAll('#ptContainer .pt-row');
+        let targetRow = rows[rows.length - 1];
+        let isLastEmpty = !targetRow.querySelector('input[name="pt_name[]"]').value && !targetRow.querySelector('input[name="pt_kegiatan[]"]').value;
+        
+        // Prevent double clicking by disabling button
+        const importBtn = document.getElementById('btnImportBa');
+        if (importBtn) {
+            importBtn.disabled = true;
+            importBtn.innerText = 'Mengimpor...';
+        }
+        
+        if (!isLastEmpty) {
+            addProkerTerlaksana();
+            const newRows = document.querySelectorAll('#ptContainer .pt-row');
+            targetRow = newRows[newRows.length - 1];
+        }
+        
+        fetch('buat-lpj.php?ajax_get_berita_acara_id=' + baId)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                
+                // Simpan referensi BA ID di hidden input
+                const baIdHidden = targetRow.querySelector('.pt-ba-id-hidden');
+                if (baIdHidden) baIdHidden.value = baId;
+                
+                targetRow.querySelector('input[name="pt_name[]"]').value = data.program_kerja || '';
+                targetRow.querySelector('input[name="pt_kegiatan[]"]').value = data.nama_kegiatan || '';
+                targetRow.querySelector('input[name="pt_tempat[]"]').value = data.tempat || '';
+                targetRow.querySelector('input[name="pt_tema[]"]').value = data.tema || '';
+                targetRow.querySelector('input[name="pt_tanggal[]"]').value = data.tanggal || '';
+                targetRow.querySelector('input[name="pt_pj[]"]').value = data.penanggung_jawab || '';
+                
+                if (data.tujuan && data.tujuan.length > 0) {
+                    const hiddenTujuan = targetRow.querySelector('.pt-tujuan-hidden');
+                    if (hiddenTujuan) {
+                        hiddenTujuan.value = JSON.stringify(data.tujuan);
+                        const wrapper = hiddenTujuan.closest('.multipoint-wrapper');
+                        const container = wrapper.querySelector('.multipoint-list-container');
+                        container.innerHTML = '';
+                        const placeholder = container.getAttribute('data-placeholder');
+                        data.tujuan.forEach(val => {
+                            const escapedVal = val.replace(/"/g, '&quot;');
+                            container.innerHTML += `
+                            <div class="multipoint-item" style="display:flex; gap:10px; margin-bottom:10px;">
+                                <input type="text" class="form-control" value="${escapedVal}" placeholder="${placeholder}" onchange="updateMultiPointJSON(this)">
+                                <button type="button" class="btn btn-danger btn-sm" style="padding:0 12px;" onclick="removeMultiPoint(this)"><i class="fas fa-trash"></i></button>
+                            </div>`;
+                        });
+                    }
+                }
+                
+                if (data.dokumentasi && data.dokumentasi.length > 0) {
+                    const hiddenDocs = targetRow.querySelector('.pt-existing-dok-hidden');
+                    const previewGrid = targetRow.querySelector('.proker-existing-photos-grid');
+                    if (hiddenDocs && previewGrid) {
+                        hiddenDocs.value = JSON.stringify(data.dokumentasi);
+                        previewGrid.innerHTML = '';
+                        data.dokumentasi.forEach(doc => {
+                            let webPath = doc.file_path || '';
+                            if (webPath.includes('/var/www/html/bem/')) {
+                                webPath = '../' + webPath.split('/var/www/html/bem/')[1];
+                            } else if (!webPath.startsWith('http') && !webPath.startsWith('../')) {
+                                webPath = '../uploads/berita_acara/' + webPath.split('/').pop();
+                            }
+                            const div = document.createElement('div');
+                            div.className = 'photo-item photo-card';
+                            div.setAttribute('data-path', doc.file_path || '');
+                            div.innerHTML = `
+                                <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                    <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Foto Impor</label>
+                                    <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus Slot</button>
+                                </div>
+                                <div class="photo-preview-wrap">
+                                    <img src="${webPath}">
+                                </div>
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label class="photo-card-label">Caption Foto</label>
+                                    <input type="text" class="form-control photo-caption-input" style="font-size: 0.8rem; padding: 10px;" value="${doc.caption}" oninput="serializeProkerPhotos(this)">
+                                </div>
+                            `;
+                            previewGrid.appendChild(div);
+                        });
+                    }
+                }
+                
+                document.getElementById('baModal').style.display = 'none';
+                alert("Data Berita Acara berhasil diimpor!");
+                targetRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+            }).catch(err => {
+                console.error(err);
+                alert("Gagal mengambil detail Berita Acara.");
+            }).finally(() => {
+                const importBtn = document.getElementById('btnImportBa');
+                if (importBtn) {
+                    importBtn.disabled = false;
+                    importBtn.innerText = 'Gunakan Data';
+                }
+            });
+    }
+
+    function toggleProker(header) {
+        const body = header.nextElementSibling;
+        const icon = header.querySelector('.toggle-icon');
+        const summary = header.querySelector('.proker-summary');
+        
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            icon.style.transform = 'rotate(0deg)';
+            if (summary) summary.style.display = 'none';
+        } else {
+            // Read inputs to build summary before hiding
+            if (summary) {
+                const name = body.querySelector('input[name="pt_name[]"], input[name="pbt_name[]"]');
+                const keg = body.querySelector('input[name="pt_kegiatan[]"], input[name="pbt_kegiatan[]"]');
+                const tgl = body.querySelector('input[name="pt_tanggal[]"], input[name="pbt_tanggal[]"]');
+                
+                let text = (name && name.value) ? name.value : 'Tanpa Nama';
+                if (keg && keg.value) text += ' - ' + keg.value;
+                if (tgl && tgl.value) text += ' (' + tgl.value + ')';
+                
+                summary.innerText = text;
+                summary.style.display = 'block';
+            }
+            body.style.display = 'none';
+            icon.style.transform = 'rotate(180deg)';
+        }
     }
 </script>
 

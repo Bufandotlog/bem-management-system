@@ -825,9 +825,10 @@ if (!function_exists('cleanPointPrefix')) {
         <?php endif; ?>
 
         <!-- 5. EVALUASI KINERJA PRIBADI & INTERNAL MENTERI & PENUTUP -->
+        <?php if ($is_mubesma): ?>
         <div class="page">
             <div class="section-header">
-                <?php echo $is_mubesma ? "VIII. EVALUASI KINERJA PRIBADI" : "E. EVALUASI KINERJA PRIBADI"; ?>
+                <?php echo "VIII. EVALUASI KINERJA PRIBADI"; ?>
             </div>
             <?php 
             $eval_pribadi = trim($lpj['evaluasi_kinerja_pribadi'] ?? '');
@@ -912,9 +913,10 @@ if (!function_exists('cleanPointPrefix')) {
             <div style="clear: both;"></div>
 
             <div class="page-footer-label">
-                Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
+                Laporan Pertanggungjawaban Mubesma
             </div>
         </div>
+        <?php endif; ?>
 
     </div>
 

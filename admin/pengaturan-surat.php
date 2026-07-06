@@ -28,11 +28,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         $w_jab = sanitizeText($_POST['ttd_warek_jabatan'] ?? '');
         $p_name = sanitizeText($_POST['ttd_presma_name'] ?? '');
         $p_jab = sanitizeText($_POST['ttd_presma_jabatan'] ?? '');
+        $s_name = sanitizeText($_POST['ttd_sekretaris_name'] ?? '');
+        $s_jab = sanitizeText($_POST['ttd_sekretaris_jabatan'] ?? '');
 
         dbUpsertPengaturan('ttd_warek_name', $w_name);
         dbUpsertPengaturan('ttd_warek_jabatan', $w_jab);
         dbUpsertPengaturan('ttd_presma_name', $p_name);
         dbUpsertPengaturan('ttd_presma_jabatan', $p_jab);
+        dbUpsertPengaturan('ttd_sekretaris_name', $s_name);
+        dbUpsertPengaturan('ttd_sekretaris_jabatan', $s_jab);
+
+        // Fetch current settings to handle image deletion
+        $db_pengaturan = dbFetchAll("SELECT kunci, nilai FROM pengaturan");
+        $pengaturan = [];
+        foreach($db_pengaturan as $p) {
+            $pengaturan[$p['kunci']] = $p['nilai'];
+        }
+
+        // Handle Image Deletion
+        $delete_targets = ['warek', 'presma', 'sekretaris', 'cap_panitia', 'cap_warek', 'cap_presma'];
+        foreach ($delete_targets as $tgt) {
+            if (($_POST['delete_' . $tgt] ?? '') === '1') {
+                $db_key = in_array($tgt, ['warek', 'presma', 'sekretaris']) ? 'ttd_' . $tgt . '_image' : $tgt . '_image';
+                $old_img = $pengaturan[$db_key] ?? '';
+                if ($old_img) {
+                    deleteFile($old_img);
+                }
+                dbUpsertPengaturan($db_key, '');
+            }
+        }
 
         // Handle File Uploads
         if (!empty($_FILES['ttd_warek_image']['name'])) {
@@ -44,6 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
             $uploaded = uploadFile($_FILES['ttd_presma_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('ttd_presma_image', $uploaded);
             else $error = "Gagal upload ttd_presma_image.";
+        }
+        if (!empty($_FILES['ttd_sekretaris_image']['name'])) {
+            $uploaded = uploadFile($_FILES['ttd_sekretaris_image'], 'umum');
+            if ($uploaded) dbUpsertPengaturan('ttd_sekretaris_image', $uploaded);
+            else $error = "Gagal upload ttd_sekretaris_image.";
         }
         if (!empty($_FILES['cap_panitia_image']['name'])) {
             $uploaded = uploadFile($_FILES['cap_panitia_image'], 'umum');
@@ -203,11 +232,25 @@ foreach($db_pengaturan as $p) {
 $def_warek_name = $pengaturan['ttd_warek_name'] ?? 'II MUHAMAD MISBAH, S.Pd.I., SE., MM.';
 $def_warek_jab  = $pengaturan['ttd_warek_jabatan'] ?? 'WAREK III Bid. Kemahasiswaan';
 $def_warek_img  = $pengaturan['ttd_warek_image'] ?? '';
+
 $ketua = getKetua($periode_id);
-$fallback_presma = $ketua ? $ketua['nama_lengkap'] : '';
+$fallback_presma = $ketua ? ($ketua['nama'] ?? $ketua['nama_lengkap'] ?? '') : '';
 $def_presma_name = $pengaturan['ttd_presma_name'] ?? $fallback_presma;
 $def_presma_jab  = $pengaturan['ttd_presma_jabatan'] ?? 'Ketua BEM INSTBUNAS Majalengka';
 $def_presma_img  = $pengaturan['ttd_presma_image'] ?? '';
+
+$sekretaris = getSekretarisUmum($periode_id);
+$fallback_sekretaris = '';
+if ($sekretaris) {
+    $fallback_sekretaris = $sekretaris['nama'] ?? '';
+    if (empty($fallback_sekretaris) && !empty($sekretaris['anggota'])) {
+        $fallback_sekretaris = $sekretaris['anggota'][0]['nama'] ?? '';
+    }
+}
+$def_sekretaris_name = $pengaturan['ttd_sekretaris_name'] ?? $fallback_sekretaris;
+$def_sekretaris_jab  = $pengaturan['ttd_sekretaris_jabatan'] ?? 'Sekretaris BEM INSTBUNAS Majalengka';
+$def_sekretaris_img  = $pengaturan['ttd_sekretaris_image'] ?? '';
+
 $def_cap_panitia = $pengaturan['cap_panitia_image'] ?? '';
 $def_cap_warek   = $pengaturan['cap_warek_image'] ?? '';
 $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
@@ -507,6 +550,26 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                             <div class="preview-container" id="preview_presma_ctn" style="<?php echo $def_presma_img ? 'display:flex' : 'display:none'; ?>">
                                 <img id="preview_presma_img" class="preview-img" src="<?php echo $def_presma_img ? uploadUrl($def_presma_img) : '#'; ?>">
                                 <button type="button" class="btn-remove-img" data-target="presma" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                            <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="upload-card">
+                    <div class="upload-card-header"><i class="fas fa-file-signature"></i> Sekretaris BEM / Sekretaris Umum</div>
+                    <div class="upload-card-body">
+                        <div class="form-group"><label>Nama Sekretaris</label><input type="text" name="ttd_sekretaris_name" class="form-control" value="<?php echo htmlspecialchars($def_sekretaris_name); ?>" required></div>
+                        <div class="form-group"><label>Jabatan</label><input type="text" name="ttd_sekretaris_jabatan" class="form-control" value="<?php echo htmlspecialchars($def_sekretaris_jab); ?>" required></div>
+                        <div class="upload-area" data-target="sekretaris">
+                            <div class="drop-zone" id="dropzone_sekretaris">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <p>Seret & lepas gambar di sini<br>atau klik untuk memilih</p>
+                                <input type="file" id="file_sekretaris" name="ttd_sekretaris_image" accept="image/png, image/jpeg, image/webp" style="display:none;">
+                                <button type="button" class="btn-select-file" onclick="document.getElementById('file_sekretaris').click()">Pilih File</button>
+                            </div>
+                            <div class="preview-container" id="preview_sekretaris_ctn" style="<?php echo $def_sekretaris_img ? 'display:flex' : 'display:none'; ?>">
+                                <img id="preview_sekretaris_img" class="preview-img" src="<?php echo $def_sekretaris_img ? uploadUrl($def_sekretaris_img) : '#'; ?>">
+                                <button type="button" class="btn-remove-img" data-target="sekretaris" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
                         </div>
@@ -855,6 +918,20 @@ document.querySelectorAll('.btn-remove-img').forEach(btn => {
         if (previewCtn) previewCtn.style.display = 'none';
         const fileInput = document.getElementById(`file_${target}`);
         if (fileInput) fileInput.value = '';
+
+        // Add or set hidden field to delete
+        let delInput = document.getElementById(`delete_${target}`);
+        if (!delInput) {
+            delInput = document.createElement('input');
+            delInput.type = 'hidden';
+            delInput.id = `delete_${target}`;
+            delInput.name = `delete_${target}`;
+            delInput.value = '1';
+            document.getElementById('ttdStempelForm').appendChild(delInput);
+        } else {
+            delInput.value = '1';
+        }
+
         alert('Gambar akan dihapus saat Anda menyimpan pengaturan. Klik "Simpan" untuk menerapkan perubahan.');
     });
 });
@@ -863,6 +940,7 @@ document.querySelectorAll('.btn-remove-img').forEach(btn => {
 document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop('dropzone_warek', 'file_warek', 'preview_warek_ctn', 'preview_warek_img');
     setupDragAndDrop('dropzone_presma', 'file_presma', 'preview_presma_ctn', 'preview_presma_img');
+    setupDragAndDrop('dropzone_sekretaris', 'file_sekretaris', 'preview_sekretaris_ctn', 'preview_sekretaris_img');
     setupDragAndDrop('dropzone_cap_panitia', 'file_cap_panitia', 'preview_cap_panitia_ctn', 'preview_cap_panitia_img');
     setupDragAndDrop('dropzone_cap_warek', 'file_cap_warek', 'preview_cap_warek_ctn', 'preview_cap_warek_img');
     setupDragAndDrop('dropzone_cap_presma', 'file_cap_presma', 'preview_cap_presma_ctn', 'preview_cap_presma_img');

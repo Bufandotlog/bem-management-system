@@ -401,4 +401,29 @@ CREATE TABLE `login_attempts_ip` (
   KEY `idx_ip_created` (`ip_address`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------------------
+-- 16. Tabel `arsip_berita_acara`
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS `arsip_berita_acara`;
+CREATE TABLE `arsip_berita_acara` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `periode_id` int(11) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `nomor_berita` varchar(255) NOT NULL,
+  `tanggal_kegiatan` varchar(100) DEFAULT NULL,
+  `nama_kegiatan` varchar(255) NOT NULL,
+  `tempat` varchar(255) DEFAULT NULL,
+  `waktu` varchar(100) DEFAULT NULL,
+  `konten_json` mediumtext DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `fk_berita_acara_periode` (`periode_id`),
+  KEY `fk_berita_acara_user` (`created_by`),
+  CONSTRAINT `fk_berita_acara_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_berita_acara_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
+

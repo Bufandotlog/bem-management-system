@@ -317,3 +317,23 @@ CREATE TABLE "lpj_dokumen" (
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ----------------------------------------
+-- 16. Tabel `arsip_berita_acara`
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS "arsip_berita_acara" CASCADE;
+CREATE TABLE "arsip_berita_acara" (
+  "id" SERIAL PRIMARY KEY,
+  "periode_id" INTEGER REFERENCES "periode_kepengurusan"("id") ON DELETE CASCADE,
+  "created_by" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
+  "nomor_berita" VARCHAR(255) NOT NULL,
+  "tanggal_kegiatan" VARCHAR(100),
+  "nama_kegiatan" VARCHAR(255) NOT NULL,
+  "tempat" VARCHAR(255),
+  "waktu" VARCHAR(100),
+  "konten_json" TEXT,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

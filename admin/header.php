@@ -461,7 +461,8 @@ if (isset($page_css)) {
         $is_info_bem_active = in_array($current_page, $info_bem_pages);
         
         $surat_pages = [
-            'arsip-surat.php', 'buat-surat.php', 'pengaturan-surat.php', 'cetak-surat.php', 'arsip-manual.php', 'catat-surat-masuk.php'
+            'arsip-surat.php', 'buat-surat.php', 'pengaturan-surat.php', 'cetak-surat.php', 'arsip-manual.php', 'catat-surat-masuk.php',
+            'buat-berita-acara.php', 'arsip-berita-acara.php', 'cetak-berita-acara.php'
         ];
         $is_surat_active = in_array($current_page, $surat_pages);
         
@@ -543,6 +544,12 @@ if (isset($page_css)) {
                     </a>
                     <a href="buat-surat.php" class="<?php echo in_array($current_page, ['buat-surat.php', 'cetak-surat.php']) ? 'active' : ''; ?>">
                         <i class="fas fa-file-signature"></i><span>Buat Surat Otomatis</span>
+                    </a>
+                    <a href="arsip-berita-acara.php" class="<?php echo $current_page === 'arsip-berita-acara.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-file-alt"></i><span>Arsip Berita Acara</span>
+                    </a>
+                    <a href="buat-berita-acara.php" class="<?php echo in_array($current_page, ['buat-berita-acara.php', 'cetak-berita-acara.php']) ? 'active' : ''; ?>">
+                        <i class="fas fa-pen-nib"></i><span>Buat Berita Acara</span>
                     </a>
                     <a href="pengaturan-surat.php" class="<?php echo $current_page === 'pengaturan-surat.php' ? 'active' : ''; ?>">
                         <i class="fas fa-cogs"></i><span>Pengaturan Surat</span>

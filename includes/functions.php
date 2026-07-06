@@ -82,6 +82,51 @@ try {
     }
 }
 
+// Auto-migration: Pastikan tabel arsip_berita_acara ada
+try {
+    dbQuery("SELECT 1 FROM arsip_berita_acara LIMIT 1");
+} catch (Exception $e) {
+    try {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery('CREATE TABLE "arsip_berita_acara" (
+              "id" SERIAL PRIMARY KEY,
+              "periode_id" INTEGER REFERENCES "periode_kepengurusan"("id") ON DELETE CASCADE,
+              "created_by" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
+              "nomor_berita" VARCHAR(255) NOT NULL,
+              "tanggal_kegiatan" VARCHAR(100),
+              "nama_kegiatan" VARCHAR(255) NOT NULL,
+              "tempat" VARCHAR(255),
+              "waktu" VARCHAR(100),
+              "konten_json" TEXT,
+              "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )');
+        } else {
+            dbQuery("CREATE TABLE IF NOT EXISTS `arsip_berita_acara` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `periode_id` int(11) DEFAULT NULL,
+              `created_by` int(11) DEFAULT NULL,
+              `nomor_berita` varchar(255) NOT NULL,
+              `tanggal_kegiatan` varchar(100) DEFAULT NULL,
+              `nama_kegiatan` varchar(255) NOT NULL,
+              `tempat` varchar(255) DEFAULT NULL,
+              `waktu` varchar(100) DEFAULT NULL,
+              `konten_json` mediumtext DEFAULT NULL,
+              `created_at` timestamp NULL DEFAULT current_timestamp(),
+              `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+              PRIMARY KEY (`id`),
+              KEY `fk_berita_acara_periode` (`periode_id`),
+              KEY `fk_berita_acara_user` (`created_by`),
+              CONSTRAINT `fk_berita_acara_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE CASCADE,
+              CONSTRAINT `fk_berita_acara_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+    } catch (Exception $ex) {
+        // Abaikan jika database belum siap
+    }
+}
+
 // ============================================
 // FUNGSI IP-BASED LOGIN TRACKING
 // ============================================

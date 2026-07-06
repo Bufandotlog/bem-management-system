@@ -51,6 +51,10 @@ def clean_proker_name(name):
 def parse_id_date(d):
     if not d:
         return 0
+    match_iso = re.search(r'^(\d{4})-(\d{2})-(\d{2})$', d.strip())
+    if match_iso:
+        return int(match_iso.group(1)) * 10000 + int(match_iso.group(2)) * 100 + int(match_iso.group(3))
+        
     id_months = {
         'januari': 1, 'februari': 2, 'maret': 3, 'april': 4, 'mei': 5, 'juni': 6,
         'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12
@@ -63,6 +67,18 @@ def parse_id_date(d):
         month = id_months.get(month_name, 1)
         return year * 10000 + month * 100 + day
     return 0
+
+def format_id_date_str(d):
+    if not d:
+        return ""
+    match_iso = re.search(r'^(\d{4})-(\d{2})-(\d{2})$', d.strip())
+    if match_iso:
+        year = match_iso.group(1)
+        month = int(match_iso.group(2))
+        day = int(match_iso.group(3))
+        months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+        return f"{day} {months[month]} {year}"
+    return d
 
 def format_kementerian_title(k_name):
     if not k_name:
@@ -986,7 +1002,7 @@ def generate_lpj(output_path, config_data):
                     row_cells[0].text = str(grp['start_no'])
                     row_cells[2].text = grp['name']
                 
-                row_cells[1].text = r_row.get('Tanggal Kegiatan', '—')
+                row_cells[1].text = format_id_date_str(r_row.get('Tanggal Kegiatan', '—'))
                 row_cells[3].text = r_row.get('Nama Kegiatan', r_row.get('Nama Program Kerja', '—'))
                 row_cells[4].text = r_row.get('Tempat Kegiatan', r_row.get('Tempat', '—'))
                 
@@ -1044,7 +1060,7 @@ def generate_lpj(output_path, config_data):
             ("Sifat", pk.get("Sifat", "Internal")),
             ("Tema Kegiatan", pk.get("Tema Kegiatan", "")),
             ("Tujuan", pk.get("Tujuan", "")),
-            ("Tanggal Kegiatan", pk.get("Tanggal Kegiatan", "")),
+            ("Tanggal Kegiatan", format_id_date_str(pk.get("Tanggal Kegiatan", ""))),
             ("Penanggung Jawab", pk.get("Penanggung Jawab", "")),
             ("Peserta Kegiatan", pk.get("Peserta Kegiatan", "")),
             ("Evaluasi & Saran", pk.get("Evaluasi & Saran", pk.get("Evaluasi", "")))
@@ -1233,7 +1249,7 @@ def generate_lpj(output_path, config_data):
                 ("Sifat", pk.get("Sifat", "—")),
                 ("Tema Kegiatan", pk.get("Tema Kegiatan", "—")),
                 ("Tujuan Kegiatan", pk.get("Tujuan Kegiatan", pk.get("Tujuan", "—"))),
-                ("Tanggal Kegiatan", pk.get("Tanggal Kegiatan", "—")),
+                ("Tanggal Kegiatan", format_id_date_str(pk.get("Tanggal Kegiatan", "—"))),
                 ("Penanggung Jawab", pk.get("Penanggung Jawab", "—")),
                 ("Peserta Kegiatan", pk.get("Peserta Kegiatan", "—")),
                 ("Anggaran", pk.get("Anggaran", "—")),
@@ -1241,113 +1257,114 @@ def generate_lpj(output_path, config_data):
             ]
             render_table_rows(table, fields, indent_cm=INDENT_PROKER, bold_label=False, prefix_alpha=True)
             
-    # E. EVALUASI KINERJA PRIBADI
-    p_hdr_e = doc.add_paragraph()
-    p_hdr_e.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p_hdr_e.paragraph_format.space_before = Pt(12)
-    p_hdr_e.paragraph_format.space_after = Pt(6)
-    p_hdr_e.paragraph_format.keep_with_next = True
-    format_run(p_hdr_e.add_run(f"{pref_e} EVALUASI KINERJA PRIBADI"), size_pt=12, bold=True)
-    
-    eval_pribadi = config_data.get("evaluasi_kinerja_pribadi", "").strip()
-    if eval_pribadi:
-        for line in eval_pribadi.split("\n"):
+    if is_mubesma:
+        # E. EVALUASI KINERJA PRIBADI
+        p_hdr_e = doc.add_paragraph()
+        p_hdr_e.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_e.paragraph_format.space_before = Pt(12)
+        p_hdr_e.paragraph_format.space_after = Pt(6)
+        p_hdr_e.paragraph_format.keep_with_next = True
+        format_run(p_hdr_e.add_run(f"{pref_e} EVALUASI KINERJA PRIBADI"), size_pt=12, bold=True)
+
+        eval_pribadi = config_data.get("evaluasi_kinerja_pribadi", "").strip()
+        if eval_pribadi:
+            for line in eval_pribadi.split("\n"):
+                line_clean = line.strip()
+                if not line_clean:
+                    doc.add_paragraph()
+                    continue
+                p_eval_pribadi = doc.add_paragraph()
+                p_eval_pribadi.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_eval_pribadi.paragraph_format.line_spacing = 1.5
+                p_eval_pribadi.paragraph_format.space_before = Pt(0)
+                p_eval_pribadi.paragraph_format.space_after = Pt(0)
+                p_eval_pribadi.paragraph_format.left_indent = Cm(0.5)
+                p_eval_pribadi.paragraph_format.first_line_indent = Cm(1.0)
+                format_run(p_eval_pribadi.add_run(line_clean), size_pt=12)
+        else:
+            p_eval_pribadi = doc.add_paragraph()
+            p_eval_pribadi.paragraph_format.left_indent = Cm(0.5)
+            p_eval_pribadi.paragraph_format.space_before = Pt(0)
+            p_eval_pribadi.paragraph_format.space_after = Pt(0)
+            p_eval_pribadi.paragraph_format.line_spacing = 1.5
+            format_run(p_eval_pribadi.add_run("—"), size_pt=12)
+
+        # F. EVALUASI ANGGOTA DAN INTERNAL MENTERI
+        p_hdr_f = doc.add_paragraph()
+        p_hdr_f.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_f.paragraph_format.space_before = Pt(12)
+        p_hdr_f.paragraph_format.space_after = Pt(6)
+        p_hdr_f.paragraph_format.keep_with_next = True
+        format_run(p_hdr_f.add_run(f"{pref_f} EVALUASI ANGGOTA DAN INTERNAL MENTERI"), size_pt=12, bold=True)
+
+        eval_anggota = config_data.get("evaluasi_anggota_internal", [])
+        if eval_anggota:
+            table_eva = doc.add_table(rows=1, cols=4)
+            table_eva.style = 'Table Grid'
+            set_table_indent(table_eva, 0.5)
+            set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
+
+            hdr_cells = table_eva.rows[0].cells
+            hdr_cells[0].text = 'No'
+            hdr_cells[1].text = 'Nama Anggota'
+            hdr_cells[2].text = 'Kepribadian'
+            hdr_cells[3].text = 'Kinerja'
+
+            for cell in hdr_cells:
+                set_cell_shading(cell, "D3D3D3")
+                set_cell_margins(cell, top=100, bottom=100, left=120, right=120)
+                cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for run in cell.paragraphs[0].runs:
+                    format_run(run, size_pt=11, bold=True)
+
+            for idx_eva, agt in enumerate(eval_anggota, 1):
+                row_cells = table_eva.add_row().cells
+                set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
+                row_cells[0].text = str(idx_eva)
+                row_cells[1].text = agt.get('nama', '')
+                row_cells[2].text = agt.get('kepribadian', '')
+                row_cells[3].text = agt.get('kinerja', '')
+
+                row_cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for i_cell, cell in enumerate(row_cells):
+                    set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+                    for paragraph in cell.paragraphs:
+                        paragraph.paragraph_format.line_spacing = 1.15
+                        paragraph.paragraph_format.space_after = Pt(2)
+                        for run in paragraph.runs:
+                            format_run(run, size_pt=10 if i_cell > 1 else 11)
+        else:
+            p_eval_anggota = doc.add_paragraph()
+            p_eval_anggota.paragraph_format.left_indent = Cm(0.5)
+            run_ea = p_eval_anggota.add_run("—")
+            format_run(run_ea, size_pt=11)
+
+        # PENUTUP SECTION
+        p_hdr_penutup = doc.add_paragraph()
+        p_hdr_penutup.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p_hdr_penutup.paragraph_format.space_before = Pt(12)
+        p_hdr_penutup.paragraph_format.space_after = Pt(6)
+        p_hdr_penutup.paragraph_format.keep_with_next = True
+        format_run(p_hdr_penutup.add_run(f"{pref_penutup} PENUTUP"), size_pt=12, bold=True)
+
+        penutup_text = config_data.get("penutup", "").strip()
+        if not penutup_text:
+            penutup_text = "Demikian Laporan Pertanggungjawaban ini kami susun sebagai bentuk pertanggungjawaban atas amanah yang telah diberikan selama satu periode kepengurusan. Kami menyadari masih banyak kekurangan dalam pelaksanaan program kerja maupun dalam koordinasi internal, namun hal tersebut menjadi bahan evaluasi dan pembelajaran untuk ke depannya.\n\nTerima kasih kepada seluruh pihak yang telah mendukung dan bekerja sama, baik dari internal maupun pihak eksternal. Semoga apa yang telah dijalankan dapat memberikan manfaat bagi mahasiswa dan lingkungan kampus secara luas."
+
+        for line in penutup_text.split("\n"):
             line_clean = line.strip()
             if not line_clean:
                 doc.add_paragraph()
                 continue
-            p_eval_pribadi = doc.add_paragraph()
-            p_eval_pribadi.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            p_eval_pribadi.paragraph_format.line_spacing = 1.5
-            p_eval_pribadi.paragraph_format.space_before = Pt(0)
-            p_eval_pribadi.paragraph_format.space_after = Pt(0)
-            p_eval_pribadi.paragraph_format.left_indent = Cm(0.5)
-            p_eval_pribadi.paragraph_format.first_line_indent = Cm(1.0)
-            format_run(p_eval_pribadi.add_run(line_clean), size_pt=12)
-    else:
-        p_eval_pribadi = doc.add_paragraph()
-        p_eval_pribadi.paragraph_format.left_indent = Cm(0.5)
-        p_eval_pribadi.paragraph_format.space_before = Pt(0)
-        p_eval_pribadi.paragraph_format.space_after = Pt(0)
-        p_eval_pribadi.paragraph_format.line_spacing = 1.5
-        format_run(p_eval_pribadi.add_run("—"), size_pt=12)
-    
-    # F. EVALUASI ANGGOTA DAN INTERNAL MENTERI
-    p_hdr_f = doc.add_paragraph()
-    p_hdr_f.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p_hdr_f.paragraph_format.space_before = Pt(12)
-    p_hdr_f.paragraph_format.space_after = Pt(6)
-    p_hdr_f.paragraph_format.keep_with_next = True
-    format_run(p_hdr_f.add_run(f"{pref_f} EVALUASI ANGGOTA DAN INTERNAL MENTERI"), size_pt=12, bold=True)
-    
-    eval_anggota = config_data.get("evaluasi_anggota_internal", [])
-    if eval_anggota:
-        table_eva = doc.add_table(rows=1, cols=4)
-        table_eva.style = 'Table Grid'
-        set_table_indent(table_eva, 0.5)
-        set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
-        
-        hdr_cells = table_eva.rows[0].cells
-        hdr_cells[0].text = 'No'
-        hdr_cells[1].text = 'Nama Anggota'
-        hdr_cells[2].text = 'Kepribadian'
-        hdr_cells[3].text = 'Kinerja'
-        
-        for cell in hdr_cells:
-            set_cell_shading(cell, "D3D3D3")
-            set_cell_margins(cell, top=100, bottom=100, left=120, right=120)
-            cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-            for run in cell.paragraphs[0].runs:
-                format_run(run, size_pt=11, bold=True)
-                
-        for idx_eva, agt in enumerate(eval_anggota, 1):
-            row_cells = table_eva.add_row().cells
-            set_table_widths(table_eva, [Cm(1.0), Cm(4.0), Cm(5.5), Cm(5.5)])
-            row_cells[0].text = str(idx_eva)
-            row_cells[1].text = agt.get('nama', '')
-            row_cells[2].text = agt.get('kepribadian', '')
-            row_cells[3].text = agt.get('kinerja', '')
-            
-            row_cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-            for i_cell, cell in enumerate(row_cells):
-                set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
-                for paragraph in cell.paragraphs:
-                    paragraph.paragraph_format.line_spacing = 1.15
-                    paragraph.paragraph_format.space_after = Pt(2)
-                    for run in paragraph.runs:
-                        format_run(run, size_pt=10 if i_cell > 1 else 11)
-    else:
-        p_eval_anggota = doc.add_paragraph()
-        p_eval_anggota.paragraph_format.left_indent = Cm(0.5)
-        run_ea = p_eval_anggota.add_run("—")
-        format_run(run_ea, size_pt=11)
-            
-    # PENUTUP SECTION
-    p_hdr_penutup = doc.add_paragraph()
-    p_hdr_penutup.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p_hdr_penutup.paragraph_format.space_before = Pt(12)
-    p_hdr_penutup.paragraph_format.space_after = Pt(6)
-    p_hdr_penutup.paragraph_format.keep_with_next = True
-    format_run(p_hdr_penutup.add_run(f"{pref_penutup} PENUTUP"), size_pt=12, bold=True)
-    
-    penutup_text = config_data.get("penutup", "").strip()
-    if not penutup_text:
-        penutup_text = "Demikian Laporan Pertanggungjawaban ini kami susun sebagai bentuk pertanggungjawaban atas amanah yang telah diberikan selama satu periode kepengurusan. Kami menyadari masih banyak kekurangan dalam pelaksanaan program kerja maupun dalam koordinasi internal, namun hal tersebut menjadi bahan evaluasi dan pembelajaran untuk ke depannya.\n\nTerima kasih kepada seluruh pihak yang telah mendukung dan bekerja sama, baik dari internal maupun pihak eksternal. Semoga apa yang telah dijalankan dapat memberikan manfaat bagi mahasiswa dan lingkungan kampus secara luas."
-        
-    for line in penutup_text.split("\n"):
-        line_clean = line.strip()
-        if not line_clean:
-            doc.add_paragraph()
-            continue
-        p_penutup = doc.add_paragraph()
-        p_penutup.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-        p_penutup.paragraph_format.line_spacing = 1.5
-        p_penutup.paragraph_format.space_before = Pt(0)
-        p_penutup.paragraph_format.space_after = Pt(0)
-        p_penutup.paragraph_format.left_indent = Cm(0.5)
-        p_penutup.paragraph_format.first_line_indent = Cm(1.0)
-        format_run(p_penutup.add_run(line_clean), size_pt=12)
-        
+            p_penutup = doc.add_paragraph()
+            p_penutup.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p_penutup.paragraph_format.line_spacing = 1.5
+            p_penutup.paragraph_format.space_before = Pt(0)
+            p_penutup.paragraph_format.space_after = Pt(0)
+            p_penutup.paragraph_format.left_indent = Cm(0.5)
+            p_penutup.paragraph_format.first_line_indent = Cm(1.0)
+            format_run(p_penutup.add_run(line_clean), size_pt=12)
+
     # Signature Block
     import re
     clean_k_name = re.sub(r'^(Kementerian|Menteri|Departemen)\s+', '', kementrian_str, flags=re.IGNORECASE)
@@ -1360,31 +1377,32 @@ def generate_lpj(output_path, config_data):
     now = datetime.datetime.now()
     tgl_str = f"Majalengka, {now.day:02d} {months[now.month - 1]} {now.year}"
     
-    p_sig_date = doc.add_paragraph()
-    p_sig_date.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig_date.paragraph_format.space_before = Pt(36)
-    p_sig_date.paragraph_format.line_spacing = 1.15
-    format_run(p_sig_date.add_run(tgl_str), size_pt=12)
-    
-    p_sig_ket1 = doc.add_paragraph()
-    p_sig_ket1.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig_ket1.paragraph_format.line_spacing = 1.15
-    format_run(p_sig_ket1.add_run("Ketua Umum"), size_pt=12)
+    if is_mubesma:
+        p_sig_date = doc.add_paragraph()
+        p_sig_date.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p_sig_date.paragraph_format.space_before = Pt(36)
+        p_sig_date.paragraph_format.line_spacing = 1.15
+        format_run(p_sig_date.add_run(tgl_str), size_pt=12)
 
-    p_sig_ket2 = doc.add_paragraph()
-    p_sig_ket2.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig_ket2.paragraph_format.line_spacing = 1.15
-    format_run(p_sig_ket2.add_run(f"{org_prefix} {clean_k_name},\n\n\n\n\n"), size_pt=12)
-    
-    ketua_name = config_data.get("keanggotaan", {}).get("ketua", "Nama Ketua")
-    
-    p_sig_name = doc.add_paragraph()
-    p_sig_name.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sig_name.paragraph_format.line_spacing = 1.15
-    run_name = p_sig_name.add_run(ketua_name)
-    run_name.underline = True
-    format_run(run_name, size_pt=12, bold=True)
-        
+        p_sig_ket1 = doc.add_paragraph()
+        p_sig_ket1.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p_sig_ket1.paragraph_format.line_spacing = 1.15
+        format_run(p_sig_ket1.add_run("Ketua Umum"), size_pt=12)
+
+        p_sig_ket2 = doc.add_paragraph()
+        p_sig_ket2.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p_sig_ket2.paragraph_format.line_spacing = 1.15
+        format_run(p_sig_ket2.add_run(f"{org_prefix} {clean_k_name},\n\n\n\n\n"), size_pt=12)
+
+        ketua_name = config_data.get("keanggotaan", {}).get("ketua", "Nama Ketua")
+
+        p_sig_name = doc.add_paragraph()
+        p_sig_name.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p_sig_name.paragraph_format.line_spacing = 1.15
+        run_name = p_sig_name.add_run(ketua_name)
+        run_name.underline = True
+        format_run(run_name, size_pt=12, bold=True)
+
     add_document_footer(doc, triwulan_str)
     doc.save(output_path)
     return True
@@ -1672,7 +1690,7 @@ def consolidate_lpj(output_path, file_list):
                         row_cells[0].text = str(grp['start_no'])
                         row_cells[2].text = grp['name']
                     
-                    row_cells[1].text = r_row.get('Tanggal Kegiatan', '—')
+                    row_cells[1].text = format_id_date_str(r_row.get('Tanggal Kegiatan', '—'))
                     row_cells[3].text = r_row.get('Nama Kegiatan', r_row.get('Nama Program Kerja', '—'))
                     row_cells[4].text = r_row.get('Tempat Kegiatan', r_row.get('Tempat', '—'))
                     
@@ -1727,7 +1745,7 @@ def consolidate_lpj(output_path, file_list):
                 ("Sifat", pk.get("Sifat", "Internal")),
                 ("Tema Kegiatan", pk.get("Tema Kegiatan", "")),
                 ("Tujuan", pk.get("Tujuan", "")),
-                ("Tanggal Kegiatan", pk.get("Tanggal Kegiatan", "")),
+                ("Tanggal Kegiatan", format_id_date_str(pk.get("Tanggal Kegiatan", ""))),
                 ("Penanggung Jawab", pk.get("Penanggung Jawab", "")),
                 ("Peserta Kegiatan", pk.get("Peserta Kegiatan", "")),
                 ("Evaluasi & Saran", pk.get("Evaluasi & Saran", pk.get("Evaluasi", "")))
@@ -1907,7 +1925,7 @@ def consolidate_lpj(output_path, file_list):
                 ("Sifat", pk.get("Sifat", "—")),
                 ("Tema Kegiatan", pk.get("Tema Kegiatan", "—")),
                 ("Tujuan Kegiatan", pk.get("Tujuan Kegiatan", pk.get("Tujuan", "—"))),
-                ("Tanggal Kegiatan", pk.get("Tanggal Kegiatan", "—")),
+                ("Tanggal Kegiatan", format_id_date_str(pk.get("Tanggal Kegiatan", "—"))),
                 ("Penanggung Jawab", pk.get("Penanggung Jawab", "—")),
                 ("Peserta Kegiatan", pk.get("Peserta Kegiatan", "—")),
                 ("Anggaran", pk.get("Anggaran", "—")),
