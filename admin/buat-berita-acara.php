@@ -90,13 +90,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tanggal_kegiatan = '';
         $hari_kegiatan = 'Senin';
         if (!empty($tanggal_kegiatan_raw)) {
-            $timestamp = strtotime($tanggal_kegiatan_raw);
-            if ($timestamp !== false) {
-                $tanggal_kegiatan = tanggalIndonesia($timestamp);
-                $hari_array = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-                $hari_kegiatan = $hari_array[(int)date('w', $timestamp)];
+            if (strpos($tanggal_kegiatan_raw, ',') !== false) {
+                $parts = explode(',', $tanggal_kegiatan_raw, 2);
+                $hari_kegiatan = trim($parts[0]);
+                $tanggal_kegiatan = trim($parts[1]);
             } else {
-                $tanggal_kegiatan = $tanggal_kegiatan_raw;
+                $timestamp = strtotime($tanggal_kegiatan_raw);
+                if ($timestamp !== false) {
+                    $tanggal_kegiatan = tanggalIndonesia($timestamp);
+                    $hari_array = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                    $hari_kegiatan = $hari_array[(int)date('w', $timestamp)];
+                } else {
+                    $tanggal_kegiatan = $tanggal_kegiatan_raw;
+                }
             }
         }
         
@@ -491,16 +497,32 @@ if (!isset($edit_data['pelaksana_tipe']) && isset($edit_data['pelaksana_kegiatan
 }
 
 // Convert tanggal_kegiatan to YYYY-MM-DD for html5 calendar date input
-$tanggal_kegiatan_val = $edit_data['tanggal_kegiatan'] ?? '';
+$tanggal_kegiatan_full_val = $edit_data['tanggal_kegiatan'] ?? '';
+if (empty($tanggal_kegiatan_full_val)) {
+    $tanggal_kegiatan_full_val = tanggalIndonesia(null, true);
+}
+
+$tanggal_kegiatan_val = $tanggal_kegiatan_full_val;
 if (!empty($tanggal_kegiatan_val)) {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal_kegiatan_val)) {
-        $ts = strtotime($tanggal_kegiatan_val);
+        // Strip day prefix if any to try parsing it
+        $clean_date = $tanggal_kegiatan_val;
+        if (strpos($clean_date, ',') !== false) {
+            $parts = explode(',', $clean_date, 2);
+            $clean_date = trim($parts[1]);
+        }
+        // Extract start date if it's a range like "12-13 Juli 2026"
+        if (preg_match('/^(\d+)[-\–]\d+\s+([a-zA-Z]+)\s+(\d{4})/', $clean_date, $rng_m)) {
+            $clean_date = $rng_m[1] . ' ' . $rng_m[2] . ' ' . $rng_m[3];
+        }
+        
+        $ts = strtotime($clean_date);
         if ($ts !== false) {
             $tanggal_kegiatan_val = date('Y-m-d', $ts);
         } else {
             $ind_months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             $eng_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            $english_date = str_replace($ind_months, $eng_months, $tanggal_kegiatan_val);
+            $english_date = str_replace($ind_months, $eng_months, $clean_date);
             $ts = strtotime($english_date);
             if ($ts !== false) {
                 $tanggal_kegiatan_val = date('Y-m-d', $ts);
@@ -889,6 +911,12 @@ if (!empty($tanggal_kegiatan_val)) {
     .buat-ba-container .drum-groups-wrap { justify-content: center; }
     .drum-colon { display: none; }
 }
+
+.buat-ba-container .date-range-wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 600px) {
+    .buat-ba-container .date-range-wrap { flex-direction: column; align-items: stretch; }
+    .buat-ba-container .date-range-wrap span { display: none; }
+}
 </style>
 
 <div class="buat-ba-container">
@@ -958,7 +986,26 @@ if (!empty($tanggal_kegiatan_val)) {
                 <div class="grid-2">
                     <div class="form-group">
                         <label>Tanggal Kegiatan</label>
-                        <input type="date" name="tanggal_kegiatan" value="<?php echo htmlspecialchars($tanggal_kegiatan_val); ?>" required>
+                        <div class="wakpel-card" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 18px; padding: 20px;">
+                            <div class="date-range-wrap" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                                <input type="date" id="tgl-mulai" onchange="formatTanggalRange()" value="<?php echo htmlspecialchars($tanggal_kegiatan_val); ?>" style="flex: 2; min-width: 140px;">
+                                <span style="color:var(--text-muted); font-size: 0.8rem; flex-shrink: 0;">selama</span>
+                                <div style="display:flex; gap:5px; align-items:center; flex: 1; min-width: 130px;">
+                                    <select id="durasi-hari" onchange="handleDurasiChange()">
+                                        <option value="1">1 Hari</option>
+                                        <option value="2">2 Hari</option>
+                                        <option value="3">3 Hari</option>
+                                        <option value="4">4 Hari</option>
+                                        <option value="5">5 Hari</option>
+                                        <option value="custom">Custom...</option>
+                                    </select>
+                                    <input type="number" id="custom-hari" min="1" value="1" oninput="formatTanggalRange()" style="display:none; width: 80px;">
+                                    <span id="label-hari" style="color:var(--text-muted); font-size: 0.8rem; display:none; flex-shrink: 0;">Hari</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="out-tanggal" name="tanggal_kegiatan" value="<?php echo htmlspecialchars($tanggal_kegiatan_full_val); ?>">
+                            <div class="preview-bar" id="preview-tanggal"><?php echo htmlspecialchars($tanggal_kegiatan_full_val); ?></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Waktu Kegiatan</label>
@@ -1589,6 +1636,200 @@ function updateDependentDropdowns() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateDependentDropdowns();
+});
+
+// ========== Date Range Picker Logic ==========
+const HARI_ID  = ['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'];
+const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const MONTH_MAP = {
+    'januari': 0, 'februari': 1, 'maret': 2, 'april': 3, 'mei': 4, 'juni': 5,
+    'juli': 6, 'agustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'desember': 11
+};
+
+function parseSingleDateString(str) {
+    const commaParts = str.split(',');
+    const target = commaParts.length > 1 ? commaParts[1].trim() : commaParts[0].trim();
+    const parts = target.split(/\s+/);
+    if (parts.length >= 3) {
+        const day = parseInt(parts[0]);
+        const monthName = parts[1].toLowerCase();
+        const year = parseInt(parts[2]);
+        const month = MONTH_MAP[monthName];
+        if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+            return { day, month, year };
+        }
+    }
+    return null;
+}
+
+function formatDateIso(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function parseTanggalRange(str) {
+    if (!str) return null;
+    str = str.trim();
+
+    // 1. Check if YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        return { start: str, duration: 1 };
+    }
+
+    // 2. Check if it's the long range format with " – " or " - " (across months/years)
+    const partsDouble = str.split(/\s+[\–\-]\s+/);
+    if (partsDouble.length === 2) {
+        const p1 = parseSingleDateString(partsDouble[0]);
+        const p2 = parseSingleDateString(partsDouble[1]);
+        if (p1 && p2) {
+            const d1 = new Date(p1.year, p1.month, p1.day);
+            const d2 = new Date(p2.year, p2.month, p2.day);
+            const diffTime = Math.abs(d2 - d1);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            return {
+                start: formatDateIso(d1),
+                duration: diffDays
+            };
+        }
+    }
+
+    // 3. Check if it is single day or same-month range format
+    let datePart = str;
+    const commaParts = str.split(',');
+    if (commaParts.length >= 2) {
+        datePart = commaParts.slice(1).join(',').trim();
+    }
+    const spaceParts = datePart.split(/\s+/);
+    if (spaceParts.length >= 3) {
+        const dayRange = spaceParts[0];
+        const monthName = spaceParts[1].toLowerCase();
+        const year = parseInt(spaceParts[2]);
+        const month = MONTH_MAP[monthName];
+
+        if (month !== undefined && !isNaN(year)) {
+            const days = dayRange.split(/[\-\–]/);
+            if (days.length === 2) {
+                const startDay = parseInt(days[0]);
+                const endDay = parseInt(days[1]);
+                if (!isNaN(startDay) && !isNaN(endDay)) {
+                    const d1 = new Date(year, month, startDay);
+                    const duration = endDay - startDay + 1;
+                    return {
+                        start: formatDateIso(d1),
+                        duration: duration > 0 ? duration : 1
+                    };
+                }
+            } else if (days.length === 1) {
+                const startDay = parseInt(days[0]);
+                if (!isNaN(startDay)) {
+                    const d1 = new Date(year, month, startDay);
+                    return {
+                        start: formatDateIso(d1),
+                        duration: 1
+                    };
+                }
+            }
+        }
+    }
+    return null;
+}
+
+function initDateRangePicker() {
+    const tglMulaiInput = document.getElementById('tgl-mulai');
+    const durasiSelect = document.getElementById('durasi-hari');
+    const customInput = document.getElementById('custom-hari');
+    const labelHari = document.getElementById('label-hari');
+    const outHidden = document.getElementById('out-tanggal');
+    const previewDiv = document.getElementById('preview-tanggal');
+
+    if (!outHidden || !previewDiv) return;
+
+    const rawValue = outHidden.value || '';
+    previewDiv.innerText = rawValue || '—';
+
+    if (rawValue) {
+        const parsed = parseTanggalRange(rawValue);
+        if (parsed) {
+            tglMulaiInput.value = parsed.start;
+            const durVal = parsed.duration;
+            if (durVal >= 1 && durVal <= 5) {
+                durasiSelect.value = String(durVal);
+                customInput.style.display = 'none';
+                labelHari.style.display = 'none';
+            } else {
+                durasiSelect.value = 'custom';
+                customInput.value = String(durVal);
+                customInput.style.display = 'inline-block';
+                labelHari.style.display = 'inline';
+            }
+        } else {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+                tglMulaiInput.value = rawValue;
+                durasiSelect.value = '1';
+            }
+        }
+    }
+}
+
+function handleDurasiChange() {
+    const selectEl = document.getElementById('durasi-hari');
+    const custom = document.getElementById('custom-hari');
+    const label = document.getElementById('label-hari');
+    
+    if (selectEl.value === 'custom') {
+        custom.style.display = 'inline-block';
+        label.style.display = 'inline';
+    } else {
+        custom.style.display = 'none';
+        label.style.display = 'none';
+    }
+    formatTanggalRange();
+}
+
+function formatTanggalRange() {
+    const tglMulaiInput = document.getElementById('tgl-mulai');
+    const durasiSelect = document.getElementById('durasi-hari');
+    const customInput = document.getElementById('custom-hari');
+    const outHidden = document.getElementById('out-tanggal');
+    const previewDiv = document.getElementById('preview-tanggal');
+
+    const mulai = tglMulaiInput.value;
+    if (!mulai) {
+        outHidden.value = '';
+        previewDiv.innerText = '—';
+        return;
+    }
+
+    let jmlHari = parseInt(durasiSelect.value);
+    if (durasiSelect.value === 'custom') {
+        jmlHari = parseInt(customInput.value) || 1;
+    }
+
+    const d1 = new Date(mulai + 'T00:00:00');
+    let result = '';
+
+    if (jmlHari <= 1) {
+        result = HARI_ID[d1.getDay()] + ', ' + d1.getDate() + ' ' + BULAN_ID[d1.getMonth()] + ' ' + d1.getFullYear();
+    } else {
+        const d2 = new Date(d1);
+        d2.setDate(d1.getDate() + (jmlHari - 1));
+
+        const hari = HARI_ID[d1.getDay()] === HARI_ID[d2.getDay()] ? HARI_ID[d1.getDay()] : HARI_ID[d1.getDay()] + '-' + HARI_ID[d2.getDay()];
+        const bln1 = BULAN_ID[d1.getMonth()], bln2 = BULAN_ID[d2.getMonth()];
+        const tgl  = bln1 === bln2 && d1.getFullYear() === d2.getFullYear()
+            ? d1.getDate() + '-' + d2.getDate() + ' ' + bln1 + ' ' + d1.getFullYear()
+            : d1.getDate() + ' ' + bln1 + ' ' + d1.getFullYear() + ' – ' + d2.getDate() + ' ' + bln2 + ' ' + d2.getFullYear();
+        result = hari + ', ' + tgl;
+    }
+
+    outHidden.value = result;
+    previewDiv.innerText = result;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initDateRangePicker();
 });
 </script>
 
