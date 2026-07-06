@@ -2234,11 +2234,47 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             let valid = true;
 
             inputs.forEach(input => {
-                // Skip hidden inputs and inputs inside hidden containers
-                if (input.type === 'hidden' || input.offsetParent === null) return;
+                if (input.type === 'hidden') return;
+                
+                // Check if hidden (offsetParent === null)
+                if (input.offsetParent === null) {
+                    // Check if it's inside a collapsed proker body
+                    const prokerBody = input.closest('.proker-body');
+                    if (prokerBody) {
+                        // Check if any ancestor of input up to prokerBody is hidden
+                        let parent = input.parentElement;
+                        let isInsideConditionalHidden = false;
+                        while (parent && parent !== prokerBody) {
+                            if (parent.style.display === 'none' || window.getComputedStyle(parent).display === 'none') {
+                                isInsideConditionalHidden = true;
+                                break;
+                            }
+                            parent = parent.parentElement;
+                        }
+                        if (isInsideConditionalHidden) {
+                            return; // skip conditionally hidden inputs (e.g. hidden budget)
+                        }
+                    } else {
+                        return; // skip other truly hidden inputs
+                    }
+                }
+                
                 if (!input.value.trim()) {
                     markFieldInvalid(input, 'Kolom ini wajib diisi.');
                     valid = false;
+                    
+                    // If it is inside a collapsed proker body, expand it!
+                    const prokerBody = input.closest('.proker-body');
+                    if (prokerBody && prokerBody.style.display === 'none') {
+                        prokerBody.style.display = 'block';
+                        const row = prokerBody.closest('.dynamic-row');
+                        const header = row.querySelector('.proker-header');
+                        const icon = header.querySelector('.toggle-icon');
+                        const summary = header.querySelector('.proker-summary');
+                        if (icon) icon.style.transform = 'rotate(0deg)';
+                        if (summary) summary.style.display = 'none';
+                    }
+                    
                     if (!firstInvalid) firstInvalid = input;
                 }
             });
@@ -2273,6 +2309,19 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         const tWrapper = tujuanHidden.closest('.multipoint-wrapper');
                         if (tWrapper) {
                             markMultipointInvalid(tWrapper, 'Minimal 1 tujuan kegiatan wajib diisi.');
+                            
+                            // Expand the proker row if collapsed!
+                            const prokerBody = tWrapper.closest('.proker-body');
+                            if (prokerBody && prokerBody.style.display === 'none') {
+                                prokerBody.style.display = 'block';
+                                const rowDiv = prokerBody.closest('.dynamic-row');
+                                const header = rowDiv.querySelector('.proker-header');
+                                const icon = header.querySelector('.toggle-icon');
+                                const summary = header.querySelector('.proker-summary');
+                                if (icon) icon.style.transform = 'rotate(0deg)';
+                                if (summary) summary.style.display = 'none';
+                            }
+                            
                             if (!firstInvalid) firstInvalid = tWrapper;
                         }
                     }
@@ -2282,6 +2331,19 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         const eWrapper = evaluasiHidden.closest('.multipoint-wrapper');
                         if (eWrapper) {
                             markMultipointInvalid(eWrapper, 'Minimal 1 evaluasi & saran wajib diisi.');
+                            
+                            // Expand the proker row if collapsed!
+                            const prokerBody = eWrapper.closest('.proker-body');
+                            if (prokerBody && prokerBody.style.display === 'none') {
+                                prokerBody.style.display = 'block';
+                                const rowDiv = prokerBody.closest('.dynamic-row');
+                                const header = rowDiv.querySelector('.proker-header');
+                                const icon = header.querySelector('.toggle-icon');
+                                const summary = header.querySelector('.proker-summary');
+                                if (icon) icon.style.transform = 'rotate(0deg)';
+                                if (summary) summary.style.display = 'none';
+                            }
+                            
                             if (!firstInvalid) firstInvalid = eWrapper;
                         }
                     }
@@ -2667,7 +2729,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 photosGrid.appendChild(photoCard);
             });
             div.querySelector('.proker-body').style.display = 'none'; // Auto-collapse newly added imported data
-            div.querySelector('.toggle-icon').style.transform = 'rotate(180deg)';
+            updateProkerSummary(div);
         }
         
         reindexProkers();
@@ -2750,6 +2812,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             div.querySelector('input[name="pbt_peserta[]"]').value = pbtData['Peserta Kegiatan'] || pbtData['Peserta Rencana'] || '';
             div.querySelector('input[name="pbt_anggaran[]"]').value = pbtData['Anggaran'] || pbtData['Anggaran Rencana'] || '';
             div.querySelector('textarea[name="pbt_dokumentasi[]"]').value = pbtData['Dokumentasi'] || pbtData['Hambatan & Kendala Dokumentasi'] || '';
+            
+            div.querySelector('.proker-body').style.display = 'none';
+            updateProkerSummary(div);
         }
         updateRowReorderButtons('pbt');
     }
@@ -3742,6 +3807,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 `;
                 row.insertBefore(controls, row.firstChild);
             }
+            // Collapse on load
+            row.querySelector('.proker-body').style.display = 'none';
+            updateProkerSummary(row);
         });
 
         // Also add row-number-badges and reorder controls to initial PHP-rendered pt rows
@@ -3769,6 +3837,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 const rawVal = outHidden ? outHidden.value : '';
                 initDateRangePickerPt(dateGroup, rawVal);
             }
+            // Collapse on load
+            row.querySelector('.proker-body').style.display = 'none';
+            updateProkerSummary(row);
         });
 
         updateRowReorderButtons('pt');
@@ -4065,31 +4136,64 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             });
     }
 
+    function updateProkerSummary(row) {
+        const body = row.querySelector('.proker-body');
+        const summary = row.querySelector('.proker-summary');
+        const icon = row.querySelector('.toggle-icon');
+        if (!body || !summary) return;
+
+        const name = body.querySelector('input[name="pt_name[]"], input[name="pbt_name[]"]');
+        const keg = body.querySelector('input[name="pt_kegiatan[]"], input[name="pbt_kegiatan[]"]');
+        
+        let tglValue = '';
+        const ptOutTanggal = body.querySelector('.pt-out-tanggal');
+        if (ptOutTanggal) {
+            tglValue = ptOutTanggal.value;
+        } else {
+            const tglInput = body.querySelector('input[name="pt_tanggal[]"], input[name="pbt_tanggal[]"]');
+            tglValue = tglInput ? tglInput.value : '';
+        }
+        
+        let text = (name && name.value.trim()) ? name.value.trim() : '';
+        if (keg && keg.value.trim()) {
+            if (text) text += ' - ';
+            text += keg.value.trim();
+        }
+        if (tglValue && tglValue.trim()) {
+            if (text) {
+                text += ' (' + tglValue.trim() + ')';
+            } else {
+                text = tglValue.trim();
+            }
+        }
+        if (!text) {
+            text = 'Tanpa Nama';
+        }
+        
+        summary.innerText = text;
+        if (body.style.display === 'none') {
+            summary.style.display = 'block';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            summary.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
     function toggleProker(header) {
-        const body = header.nextElementSibling;
-        const icon = header.querySelector('.toggle-icon');
-        const summary = header.querySelector('.proker-summary');
+        const row = header.closest('.dynamic-row');
+        const body = row.querySelector('.proker-body');
+        const icon = row.querySelector('.toggle-icon');
+        const summary = row.querySelector('.proker-summary');
         
         if (body.style.display === 'none') {
             body.style.display = 'block';
-            icon.style.transform = 'rotate(0deg)';
+            if (icon) icon.style.transform = 'rotate(0deg)';
             if (summary) summary.style.display = 'none';
         } else {
-            // Read inputs to build summary before hiding
-            if (summary) {
-                const name = body.querySelector('input[name="pt_name[]"], input[name="pbt_name[]"]');
-                const keg = body.querySelector('input[name="pt_kegiatan[]"], input[name="pbt_kegiatan[]"]');
-                const tgl = body.querySelector('input[name="pt_tanggal[]"], input[name="pbt_tanggal[]"]');
-                
-                let text = (name && name.value) ? name.value : 'Tanpa Nama';
-                if (keg && keg.value) text += ' - ' + keg.value;
-                if (tgl && tgl.value) text += ' (' + tgl.value + ')';
-                
-                summary.innerText = text;
-                summary.style.display = 'block';
-            }
             body.style.display = 'none';
-            icon.style.transform = 'rotate(180deg)';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+            updateProkerSummary(row);
         }
     }
 </script>
