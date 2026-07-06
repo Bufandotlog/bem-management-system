@@ -1,0 +1,12 @@
+[Unit]
+Description=Cloudflare Firewall rules for Docker Containers
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/html/bem/scratch/setup_cloudflare_docker_firewall.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
