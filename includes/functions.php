@@ -382,7 +382,8 @@ function uploadFile($file, $folder = 'umum') {
         }
     }
 
-    $newFilename = bin2hex(random_bytes(16)) . '.' . $ext;
+    $is_image = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+    $newFilename = bin2hex(random_bytes(16)) . '.' . ($is_image ? 'webp' : $ext);
     $uploadDir   = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $folder . DIRECTORY_SEPARATOR;
 
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
@@ -398,6 +399,54 @@ function uploadFile($file, $folder = 'umum') {
     }
 
     $destination = $uploadDir . $newFilename;
+
+    if ($is_image && function_exists('imagewebp')) {
+        $img = null;
+        if ($ext === 'jpg' || $ext === 'jpeg') {
+            $img = @imagecreatefromjpeg($file['tmp_name']);
+        } elseif ($ext === 'png') {
+            $img = @imagecreatefrompng($file['tmp_name']);
+        } elseif ($ext === 'gif') {
+            $img = @imagecreatefromgif($file['tmp_name']);
+        } elseif ($ext === 'webp') {
+            $img = @imagecreatefromwebp($file['tmp_name']);
+        }
+
+        if ($img) {
+            $width = imagesx($img);
+            $height = imagesy($img);
+            $max_dim = 2000;
+            if ($width > $max_dim || $height > $max_dim) {
+                if ($width > $height) {
+                    $new_width = $max_dim;
+                    $new_height = floor($height * ($max_dim / $width));
+                } else {
+                    $new_height = $max_dim;
+                    $new_width = floor($width * ($max_dim / $height));
+                }
+                
+                $resized = imagecreatetruecolor($new_width, $new_height);
+                imagealphablending($resized, false);
+                imagesavealpha($resized, true);
+                
+                imagecopyresampled($resized, $img, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+                imagedestroy($img);
+                $img = $resized;
+            } else {
+                imagealphablending($img, false);
+                imagesavealpha($img, true);
+            }
+
+            if (@imagewebp($img, $destination, 75)) {
+                imagedestroy($img);
+                chmod($destination, 0644);
+                $relativePath = $folder . '/' . $newFilename;
+                error_log("uploadFile: SUKSES (Image converted to WebP) - {$destination} | path: {$relativePath}");
+                return $relativePath;
+            }
+            if ($img) imagedestroy($img);
+        }
+    }
 
     if (!move_uploaded_file($file['tmp_name'], $destination)) {
         $_SESSION['error'] = 'Gagal menyimpan file';

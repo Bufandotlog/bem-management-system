@@ -69,7 +69,6 @@ RUN mkdir -p uploads/lpj uploads/surat uploads/foto logs \
         .env \
         .env.example* \
         scratch/db_data \
-        scratch/*.py \
         databases/dump_migration_*.sql.gz \
         admin/node_modules \
         admin/node_modules.zip \

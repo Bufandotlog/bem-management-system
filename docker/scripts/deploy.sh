@@ -53,8 +53,8 @@ sudo apt-get install -y -qq \
 # LANGKAH 2: Setup Swap (VPS 1GB tidak punya swap)
 # ─────────────────────────────────────────────────────────────
 if [ ! -f /swapfile ]; then
-    info "Membuat swap 1GB..."
-    sudo fallocate -l 1G /swapfile
+    info "Membuat swap 2GB..."
+    sudo fallocate -l 2G /swapfile
     sudo chmod 600 /swapfile
     sudo mkswap /swapfile
     sudo swapon /swapfile
@@ -63,7 +63,7 @@ if [ ! -f /swapfile ]; then
     echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
     echo 'vm.vfs_cache_pressure=50' | sudo tee -a /etc/sysctl.conf
     sudo sysctl -p
-    log "Swap 1GB berhasil dibuat"
+    log "Swap 2GB berhasil dibuat"
 else
     warn "Swap sudah ada, skip..."
 fi

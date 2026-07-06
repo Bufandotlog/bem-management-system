@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="copyright">
-            <p>&copy; 2025 BEM Kabinet Astawidya. Hak Cipta Dilindungi.</p>
+            <p>&copy; 2025 BEM Kabinet Astawidya.BFN.v1.2.27. Hak Cipta Dilindungi.</p>
         </div>
     </footer>
 

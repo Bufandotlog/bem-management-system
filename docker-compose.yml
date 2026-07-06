@@ -75,7 +75,7 @@ services:
       - bem_external
     # Mencegah app pakai RAM berlebihan
     mem_limit: 256m
-    memswap_limit: 256m
+    memswap_limit: 1024m
 
   # ──────────────────────────────────────────────
   # 3. NGINX - Reverse Proxy + Static Files

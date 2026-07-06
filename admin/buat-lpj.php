@@ -603,10 +603,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'evaluasi_kinerja_pribadi' => $evaluasi_kinerja_pribadi,
                 'evaluasi_anggota_internal' => $evaluasi_anggota_internal
             ];
-            
             $tmp_json_path = tempnam(sys_get_temp_dir(), 'lpj_') . '.json';
             file_put_contents($tmp_json_path, json_encode($config_data));
             
+            // Delete old generated .docx file from server to save space if this is an edit
+            if ($lpj_id > 0) {
+                $old_lpj = dbFetchOne("SELECT file_path FROM lpj_dokumen WHERE id = ?", [$lpj_id], "i");
+                if ($old_lpj && !empty($old_lpj['file_path'])) {
+                    $old_filepath = UPLOAD_PATH . '/' . $old_lpj['file_path'];
+                    if (file_exists($old_filepath) && is_file($old_filepath)) {
+                        @unlink($old_filepath);
+                    }
+                }
+            }
+
             $output_filename = 'LPJ_' . str_replace(' ', '_', $k_name) . '_Triwulan_' . $triwulan . '_' . time() . '.docx';
             $output_filepath = UPLOAD_PATH . '/lpj/' . $output_filename;
             

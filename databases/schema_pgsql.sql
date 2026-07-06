@@ -337,3 +337,101 @@ CREATE TABLE "arsip_berita_acara" (
   "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ----------------------------------------
+-- 17. Views untuk First Normal Form (1NF)
+-- ----------------------------------------
+
+-- View untuk Program Kerja LPJ (v_lpj_proker) dengan optimasi 3NF (COALESCE dari Berita Acara)
+CREATE OR REPLACE VIEW v_lpj_proker AS
+SELECT 
+    d.id AS lpj_id,
+    d.periode_id,
+    d.kementerian_id,
+    d.triwulan,
+    'terlaksana'::varchar(16) AS tipe_proker,
+    jt."Nama Program Kerja" AS nama_proker,
+    COALESCE(ba.nama_kegiatan, jt."Nama Kegiatan") AS nama_kegiatan,
+    COALESCE(ba.tempat, jt."Tempat Kegiatan") AS tempat_kegiatan,
+    jt."Sifat" AS sifat,
+    jt."Tema Kegiatan" AS tema_kegiatan,
+    COALESCE(ba.tanggal_kegiatan, jt."Tanggal Kegiatan") AS tanggal_kegiatan,
+    jt."Penanggung Jawab" AS penanggung_jawab,
+    jt.berita_acara_id
+FROM lpj_dokumen d
+CROSS JOIN LATERAL json_to_recordset(NULLIF(d.proker_terlaksana, '')::json) AS jt(
+    "Nama Program Kerja" VARCHAR(255),
+    "Nama Kegiatan" VARCHAR(255),
+    "Tempat Kegiatan" VARCHAR(255),
+    "Sifat" VARCHAR(50),
+    "Tema Kegiatan" VARCHAR(255),
+    "Tanggal Kegiatan" VARCHAR(100),
+    "Penanggung Jawab" VARCHAR(100),
+    "berita_acara_id" INT
+)
+LEFT JOIN arsip_berita_acara ba ON jt.berita_acara_id = ba.id
+UNION ALL
+SELECT 
+    d.id AS lpj_id,
+    d.periode_id,
+    d.kementerian_id,
+    d.triwulan,
+    'belum_terlaksana'::varchar(16) AS tipe_proker,
+    jt."Nama Program Kerja" AS nama_proker,
+    NULL::varchar(255) AS nama_kegiatan,
+    NULL::varchar(255) AS tempat_kegiatan,
+    jt."Sifat" AS sifat,
+    jt."Tema Kegiatan" AS tema_kegiatan,
+    NULL::varchar(100) AS tanggal_kegiatan,
+    jt."Penanggung Jawab" AS penanggung_jawab,
+    NULL::integer AS berita_acara_id
+FROM lpj_dokumen d,
+LATERAL json_to_recordset(NULLIF(d.proker_belum_terlaksana, '')::json) AS jt(
+    "Nama Program Kerja" VARCHAR(255),
+    "Sifat" VARCHAR(50),
+    "Tema Kegiatan" VARCHAR(255),
+    "Penanggung Jawab" VARCHAR(100)
+);
+
+-- View untuk Anggaran LPJ (v_lpj_anggaran)
+CREATE OR REPLACE VIEW v_lpj_anggaran AS
+SELECT 
+    d.id AS lpj_id,
+    d.periode_id,
+    d.kementerian_id,
+    jt.jenis,
+    jt.kategori,
+    jt.keterangan,
+    jt.jumlah,
+    jt.total
+FROM lpj_dokumen d,
+LATERAL json_to_recordset(NULLIF(json_extract_path_text(NULLIF(d.anggaran, '')::json, 'transaksi'), '')::json) AS jt(
+    jenis VARCHAR(50),
+    kategori VARCHAR(100),
+    keterangan VARCHAR(255),
+    jumlah DECIMAL(15,2),
+    total DECIMAL(15,2)
+);
+
+-- View untuk Rundown Acara (v_rundown_acara)
+CREATE OR REPLACE VIEW v_rundown_acara AS
+SELECT 
+    r.id AS rundown_id,
+    r.periode_id,
+    r.nama_acara,
+    r.tahun,
+    r.tanggal_mulai,
+    jt.hari,
+    jt.waktu,
+    jt.agenda,
+    jt.pj AS penanggung_jawab,
+    jt.keterangan
+FROM arsip_rundown r,
+LATERAL json_to_recordset(NULLIF(r.rundown_json, '')::json) AS jt(
+    hari INT,
+    waktu VARCHAR(50),
+    agenda VARCHAR(255),
+    pj VARCHAR(100),
+    keterangan TEXT
+);
+
+
