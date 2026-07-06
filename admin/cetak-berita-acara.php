@@ -62,7 +62,7 @@ function format_paragraphs($text) {
         .page {
             width: 210mm;
             min-height: 297mm;
-            padding: 15mm 20mm;
+            padding: 30mm;
             margin: 10mm auto;
             border: 1px solid #D3D3D3;
             border-radius: 5px;
@@ -70,6 +70,22 @@ function format_paragraphs($text) {
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
             position: relative;
             page-break-after: always;
+        }
+        table.page-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+            background: transparent;
+        }
+        table.page-table > thead > tr > td,
+        table.page-table > tbody > tr > td {
+            border: none;
+            padding: 0;
+            background: transparent;
+        }
+        .sig-block, .meta-table, .doc-item, .section-header {
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         /* Non-Printable Elements (Tombol Cetak) */
@@ -321,7 +337,7 @@ function format_paragraphs($text) {
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
             .page { 
                 margin: 0 !important; 
-                padding: 15mm 20mm; 
+                padding: 30mm; 
                 border: none !important; 
                 border-radius: 0 !important; 
                 width: 210mm; 
@@ -335,6 +351,7 @@ function format_paragraphs($text) {
                 page-break-after: avoid !important;
             }
             .no-print { display: none !important; }
+            thead { display: table-header-group; }
         }
     </style>
 </head>
@@ -353,7 +370,7 @@ function format_paragraphs($text) {
         if (file_exists($kop_path)): 
             $kop_url = baseUrl('uploads/kop_surat.png') . '?v=' . filemtime($kop_path);
         ?>
-            <div style="margin: -10mm -15mm 10px -15mm; text-align: center;">
+            <div style="margin: -20mm -20mm 15px -20mm; text-align: center;">
                 <img src="<?php echo htmlspecialchars($kop_url); ?>" style="width:100%; height:auto; display:block;" alt="Kop Surat">
             </div>
         <?php else: ?>
@@ -383,228 +400,267 @@ function format_paragraphs($text) {
 
     <!-- PAGE 1: BERITA ACARA KEGIATAN -->
     <div class="page">
-        <?php renderKop(); ?>
-        
-        <div class="doc-title">BERITA ACARA KEGIATAN</div>
-        <div class="doc-number">Nomor: <?php echo htmlspecialchars($ba['nomor_berita']); ?></div>
+        <table class="page-table">
+            <thead>
+                <tr>
+                    <td>
+                        <?php renderKop(); ?>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="doc-title">BERITA ACARA KEGIATAN</div>
+                        <div class="doc-number">Nomor: <?php echo htmlspecialchars($ba['nomor_berita']); ?></div>
 
-        <div class="doc-body">
-            <p>
-                Pada hari ini <?php echo htmlspecialchars($konten['hari_kegiatan'] ?? ''); ?> 
-                tanggal <?php echo htmlspecialchars($ba['tanggal_kegiatan'] ?? ''); ?>, 
-                bertempat di <?php echo htmlspecialchars($ba['tempat'] ?? ''); ?>, 
-                telah dilaksanakan kegiatan <?php echo htmlspecialchars($ba['nama_kegiatan'] ?? ''); ?> 
-                dengan tema <i>"<?php echo htmlspecialchars($konten['tema_kegiatan'] ?? ''); ?>"</i>, 
-                yang berlangsung dari pukul <?php echo htmlspecialchars($konten['waktu_mulai'] ?? ''); ?> WIB hingga selesai. 
-                Kegiatan ini diselenggarakan oleh Badan Eksekutif Mahasiswa (BEM) bekerja sama dengan pihak rektorat Institut Budi Utomo Nasional Majalengka. 
-                Adapun rincian kegiatan yang telah dilaksanakan adalah:
-            </p>
+                        <div class="doc-body">
+                            <p>
+                                Pada hari ini <?php echo htmlspecialchars($konten['hari_kegiatan'] ?? ''); ?> 
+                                tanggal <?php echo htmlspecialchars($ba['tanggal_kegiatan'] ?? ''); ?>, 
+                                bertempat di <?php echo htmlspecialchars($ba['tempat'] ?? ''); ?>, 
+                                telah dilaksanakan kegiatan <?php echo htmlspecialchars($ba['nama_kegiatan'] ?? ''); ?> 
+                                dengan tema <i>"<?php echo htmlspecialchars($konten['tema_kegiatan'] ?? ''); ?>"</i>, 
+                                yang berlangsung dari pukul <?php echo htmlspecialchars($konten['waktu_mulai'] ?? ''); ?> WIB hingga selesai. 
+                                Kegiatan ini diselenggarakan oleh Badan Eksekutif Mahasiswa (BEM) bekerja sama dengan pihak rektorat Institut Budi Utomo Nasional Majalengka. 
+                                Adapun rincian kegiatan yang telah dilaksanakan adalah:
+                            </p>
 
-            <ol class="list-kegiatan">
-                <?php 
-                $rincian = $konten['rincian_kegiatan'] ?? [];
-                foreach ($rincian as $item): 
-                ?>
-                    <li><?php echo htmlspecialchars($item); ?></li>
-                <?php endforeach; ?>
-            </ol>
+                            <ol class="list-kegiatan">
+                                <?php 
+                                $rincian = $konten['rincian_kegiatan'] ?? [];
+                                foreach ($rincian as $item): 
+                                ?>
+                                    <li><?php echo htmlspecialchars($item); ?></li>
+                                <?php endforeach; ?>
+                            </ol>
 
-            <p class="no-indent">
-                Kegiatan berjalan dengan lancar dan mendapat respon positif dari seluruh civitas akademika INSTBUNAS Majalengka serta Mahasiswa INSTBUNAS Majalengka.
-            </p>
+                            <p class="no-indent">
+                                Kegiatan berjalan dengan lancar dan mendapat respon positif dari seluruh civitas akademika INSTBUNAS Majalengka serta Mahasiswa INSTBUNAS Majalengka.
+                            </p>
 
-            <p class="no-indent">
-                Demikian berita acara ini dibuat dengan sebenarnya untuk digunakan sebagaimana mestinya.
-            </p>
-        </div>
+                            <p class="no-indent">
+                                Demikian berita acara ini dibuat dengan sebenarnya untuk digunakan sebagaimana mestinya.
+                            </p>
+                        </div>
 
-        <div class="date-creation">
-            <?php echo htmlspecialchars($konten['tempat_pembuatan'] ?? 'Majalengka'); ?>, <?php echo htmlspecialchars($konten['tanggal_pembuatan'] ?? ''); ?>
-        </div>
+                        <div class="date-creation">
+                            <?php echo htmlspecialchars($konten['tempat_pembuatan'] ?? 'Majalengka'); ?>, <?php echo htmlspecialchars($konten['tanggal_pembuatan'] ?? ''); ?>
+                        </div>
 
-        <!-- Yang Membuat Berita Acara (Signatures) -->
-        <div style="text-align: center; font-size: 16px; margin-bottom: 10px;">Yang Membuat Berita Acara,</div>
-        
-        <table class="sig-block">
-            <tr>
-                <td>
-                    <div class="sig-title">
-                        Ketua BEM<br>
-                        INSTBUNAS Majalengka
-                    </div>
-                    
-                    <?php if (!empty($pengaturan['cap_presma_image']) && ($konten['use_cap_presma'] ?? '1') === '1'): ?>
-                        <img src="<?php echo uploadUrl($pengaturan['cap_presma_image']); ?>" class="sig-stamp" style="bottom: 25px; left: 18%; max-width: 120px; max-height: 100px;">
-                    <?php endif; ?>
-                    
-                    <?php if (($konten['use_ttd_presma'] ?? '1') === '1'): ?>
-                        <?php if (!empty($pengaturan['ttd_presma_image'])): ?>
-                            <div class="sig-image-wrap">
-                                <img src="<?php echo uploadUrl($pengaturan['ttd_presma_image']); ?>" alt="TTD Ketua BEM">
-                            </div>
-                        <?php elseif (!empty($konten['ketua_bem_ttd'])): ?>
-                            <div class="sig-image-wrap">
-                                <img src="<?php echo uploadUrl($konten['ketua_bem_ttd']); ?>" alt="TTD Ketua BEM">
-                            </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    
-                    <div class="sig-name"><?php echo htmlspecialchars($konten['ketua_bem_nama'] ?: ($pengaturan['ttd_presma_name'] ?? 'Dede Anggi Muhyidin')); ?></div>
-                </td>
-                <td>
-                    <div class="sig-title">
-                        Sekretaris BEM<br>
-                        INSTBUNAS Majalengka
-                    </div>
-                    
-                    <?php if (($konten['use_ttd_sekretaris'] ?? '1') === '1'): ?>
-                        <?php if (!empty($pengaturan['ttd_sekretaris_image'])): ?>
-                            <div class="sig-image-wrap">
-                                <img src="<?php echo uploadUrl($pengaturan['ttd_sekretaris_image']); ?>" alt="TTD Sekretaris BEM">
-                            </div>
-                        <?php elseif (!empty($konten['sekretaris_bem_ttd'])): ?>
-                            <div class="sig-image-wrap">
-                                <img src="<?php echo uploadUrl($konten['sekretaris_bem_ttd']); ?>" alt="TTD Sekretaris BEM">
-                            </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    
-                    <div class="sig-name"><?php echo htmlspecialchars($konten['sekretaris_bem_nama'] ?: ($pengaturan['ttd_sekretaris_name'] ?? 'Mela Agustin')); ?></div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" style="text-align: center; padding-top: 20px;">
-                    <div class="sig-title" style="margin-bottom: 60px;">
-                        Mengetahui,<br>
-                        a.n. Rektor INSTBUNAS Majalengka<br>
-                        WAREK III Bid. Kemahasiswaan
-                    </div>
-                    
-                    <?php if (!empty($pengaturan['cap_warek_image']) && ($konten['use_cap_warek'] ?? '1') === '1'): ?>
-                        <img src="<?php echo uploadUrl($pengaturan['cap_warek_image']); ?>" class="sig-stamp" style="bottom: 60px; left: 25%; max-width: 240px; max-height: 180px;">
-                    <?php endif; ?>
-                    
-                    <?php if (($konten['use_ttd_warek'] ?? '1') === '1'): ?>
-                        <?php if (!empty($pengaturan['ttd_warek_image'])): ?>
-                            <div class="sig-image-wrap warek-sig-wrap">
-                                <img src="<?php echo uploadUrl($pengaturan['ttd_warek_image']); ?>" alt="TTD & Cap Warek III">
-                            </div>
-                        <?php elseif (!empty($konten['warek_ttd'])): ?>
-                            <div class="sig-image-wrap warek-sig-wrap">
-                                <img src="<?php echo uploadUrl($konten['warek_ttd']); ?>" alt="TTD & Cap Warek III">
-                            </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    
-                    <div class="sig-name"><?php echo htmlspecialchars($konten['warek_nama'] ?: ($pengaturan['ttd_warek_name'] ?? 'Ir Muhammad Misbah, S.Pd.I., SE., MM.')); ?></div>
-                    <div style="font-size: 14px;">NUPTK. <?php echo htmlspecialchars($konten['warek_nuptk'] ?? '7756762662200002'); ?></div>
-                </td>
-            </tr>
+                        <!-- Yang Membuat Berita Acara (Signatures) -->
+                        <div style="text-align: center; font-size: 16px; margin-bottom: 10px;">Yang Membuat Berita Acara,</div>
+                        
+                        <table class="sig-block">
+                            <tr>
+                                <td>
+                                    <div class="sig-title">
+                                        Ketua BEM<br>
+                                        INSTBUNAS Majalengka
+                                    </div>
+                                    
+                                    <?php if (!empty($pengaturan['cap_presma_image']) && ($konten['use_cap_presma'] ?? '1') === '1'): ?>
+                                        <img src="<?php echo uploadUrl($pengaturan['cap_presma_image']); ?>" class="sig-stamp" style="bottom: 25px; left: 18%; max-width: 120px; max-height: 100px;">
+                                    <?php endif; ?>
+                                    
+                                    <?php if (($konten['use_ttd_presma'] ?? '1') === '1'): ?>
+                                        <?php if (!empty($pengaturan['ttd_presma_image'])): ?>
+                                            <div class="sig-image-wrap">
+                                                <img src="<?php echo uploadUrl($pengaturan['ttd_presma_image']); ?>" alt="TTD Ketua BEM">
+                                            </div>
+                                        <?php elseif (!empty($konten['ketua_bem_ttd'])): ?>
+                                            <div class="sig-image-wrap">
+                                                <img src="<?php echo uploadUrl($konten['ketua_bem_ttd']); ?>" alt="TTD Ketua BEM">
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    
+                                    <div class="sig-name"><?php echo htmlspecialchars($konten['ketua_bem_nama'] ?: ($pengaturan['ttd_presma_name'] ?? 'Dede Anggi Muhyidin')); ?></div>
+                                </td>
+                                <td>
+                                    <div class="sig-title">
+                                        Sekretaris BEM<br>
+                                        INSTBUNAS Majalengka
+                                    </div>
+                                    
+                                    <?php if (($konten['use_ttd_sekretaris'] ?? '1') === '1'): ?>
+                                        <?php if (!empty($pengaturan['ttd_sekretaris_image'])): ?>
+                                            <div class="sig-image-wrap">
+                                                <img src="<?php echo uploadUrl($pengaturan['ttd_sekretaris_image']); ?>" alt="TTD Sekretaris BEM">
+                                            </div>
+                                        <?php elseif (!empty($konten['sekretaris_bem_ttd'])): ?>
+                                            <div class="sig-image-wrap">
+                                                <img src="<?php echo uploadUrl($konten['sekretaris_bem_ttd']); ?>" alt="TTD Sekretaris BEM">
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    
+                                    <div class="sig-name"><?php echo htmlspecialchars($konten['sekretaris_bem_nama'] ?: ($pengaturan['ttd_sekretaris_name'] ?? 'Mela Agustin')); ?></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="text-align: center; padding-top: 20px;">
+                                    <div class="sig-title" style="margin-bottom: 60px;">
+                                        Mengetahui,<br>
+                                        a.n. Rektor INSTBUNAS Majalengka<br>
+                                        WAREK III Bid. Kemahasiswaan
+                                    </div>
+                                    
+                                    <?php if (!empty($pengaturan['cap_warek_image']) && ($konten['use_cap_warek'] ?? '1') === '1'): ?>
+                                        <img src="<?php echo uploadUrl($pengaturan['cap_warek_image']); ?>" class="sig-stamp" style="bottom: 60px; left: 25%; max-width: 240px; max-height: 180px;">
+                                    <?php endif; ?>
+                                    
+                                    <?php if (($konten['use_ttd_warek'] ?? '1') === '1'): ?>
+                                        <?php if (!empty($pengaturan['ttd_warek_image'])): ?>
+                                            <div class="sig-image-wrap warek-sig-wrap">
+                                                <img src="<?php echo uploadUrl($pengaturan['ttd_warek_image']); ?>" alt="TTD & Cap Warek III">
+                                            </div>
+                                        <?php elseif (!empty($konten['warek_ttd'])): ?>
+                                            <div class="sig-image-wrap warek-sig-wrap">
+                                                <img src="<?php echo uploadUrl($konten['warek_ttd']); ?>" alt="TTD & Cap Warek III">
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    
+                                    <div class="sig-name"><?php echo htmlspecialchars($konten['warek_nama'] ?: ($pengaturan['ttd_warek_name'] ?? 'Ir Muhammad Misbah, S.Pd.I., SE., MM.')); ?></div>
+                                    <div style="font-size: 14px;">NUPTK. <?php echo htmlspecialchars($konten['warek_nuptk'] ?? '7756762662200002'); ?></div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </div>
 
     <!-- PAGE 2: LAPORAN KEGIATAN -->
     <div class="page">
-        <?php renderKop(); ?>
+        <table class="page-table">
+            <thead>
+                <tr>
+                    <td>
+                        <?php renderKop(); ?>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="doc-title" style="text-decoration:none; margin-bottom: 30px;">LAPORAN KEGIATAN <?php echo strtoupper(htmlspecialchars($ba['nama_kegiatan'])); ?></div>
 
-        <div class="doc-title" style="text-decoration:none; margin-bottom: 30px;">LAPORAN KEGIATAN <?php echo strtoupper(htmlspecialchars($ba['nama_kegiatan'])); ?></div>
+                        <table class="meta-table">
+                            <tr>
+                                <td class="label-col">Nama Kegiatan</td>
+                                <td class="colon-col">:</td>
+                                <td><?php echo htmlspecialchars($ba['nama_kegiatan']); ?></td>
+                            </tr>
+                            <?php if (!empty($konten['program_kerja'])): ?>
+                            <tr>
+                                <td class="label-col">Program Kerja</td>
+                                <td class="colon-col">:</td>
+                                <td><?php echo htmlspecialchars($konten['program_kerja']); ?></td>
+                            </tr>
+                            <?php endif; ?>
+                            <tr>
+                                <td class="label-col">Tema Kegiatan</td>
+                                <td class="colon-col">:</td>
+                                <td>"<?php echo htmlspecialchars($konten['tema_kegiatan'] ?? ''); ?>"</td>
+                            </tr>
+                            <tr>
+                                <td class="label-col">Hari, Tanggal</td>
+                                <td class="colon-col">:</td>
+                                <td><?php echo htmlspecialchars($konten['hari_kegiatan'] ?? ''); ?>, <?php echo htmlspecialchars($ba['tanggal_kegiatan']); ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col">Waktu</td>
+                                <td class="colon-col">:</td>
+                                <td><?php echo htmlspecialchars($ba['waktu']); ?></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col">Pelaksana Kegiatan</td>
+                                <td class="colon-col">:</td>
+                                <td><?php echo htmlspecialchars($konten['pelaksana_kegiatan'] ?? ''); ?></td>
+                            </tr>
+                            <?php if (!empty($konten['penanggung_jawab'])): ?>
+                            <tr>
+                                <td class="label-col">Penanggung Jawab</td>
+                                <td class="colon-col">:</td>
+                                <td><?php echo htmlspecialchars($konten['penanggung_jawab']); ?></td>
+                            </tr>
+                            <?php endif; ?>
+                        </table>
 
-        <table class="meta-table">
-            <tr>
-                <td class="label-col">Nama Kegiatan</td>
-                <td class="colon-col">:</td>
-                <td><?php echo htmlspecialchars($ba['nama_kegiatan']); ?></td>
-            </tr>
-            <?php if (!empty($konten['program_kerja'])): ?>
-            <tr>
-                <td class="label-col">Program Kerja</td>
-                <td class="colon-col">:</td>
-                <td><?php echo htmlspecialchars($konten['program_kerja']); ?></td>
-            </tr>
-            <?php endif; ?>
-            <tr>
-                <td class="label-col">Tema Kegiatan</td>
-                <td class="colon-col">:</td>
-                <td>"<?php echo htmlspecialchars($konten['tema_kegiatan'] ?? ''); ?>"</td>
-            </tr>
-            <tr>
-                <td class="label-col">Hari, Tanggal</td>
-                <td class="colon-col">:</td>
-                <td><?php echo htmlspecialchars($konten['hari_kegiatan'] ?? ''); ?>, <?php echo htmlspecialchars($ba['tanggal_kegiatan']); ?></td>
-            </tr>
-            <tr>
-                <td class="label-col">Waktu</td>
-                <td class="colon-col">:</td>
-                <td><?php echo htmlspecialchars($ba['waktu']); ?></td>
-            </tr>
-            <tr>
-                <td class="label-col">Pelaksana Kegiatan</td>
-                <td class="colon-col">:</td>
-                <td><?php echo htmlspecialchars($konten['pelaksana_kegiatan'] ?? ''); ?></td>
-            </tr>
-            <?php if (!empty($konten['penanggung_jawab'])): ?>
-            <tr>
-                <td class="label-col">Penanggung Jawab</td>
-                <td class="colon-col">:</td>
-                <td><?php echo htmlspecialchars($konten['penanggung_jawab']); ?></td>
-            </tr>
-            <?php endif; ?>
+                        <!-- A. TUJUAN -->
+                        <div class="section-header">A. Tujuan :</div>
+                        <ol class="section-list">
+                            <?php 
+                            $tujuan = $konten['tujuan'] ?? [];
+                            foreach ($tujuan as $item): 
+                            ?>
+                                <li><?php echo htmlspecialchars($item); ?></li>
+                            <?php endforeach; ?>
+                        </ol>
+
+                        <!-- B. MANFAAT -->
+                        <div class="section-header">B. Manfaat :</div>
+                        <ol class="section-list">
+                            <?php 
+                            $manfaat = $konten['manfaat'] ?? [];
+                            foreach ($manfaat as $item): 
+                            ?>
+                                <li><?php echo htmlspecialchars($item); ?></li>
+                            <?php endforeach; ?>
+                        </ol>
+
+                        <!-- C. BENTUK KEGIATAN -->
+                        <div class="section-header">C. Bentuk Kegiatan :</div>
+                        <div class="doc-body" style="text-indent:0;">
+                            <?php echo format_paragraphs($konten['bentuk_kegiatan'] ?? ''); ?>
+                            <p style="text-indent: 0; margin-top:20px;">
+                                Demikian Laporan Kegiatan ini kami buat, semoga dapat dipergunakan sebagaimana mestinya.
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
         </table>
-
-        <!-- A. TUJUAN -->
-        <div class="section-header">A. Tujuan :</div>
-        <ol class="section-list">
-            <?php 
-            $tujuan = $konten['tujuan'] ?? [];
-            foreach ($tujuan as $item): 
-            ?>
-                <li><?php echo htmlspecialchars($item); ?></li>
-            <?php endforeach; ?>
-        </ol>
-
-        <!-- B. MANFAAT -->
-        <div class="section-header">B. Manfaat :</div>
-        <ol class="section-list">
-            <?php 
-            $manfaat = $konten['manfaat'] ?? [];
-            foreach ($manfaat as $item): 
-            ?>
-                <li><?php echo htmlspecialchars($item); ?></li>
-            <?php endforeach; ?>
-        </ol>
-
-        <!-- C. BENTUK KEGIATAN -->
-        <div class="section-header">C. Bentuk Kegiatan :</div>
-        <div class="doc-body" style="text-indent:0;">
-            <?php echo format_paragraphs($konten['bentuk_kegiatan'] ?? ''); ?>
-            <p style="text-indent: 0; margin-top:20px;">
-                Demikian Laporan Kegiatan ini kami buat, semoga dapat dipergunakan sebagaimana mestinya.
-            </p>
-        </div>
     </div>
 
     <!-- PAGE 3: DOKUMENTASI -->
     <div class="page">
-        <?php renderKop(); ?>
+        <table class="page-table">
+            <thead>
+                <tr>
+                    <td>
+                        <?php renderKop(); ?>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="section-header" style="font-size: 18px; margin-bottom: 20px;">D. Dokumentasi :</div>
 
-        <div class="section-header" style="font-size: 18px; margin-bottom: 20px;">D. Dokumentasi :</div>
-
-        <?php if (!empty($konten['dokumentasi'])): ?>
-            <div class="doc-grid">
-                <?php foreach ($konten['dokumentasi'] as $doc): ?>
-                    <div class="doc-item">
-                        <div class="doc-photo-wrap">
-                            <img src="<?php echo uploadUrl($doc['image']); ?>" alt="Foto Kegiatan">
-                        </div>
-                        <div class="doc-caption"><?php echo htmlspecialchars($doc['caption']); ?></div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php else: ?>
-            <p style="font-style: italic; color: #555; text-align: center; margin-top: 30px;">
-                (tidak ada dokumentasi dalam kegiatan ini)
-            </p>
-        <?php endif; ?>
+                        <?php if (!empty($konten['dokumentasi'])): ?>
+                            <div class="doc-grid">
+                                <?php foreach ($konten['dokumentasi'] as $doc): ?>
+                                    <div class="doc-item">
+                                        <div class="doc-photo-wrap">
+                                            <img src="<?php echo uploadUrl($doc['image']); ?>" alt="Foto Kegiatan">
+                                        </div>
+                                        <div class="doc-caption"><?php echo htmlspecialchars($doc['caption']); ?></div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <p style="font-style: italic; color: #555; text-align: center; margin-top: 30px;">
+                                (tidak ada dokumentasi dalam kegiatan ini)
+                            </p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -636,6 +692,10 @@ function format_paragraphs($text) {
 
         const css = `
             <style>
+                @page {
+                    size: 21cm 29.7cm;
+                    margin: 3cm 3cm 3cm 3cm;
+                }
                 body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; }
                 table { border-collapse: collapse; width: 100%; }
                 .kop-surat { display: table; width: 100%; border-bottom: 4pt solid #1c3687; padding-bottom: 10px; margin-bottom: 20px; }
