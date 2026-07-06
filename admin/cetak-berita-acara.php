@@ -35,12 +35,13 @@ function format_paragraphs($text) {
     if (strpos($text, '<p>') !== false || strpos($text, '<br>') !== false) {
         return $text;
     }
-    $paragraphs = explode("\n\n", str_replace("\r", "", $text));
+    // Pisahkan berdasarkan baris baru (satu enter pun dianggap paragraf baru)
+    $paragraphs = explode("\n", str_replace("\r", "", $text));
     $html = '';
     foreach ($paragraphs as $p) {
         $p = trim($p);
         if ($p !== '') {
-            $html .= '<p>' . nl2br(htmlspecialchars($p)) . '</p>';
+            $html .= '<p>' . htmlspecialchars($p) . '</p>';
         }
     }
     return $html;
