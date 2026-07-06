@@ -749,6 +749,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         color: #ffc107;
     }
 
+    /* ===== DATE RANGE PICKER STYLING ===== */
+    .date-range-wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .preview-bar.pt-preview-tanggal { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 10px; color: #8BB9F0; border-left: 4px solid #4A90E2; min-height: 38px; display: flex; align-items: center; word-break: break-all; }
+
     /* ===== STEP PROGRESS BAR ===== */
     .step-progress {
         display: flex;
@@ -1596,9 +1600,26 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                                     <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group pt-date-group">
                                 <label>Tanggal Kegiatan</label>
-                                <input type="date" name="pt_tanggal[]" class="form-control" value="<?php echo htmlspecialchars($pt['Tanggal Kegiatan'] ?? ''); ?>">
+                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+                                    <input type="date" class="form-control pt-tgl-mulai" onchange="formatTanggalRangePt(this)" style="flex: 1; min-width: 130px;">
+                                    <span style="color:var(--text-muted); font-size: 0.8rem;">selama</span>
+                                    <div style="display:flex; gap:5px; align-items:center;">
+                                        <select class="form-control pt-durasi-hari" onchange="handleDurasiChangePt(this)" style="padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; outline:none; height: auto;">
+                                            <option value="1">1 Hari</option>
+                                            <option value="2">2 Hari</option>
+                                            <option value="3">3 Hari</option>
+                                            <option value="4">4 Hari</option>
+                                            <option value="5">5 Hari</option>
+                                            <option value="custom">Custom...</option>
+                                        </select>
+                                        <input type="number" class="form-control pt-custom-hari" min="1" value="1" oninput="formatTanggalRangePt(this)" style="display:none; width: 60px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; outline:none; height: auto;">
+                                        <span class="pt-label-hari" style="color:var(--text-muted); font-size: 0.8rem; display:none;">Hari</span>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="pt_tanggal[]" class="pt-out-tanggal" value="<?php echo htmlspecialchars($pt['Tanggal Kegiatan'] ?? ''); ?>">
+                                <div class="preview-bar pt-preview-tanggal" style="margin-top: 10px;"><?php echo htmlspecialchars($pt['Tanggal Kegiatan'] ?? '—'); ?></div>
                             </div>
                         </div>
                         <div class="form-row-grid" style="margin-top: 10px;">
@@ -1881,7 +1902,191 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 </div>
 
 <script>
+    const HARI_ID  = ['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'];
+    const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const MONTH_MAP = {
+        'januari': 0, 'februari': 1, 'maret': 2, 'april': 3, 'mei': 4, 'juni': 5,
+        'juli': 6, 'agustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'desember': 11
+    };
 
+    function parseTanggalRange(str) {
+        if (!str) return null;
+        str = str.trim();
+
+        // 1. Check if YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+            return { start: str, duration: 1 };
+        }
+
+        // 2. Check if it's the long range format with " – " or " - " (across months/years)
+        const partsDouble = str.split(/\s+[\–\-]\s+/);
+        if (partsDouble.length === 2) {
+            const p1 = parseSingleDateString(partsDouble[0]);
+            const p2 = parseSingleDateString(partsDouble[1]);
+            if (p1 && p2) {
+                const d1 = new Date(p1.year, p1.month, p1.day);
+                const d2 = new Date(p2.year, p2.month, p2.day);
+                const diffTime = Math.abs(d2 - d1);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                return {
+                    start: formatDateIso(d1),
+                    duration: diffDays
+                };
+            }
+        }
+
+        // 3. Check if it's single day or same-month range format
+        const commaParts = str.split(',');
+        if (commaParts.length >= 2) {
+            const datePart = commaParts.slice(1).join(',').trim();
+            const spaceParts = datePart.split(/\s+/);
+            if (spaceParts.length >= 3) {
+                const dayRange = spaceParts[0];
+                const monthName = spaceParts[1].toLowerCase();
+                const year = parseInt(spaceParts[2]);
+                const month = MONTH_MAP[monthName];
+
+                if (month !== undefined && !isNaN(year)) {
+                    const days = dayRange.split(/[\-\–]/);
+                    if (days.length === 2) {
+                        const startDay = parseInt(days[0]);
+                        const endDay = parseInt(days[1]);
+                        if (!isNaN(startDay) && !isNaN(endDay)) {
+                            const d1 = new Date(year, month, startDay);
+                            const duration = endDay - startDay + 1;
+                            return {
+                                start: formatDateIso(d1),
+                                duration: duration > 0 ? duration : 1
+                            };
+                        }
+                    } else if (days.length === 1) {
+                        const startDay = parseInt(days[0]);
+                        if (!isNaN(startDay)) {
+                            const d1 = new Date(year, month, startDay);
+                            return {
+                                start: formatDateIso(d1),
+                                duration: 1
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function parseSingleDateString(str) {
+        const commaParts = str.split(',');
+        const target = commaParts.length > 1 ? commaParts[1].trim() : commaParts[0].trim();
+        const parts = target.split(/\s+/);
+        if (parts.length >= 3) {
+            const day = parseInt(parts[0]);
+            const monthName = parts[1].toLowerCase();
+            const year = parseInt(parts[2]);
+            const month = MONTH_MAP[monthName];
+            if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+                return { day, month, year };
+            }
+        }
+        return null;
+    }
+
+    function formatDateIso(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function initDateRangePickerPt(row, rawValue) {
+        const tglMulaiInput = row.querySelector('.pt-tgl-mulai');
+        const durasiSelect = row.querySelector('.pt-durasi-hari');
+        const customInput = row.querySelector('.pt-custom-hari');
+        const labelHari = row.querySelector('.pt-label-hari');
+        const outHidden = row.querySelector('.pt-out-tanggal');
+        const previewDiv = row.querySelector('.pt-preview-tanggal');
+
+        if (!outHidden || !previewDiv) return;
+
+        outHidden.value = rawValue || '';
+        previewDiv.innerText = rawValue || '—';
+
+        if (rawValue) {
+            const parsed = parseTanggalRange(rawValue);
+            if (parsed) {
+                tglMulaiInput.value = parsed.start;
+                const durVal = parsed.duration;
+                if (durVal >= 1 && durVal <= 5) {
+                    durasiSelect.value = String(durVal);
+                    customInput.style.display = 'none';
+                    labelHari.style.display = 'none';
+                } else {
+                    durasiSelect.value = 'custom';
+                    customInput.value = String(durVal);
+                    customInput.style.display = 'inline-block';
+                    labelHari.style.display = 'inline';
+                }
+            }
+        }
+    }
+
+    function handleDurasiChangePt(selectEl) {
+        const row = selectEl.closest('.pt-date-group');
+        const custom = row.querySelector('.pt-custom-hari');
+        const label = row.querySelector('.pt-label-hari');
+        
+        if (selectEl.value === 'custom') {
+            custom.style.display = 'inline-block';
+            label.style.display = 'inline';
+        } else {
+            custom.style.display = 'none';
+            label.style.display = 'none';
+        }
+        formatTanggalRangePt(selectEl);
+    }
+
+    function formatTanggalRangePt(element) {
+        const row = element.closest('.pt-date-group');
+        if (!row) return;
+
+        const tglMulaiInput = row.querySelector('.pt-tgl-mulai');
+        const durasiSelect = row.querySelector('.pt-durasi-hari');
+        const customInput = row.querySelector('.pt-custom-hari');
+        const outHidden = row.querySelector('.pt-out-tanggal');
+        const previewDiv = row.querySelector('.pt-preview-tanggal');
+
+        const mulai = tglMulaiInput.value;
+        if (!mulai) {
+            outHidden.value = '';
+            previewDiv.innerText = '—';
+            return;
+        }
+
+        let jmlHari = parseInt(durasiSelect.value);
+        if (durasiSelect.value === 'custom') {
+            jmlHari = parseInt(customInput.value) || 1;
+        }
+
+        const d1 = new Date(mulai + 'T00:00:00');
+        let result = '';
+
+        if (jmlHari <= 1) {
+            result = HARI_ID[d1.getDay()] + ', ' + d1.getDate() + ' ' + BULAN_ID[d1.getMonth()] + ' ' + d1.getFullYear();
+        } else {
+            const d2 = new Date(d1);
+            d2.setDate(d1.getDate() + (jmlHari - 1));
+
+            const hari = HARI_ID[d1.getDay()] === HARI_ID[d2.getDay()] ? HARI_ID[d1.getDay()] : HARI_ID[d1.getDay()] + '-' + HARI_ID[d2.getDay()];
+            const bln1 = BULAN_ID[d1.getMonth()], bln2 = BULAN_ID[d2.getMonth()];
+            const tgl  = bln1 === bln2 && d1.getFullYear() === d2.getFullYear()
+                ? d1.getDate() + '-' + d2.getDate() + ' ' + bln1 + ' ' + d1.getFullYear()
+                : d1.getDate() + ' ' + bln1 + ' ' + d1.getFullYear() + ' – ' + d2.getDate() + ' ' + bln2 + ' ' + d2.getFullYear();
+            result = hari + ', ' + tgl;
+        }
+
+        outHidden.value = result;
+        previewDiv.innerText = result;
+    }
 
     window.initialEvaluasiAnggota = <?php echo json_encode(json_decode($edit_data['evaluasi_anggota_internal'] ?? '', true) ?: []); ?>;
     let currentStep = 1;
@@ -2253,9 +2458,26 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group pt-date-group">
                     <label>Tanggal Kegiatan</label>
-                    <input type="date" name="pt_tanggal[]" class="form-control">
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+                        <input type="date" class="form-control pt-tgl-mulai" onchange="formatTanggalRangePt(this)" style="flex: 1; min-width: 130px;">
+                        <span style="color:var(--text-muted); font-size: 0.8rem;">selama</span>
+                        <div style="display:flex; gap:5px; align-items:center;">
+                            <select class="form-control pt-durasi-hari" onchange="handleDurasiChangePt(this)" style="padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; outline:none; height: auto;">
+                                <option value="1">1 Hari</option>
+                                <option value="2">2 Hari</option>
+                                <option value="3">3 Hari</option>
+                                <option value="4">4 Hari</option>
+                                <option value="5">5 Hari</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                            <input type="number" class="form-control pt-custom-hari" min="1" value="1" oninput="formatTanggalRangePt(this)" style="display:none; width: 60px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; outline:none; height: auto;">
+                            <span class="pt-label-hari" style="color:var(--text-muted); font-size: 0.8rem; display:none;">Hari</span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="pt_tanggal[]" class="pt-out-tanggal">
+                    <div class="preview-bar pt-preview-tanggal" style="margin-top: 10px;">—</div>
                 </div>
             </div>
             <div class="form-row-grid" style="margin-top: 10px;">
@@ -2351,13 +2573,15 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         `;
         container.appendChild(div);
         
+        // Initialize date picker (for both empty or loaded)
+        initDateRangePickerPt(div.querySelector('.pt-date-group'), ptData ? (ptData['Tanggal Kegiatan'] || '') : '');
+        
         if (ptData) {
             div.querySelector('input[name="pt_name[]"]').value = ptData['Nama Program Kerja'] || '';
             div.querySelector('input[name="pt_kegiatan[]"]').value = ptData['Nama Kegiatan'] || '';
             div.querySelector('input[name="pt_tempat[]"]').value = ptData['Tempat Kegiatan'] || ptData['Tempat'] || '';
             div.querySelector('input[name="pt_sifat[]"]').value = ptData['Sifat'] || 'Internal';
             div.querySelector('input[name="pt_tema[]"]').value = ptData['Tema Kegiatan'] || '';
-            div.querySelector('input[name="pt_tanggal[]"]').value = ptData['Tanggal Kegiatan'] || '';
             div.querySelector('input[name="pt_pj[]"]').value = ptData['Penanggung Jawab'] || '';
             
             // For multipoint inputs (tujuan, peserta, evaluasi)
@@ -3537,6 +3761,14 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 `;
                 row.insertBefore(controls, row.firstChild);
             }
+            
+            // Initialize date range picker for this row
+            const dateGroup = row.querySelector('.pt-date-group');
+            if (dateGroup) {
+                const outHidden = dateGroup.querySelector('.pt-out-tanggal');
+                const rawVal = outHidden ? outHidden.value : '';
+                initDateRangePickerPt(dateGroup, rawVal);
+            }
         });
 
         updateRowReorderButtons('pt');
@@ -3755,7 +3987,13 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 targetRow.querySelector('input[name="pt_kegiatan[]"]').value = data.nama_kegiatan || '';
                 targetRow.querySelector('input[name="pt_tempat[]"]').value = data.tempat || '';
                 targetRow.querySelector('input[name="pt_tema[]"]').value = data.tema || '';
-                targetRow.querySelector('input[name="pt_tanggal[]"]').value = data.tanggal || '';
+                const rawTgl = data.tanggal || '';
+                const dateGroup = targetRow.querySelector('.pt-date-group');
+                if (dateGroup) {
+                    initDateRangePickerPt(dateGroup, rawTgl);
+                } else {
+                    targetRow.querySelector('input[name="pt_tanggal[]"]').value = rawTgl;
+                }
                 targetRow.querySelector('input[name="pt_pj[]"]').value = data.penanggung_jawab || '';
                 
                 if (data.tujuan && data.tujuan.length > 0) {

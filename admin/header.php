@@ -481,6 +481,11 @@ if (isset($page_css)) {
         ];
         $is_rundown_active = in_array($current_page, $rundown_pages);
         
+        $panitia_pages = [
+            'buat-panitia.php', 'arsip-panitia.php', 'cetak-panitia.php'
+        ];
+        $is_panitia_active = in_array($current_page, $panitia_pages);
+        
         $superadmin_pages = [
             'periode-kepengurusan.php', 'kelola-admin.php', 'ganti-periode.php', 'audit-log.php', 'backup-database.php'
         ];
@@ -628,6 +633,25 @@ if (isset($page_css)) {
                     </a>
                     <a href="arsip-rundown.php" class="<?php echo $current_page === 'arsip-rundown.php' ? 'active' : ''; ?>">
                         <i class="fas fa-clipboard-list"></i><span>Arsip Rundown</span>
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Susunan Panitia (Dropdown) -->
+            <?php if ($isSekretaris || $isSuperadmin || $admin_role === 'admin'): ?>
+            <div class="sidebar-dropdown <?php echo $is_panitia_active ? 'active open' : ''; ?>">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Susunan Panitia</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="buat-panitia.php" class="<?php echo $current_page === 'buat-panitia.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-user-plus"></i><span>Buat Panitia</span>
+                    </a>
+                    <a href="arsip-panitia.php" class="<?php echo $current_page === 'arsip-panitia.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-archive"></i><span>Arsip Panitia</span>
                     </a>
                 </div>
             </div>
