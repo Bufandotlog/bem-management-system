@@ -11,20 +11,22 @@ Sistem informasi manajemen organisasi Badan Eksekutif Mahasiswa (BEM) yang diran
 ## ✨ Fitur Unggulan
 
 - **📂 Arsip Digital Cerdas**: Pengelolaan surat masuk, surat keluar, dan lampiran secara sistematis dengan sistem penomoran otomatis.
+- **📝 LPJ & Berita Acara Sync Engine**: Pembuatan Laporan Pertanggungjawaban (LPJ) dinamis dalam format `.docx` (via engine Python) yang terintegrasi otomatis dengan modul Berita Acara, evaluasi kinerja (pribadi & kementerian), serta pratinjau cetak real-time.
 - **⏱️ Rundown Generator**: Pembuatan susunan acara dinamis dengan kalkulasi waktu otomatis (Durasi Jam & Menit) serta dukungan multi-hari.
 - **📦 Inventory Sync**: Sinkronisasi data master barang dan tempat secara real-time ke dalam dokumen cetak (PDF).
 - **📱 Premium Responsive UI**: Antarmuka dashboard modern yang dioptimalkan untuk perangkat mobile (Dark Mode Support & Glassmorphism Design).
 - **🔗 Hybrid Database**: Mendukung arsitektur database ganda (MySQL & PostgreSQL) untuk fleksibilitas deployment.
-- **🛡️ Security First**: Dilengkapi CSRF Protection, Password Hashing, Audit Logging, dan Session Management.
+- **🛡️ Security First**: Dilengkapi CSRF Protection, Password Hashing, Audit Logging, Turnstile Captcha, dan Session Management.
 
 ---
 
 ## 🛠️ Persyaratan Sistem
 
 - **Server**: Apache / Nginx
-- **Bahasa**: PHP 7.4 / 8.x
+- **Bahasa**: PHP 7.4 / 8.x, Python 3.8+ (untuk generator dokumen LPJ Word)
 - **Database**: MySQL 5.7+ atau PostgreSQL 12+
 - **Ekstensi PHP**: `pdo`, `gd`, `mbstring`, `openssl`
+- **Pustaka Python**: `python-docx` (digunakan oleh engine compiler LPJ)
 
 ---
 
