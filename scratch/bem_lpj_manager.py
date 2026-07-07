@@ -114,6 +114,27 @@ def resolve_photo_path(photo_path):
             return local_path
     return ""
 
+def get_docx_compatible_image(photo_path):
+    if not photo_path or not os.path.exists(photo_path):
+        return None, False
+    ext = os.path.splitext(photo_path)[1].lower()
+    if ext == '.webp':
+        try:
+            from PIL import Image
+            img = Image.open(photo_path)
+            fd, temp_path = tempfile.mkstemp(suffix='.png')
+            os.close(fd)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGBA')
+            else:
+                img = img.convert('RGB')
+            img.save(temp_path, 'PNG')
+            return temp_path, True
+        except Exception as e:
+            print(f"Error converting WebP image: {e}")
+            return None, False
+    return photo_path, False
+
 def int_to_roman(num):
     val = [10, 9, 5, 4, 1]
     syb = ["X", "IX", "V", "IV", "I"]
@@ -1210,12 +1231,20 @@ def generate_lpj(output_path, config_data):
                 p_img.paragraph_format.space_after = Pt(0)
                 
                 photo_path = resolve_photo_path(photo.get("file_path", ""))
-                if photo_path:
+                compat_path, is_temp = get_docx_compatible_image(photo_path)
+                if compat_path:
                     try:
-                        p_img.add_run().add_picture(photo_path, width=Cm(6))
+                        p_img.add_run().add_picture(compat_path, width=Cm(6))
                     except Exception as e:
+                        print(f"Exception adding picture: {e}")
                         run_pl = p_img.add_run(f"[Foto: {photo.get('caption', 'Kegiatan')}]")
                         format_run(run_pl, size_pt=11, italic=True)
+                    finally:
+                        if is_temp and os.path.exists(compat_path):
+                            try:
+                                os.remove(compat_path)
+                            except:
+                                pass
                 else:
                     run_pl = p_img.add_run("[Foto Kegiatan]")
                     format_run(run_pl, size_pt=11, italic=True)
@@ -1896,12 +1925,20 @@ def consolidate_lpj(output_path, file_list):
                     p_img.paragraph_format.space_after = Pt(0)
                     
                     photo_path = resolve_photo_path(photo.get("file_path", ""))
-                    if photo_path:
+                    compat_path, is_temp = get_docx_compatible_image(photo_path)
+                    if compat_path:
                         try:
-                            p_img.add_run().add_picture(photo_path, width=Cm(6))
+                            p_img.add_run().add_picture(compat_path, width=Cm(6))
                         except Exception as e:
+                            print(f"Exception adding picture: {e}")
                             run_pl = p_img.add_run(f"[Foto: {photo.get('caption', 'Kegiatan')}]")
                             format_run(run_pl, size_pt=11, italic=True)
+                        finally:
+                            if is_temp and os.path.exists(compat_path):
+                                try:
+                                    os.remove(compat_path)
+                                except:
+                                    pass
                     else:
                         run_pl = p_img.add_run("[Foto Kegiatan]")
                         format_run(run_pl, size_pt=11, italic=True)
