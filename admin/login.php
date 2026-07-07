@@ -8,6 +8,17 @@
 
 require_once __DIR__ . '/../includes/functions.php';
 
+// Cookie Gate - Proteksi Halaman Login dari Akses Langsung
+if (!isset($_COOKIE['admin_access']) || $_COOKIE['admin_access'] !== '1') {
+    header("HTTP/1.1 404 Not Found");
+    if (file_exists(__DIR__ . '/../404.html')) {
+        include __DIR__ . '/../404.html';
+    } else {
+        echo "<h1>404 Not Found</h1>The requested URL was not found on this server.";
+    }
+    exit();
+}
+
 if (isLoggedIn()) {
     redirect('admin/dashboard.php');
     exit();
