@@ -292,3 +292,30 @@ function dbCommit(): void {
 function dbRollback(): void {
     getConnection()->rollback();
 }
+
+// ============================================
+// GLOBAL COOKIE GATE ACTIVATOR via ?key=xxx
+// ============================================
+if (isset($_GET['key']) && php_sapi_name() !== 'cli') {
+    $adminGateKey = $_ENV['ADMIN_GATE_KEY'] ?? 'astawidya-secret';
+    if ($_GET['key'] === $adminGateKey) {
+        $cookieOptions = [
+            'expires' => 0, // Sesi
+            'path' => '/',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ];
+        setcookie('admin_access', '1', $cookieOptions);
+        
+        $isBpm = (strpos($_SERVER['SCRIPT_NAME'], '/bpm/') !== false || strpos(dirname(__DIR__), '/bpm') !== false);
+        $redirectTarget = $isBpm ? 'astawidya/bpm.php' : 'astawidya/bem.php';
+        
+        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $subFolder = $isBpm ? '/bpm/' : '/';
+        
+        header("Location: " . $protocol . "://" . $host . $subFolder . $redirectTarget);
+        exit();
+    }
+}
