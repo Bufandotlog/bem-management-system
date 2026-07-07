@@ -315,7 +315,13 @@ if (isset($_GET['key']) && php_sapi_name() !== 'cli') {
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $subFolder = $isBpm ? '/bpm/' : '/';
         
-        header("Location: " . $protocol . "://" . $host . $subFolder . $redirectTarget);
+        $redirectUrl = $protocol . "://" . $host . $subFolder . $redirectTarget;
+        
+        if (!headers_sent()) {
+            header("Location: " . $redirectUrl);
+        } else {
+            echo "<script>window.location.href='" . $redirectUrl . "';</script>";
+        }
         exit();
     }
 }
