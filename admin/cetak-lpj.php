@@ -719,6 +719,24 @@ if (!function_exists('cleanPointPrefix')) {
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
+
+                        <!-- Sub-bagian l: Nota Belanja -->
+                        <div class="subsection-header" style="margin-left: 1cm; font-weight: normal; font-size: 11pt; margin-top: 15px;">l.&nbsp;&nbsp;Nota Belanja</div>
+                        <?php 
+                        $nota_list = $pk['nota_belanja'] ?? [];
+                        if (empty($nota_list)): 
+                        ?>
+                            <p style="margin-left: 1.5cm; font-style: italic; font-size: 11pt;">(Nota belanja tidak tersedia)</p>
+                        <?php else: ?>
+                            <div class="photo-grid">
+                                <?php foreach ($nota_list as $photo): ?>
+                                    <div class="photo-item">
+                                        <img src="<?php echo htmlspecialchars(getLpjImageUrl($photo['file_path'])); ?>" alt="Nota Belanja">
+                                        <div class="photo-caption"><?php echo htmlspecialchars($photo['caption'] ?? 'Nota Belanja'); ?></div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>

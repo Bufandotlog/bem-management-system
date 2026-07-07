@@ -611,15 +611,34 @@ def parse_docx(doc_path):
                     "tidak_menggunakan_anggaran": True,
                     "anggaran": [],
                     "anggaran_summary": {"debet": 0, "kredit": 0, "saldo": 0},
-                    "dokumentasi": []
+                    "dokumentasi": [],
+                    "nota_belanja": []
                 }
                 data["proker_terlaksana"].append(current_proker)
             else:
                 data["proker_belum_terlaksana"].append(fields)
             continue
             
-        # 4. Check for Documentation table (grid of photos: 2 columns, borderless)
+        # 4. Check for Documentation / Nota Belanja table (grid of photos: 2 columns, borderless)
         if len(table.rows) > 1 and len(table.columns) == 2:
+            preceding_text = ""
+            try:
+                parent_elm = doc.element.body
+                body_children = list(parent_elm.iterchildren())
+                tbl_idx = body_children.index(table._element)
+                for idx in range(tbl_idx - 1, -1, -1):
+                    child = body_children[idx]
+                    if child.tag.endswith('p'): # It is a paragraph
+                        p = docx.text.paragraph.Paragraph(child, doc)
+                        p_text = p.text.strip()
+                        if p_text:
+                            preceding_text = p_text
+                            break
+            except Exception:
+                pass
+            
+            is_nota = "nota" in preceding_text.lower()
+            
             proker_docs = []
             for r_idx in range(0, len(table.rows), 2):
                 if r_idx + 1 < len(table.rows):
@@ -635,9 +654,13 @@ def parse_docx(doc_path):
                                     "has_image": has_image
                                 }
                                 proker_docs.append(doc_item)
-                                data["dokumentasi"].append(doc_item)
+                                if not is_nota:
+                                    data["dokumentasi"].append(doc_item)
             if current_proker:
-                current_proker["dokumentasi"] = proker_docs
+                if is_nota:
+                    current_proker["nota_belanja"] = proker_docs
+                else:
+                    current_proker["dokumentasi"] = proker_docs
             continue
             
     # Parse evaluasi kinerja pribadi
@@ -773,6 +796,12 @@ def run_validation(doc_path):
                     if not doc_item.get("caption"):
                         errors.append(f"Foto dokumentasi ke-{p_idx+1} pada proker '{name}' tidak memiliki caption.")
                         checklist["dokumentasi"] = False
+                        
+            # Check nota belanja captions
+            if pk.get("nota_belanja"):
+                for p_idx, doc_item in enumerate(pk["nota_belanja"]):
+                    if not doc_item.get("caption"):
+                        errors.append(f"Foto nota belanja ke-{p_idx+1} pada proker '{name}' tidak memiliki caption.")
                         
     status = "LENGKAP" if all(checklist.values()) else "TIDAK LENGKAP"
     
@@ -1258,8 +1287,68 @@ def generate_lpj(output_path, config_data):
                 p_cap.paragraph_format.space_after = Pt(12)
                 run_cap = p_cap.add_run(photo.get("caption", ""))
                 format_run(run_cap, size_pt=11, italic=True)
+        # Sub-bagian: Nota Belanja
+        p_sub_nota = doc.add_paragraph()
+        p_sub_nota.paragraph_format.space_before = Pt(12)
+        p_sub_nota.paragraph_format.space_after = Pt(6)
+        p_sub_nota.paragraph_format.keep_with_next = True
+        p_sub_nota.paragraph_format.left_indent = Cm(INDENT_PROKER)
+        format_run(p_sub_nota.add_run("l.  Nota Belanja"), size_pt=12, bold=False)
+        
+        nota_list = pk.get("nota_belanja", [])
+        num_notas = len(nota_list)
+        
+        if num_notas == 0:
+            p_nota_empty = doc.add_paragraph()
+            p_nota_empty.paragraph_format.left_indent = Cm(INDENT_PROKER)
+            format_run(p_nota_empty.add_run("(Nota belanja tidak tersedia)"), size_pt=12, italic=True)
+        else:
+            num_rows_nota = ((num_notas + 1) // 2) * 2
+            table_nota = doc.add_table(rows=num_rows_nota, cols=2)
+            set_table_indent(table_nota, INDENT_PROKER)
+            remove_table_borders(table_nota)
+            set_table_widths(table_nota, [Cm(6.5), Cm(6.5)])
+            
+            for i, photo in enumerate(nota_list):
+                grid_row = (i // 2) * 2
+                grid_col = i % 2
                 
-        pass
+                img_cell = table_nota.rows[grid_row].cells[grid_col]
+                set_cell_margins(img_cell, top=80, bottom=40, left=100, right=100)
+                p_img = img_cell.paragraphs[0]
+                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p_img.paragraph_format.line_spacing = 1.0
+                p_img.paragraph_format.space_before = Pt(0)
+                p_img.paragraph_format.space_after = Pt(0)
+                
+                photo_path = resolve_photo_path(photo.get("file_path", ""))
+                compat_path, is_temp = get_docx_compatible_image(photo_path)
+                if compat_path:
+                    try:
+                        p_img.add_run().add_picture(compat_path, width=Cm(6))
+                    except Exception as e:
+                        print(f"Exception adding picture: {e}")
+                        run_pl = p_img.add_run(f"[Nota: {photo.get('caption', 'Belanja')}]")
+                        format_run(run_pl, size_pt=11, italic=True)
+                    finally:
+                        if is_temp and os.path.exists(compat_path):
+                            try:
+                                os.remove(compat_path)
+                            except:
+                                pass
+                else:
+                    run_pl = p_img.add_run("[Nota Belanja]")
+                    format_run(run_pl, size_pt=11, italic=True)
+                    
+                cap_cell = table_nota.rows[grid_row + 1].cells[grid_col]
+                set_cell_margins(cap_cell, top=40, bottom=80, left=100, right=100)
+                p_cap = cap_cell.paragraphs[0]
+                p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p_cap.paragraph_format.line_spacing = 1.0
+                p_cap.paragraph_format.space_before = Pt(0)
+                p_cap.paragraph_format.space_after = Pt(12)
+                run_cap = p_cap.add_run(photo.get("caption", ""))
+                format_run(run_cap, size_pt=11, italic=True)
         
     if is_mubesma:
         # D. PROGRAM KERJA YANG BELUM TERLAKSANA
@@ -1944,6 +2033,69 @@ def consolidate_lpj(output_path, file_list):
                         format_run(run_pl, size_pt=11, italic=True)
                         
                     cap_cell = table_doc.rows[grid_row + 1].cells[grid_col]
+                    set_cell_margins(cap_cell, top=40, bottom=80, left=100, right=100)
+                    p_cap = cap_cell.paragraphs[0]
+                    p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    p_cap.paragraph_format.line_spacing = 1.0
+                    p_cap.paragraph_format.space_before = Pt(0)
+                    p_cap.paragraph_format.space_after = Pt(12)
+                    run_cap = p_cap.add_run(photo.get("caption", ""))
+                    format_run(run_cap, size_pt=11, italic=True)
+
+            # Sub-bagian: Nota Belanja
+            p_sub_nota = master_doc.add_paragraph()
+            p_sub_nota.paragraph_format.space_before = Pt(12)
+            p_sub_nota.paragraph_format.space_after = Pt(6)
+            p_sub_nota.paragraph_format.keep_with_next = True
+            p_sub_nota.paragraph_format.left_indent = Cm(INDENT_PROKER)
+            format_run(p_sub_nota.add_run("l.  Nota Belanja"), size_pt=12, bold=False)
+            
+            nota_list = pk.get("nota_belanja", [])
+            num_notas = len(nota_list)
+            
+            if num_notas == 0:
+                p_nota_empty = master_doc.add_paragraph()
+                p_nota_empty.paragraph_format.left_indent = Cm(INDENT_PROKER)
+                format_run(p_nota_empty.add_run("(Nota belanja tidak tersedia)"), size_pt=12, italic=True)
+            else:
+                num_rows_nota = ((num_notas + 1) // 2) * 2
+                table_nota = master_doc.add_table(rows=num_rows_nota, cols=2)
+                set_table_indent(table_nota, INDENT_PROKER)
+                remove_table_borders(table_nota)
+                set_table_widths(table_nota, [Cm(6.5), Cm(6.5)])
+                
+                for i, photo in enumerate(nota_list):
+                    grid_row = (i // 2) * 2
+                    grid_col = i % 2
+                    
+                    img_cell = table_nota.rows[grid_row].cells[grid_col]
+                    set_cell_margins(img_cell, top=80, bottom=40, left=100, right=100)
+                    p_img = img_cell.paragraphs[0]
+                    p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    p_img.paragraph_format.line_spacing = 1.0
+                    p_img.paragraph_format.space_before = Pt(0)
+                    p_img.paragraph_format.space_after = Pt(0)
+                    
+                    photo_path = resolve_photo_path(photo.get("file_path", ""))
+                    compat_path, is_temp = get_docx_compatible_image(photo_path)
+                    if compat_path:
+                        try:
+                            p_img.add_run().add_picture(compat_path, width=Cm(6))
+                        except Exception as e:
+                            print(f"Exception adding picture: {e}")
+                            run_pl = p_img.add_run(f"[Nota: {photo.get('caption', 'Belanja')}]")
+                            format_run(run_pl, size_pt=11, italic=True)
+                        finally:
+                            if is_temp and os.path.exists(compat_path):
+                                try:
+                                    os.remove(compat_path)
+                                except:
+                                    pass
+                    else:
+                        run_pl = p_img.add_run("[Nota Belanja]")
+                        format_run(run_pl, size_pt=11, italic=True)
+                        
+                    cap_cell = table_nota.rows[grid_row + 1].cells[grid_col]
                     set_cell_margins(cap_cell, top=40, bottom=80, left=100, right=100)
                     p_cap = cap_cell.paragraphs[0]
                     p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER

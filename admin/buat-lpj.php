@@ -360,6 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pt_no_budgets = $_POST['pt_no_budget'] ?? [];
         $pt_anggarans_json = $_POST['pt_anggaran'] ?? [];
         $pt_existing_dok_json = $_POST['pt_existing_dok'] ?? [];
+        $pt_existing_nota_json = $_POST['pt_existing_nota'] ?? [];
         
         $proker_terlaksana = [];
         for ($i = 0; $i < count($pt_names); $i++) {
@@ -441,6 +442,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                 }
+
+                $nota_belanja_list = [];
+                if (!empty($pt_existing_nota_json[$i])) {
+                    $existing_nota_list = json_decode($pt_existing_nota_json[$i], true) ?: [];
+                    foreach ($existing_nota_list as $dok) {
+                        $dok['file_path'] = sanitizeText($dok['file_path'] ?? '');
+                        $dok['caption'] = sanitizeText($dok['caption'] ?? 'Nota Belanja');
+                        
+                        // Check if this existing photo was replaced in the frontend
+                        if (isset($dok['replace_index'])) {
+                            $rep_idx = (int)$dok['replace_index'];
+                            $replace_file_input_name = "pt_replace_nota_file_{$i}";
+                            if (isset($_FILES[$replace_file_input_name])) {
+                                $rep_files = $_FILES[$replace_file_input_name];
+                                if (isset($rep_files['name'][$rep_idx]) && $rep_files['error'][$rep_idx] === UPLOAD_ERR_OK) {
+                                    $single_file = [
+                                        'name' => $rep_files['name'][$rep_idx],
+                                        'type' => $rep_files['type'][$rep_idx],
+                                        'tmp_name' => $rep_files['tmp_name'][$rep_idx],
+                                        'error' => $rep_files['error'][$rep_idx],
+                                        'size' => $rep_files['size'][$rep_idx]
+                                    ];
+                                    $uploaded = uploadFile($single_file, 'lpj');
+                                    if ($uploaded) {
+                                        // Delete the old photo from server automatically
+                                        $old_path = $dok['file_path'];
+                                        if (!empty($old_path) && file_exists($old_path) && is_file($old_path)) {
+                                            @unlink($old_path);
+                                        }
+                                        // Update the file path to the new uploaded file
+                                        $dok['file_path'] = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $uploaded;
+                                    }
+                                }
+                            }
+                            unset($dok['replace_index']); // Remove the temporary key
+                        }
+                        $nota_belanja_list[] = $dok;
+                    }
+                }
+                
+                $new_nota_file_input_name = "pt_new_nota_file_{$i}";
+                if (isset($_FILES[$new_nota_file_input_name])) {
+                    $files = $_FILES[$new_nota_file_input_name];
+                    $captions = $_POST["pt_new_nota_caption_{$i}"] ?? [];
+                    for ($j = 0; $j < count($files['name']); $j++) {
+                        if ($files['error'][$j] === UPLOAD_ERR_OK) {
+                            $single_file = [
+                                'name' => $files['name'][$j],
+                                'type' => $files['type'][$j],
+                                'tmp_name' => $files['tmp_name'][$j],
+                                'error' => $files['error'][$j],
+                                'size' => $files['size'][$j]
+                            ];
+                            $uploaded = uploadFile($single_file, 'lpj');
+                            if ($uploaded) {
+                                $full_upload_path = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $uploaded;
+                                $nota_belanja_list[] = [
+                                    'file_path' => $full_upload_path,
+                                    'caption' => sanitizeText($captions[$j] ?? 'Nota Belanja')
+                                ];
+                            }
+                        }
+                    }
+                }
                 
                 $ba_id_val = isset($_POST['pt_ba_id'][$i]) ? (int)$_POST['pt_ba_id'][$i] : 0;
                 $proker_terlaksana[] = [
@@ -457,6 +522,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'tidak_menggunakan_anggaran' => $tidak_menggunakan_anggaran,
                     'anggaran' => $anggaran_txs,
                     'dokumentasi' => $dokumentasi_list,
+                    'nota_belanja' => $nota_belanja_list,
                     'berita_acara_id' => $ba_id_val
                 ];
             }
@@ -539,22 +605,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($existing_lpj) {
                 $lpj_id = $existing_lpj['id'];
                 
-                // Track old documentation paths to delete orphaned files automatically
+                // Track old documentation and nota belanja paths to delete orphaned files automatically
                 $old_paths = [];
-                $old_lpj_data = dbFetchOne("SELECT dokumentasi FROM lpj_dokumen WHERE id = ?", [$lpj_id], "i");
-                if ($old_lpj_data && !empty($old_lpj_data['dokumentasi'])) {
-                    $old_docs = json_decode($old_lpj_data['dokumentasi'], true) ?: [];
-                    foreach ($old_docs as $old_doc) {
-                        if (!empty($old_doc['file_path'])) {
-                            $old_paths[] = $old_doc['file_path'];
+                $old_lpj_data = dbFetchOne("SELECT proker_terlaksana FROM lpj_dokumen WHERE id = ?", [$lpj_id], "i");
+                if ($old_lpj_data && !empty($old_lpj_data['proker_terlaksana'])) {
+                    $old_pts = json_decode($old_lpj_data['proker_terlaksana'], true) ?: [];
+                    foreach ($old_pts as $old_pt) {
+                        if (!empty($old_pt['dokumentasi'])) {
+                            foreach ($old_pt['dokumentasi'] as $old_doc) {
+                                if (!empty($old_doc['file_path'])) {
+                                    $old_paths[] = $old_doc['file_path'];
+                                }
+                            }
+                        }
+                        if (!empty($old_pt['nota_belanja'])) {
+                            foreach ($old_pt['nota_belanja'] as $old_doc) {
+                                if (!empty($old_doc['file_path'])) {
+                                    $old_paths[] = $old_doc['file_path'];
+                                }
+                            }
                         }
                     }
                 }
                 
                 $new_paths = [];
-                foreach ($dokumentasi as $new_doc) {
-                    if (!empty($new_doc['file_path'])) {
-                        $new_paths[] = $new_doc['file_path'];
+                foreach ($proker_terlaksana as $new_pt) {
+                    if (!empty($new_pt['dokumentasi'])) {
+                        foreach ($new_pt['dokumentasi'] as $new_doc) {
+                            if (!empty($new_doc['file_path'])) {
+                                $new_paths[] = $new_doc['file_path'];
+                            }
+                        }
+                    }
+                    if (!empty($new_pt['nota_belanja'])) {
+                        foreach ($new_pt['nota_belanja'] as $new_doc) {
+                            if (!empty($new_doc['file_path'])) {
+                                $new_paths[] = $new_doc['file_path'];
+                            }
+                        }
                     }
                 }
                 
@@ -1820,6 +1908,53 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             <div class="proker-new-photos-container" style="margin-top: 10px;"></div>
                             <div class="btn-add-row-mini" onclick="addProkerNewPhotoRow(this)"><i class="fas fa-plus"></i> Tambah Foto Baru</div>
                         </div>
+                        
+                        <!-- Nota Belanja Sub-section -->
+                        <hr style="border: 0; border-top: 1px solid #2a3545; margin: 20px 0;">
+                        <div class="proker-sub-section">
+                            <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-receipt"></i> Nota Belanja</h4>
+                            
+                            <?php 
+                            $pt_nota_list = $pt['nota_belanja'] ?? [];
+                            $pt_nota_json = json_encode($pt_nota_list);
+                            ?>
+                            <div class="proker-existing-nota-grid photo-grid" style="margin-bottom: 15px;">
+                                <?php foreach ($pt_nota_list as $p_idx => $photo): ?>
+                                    <div class="photo-item photo-card" data-path="<?php echo htmlspecialchars($photo['file_path']); ?>">
+                                        <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                            <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Nota Slot <?php echo $p_idx + 1; ?></label>
+                                            <div style="display:flex; gap: 8px;">
+                                                <button type="button" class="btn-change-photo" style="background:none; border:none; color:#8BB9F0; cursor:pointer; font-size: 0.8rem;" onclick="triggerReplaceNota(this)"><i class="fas fa-edit"></i> Ganti</button>
+                                                <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingNota(this)"><i class="fas fa-times"></i> Hapus</button>
+                                            </div>
+                                        </div>
+                                        <div class="photo-preview-wrap">
+                                            <?php
+                                            $img_src = '';
+                                            if (!empty($photo['file_path'])) {
+                                                $uploads_pos = strpos($photo['file_path'], 'uploads/');
+                                                if ($uploads_pos !== false) {
+                                                    $img_src = uploadUrl(substr($photo['file_path'], $uploads_pos + 8));
+                                                } else {
+                                                    $img_src = uploadUrl($photo['file_path']);
+                                                }
+                                            }
+                                            ?>
+                                            <img src="<?php echo htmlspecialchars($img_src); ?>">
+                                        </div>
+                                        <div class="form-group" style="margin-top: 15px;">
+                                            <label class="photo-card-label">Caption Nota</label>
+                                            <input type="text" class="form-control nota-caption-input" style="font-size: 0.8rem; padding: 10px;" value="<?php echo htmlspecialchars($photo['caption'] ?? 'Nota Belanja'); ?>" oninput="serializeProkerNota(this)">
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" name="pt_existing_nota[]" class="pt-existing-nota-hidden" value="<?php echo htmlspecialchars($pt_nota_json); ?>">
+                            
+                            <div class="proker-new-nota-container" style="margin-top: 10px;"></div>
+                            <div class="btn-add-row-mini" onclick="addProkerNewNotaRow(this)"><i class="fas fa-plus"></i> Tambah Nota Baru</div>
+                        </div>
+                        
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -2713,6 +2848,18 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 <div class="proker-new-photos-container" style="margin-top: 10px;"></div>
                 <div class="btn-add-row-mini" onclick="addProkerNewPhotoRow(this)"><i class="fas fa-plus"></i> Tambah Foto Baru</div>
             </div>
+
+            <!-- Nota Belanja Sub-section -->
+            <hr style="border: 0; border-top: 1px solid #2a3545; margin: 20px 0;">
+            <div class="proker-sub-section">
+                <h4 style="color: #8BB9F0; margin-bottom: 10px;"><i class="fas fa-receipt"></i> Nota Belanja</h4>
+                
+                <div class="proker-existing-nota-grid photo-grid" style="margin-bottom: 15px;"></div>
+                <input type="hidden" name="pt_existing_nota[]" class="pt-existing-nota-hidden" value="[]">
+                
+                <div class="proker-new-nota-container" style="margin-top: 10px;"></div>
+                <div class="btn-add-row-mini" onclick="addProkerNewNotaRow(this)"><i class="fas fa-plus"></i> Tambah Nota Baru</div>
+            </div>
         `;
         container.appendChild(div);
         
@@ -2818,6 +2965,49 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 `;
                 photosGrid.appendChild(photoCard);
             });
+
+            // Existing nota belanja
+            const notaList = ptData['nota_belanja'] || [];
+            const notaHidden = div.querySelector('.pt-existing-nota-hidden');
+            if (notaHidden) {
+                notaHidden.value = JSON.stringify(notaList);
+            }
+            
+            const notasGrid = div.querySelector('.proker-existing-nota-grid');
+            if (notasGrid) {
+                notasGrid.innerHTML = '';
+                notaList.forEach((nota) => {
+                    const basename = nota.file_path.split('/').pop();
+                    let pathUrl = '';
+                    const uploadsPos = nota.file_path.indexOf('uploads/');
+                    if (uploadsPos !== -1) {
+                        pathUrl = '../' + nota.file_path.substring(uploadsPos);
+                    } else {
+                        pathUrl = `../uploads/lpj/${basename}`;
+                    }
+                    const photoCard = document.createElement('div');
+                    photoCard.className = 'photo-item photo-card';
+                    photoCard.dataset.path = nota.file_path;
+                    photoCard.innerHTML = `
+                        <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                            <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Nota Impor</label>
+                            <div style="display:flex; gap: 8px;">
+                                <button type="button" class="btn-change-photo" style="background:none; border:none; color:#8BB9F0; cursor:pointer; font-size: 0.8rem;" onclick="triggerReplaceNota(this)"><i class="fas fa-edit"></i> Ganti</button>
+                                <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingNota(this)"><i class="fas fa-times"></i> Hapus</button>
+                            </div>
+                        </div>
+                        <div class="photo-preview-wrap">
+                            <img src="${pathUrl}">
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label class="photo-card-label">Caption Nota</label>
+                            <input type="text" class="form-control nota-caption-input" style="font-size: 0.8rem; padding: 10px;" value="${escapeHtml(nota.caption)}" oninput="serializeProkerNota(this)">
+                        </div>
+                    `;
+                    notasGrid.appendChild(photoCard);
+                });
+            }
+
             div.querySelector('.proker-body').style.display = 'none'; // Auto-collapse newly added imported data
             updateProkerSummary(div);
         }
@@ -3287,6 +3477,129 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         reader.readAsDataURL(file);
     }
 
+    // --- Per-proker Nota Belanja Functions ---
+    function removeExistingNota(btn) {
+        const photoItem = btn.closest('.photo-item');
+        const grid = photoItem.closest('.proker-existing-nota-grid');
+        const prokerCard = btn.closest('.pt-row');
+        photoItem.remove();
+        if (grid) serializeProkerNota(grid);
+        else if (prokerCard) serializeProkerNota(prokerCard);
+    }
+
+    function triggerReplaceNota(btn) {
+        const photoItem = btn.closest('.photo-item');
+        let fileInput = photoItem.querySelector('.proker-replace-nota-file');
+        if (!fileInput) {
+            fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.className = 'proker-replace-nota-file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            fileInput.onchange = function() {
+                handleReplaceNotaFile(this);
+            };
+            photoItem.appendChild(fileInput);
+        }
+        fileInput.click();
+    }
+
+    function handleReplaceNotaFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const photoItem = input.closest('.photo-item');
+        const img = photoItem.querySelector('.photo-preview-wrap img');
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            img.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+        
+        reindexProkers();
+        serializeProkerNota(input);
+    }
+
+    function serializeProkerNota(element) {
+        const prokerCard = element.closest('.pt-row');
+        if (!prokerCard) return;
+        const grid = prokerCard.querySelector('.proker-existing-nota-grid');
+        const hiddenInput = prokerCard.querySelector('.pt-existing-nota-hidden');
+        if (!grid || !hiddenInput) return;
+        
+        const photos = [];
+        let replaceCount = 0;
+        grid.querySelectorAll('.photo-item').forEach(item => {
+            const path = item.getAttribute('data-path');
+            const caption = item.querySelector('.nota-caption-input').value;
+            const fileInput = item.querySelector('.proker-replace-nota-file');
+            
+            const photoData = {
+                file_path: path,
+                caption: caption
+            };
+            
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                photoData.replace_index = replaceCount;
+                replaceCount++;
+            }
+            
+            photos.push(photoData);
+        });
+        
+        hiddenInput.value = JSON.stringify(photos);
+    }
+
+    function addProkerNewNotaRow(btn) {
+        const prokerCard = btn.closest('.pt-row');
+        const container = prokerCard.querySelector('.proker-new-nota-container');
+        if (!container.classList.contains('photo-grid')) {
+            container.classList.add('photo-grid');
+        }
+        
+        const div = document.createElement('div');
+        div.className = 'new-photo-row photo-card';
+        div.innerHTML = `
+            <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Nota Slot Baru</label>
+                <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="this.closest('.photo-card').remove(); reindexProkers();"><i class="fas fa-times"></i> Hapus Slot</button>
+            </div>
+            <div class="photo-preview-wrap">
+                <i class="fas fa-spinner fa-spin upload-spinner" style="display: none; position: absolute; z-index: 3; font-size: 2rem; color: #4A90E2;"></i>
+                <img class="preview-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'/><circle cx='8.5' cy='8.5' r='1.5'/><polyline points='21 15 16 10 5 21'/></svg>">
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label class="photo-card-label">Upload Nota</label>
+                <input type="file" class="form-control proker-new-nota-file" accept="image/*" required onchange="handleNewNotaUpload(this)" style="background: #0f1217; padding: 6px;">
+            </div>
+            <div class="form-group">
+                <label class="photo-card-label">Caption Nota</label>
+                <input type="text" class="form-control proker-new-nota-caption" placeholder="Cth: Nota Konsumsi" required>
+            </div>
+        `;
+        container.appendChild(div);
+        reindexProkers();
+    }
+
+    function handleNewNotaUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const zone = input.closest('.photo-card');
+        const spinner = zone.querySelector('.upload-spinner');
+        const preview = zone.querySelector('.preview-img');
+        
+        if (spinner) spinner.style.display = 'inline-block';
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (spinner) spinner.style.display = 'none';
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
     function reindexProkers() {
         const rows = document.querySelectorAll('#ptContainer .pt-row');
         rows.forEach((row, index) => {
@@ -3306,6 +3619,25 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     input.removeAttribute('name');
                 }
             });
+
+            // Reindex new nota files
+            const notaFileInputs = row.querySelectorAll('.proker-new-nota-file');
+            notaFileInputs.forEach(input => {
+                input.name = `pt_new_nota_file_${index}[]`;
+            });
+            const notaCaptionInputs = row.querySelectorAll('.proker-new-nota-caption');
+            notaCaptionInputs.forEach(input => {
+                input.name = `pt_new_nota_caption_${index}[]`;
+            });
+            const notaReplaceInputs = row.querySelectorAll('.proker-replace-nota-file');
+            notaReplaceInputs.forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    input.name = `pt_replace_nota_file_${index}[]`;
+                } else {
+                    input.removeAttribute('name');
+                }
+            });
+
             calculateProkerBudgetBalance(row);
             // Update row number badge
             const badge = row.querySelector('.row-number-badge');
@@ -3319,6 +3651,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         document.querySelectorAll('#ptContainer .pt-row').forEach(row => {
             serializeProkerBudgetTable(row);
             serializeProkerPhotos(row);
+            serializeProkerNota(row);
         });
     }
 
