@@ -19,7 +19,11 @@ if (isset($_GET['key']) && $_GET['key'] === $adminGateKey) {
     setcookie('admin_access', '1', $cookieOptions);
     // Redirect ke URL bersih tanpa query string
     $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[PHP_SELF]";
-    header("Location: " . $currentUrl);
+    if (!headers_sent()) {
+        header("Location: " . $currentUrl);
+    } else {
+        echo "<script>window.location.href='" . $currentUrl . "';</script>";
+    }
     exit();
 }
 
