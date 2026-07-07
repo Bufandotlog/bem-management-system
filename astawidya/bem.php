@@ -1,10 +1,6 @@
 <?php
-// admin/login.php - VERSI: 3.6
-// CHANGED: Hapus recordUserSession() — dipindah ke 2fa-verify.php
-// CHANGED: Hapus alur "belum setup 2FA" — semua akun wajib punya 2FA dari awal
-//          Jika totp_enabled=0, tampilkan pesan minta hubungi superadmin
-// CHANGED: Kompatibel dengan replay protection TOTP (totp_last_counter)
-// UNCHANGED: Rate limiting, CSRF, seluruh HTML
+// astawidya/bem.php - Login Panel BEM
+// Terlindungi oleh Cookie Gate
 
 require_once __DIR__ . '/../includes/functions.php';
 
@@ -36,8 +32,8 @@ $isLocked     = $lockedUntil > 0 && time() < $lockedUntil;
 $lockWaitMins = $isLocked ? ceil(($lockedUntil - time()) / 60) : 0;
 $error = '';
 
-// IP-based lockout (persistent — tidak bisa dihapus dengan clear cookies)
-$ipMaxAttempts = 15;  // 15 kali gagal dari IP yang sama dalam 30 menit
+// IP-based lockout
+$ipMaxAttempts = 15;
 $ipAttempts    = countIpFailedAttempts(30);
 if (!$isLocked && $ipAttempts >= $ipMaxAttempts) {
     $isLocked     = true;
@@ -45,8 +41,6 @@ if (!$isLocked && $ipAttempts >= $ipMaxAttempts) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    // Exponential Delay (Exponential Backoff) based on previous failed attempts in session
     $attempts = $_SESSION['login_attempts'] ?? 0;
     if ($attempts > 0) {
         $delay = min(15, pow(2, $attempts - 1));
@@ -57,13 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hash_equals($_SESSION['csrf_token'], $submittedToken)) {
         $error = 'Sesi tidak valid, silakan muat ulang halaman dan coba lagi.';
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-
     } elseif ($isLocked) {
         $error = "Terlalu banyak percobaan gagal. Coba lagi dalam {$lockWaitMins} menit.";
-
     } else {
         // Cloudflare Turnstile Verification
-        // Skip di development karena Site Key hanya valid untuk domain produksi
         $appEnv = defined('APP_ENV') ? APP_ENV : ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
         $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
         $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
@@ -107,7 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$turnstileSuccess) {
                 $error = 'Verifikasi Captcha (Turnstile) gagal. Silakan coba lagi.';
-                // Audit log: catat kegagalan Turnstile ke database
                 $attemptUsername = trim(substr($_POST['username'] ?? '', 0, 100));
                 recordFailedAttempt('turnstile_failed', $attemptUsername ?: null);
                 auditLog('TURNSTILE_FAIL', null, null, 'Turnstile verification failed for IP: ' . getClientIp() . ($attemptUsername ? " user: {$attemptUsername}" : ''));
@@ -133,13 +123,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Username atau password salah.';
                     $_SESSION['login_attempts'] = $attempts + 1;
                     recordFailedAttempt('login_failed', $username);
-
                 } elseif ($user && password_verify($password, $user['password'])) {
-
                     $_SESSION['login_attempts']     = 0;
                     $_SESSION['login_locked_until'] = 0;
 
-                    // Jika tidak wajib 2FA (tidak enabled/secret kosong), langsung login
                     if (!$user['totp_enabled'] || empty($user['totp_secret'])) {
                         session_regenerate_id(true);
                         $_SESSION['admin_logged_in']      = true;
@@ -162,21 +149,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 [$ip, $user['id']], "si");
 
                         auditLog('LOGIN', 'users', $user['id'], 'Login berhasil (2FA Bypassed)');
-
                         redirect('admin/dashboard.php', "Selamat datang, {$user['nama']}!", 'success');
                         exit();
                     } else {
-                        // 2FA aktif — arahkan ke verifikasi
                         session_regenerate_id(true);
                         $_SESSION['2fa_pending']    = true;
                         $_SESSION['2fa_user_id']    = $user['id'];
                         $_SESSION['2fa_attempts']   = 0;
                         $_SESSION['_last_activity'] = time();
-                        // Fix: gunakan URL yang konsisten terhadap BASE_URL
                         redirect('admin/2fa-verify.php');
                         exit();
                     }
-
                 } else {
                     $newAttempts = $attempts + 1;
                     $_SESSION['login_attempts'] = $newAttempts;
@@ -196,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/login.css') : '1';
+$cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ . '/../admin/css/login.css') : '1';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -204,7 +187,7 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Admin - BEM Kabinet Astawidya</title>
-    <link rel="stylesheet" href="css/login.css?v=<?php echo $cssVer; ?>">
+    <link rel="stylesheet" href="../admin/css/login.css?v=<?php echo $cssVer; ?>">
     <?php
     $appEnvFront = defined('APP_ENV') ? APP_ENV : ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
     $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
@@ -257,18 +240,16 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
                            maxlength="200" required
                            <?php echo $isLocked ? 'disabled' : ''; ?>>
                     <button type="button" class="toggle-password" id="togglePassword" aria-label="Tampilkan password" tabindex="-1">
-                        <!-- Eye icon (show) -->
                         <svg id="eyeShow" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                         </svg>
-                        <!-- Eye-off icon (hide) - hidden by default -->
                         <svg id="eyeHide" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none;">
                             <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 001 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
                         </svg>
                     </button>
                 </div>
             </div>
-            
+
             <?php if ($hasTurnstile): ?>
             <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
                 <div class="cf-turnstile"
@@ -293,7 +274,6 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
 </div>
 
 <script>
-// ── Password Toggle ──────────────────────────────
 (function() {
     var toggle = document.getElementById('togglePassword');
     var input  = document.getElementById('password');
@@ -317,7 +297,6 @@ $cssVer = file_exists(__DIR__ . '/css/login.css') ? filemtime(__DIR__ . '/css/lo
     }
 })();
 
-// ── Turnstile Callbacks ──────────────────────────
 function onTurnstileSuccess(token) {
     var form   = document.getElementById('loginForm');
     var notice = document.getElementById('turnstileNotice');

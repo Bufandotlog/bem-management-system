@@ -652,8 +652,19 @@ function isLoggedIn() {
 
 function requireLogin() {
     if (!isLoggedIn()) {
+        // Jika tidak login dan tidak punya cookie gate, sembunyikan total (kembalikan 404)
+        if (!isset($_COOKIE['admin_access']) || $_COOKIE['admin_access'] !== '1') {
+            header("HTTP/1.1 404 Not Found");
+            if (file_exists(__DIR__ . '/../404.html')) {
+                include __DIR__ . '/../404.html';
+            } else {
+                echo "<h1>404 Not Found</h1>The requested URL was not found on this server.";
+            }
+            exit();
+        }
+
         if (!headers_sent()) {
-            redirect('admin/login.php', 'Silakan login terlebih dahulu', 'error');
+            redirect('astawidya/bem.php', 'Silakan login terlebih dahulu', 'error');
         }
         exit();
     }
@@ -697,7 +708,7 @@ function logout() {
         );
     }
     session_destroy();
-    redirect('admin/login.php', 'Anda telah logout', 'info');
+    redirect('astawidya/bem.php', 'Anda telah logout', 'info');
     exit();
 }
 
