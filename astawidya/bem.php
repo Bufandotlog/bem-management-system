@@ -4,6 +4,25 @@
 
 require_once __DIR__ . '/../includes/functions.php';
 
+// Ambil kunci gerbang dari .env, default jika tidak ada
+$adminGateKey = $_ENV['ADMIN_GATE_KEY'] ?? 'astawidya-secret';
+
+// Jika mengakses dengan query string kunci (?key=xxx), pasang cookie
+if (isset($_GET['key']) && $_GET['key'] === $adminGateKey) {
+    $cookieOptions = [
+        'expires' => 0, // Sesi
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ];
+    setcookie('admin_access', '1', $cookieOptions);
+    // Redirect ke URL bersih tanpa query string
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[PHP_SELF]";
+    header("Location: " . $currentUrl);
+    exit();
+}
+
 // Cookie Gate - Proteksi Halaman Login dari Akses Langsung
 if (!isset($_COOKIE['admin_access']) || $_COOKIE['admin_access'] !== '1') {
     header("HTTP/1.1 404 Not Found");
