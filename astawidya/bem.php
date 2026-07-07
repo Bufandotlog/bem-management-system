@@ -5,7 +5,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 
 // Ambil kunci gerbang dari .env, default jika tidak ada
-$adminGateKey = $_ENV['ADMIN_GATE_KEY'] ?? 'astawidya-secret';
+$adminGateKey = $_ENV['ADMIN_GATE_KEY'] ?? 'astawidya-bem';
 
 // Jika mengakses dengan query string kunci (?key=xxx), pasang cookie
 if (isset($_GET['key']) && $_GET['key'] === $adminGateKey) {
