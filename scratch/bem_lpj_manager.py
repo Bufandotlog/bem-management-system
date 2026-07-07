@@ -100,6 +100,20 @@ def extract_periode_years(periode_str):
         return match.group(0)
     return periode_str
 
+def resolve_photo_path(photo_path):
+    if not photo_path:
+        return ""
+    if os.path.exists(photo_path) and os.path.isfile(photo_path):
+        return photo_path
+    uploads_pos = photo_path.find('uploads/')
+    if uploads_pos != -1:
+        rel_path = photo_path[uploads_pos:]
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        local_path = os.path.join(project_root, rel_path)
+        if os.path.exists(local_path) and os.path.isfile(local_path):
+            return local_path
+    return ""
+
 def int_to_roman(num):
     val = [10, 9, 5, 4, 1]
     syb = ["X", "IX", "V", "IV", "I"]
@@ -1195,8 +1209,8 @@ def generate_lpj(output_path, config_data):
                 p_img.paragraph_format.space_before = Pt(0)
                 p_img.paragraph_format.space_after = Pt(0)
                 
-                photo_path = photo.get("file_path", "")
-                if photo_path and os.path.exists(photo_path):
+                photo_path = resolve_photo_path(photo.get("file_path", ""))
+                if photo_path:
                     try:
                         p_img.add_run().add_picture(photo_path, width=Cm(6))
                     except Exception as e:
@@ -1881,8 +1895,8 @@ def consolidate_lpj(output_path, file_list):
                     p_img.paragraph_format.space_before = Pt(0)
                     p_img.paragraph_format.space_after = Pt(0)
                     
-                    photo_path = photo.get("file_path", "")
-                    if photo_path and os.path.exists(photo_path):
+                    photo_path = resolve_photo_path(photo.get("file_path", ""))
+                    if photo_path:
                         try:
                             p_img.add_run().add_picture(photo_path, width=Cm(6))
                         except Exception as e:

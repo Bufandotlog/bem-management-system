@@ -1795,7 +1795,18 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                                             </div>
                                         </div>
                                         <div class="photo-preview-wrap">
-                                            <img src="<?php echo file_exists($photo['file_path']) ? str_replace('/var/www/html/bem/', BASE_URL, $photo['file_path']) : uploadUrl(basename($photo['file_path'])); ?>">
+                                            <?php
+                                            $img_src = '';
+                                            if (!empty($photo['file_path'])) {
+                                                $uploads_pos = strpos($photo['file_path'], 'uploads/');
+                                                if ($uploads_pos !== false) {
+                                                    $img_src = uploadUrl(substr($photo['file_path'], $uploads_pos + 8));
+                                                } else {
+                                                    $img_src = uploadUrl($photo['file_path']);
+                                                }
+                                            }
+                                            ?>
+                                            <img src="<?php echo htmlspecialchars($img_src); ?>">
                                         </div>
                                         <div class="form-group" style="margin-top: 15px;">
                                             <label class="photo-card-label">Caption Foto</label>
@@ -2779,7 +2790,13 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             photosGrid.innerHTML = '';
             dokList.forEach((dok) => {
                 const basename = dok.file_path.split('/').pop();
-                const pathUrl = `../uploads/lpj/${basename}`;
+                let pathUrl = '';
+                const uploadsPos = dok.file_path.indexOf('uploads/');
+                if (uploadsPos !== -1) {
+                    pathUrl = '../' + dok.file_path.substring(uploadsPos);
+                } else {
+                    pathUrl = `../uploads/lpj/${basename}`;
+                }
                 const photoCard = document.createElement('div');
                 photoCard.className = 'photo-item photo-card';
                 photoCard.dataset.path = dok.file_path;
@@ -4223,8 +4240,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         previewGrid.innerHTML = '';
                         data.dokumentasi.forEach(doc => {
                             let webPath = doc.file_path || '';
-                            if (webPath.includes('/var/www/html/bem/')) {
-                                webPath = '../' + webPath.split('/var/www/html/bem/')[1];
+                            const uploadsIndex = webPath.indexOf('uploads/');
+                            if (uploadsIndex !== -1) {
+                                webPath = '../' + webPath.substring(uploadsIndex);
                             } else if (!webPath.startsWith('http') && !webPath.startsWith('../')) {
                                 webPath = '../uploads/berita_acara/' + webPath.split('/').pop();
                             }
