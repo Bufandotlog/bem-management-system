@@ -12,7 +12,7 @@ if (isset($_GET['key']) && $_GET['key'] === $adminGateKey) {
     $cookieOptions = [
         'expires' => 0, // Sesi
         'path' => '/',
-        'secure' => true,
+        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
         'httponly' => true,
         'samesite' => 'Lax'
     ];

@@ -205,7 +205,7 @@ if (isset($_GET['ajax_get_berita_acara_id'])) {
             foreach ($konten['dokumentasi'] as $dok) {
                 $img_path = $dok['image'] ?? '';
                 if (strpos($img_path, '/var/www/html') === false) {
-                    $file_path = UPLOAD_PATH . '/' . ltrim($img_path, '/');
+                    $file_path = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . ltrim($img_path, '/\\');
                 } else {
                     $file_path = $img_path;
                 }
@@ -380,12 +380,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $dokumentasi_list = [];
                 if (!empty($pt_existing_dok_json[$i])) {
-                    $dokumentasi_list = json_decode($pt_existing_dok_json[$i], true) ?: [];
-                    foreach ($dokumentasi_list as &$dok) {
+                    $existing_list = json_decode($pt_existing_dok_json[$i], true) ?: [];
+                    foreach ($existing_list as $dok) {
                         $dok['file_path'] = sanitizeText($dok['file_path'] ?? '');
                         $dok['caption'] = sanitizeText($dok['caption'] ?? 'Dokumentasi');
+                        
+                        // Check if this existing photo was replaced in the frontend
+                        if (isset($dok['replace_index'])) {
+                            $rep_idx = (int)$dok['replace_index'];
+                            $replace_file_input_name = "pt_replace_file_{$i}";
+                            if (isset($_FILES[$replace_file_input_name])) {
+                                $rep_files = $_FILES[$replace_file_input_name];
+                                if (isset($rep_files['name'][$rep_idx]) && $rep_files['error'][$rep_idx] === UPLOAD_ERR_OK) {
+                                    $single_file = [
+                                        'name' => $rep_files['name'][$rep_idx],
+                                        'type' => $rep_files['type'][$rep_idx],
+                                        'tmp_name' => $rep_files['tmp_name'][$rep_idx],
+                                        'error' => $rep_files['error'][$rep_idx],
+                                        'size' => $rep_files['size'][$rep_idx]
+                                    ];
+                                    $uploaded = uploadFile($single_file, 'lpj');
+                                    if ($uploaded) {
+                                        // Delete the old photo from server automatically
+                                        $old_path = $dok['file_path'];
+                                        if (!empty($old_path) && file_exists($old_path) && is_file($old_path)) {
+                                            @unlink($old_path);
+                                        }
+                                        // Update the file path to the new uploaded file
+                                        $dok['file_path'] = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $uploaded;
+                                    }
+                                }
+                            }
+                            unset($dok['replace_index']); // Remove the temporary key
+                        }
+                        $dokumentasi_list[] = $dok;
                     }
-                    unset($dok);
                 }
                 
                 $new_file_input_name = "pt_new_dok_file_{$i}";
@@ -403,7 +432,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             ];
                             $uploaded = uploadFile($single_file, 'lpj');
                             if ($uploaded) {
-                                $full_upload_path = UPLOAD_PATH . '/' . $uploaded;
+                                $full_upload_path = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $uploaded;
                                 $dokumentasi_list[] = [
                                     'file_path' => $full_upload_path,
                                     'caption' => sanitizeText($captions[$j] ?? 'Dokumentasi')
@@ -509,6 +538,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($existing_lpj) {
                 $lpj_id = $existing_lpj['id'];
+                
+                // Track old documentation paths to delete orphaned files automatically
+                $old_paths = [];
+                $old_lpj_data = dbFetchOne("SELECT dokumentasi FROM lpj_dokumen WHERE id = ?", [$lpj_id], "i");
+                if ($old_lpj_data && !empty($old_lpj_data['dokumentasi'])) {
+                    $old_docs = json_decode($old_lpj_data['dokumentasi'], true) ?: [];
+                    foreach ($old_docs as $old_doc) {
+                        if (!empty($old_doc['file_path'])) {
+                            $old_paths[] = $old_doc['file_path'];
+                        }
+                    }
+                }
+                
+                $new_paths = [];
+                foreach ($dokumentasi as $new_doc) {
+                    if (!empty($new_doc['file_path'])) {
+                        $new_paths[] = $new_doc['file_path'];
+                    }
+                }
+                
+                $orphaned_paths = array_diff($old_paths, $new_paths);
+                foreach ($orphaned_paths as $orphan) {
+                    if (file_exists($orphan) && is_file($orphan)) {
+                        @unlink($orphan);
+                    }
+                }
+                
                 try {
                     dbQuery("UPDATE lpj_dokumen SET status = ?, keanggotaan = ?, keadaan_objektif = ?, penutup = ?, proker_terlaksana = ?, proker_belum_terlaksana = ?, anggaran = ?, dokumentasi = ?, evaluasi_kinerja_pribadi = ?, evaluasi_anggota_internal = ? WHERE id = ?", 
                         [$status, $keanggotaan_json, $keadaan_objektif, $penutup, $proker_terlaksana_json, $proker_belum_terlaksana_json, $anggaran_json, $dokumentasi_json, $evaluasi_kinerja_pribadi, $evaluasi_anggota_internal_json, $lpj_id], "ssssssssssi");
@@ -610,7 +666,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($lpj_id > 0) {
                 $old_lpj = dbFetchOne("SELECT file_path FROM lpj_dokumen WHERE id = ?", [$lpj_id], "i");
                 if ($old_lpj && !empty($old_lpj['file_path'])) {
-                    $old_filepath = UPLOAD_PATH . '/' . $old_lpj['file_path'];
+                    $old_filepath = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $old_lpj['file_path'];
                     if (file_exists($old_filepath) && is_file($old_filepath)) {
                         @unlink($old_filepath);
                     }
@@ -618,11 +674,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $output_filename = 'LPJ_' . str_replace(' ', '_', $k_name) . '_Triwulan_' . $triwulan . '_' . time() . '.docx';
-            $output_filepath = UPLOAD_PATH . '/lpj/' . $output_filename;
+            $output_filepath = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . 'lpj' . DIRECTORY_SEPARATOR . $output_filename;
             
             // Ensure lpj folder exists
-            if (!file_exists(UPLOAD_PATH . '/lpj')) {
-                mkdir(UPLOAD_PATH . '/lpj', 0777, true);
+            $lpj_dir = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . 'lpj';
+            if (!file_exists($lpj_dir)) {
+                mkdir($lpj_dir, 0777, true);
             }
             
             $manager_script = escapeshellarg(__DIR__ . '/../scratch/bem_lpj_manager.py');
@@ -1732,7 +1789,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                                     <div class="photo-item photo-card" data-path="<?php echo htmlspecialchars($photo['file_path']); ?>">
                                         <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
                                             <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Foto Slot <?php echo $p_idx + 1; ?></label>
-                                            <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus Slot</button>
+                                            <div style="display:flex; gap: 8px;">
+                                                <button type="button" class="btn-change-photo" style="background:none; border:none; color:#8BB9F0; cursor:pointer; font-size: 0.8rem;" onclick="triggerReplacePhoto(this)"><i class="fas fa-edit"></i> Ganti</button>
+                                                <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus</button>
+                                            </div>
                                         </div>
                                         <div class="photo-preview-wrap">
                                             <img src="<?php echo file_exists($photo['file_path']) ? str_replace('/var/www/html/bem/', BASE_URL, $photo['file_path']) : uploadUrl(basename($photo['file_path'])); ?>">
@@ -2726,7 +2786,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 photoCard.innerHTML = `
                     <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
                         <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Foto Impor</label>
-                        <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus Slot</button>
+                        <div style="display:flex; gap: 8px;">
+                            <button type="button" class="btn-change-photo" style="background:none; border:none; color:#8BB9F0; cursor:pointer; font-size: 0.8rem;" onclick="triggerReplacePhoto(this)"><i class="fas fa-edit"></i> Ganti</button>
+                            <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus</button>
+                        </div>
                     </div>
                     <div class="photo-preview-wrap">
                         <img src="${pathUrl}">
@@ -3086,23 +3149,71 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     function removeExistingPhoto(btn) {
         const photoItem = btn.closest('.photo-item');
         const grid = photoItem.closest('.proker-existing-photos-grid');
+        const prokerCard = btn.closest('.pt-row');
         photoItem.remove();
-        serializeProkerPhotos(grid);
+        if (grid) serializeProkerPhotos(grid);
+        else if (prokerCard) serializeProkerPhotos(prokerCard);
+    }
+
+    function triggerReplacePhoto(btn) {
+        const photoItem = btn.closest('.photo-item');
+        let fileInput = photoItem.querySelector('.proker-replace-photo-file');
+        if (!fileInput) {
+            fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.className = 'proker-replace-photo-file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            fileInput.onchange = function() {
+                handleReplacePhotoFile(this);
+            };
+            photoItem.appendChild(fileInput);
+        }
+        fileInput.click();
+    }
+
+    function handleReplacePhotoFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const photoItem = input.closest('.photo-item');
+        const img = photoItem.querySelector('.photo-preview-wrap img');
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            img.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+        
+        reindexProkers();
+        serializeProkerPhotos(input);
     }
 
     function serializeProkerPhotos(element) {
         const prokerCard = element.closest('.pt-row');
+        if (!prokerCard) return;
         const grid = prokerCard.querySelector('.proker-existing-photos-grid');
         const hiddenInput = prokerCard.querySelector('.pt-existing-dok-hidden');
+        if (!grid || !hiddenInput) return;
         
         const photos = [];
+        let replaceCount = 0;
         grid.querySelectorAll('.photo-item').forEach(item => {
             const path = item.getAttribute('data-path');
             const caption = item.querySelector('.photo-caption-input').value;
-            photos.push({
+            const fileInput = item.querySelector('.proker-replace-photo-file');
+            
+            const photoData = {
                 file_path: path,
                 caption: caption
-            });
+            };
+            
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                photoData.replace_index = replaceCount;
+                replaceCount++;
+            }
+            
+            photos.push(photoData);
         });
         
         hiddenInput.value = JSON.stringify(photos);
@@ -3169,6 +3280,14 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             const captionInputs = row.querySelectorAll('.proker-new-photo-caption');
             captionInputs.forEach(input => {
                 input.name = `pt_new_dok_caption_${index}[]`;
+            });
+            const replaceInputs = row.querySelectorAll('.proker-replace-photo-file');
+            replaceInputs.forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    input.name = `pt_replace_file_${index}[]`;
+                } else {
+                    input.removeAttribute('name');
+                }
             });
             calculateProkerBudgetBalance(row);
             // Update row number badge
@@ -4115,7 +4234,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             div.innerHTML = `
                                 <div class="photo-card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
                                     <label style="color:#8BB9F0; font-weight:bold; font-size:0.8rem; margin:0;">Foto Impor</label>
-                                    <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus Slot</button>
+                                    <div style="display:flex; gap: 8px;">
+                                        <button type="button" class="btn-change-photo" style="background:none; border:none; color:#8BB9F0; cursor:pointer; font-size: 0.8rem;" onclick="triggerReplacePhoto(this)"><i class="fas fa-edit"></i> Ganti</button>
+                                        <button type="button" class="btn-remove-photo" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 0.8rem;" onclick="removeExistingPhoto(this)"><i class="fas fa-times"></i> Hapus</button>
+                                    </div>
                                 </div>
                                 <div class="photo-preview-wrap">
                                     <img src="${webPath}">
