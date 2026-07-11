@@ -135,7 +135,12 @@ def _download_to_temp(url):
         ext = os.path.splitext(url.split('?')[0])[1] or '.png'
         fd, temp_path = tempfile.mkstemp(suffix=ext)
         os.close(fd)
-        urllib.request.urlretrieve(url, temp_path)
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        )
+        with urllib.request.urlopen(req) as response, open(temp_path, 'wb') as out_file:
+            shutil.copyfileobj(response, out_file)
         if os.path.getsize(temp_path) > 0:
             return temp_path
         os.remove(temp_path)
