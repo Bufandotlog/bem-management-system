@@ -59,9 +59,13 @@ WORKDIR /var/www/html
 # Salin source (exclude file sensitif via .dockerignore)
 COPY --chown=www-data:www-data . .
 
+# ── Install PHP Dependencies via Composer ────────────────
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-plugins --no-scripts --ignore-platform-reqs
+
 # ── Buat folder yang diperlukan & set permission ─────────
 RUN mkdir -p uploads/lpj uploads/surat uploads/foto logs \
-    && chown -R www-data:www-data uploads logs \
+    && chown -R www-data:www-data uploads logs vendor \
     && chmod -R 755 uploads logs \
     # Hapus file yang tidak perlu di production
     && rm -rf \
