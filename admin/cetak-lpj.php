@@ -68,11 +68,9 @@ if (!function_exists('getLpjImageUrl')) {
         if (strpos($filePath, 'http') === 0 || strpos($filePath, 'data:') === 0) {
             return $filePath;
         }
-        $uploadsPos = strpos($filePath, 'uploads/');
-        if ($uploadsPos !== false) {
-            $relPath = substr($filePath, $uploadsPos + 8);
-            return baseUrl('uploads/' . $relPath);
-        }
+        // uploadUrl() sudah memiliki logika smart fallback:
+        // - Jika file ada di lokal → URL lokal
+        // - Jika tidak → URL S3
         return uploadUrl($filePath);
     }
 }

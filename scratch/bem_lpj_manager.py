@@ -103,6 +103,9 @@ def extract_periode_years(periode_str):
 def resolve_photo_path(photo_path):
     if not photo_path:
         return ""
+    # If it's already an absolute URL (S3), download it to a temp file
+    if photo_path.startswith("http://") or photo_path.startswith("https://"):
+        return _download_to_temp(photo_path)
     if os.path.exists(photo_path) and os.path.isfile(photo_path):
         return photo_path
     uploads_pos = photo_path.find('uploads/')
@@ -112,7 +115,34 @@ def resolve_photo_path(photo_path):
         local_path = os.path.join(project_root, rel_path)
         if os.path.exists(local_path) and os.path.isfile(local_path):
             return local_path
+    # Fallback: try S3 public URL if configured
+    s3_public_url = os.environ.get("S3_PUBLIC_URL", "")
+    storage_method = os.environ.get("STORAGE_METHOD", "local")
+    if storage_method == "s3" and s3_public_url:
+        # Strip 'uploads/' prefix if present
+        clean_key = photo_path
+        if 'uploads/' in clean_key:
+            clean_key = clean_key[clean_key.find('uploads/') + 8:]
+        clean_key = clean_key.lstrip('/')
+        full_url = s3_public_url.rstrip('/') + '/' + clean_key
+        return _download_to_temp(full_url)
     return ""
+
+def _download_to_temp(url):
+    """Download a remote image to a temporary file and return the path."""
+    try:
+        import urllib.request
+        ext = os.path.splitext(url.split('?')[0])[1] or '.png'
+        fd, temp_path = tempfile.mkstemp(suffix=ext)
+        os.close(fd)
+        urllib.request.urlretrieve(url, temp_path)
+        if os.path.getsize(temp_path) > 0:
+            return temp_path
+        os.remove(temp_path)
+        return ""
+    except Exception as e:
+        print(f"Warning: Failed to download image from {url}: {e}")
+        return ""
 
 def get_docx_compatible_image(photo_path):
     if not photo_path or not os.path.exists(photo_path):
