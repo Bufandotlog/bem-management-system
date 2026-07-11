@@ -69,6 +69,113 @@ function uploadToS3($localFile, $s3Key, $mimeType) {
 }
 
 /**
+ * Download file dari S3 ke path lokal sementara (bypass Cloudflare).
+ * Menggunakan AWS SDK langsung sehingga tidak terkena WAF/bot protection.
+ *
+ * @param string $s3Key   Key objek di S3 (contoh: "lpj/abc123.webp")
+ * @param string $destPath Path tujuan lokal untuk menyimpan file
+ * @return bool
+ */
+function downloadFromS3($s3Key, $destPath) {
+    try {
+        $s3 = getS3Client();
+        $bucket = $_ENV['S3_BUCKET'] ?? '';
+        
+        $result = $s3->getObject([
+            'Bucket' => $bucket,
+            'Key'    => $s3Key,
+            'SaveAs' => $destPath,
+        ]);
+        return file_exists($destPath) && filesize($destPath) > 0;
+    } catch (Exception $e) {
+        error_log("downloadFromS3 Error [{$s3Key}]: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Pre-fetch semua gambar dari S3 ke folder temp lokal untuk keperluan DOCX generation.
+ * Mengembalikan array mapping [original_path => local_temp_path] dan list file temp untuk cleanup.
+ *
+ * @param array &$configData Data konfigurasi LPJ (akan dimodifikasi in-place)
+ * @return array List path file temp yang harus dihapus setelah selesai
+ */
+function prefetchS3ImagesForDocx(&$configData) {
+    $tempFiles = [];
+    $storageMethod = $_ENV['STORAGE_METHOD'] ?? 'local';
+    
+    if ($storageMethod !== 's3') {
+        return $tempFiles;
+    }
+    
+    $tempDir = sys_get_temp_dir() . '/lpj_images_' . uniqid();
+    if (!file_exists($tempDir)) {
+        mkdir($tempDir, 0777, true);
+    }
+    $tempFiles[] = $tempDir; // Track dir for cleanup
+    
+    // Process proker_terlaksana -> dokumentasi
+    if (isset($configData['proker_terlaksana']) && is_array($configData['proker_terlaksana'])) {
+        foreach ($configData['proker_terlaksana'] as &$pk) {
+            if (isset($pk['dokumentasi']) && is_array($pk['dokumentasi'])) {
+                foreach ($pk['dokumentasi'] as &$dok) {
+                    $tempPath = _prefetchSingleImage($dok['file_path'] ?? '', $tempDir);
+                    if ($tempPath) {
+                        $dok['file_path'] = $tempPath;
+                        $tempFiles[] = $tempPath;
+                    }
+                }
+                unset($dok);
+            }
+            // Process nota_belanja images
+            if (isset($pk['nota_belanja']) && is_array($pk['nota_belanja'])) {
+                foreach ($pk['nota_belanja'] as &$nota) {
+                    $tempPath = _prefetchSingleImage($nota['file_path'] ?? '', $tempDir);
+                    if ($tempPath) {
+                        $nota['file_path'] = $tempPath;
+                        $tempFiles[] = $tempPath;
+                    }
+                }
+                unset($nota);
+            }
+        }
+        unset($pk);
+    }
+    
+    return $tempFiles;
+}
+
+/**
+ * Helper internal: download satu gambar dari S3 ke temp dir.
+ * @return string|null Path lokal jika berhasil, null jika skip/gagal
+ */
+function _prefetchSingleImage($filePath, $tempDir) {
+    if (empty($filePath)) return null;
+    
+    // Sudah URL http/https → skip (biarkan Python handle)
+    if (str_starts_with($filePath, 'http://') || str_starts_with($filePath, 'https://')) {
+        return null;
+    }
+    
+    // Cek apakah file sudah ada di lokal (legacy)
+    $relPath = get_relative_upload_path($filePath);
+    $localPath = uploadPath($relPath);
+    if (file_exists($localPath) && filesize($localPath) > 0) {
+        return $localPath; // File lokal ada, gunakan langsung
+    }
+    
+    // File tidak ada di lokal → download dari S3
+    $ext = pathinfo($relPath, PATHINFO_EXTENSION) ?: 'webp';
+    $tempPath = $tempDir . '/' . md5($relPath) . '.' . $ext;
+    
+    if (downloadFromS3($relPath, $tempPath)) {
+        return $tempPath;
+    }
+    
+    return null;
+}
+
+/**
  * Memastikan folder upload yang dibutuhkan tersedia.
  * Berguna saat baru deploy ke server baru.
  */

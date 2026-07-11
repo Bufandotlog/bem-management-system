@@ -814,6 +814,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'evaluasi_anggota_internal' => $evaluasi_anggota_internal
             ];
             $tmp_json_path = tempnam(sys_get_temp_dir(), 'lpj_') . '.json';
+            
+            // Pre-fetch gambar dari S3 ke lokal (bypass Cloudflare WAF)
+            // PHP download via AWS SDK → path di JSON diubah ke file lokal temp
+            $s3TempFiles = prefetchS3ImagesForDocx($config_data);
+            
             file_put_contents($tmp_json_path, json_encode($config_data));
             
             // Delete old generated .docx file from server to save space if this is an edit
@@ -837,14 +842,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             $manager_script = escapeshellarg(__DIR__ . '/../scratch/bem_lpj_manager.py');
-            // Explicitly pass S3 env vars to Python (PHP-FPM clear_env strips them)
-            $env_prefix = 'STORAGE_METHOD=' . escapeshellarg($_ENV['STORAGE_METHOD'] ?? 'local')
-                        . ' S3_PUBLIC_URL=' . escapeshellarg($_ENV['S3_PUBLIC_URL'] ?? '');
-            $command = "{$env_prefix} python3 {$manager_script} generate " . escapeshellarg($output_filepath) . " " . escapeshellarg($tmp_json_path) . " 2>&1";
+            $command = "python3 {$manager_script} generate " . escapeshellarg($output_filepath) . " " . escapeshellarg($tmp_json_path) . " 2>&1";
             $output = shell_exec($command);
             file_put_contents(UPLOAD_PATH . '/python_debug.log', date('Y-m-d H:i:s') . "\nCommand: $command\nOutput:\n$output\n---\n", FILE_APPEND);
             
-            unlink($tmp_json_path); // Clean up JSON
+            @unlink($tmp_json_path); // Clean up JSON
+            
+            // Clean up temp S3 images
+            foreach ($s3TempFiles as $tf) {
+                if (is_dir($tf)) {
+                    @array_map('unlink', glob("$tf/*"));
+                    @rmdir($tf);
+                } elseif (is_file($tf)) {
+                    @unlink($tf);
+                }
+            }
             
             if (file_exists($output_filepath)) {
                 $db_file_path = 'lpj/' . $output_filename;
