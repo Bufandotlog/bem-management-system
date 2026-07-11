@@ -143,7 +143,7 @@ fi
 info "Setup folder aplikasi..."
 sudo mkdir -p uploads/lpj uploads/surat uploads/foto uploads/dokumen
 sudo mkdir -p logs/nginx backups
-sudo chmod 755 uploads logs backups
+sudo chmod -R 775 uploads logs backups
 sudo chown -R "$USER":www-data uploads logs backups
 log "Folder berhasil dibuat"
 
