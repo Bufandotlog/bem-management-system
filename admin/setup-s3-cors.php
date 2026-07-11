@@ -9,9 +9,9 @@ require_once __DIR__ . '/../includes/functions.php';
 
 header('Content-Type: text/plain; charset=UTF-8');
 
-// Hanya superadmin yang boleh menjalankan
-if (!isLoggedIn()) {
-    echo "ERROR: Anda harus login terlebih dahulu.\n";
+// Hanya boleh dijalankan via CLI
+if (php_sapi_name() !== 'cli') {
+    echo "ERROR: Script ini hanya boleh dijalankan via CLI.\n";
     exit;
 }
 
