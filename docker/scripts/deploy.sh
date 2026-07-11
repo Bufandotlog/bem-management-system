@@ -141,9 +141,10 @@ fi
 # LANGKAH 8: Setup folder & permission
 # ─────────────────────────────────────────────────────────────
 info "Setup folder aplikasi..."
-mkdir -p uploads/lpj uploads/surat uploads/foto uploads/dokumen
-mkdir -p logs/nginx backups
-chmod 755 uploads logs backups
+sudo mkdir -p uploads/lpj uploads/surat uploads/foto uploads/dokumen
+sudo mkdir -p logs/nginx backups
+sudo chmod 755 uploads logs backups
+sudo chown -R "$USER":www-data uploads logs backups
 log "Folder berhasil dibuat"
 
 # ─────────────────────────────────────────────────────────────
