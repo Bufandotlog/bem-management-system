@@ -837,9 +837,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             $manager_script = escapeshellarg(__DIR__ . '/../scratch/bem_lpj_manager.py');
-            $command = "python3 {$manager_script} generate " . escapeshellarg($output_filepath) . " " . escapeshellarg($tmp_json_path) . " 2>&1";
+            // Explicitly pass S3 env vars to Python (PHP-FPM clear_env strips them)
+            $env_prefix = 'STORAGE_METHOD=' . escapeshellarg($_ENV['STORAGE_METHOD'] ?? 'local')
+                        . ' S3_PUBLIC_URL=' . escapeshellarg($_ENV['S3_PUBLIC_URL'] ?? '');
+            $command = "{$env_prefix} python3 {$manager_script} generate " . escapeshellarg($output_filepath) . " " . escapeshellarg($tmp_json_path) . " 2>&1";
             $output = shell_exec($command);
-            file_put_contents(UPLOAD_PATH . '/python_debug.log', "Command: $command\nOutput:\n$output\n", FILE_APPEND);
+            file_put_contents(UPLOAD_PATH . '/python_debug.log', date('Y-m-d H:i:s') . "\nCommand: $command\nOutput:\n$output\n---\n", FILE_APPEND);
             
             unlink($tmp_json_path); // Clean up JSON
             
