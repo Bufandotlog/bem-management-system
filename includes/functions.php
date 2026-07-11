@@ -254,6 +254,12 @@ function uploadUrl($filename) {
     }
     $filename = ltrim(str_replace('uploads/', '', ltrim($filename, '/')), '/');
     
+    // Fallback: Jika file ada di server lokal, prioritaskan URL lokal agar gambar lama tidak pecah sebelum di-upload ke S3
+    $localPath = uploadPath($filename);
+    if (!empty($localPath) && file_exists($localPath)) {
+        return rtrim(BASE_URL, '/') . '/uploads/' . $filename;
+    }
+    
     if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
         $publicUrl = $_ENV['S3_PUBLIC_URL'] ?? '';
         return rtrim($publicUrl, '/') . '/' . $filename;
