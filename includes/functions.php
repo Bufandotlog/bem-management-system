@@ -12,6 +12,62 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/path-detection.php';
 
+// Load composer autoloader if available
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
+
+/**
+ * Mendapatkan instance S3 Client secara aman
+ */
+function getS3Client() {
+    static $s3 = null;
+    if ($s3 === null) {
+        if (!class_exists('Aws\S3\S3Client')) {
+            throw new RuntimeException("Library AWS SDK PHP (S3Client) belum terinstal. Silakan jalankan 'composer require aws/aws-sdk-php'.");
+        }
+        $endpoint = $_ENV['S3_ENDPOINT'] ?? '';
+        $region = $_ENV['S3_REGION'] ?? 'auto';
+        $key = $_ENV['S3_ACCESS_KEY_ID'] ?? '';
+        $secret = $_ENV['S3_SECRET_ACCESS_KEY'] ?? '';
+
+        $config = [
+            'version'     => 'latest',
+            'region'      => $region,
+            'endpoint'    => $endpoint,
+            'use_path_style_endpoint' => true,
+            'credentials' => [
+                'key'    => $key,
+                'secret' => $secret,
+            ],
+        ];
+        $s3 = new Aws\S3\S3Client($config);
+    }
+    return $s3;
+}
+
+/**
+ * Mengunggah file lokal ke S3
+ */
+function uploadToS3($localFile, $s3Key, $mimeType) {
+    try {
+        $s3 = getS3Client();
+        $bucket = $_ENV['S3_BUCKET'] ?? '';
+        
+        $s3->putObject([
+            'Bucket'      => $bucket,
+            'Key'         => $s3Key,
+            'SourceFile'  => $localFile,
+            'ContentType' => $mimeType,
+        ]);
+        return true;
+    } catch (Exception $e) {
+        error_log("uploadToS3 Error: " . $e->getMessage());
+        $_SESSION['error'] = "Gagal mengunggah ke Object Storage: " . $e->getMessage();
+        return false;
+    }
+}
+
 /**
  * Memastikan folder upload yang dibutuhkan tersedia.
  * Berguna saat baru deploy ke server baru.
@@ -197,6 +253,11 @@ function uploadUrl($filename) {
         return $filename;
     }
     $filename = ltrim(str_replace('uploads/', '', ltrim($filename, '/')), '/');
+    
+    if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+        $publicUrl = $_ENV['S3_PUBLIC_URL'] ?? '';
+        return rtrim($publicUrl, '/') . '/' . $filename;
+    }
     return rtrim(BASE_URL, '/') . '/uploads/' . $filename;
 }
 
@@ -399,6 +460,8 @@ function uploadFile($file, $folder = 'umum') {
     }
 
     $destination = $uploadDir . $newFilename;
+    $relativePath = $folder . '/' . $newFilename;
+    $success = false;
 
     if ($is_image && function_exists('imagewebp')) {
         $img = null;
@@ -440,24 +503,42 @@ function uploadFile($file, $folder = 'umum') {
             if (@imagewebp($img, $destination, 75)) {
                 imagedestroy($img);
                 chmod($destination, 0644);
-                $relativePath = $folder . '/' . $newFilename;
+                $success = true;
                 error_log("uploadFile: SUKSES (Image converted to WebP) - {$destination} | path: {$relativePath}");
-                return $relativePath;
+            } else {
+                if ($img) imagedestroy($img);
             }
-            if ($img) imagedestroy($img);
         }
     }
 
-    if (!move_uploaded_file($file['tmp_name'], $destination)) {
-        $_SESSION['error'] = 'Gagal menyimpan file';
-        error_log("uploadFile: Gagal memindahkan file ke {$destination}");
-        return false;
+    if (!$success) {
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            $_SESSION['error'] = 'Gagal menyimpan file';
+            error_log("uploadFile: Gagal memindahkan file ke {$destination}");
+            return false;
+        }
+        chmod($destination, 0644);
+        $success = true;
+        error_log("uploadFile: SUKSES - {$destination} | path: {$relativePath}");
     }
 
-    chmod($destination, 0644);
+    // Jika menggunakan Object Storage, unggah ke S3 dan hapus lokal
+    if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+        $mimeType = $is_image ? 'image/webp' : ($file['type'] ?? 'application/octet-stream');
+        if (uploadToS3($destination, $relativePath, $mimeType)) {
+            if (file_exists($destination)) {
+                @unlink($destination);
+            }
+            return $relativePath;
+        } else {
+            // Jika upload S3 gagal, hapus file lokal dan return false
+            if (file_exists($destination)) {
+                @unlink($destination);
+            }
+            return false;
+        }
+    }
 
-    $relativePath = $folder . '/' . $newFilename;
-    error_log("uploadFile: SUKSES - {$destination} | path: {$relativePath}");
     return $relativePath;
 }
 
@@ -466,6 +547,23 @@ function deleteFile($filePath) {
 
     $filePath = str_replace(['../', '..\\', './', '.\\'], '', $filePath);
     $filePath = ltrim(str_replace('uploads/', '', $filePath), '/\\');
+
+    // Hapus dari Object Storage jika aktif
+    if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+        try {
+            $s3 = getS3Client();
+            $bucket = $_ENV['S3_BUCKET'] ?? '';
+            $s3->deleteObject([
+                'Bucket' => $bucket,
+                'Key'    => $filePath,
+            ]);
+            error_log("deleteFile (S3): Berhasil dihapus - {$filePath}");
+            return true;
+        } catch (Exception $e) {
+            error_log("deleteFile (S3) Error: " . $e->getMessage());
+            return false;
+        }
+    }
 
     $fullPath   = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $filePath;
     $realPath   = realpath($fullPath);

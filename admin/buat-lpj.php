@@ -382,12 +382,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dokumentasi_list = [];
                 if (!empty($pt_existing_dok_json[$i])) {
                     $existing_list = json_decode($pt_existing_dok_json[$i], true) ?: [];
+                    $j_idx = 0;
                     foreach ($existing_list as $dok) {
                         $dok['file_path'] = sanitizeText($dok['file_path'] ?? '');
                         $dok['caption'] = sanitizeText($dok['caption'] ?? 'Dokumentasi');
                         
-                        // Check if this existing photo was replaced in the frontend
-                        if (isset($dok['replace_index'])) {
+                        $replace_s3_input_name = "pt_replace_file_s3_key_{$i}";
+                        $s3_key = $_POST[$replace_s3_input_name][$j_idx] ?? '';
+
+                        if (!empty($s3_key)) {
+                            // Hapus foto lama
+                            $old_path = $dok['file_path'];
+                            if (!empty($old_path)) {
+                                $uploads_pos = strpos($old_path, 'uploads/');
+                                $rel_path = ($uploads_pos !== false) ? substr($old_path, $uploads_pos + 8) : $old_path;
+                                deleteFile($rel_path);
+                            }
+                            $dok['file_path'] = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $s3_key;
+                            if (isset($dok['replace_index'])) {
+                                unset($dok['replace_index']);
+                            }
+                        } elseif (isset($dok['replace_index'])) {
                             $rep_idx = (int)$dok['replace_index'];
                             $replace_file_input_name = "pt_replace_file_{$i}";
                             if (isset($_FILES[$replace_file_input_name])) {
@@ -404,8 +419,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     if ($uploaded) {
                                         // Delete the old photo from server automatically
                                         $old_path = $dok['file_path'];
-                                        if (!empty($old_path) && file_exists($old_path) && is_file($old_path)) {
-                                            @unlink($old_path);
+                                        if (!empty($old_path)) {
+                                            $uploads_pos = strpos($old_path, 'uploads/');
+                                            $rel_path = ($uploads_pos !== false) ? substr($old_path, $uploads_pos + 8) : $old_path;
+                                            deleteFile($rel_path);
                                         }
                                         // Update the file path to the new uploaded file
                                         $dok['file_path'] = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $uploaded;
@@ -415,6 +432,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             unset($dok['replace_index']); // Remove the temporary key
                         }
                         $dokumentasi_list[] = $dok;
+                        $j_idx++;
                     }
                 }
                 
@@ -443,15 +461,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
+                $new_s3_input_name = "pt_new_dok_s3_key_{$i}";
+                if (isset($_POST[$new_s3_input_name])) {
+                    $s3_keys = $_POST[$new_s3_input_name];
+                    $captions = $_POST["pt_new_dok_caption_{$i}"] ?? [];
+                    for ($j = 0; $j < count($s3_keys); $j++) {
+                        if (!empty($s3_keys[$j])) {
+                            $full_upload_path = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $s3_keys[$j];
+                            $dokumentasi_list[] = [
+                                'file_path' => $full_upload_path,
+                                'caption' => sanitizeText($captions[$j] ?? 'Dokumentasi')
+                            ];
+                        }
+                    }
+                }
+
                 $nota_belanja_list = [];
                 if (!empty($pt_existing_nota_json[$i])) {
                     $existing_nota_list = json_decode($pt_existing_nota_json[$i], true) ?: [];
+                    $j_idx = 0;
                     foreach ($existing_nota_list as $dok) {
                         $dok['file_path'] = sanitizeText($dok['file_path'] ?? '');
                         $dok['caption'] = sanitizeText($dok['caption'] ?? 'Nota Belanja');
                         
-                        // Check if this existing photo was replaced in the frontend
-                        if (isset($dok['replace_index'])) {
+                        $replace_s3_input_name = "pt_replace_nota_s3_key_{$i}";
+                        $s3_key = $_POST[$replace_s3_input_name][$j_idx] ?? '';
+
+                        if (!empty($s3_key)) {
+                            // Hapus nota lama
+                            $old_path = $dok['file_path'];
+                            if (!empty($old_path)) {
+                                $uploads_pos = strpos($old_path, 'uploads/');
+                                $rel_path = ($uploads_pos !== false) ? substr($old_path, $uploads_pos + 8) : $old_path;
+                                deleteFile($rel_path);
+                            }
+                            $dok['file_path'] = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $s3_key;
+                            if (isset($dok['replace_index'])) {
+                                unset($dok['replace_index']);
+                            }
+                        } elseif (isset($dok['replace_index'])) {
                             $rep_idx = (int)$dok['replace_index'];
                             $replace_file_input_name = "pt_replace_nota_file_{$i}";
                             if (isset($_FILES[$replace_file_input_name])) {
@@ -468,8 +516,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     if ($uploaded) {
                                         // Delete the old photo from server automatically
                                         $old_path = $dok['file_path'];
-                                        if (!empty($old_path) && file_exists($old_path) && is_file($old_path)) {
-                                            @unlink($old_path);
+                                        if (!empty($old_path)) {
+                                            $uploads_pos = strpos($old_path, 'uploads/');
+                                            $rel_path = ($uploads_pos !== false) ? substr($old_path, $uploads_pos + 8) : $old_path;
+                                            deleteFile($rel_path);
                                         }
                                         // Update the file path to the new uploaded file
                                         $dok['file_path'] = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $uploaded;
@@ -479,6 +529,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             unset($dok['replace_index']); // Remove the temporary key
                         }
                         $nota_belanja_list[] = $dok;
+                        $j_idx++;
                     }
                 }
                 
@@ -503,6 +554,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     'caption' => sanitizeText($captions[$j] ?? 'Nota Belanja')
                                 ];
                             }
+                        }
+                    }
+                }
+
+                $new_nota_s3_input_name = "pt_new_nota_s3_key_{$i}";
+                if (isset($_POST[$new_nota_s3_input_name])) {
+                    $s3_keys = $_POST[$new_nota_s3_input_name];
+                    $captions = $_POST["pt_new_nota_caption_{$i}"] ?? [];
+                    for ($j = 0; $j < count($s3_keys); $j++) {
+                        if (!empty($s3_keys[$j])) {
+                            $full_upload_path = rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $s3_keys[$j];
+                            $nota_belanja_list[] = [
+                                'file_path' => $full_upload_path,
+                                'caption' => sanitizeText($captions[$j] ?? 'Nota Belanja')
+                            ];
                         }
                     }
                 }
@@ -2118,6 +2184,87 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 </div>
 
 <script>
+    const STORAGE_METHOD = '<?php echo $_ENV['STORAGE_METHOD'] ?? 'local'; ?>';
+
+    async function uploadToS3Presigned(file, folder = 'lpj') {
+        const res = await fetch(`ajax-s3-presign.php?type=${encodeURIComponent(file.type)}&folder=${folder}`);
+        if (!res.ok) {
+            throw new Error('Gagal mendapatkan signature upload');
+        }
+        const data = await res.json();
+        
+        const uploadRes = await fetch(data.presignedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type
+            }
+        });
+        
+        if (!uploadRes.ok) {
+            throw new Error('Gagal mengunggah file langsung ke Object Storage');
+        }
+        
+        return data.key;
+    }
+
+    /**
+     * Mengompres file gambar menggunakan HTML5 Canvas
+     * Mengubah resolusi maksimal ke lebar 1600px dan tipe menjadi image/webp
+     */
+    function compressImageClientSide(file, quality = 0.75) {
+        return new Promise((resolve, reject) => {
+            if (!file.type.startsWith('image/')) {
+                return resolve(file); // Jika bukan gambar (misal PDF), lewati kompresi
+            }
+            
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1600;
+                    const MAX_HEIGHT = 1600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            return reject(new Error('Canvas toBlob failed'));
+                        }
+                        // Buat file baru berbasis blob hasil kompresi
+                        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                            type: 'image/webp',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    }, 'image/webp', quality);
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    }
+
     const HARI_ID  = ['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'];
     const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const MONTH_MAP = {
@@ -3375,25 +3522,69 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 handleReplacePhotoFile(this);
             };
             photoItem.appendChild(fileInput);
+            
+            const s3Input = document.createElement('input');
+            s3Input.type = 'hidden';
+            s3Input.className = 'proker-replace-photo-s3-key';
+            photoItem.appendChild(s3Input);
         }
         fileInput.click();
     }
 
-    function handleReplacePhotoFile(input) {
+    async function handleReplacePhotoFile(input) {
         const file = input.files[0];
         if (!file) return;
         
         const photoItem = input.closest('.photo-item');
         const img = photoItem.querySelector('.photo-preview-wrap img');
+        const s3Input = photoItem.querySelector('.proker-replace-photo-s3-key');
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            img.src = e.target.result;
+        const wrap = photoItem.querySelector('.photo-preview-wrap');
+        let spinner = wrap ? wrap.querySelector('.upload-spinner') : null;
+        if (!spinner) {
+            spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin upload-spinner';
+            spinner.style.position = 'absolute';
+            spinner.style.zIndex = '3';
+            spinner.style.fontSize = '1.5rem';
+            spinner.style.color = '#4A90E2';
+            spinner.style.top = '50%';
+            spinner.style.left = '50%';
+            spinner.style.transform = 'translate(-50%, -50%)';
+            if (wrap) wrap.appendChild(spinner);
         }
-        reader.readAsDataURL(file);
+        spinner.style.display = 'inline-block';
         
-        reindexProkers();
-        serializeProkerPhotos(input);
+        try {
+            const compressedFile = await compressImageClientSide(file, 0.75);
+            
+            if (STORAGE_METHOD === 's3') {
+                const s3Key = await uploadToS3Presigned(compressedFile, 'lpj');
+                if (s3Input) {
+                    s3Input.value = s3Key;
+                }
+                const dataTransfer = new DataTransfer();
+                input.files = dataTransfer.files;
+            } else {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                input.files = dataTransfer.files;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                spinner.style.display = 'none';
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(compressedFile);
+            
+            reindexProkers();
+            serializeProkerPhotos(input);
+        } catch (e) {
+            console.error("Gagal kompresi/upload:", e);
+            alert("Gagal mengganti foto: " + e.message);
+            spinner.style.display = 'none';
+        }
     }
 
     function serializeProkerPhotos(element) {
@@ -3449,6 +3640,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="form-group" style="margin-top: 15px;">
                 <label class="photo-card-label">Upload Foto</label>
                 <input type="file" class="form-control proker-new-photo-file" accept="image/*" required onchange="handleNewPhotoUpload(this)" style="background: #0f1217; padding: 6px;">
+                <input type="hidden" class="proker-new-photo-s3-key" value="">
             </div>
             <div class="form-group">
                 <label class="photo-card-label">Caption Foto</label>
@@ -3459,22 +3651,45 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         reindexProkers();
     }
 
-    function handleNewPhotoUpload(input) {
+    async function handleNewPhotoUpload(input) {
         const file = input.files[0];
         if (!file) return;
         
         const zone = input.closest('.photo-card');
         const spinner = zone.querySelector('.upload-spinner');
         const preview = zone.querySelector('.preview-img');
+        const s3Input = zone.querySelector('.proker-new-photo-s3-key');
         
         if (spinner) spinner.style.display = 'inline-block';
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
+        try {
+            const compressedFile = await compressImageClientSide(file, 0.75);
+            
+            if (STORAGE_METHOD === 's3') {
+                const s3Key = await uploadToS3Presigned(compressedFile, 'lpj');
+                if (s3Input) {
+                    s3Input.value = s3Key;
+                }
+                input.removeAttribute('required');
+                const dataTransfer = new DataTransfer();
+                input.files = dataTransfer.files;
+            } else {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                input.files = dataTransfer.files;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (spinner) spinner.style.display = 'none';
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(compressedFile);
+        } catch (e) {
+            console.error("Gagal kompresi/upload:", e);
+            alert("Gagal mengunggah foto: " + e.message);
             if (spinner) spinner.style.display = 'none';
-            preview.src = e.target.result;
         }
-        reader.readAsDataURL(file);
     }
 
     // --- Per-proker Nota Belanja Functions ---
@@ -3500,25 +3715,69 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 handleReplaceNotaFile(this);
             };
             photoItem.appendChild(fileInput);
+            
+            const s3Input = document.createElement('input');
+            s3Input.type = 'hidden';
+            s3Input.className = 'proker-replace-nota-s3-key';
+            photoItem.appendChild(s3Input);
         }
         fileInput.click();
     }
 
-    function handleReplaceNotaFile(input) {
+    async function handleReplaceNotaFile(input) {
         const file = input.files[0];
         if (!file) return;
         
         const photoItem = input.closest('.photo-item');
         const img = photoItem.querySelector('.photo-preview-wrap img');
+        const s3Input = photoItem.querySelector('.proker-replace-nota-s3-key');
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            img.src = e.target.result;
+        const wrap = photoItem.querySelector('.photo-preview-wrap');
+        let spinner = wrap ? wrap.querySelector('.upload-spinner') : null;
+        if (!spinner) {
+            spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin upload-spinner';
+            spinner.style.position = 'absolute';
+            spinner.style.zIndex = '3';
+            spinner.style.fontSize = '1.5rem';
+            spinner.style.color = '#4A90E2';
+            spinner.style.top = '50%';
+            spinner.style.left = '50%';
+            spinner.style.transform = 'translate(-50%, -50%)';
+            if (wrap) wrap.appendChild(spinner);
         }
-        reader.readAsDataURL(file);
+        spinner.style.display = 'inline-block';
         
-        reindexProkers();
-        serializeProkerNota(input);
+        try {
+            const compressedFile = await compressImageClientSide(file, 0.75);
+            
+            if (STORAGE_METHOD === 's3') {
+                const s3Key = await uploadToS3Presigned(compressedFile, 'lpj');
+                if (s3Input) {
+                    s3Input.value = s3Key;
+                }
+                const dataTransfer = new DataTransfer();
+                input.files = dataTransfer.files;
+            } else {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                input.files = dataTransfer.files;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                spinner.style.display = 'none';
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(compressedFile);
+            
+            reindexProkers();
+            serializeProkerNota(input);
+        } catch (e) {
+            console.error("Gagal kompresi/upload:", e);
+            alert("Gagal mengganti nota: " + e.message);
+            spinner.style.display = 'none';
+        }
     }
 
     function serializeProkerNota(element) {
@@ -3572,6 +3831,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="form-group" style="margin-top: 15px;">
                 <label class="photo-card-label">Upload Nota</label>
                 <input type="file" class="form-control proker-new-nota-file" accept="image/*" required onchange="handleNewNotaUpload(this)" style="background: #0f1217; padding: 6px;">
+                <input type="hidden" class="proker-new-nota-s3-key" value="">
             </div>
             <div class="form-group">
                 <label class="photo-card-label">Caption Nota</label>
@@ -3582,22 +3842,45 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         reindexProkers();
     }
 
-    function handleNewNotaUpload(input) {
+    async function handleNewNotaUpload(input) {
         const file = input.files[0];
         if (!file) return;
         
         const zone = input.closest('.photo-card');
         const spinner = zone.querySelector('.upload-spinner');
         const preview = zone.querySelector('.preview-img');
+        const s3Input = zone.querySelector('.proker-new-nota-s3-key');
         
         if (spinner) spinner.style.display = 'inline-block';
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
+        try {
+            const compressedFile = await compressImageClientSide(file, 0.75);
+            
+            if (STORAGE_METHOD === 's3') {
+                const s3Key = await uploadToS3Presigned(compressedFile, 'lpj');
+                if (s3Input) {
+                    s3Input.value = s3Key;
+                }
+                input.removeAttribute('required');
+                const dataTransfer = new DataTransfer();
+                input.files = dataTransfer.files;
+            } else {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                input.files = dataTransfer.files;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (spinner) spinner.style.display = 'none';
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(compressedFile);
+        } catch (e) {
+            console.error("Gagal kompresi/upload:", e);
+            alert("Gagal mengunggah nota: " + e.message);
             if (spinner) spinner.style.display = 'none';
-            preview.src = e.target.result;
         }
-        reader.readAsDataURL(file);
     }
 
     function reindexProkers() {
@@ -3620,6 +3903,17 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 }
             });
 
+            // S3 Hidden inputs renaming
+            const fileS3Inputs = row.querySelectorAll('.proker-new-photo-s3-key');
+            fileS3Inputs.forEach(input => {
+                input.name = `pt_new_dok_s3_key_${index}[]`;
+            });
+
+            const replaceS3Inputs = row.querySelectorAll('.proker-existing-photos-grid .proker-replace-photo-s3-key');
+            replaceS3Inputs.forEach((input, jIdx) => {
+                input.name = `pt_replace_file_s3_key_${index}[${jIdx}]`;
+            });
+
             // Reindex new nota files
             const notaFileInputs = row.querySelectorAll('.proker-new-nota-file');
             notaFileInputs.forEach(input => {
@@ -3636,6 +3930,16 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 } else {
                     input.removeAttribute('name');
                 }
+            });
+
+            const notaS3Inputs = row.querySelectorAll('.proker-new-nota-s3-key');
+            notaS3Inputs.forEach(input => {
+                input.name = `pt_new_nota_s3_key_${index}[]`;
+            });
+
+            const replaceNotaS3Inputs = row.querySelectorAll('.proker-existing-nota-grid .proker-replace-nota-s3-key');
+            replaceNotaS3Inputs.forEach((input, jIdx) => {
+                input.name = `pt_replace_nota_s3_key_${index}[${jIdx}]`;
             });
 
             calculateProkerBudgetBalance(row);
