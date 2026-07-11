@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/functions.php';
 header('Content-Type: application/json');
 
 // Validasi session
-if (!isset($_SESSION['user_id'])) {
+if (!isLoggedIn()) {
     http_response_code(403);
     echo json_encode(['error' => 'Unauthorized']);
     exit;
