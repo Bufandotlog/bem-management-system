@@ -839,6 +839,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $manager_script = escapeshellarg(__DIR__ . '/../scratch/bem_lpj_manager.py');
             $command = "python3 {$manager_script} generate " . escapeshellarg($output_filepath) . " " . escapeshellarg($tmp_json_path) . " 2>&1";
             $output = shell_exec($command);
+            file_put_contents(UPLOAD_PATH . '/python_debug.log', "Command: $command\nOutput:\n$output\n", FILE_APPEND);
             
             unlink($tmp_json_path); // Clean up JSON
             
