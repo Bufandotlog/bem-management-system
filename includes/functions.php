@@ -247,30 +247,52 @@ function countIpFailedAttempts(int $windowMinutes = 30): int {
 // FUNGSI HELPER PATH & URL (unchanged)
 // ============================================
 
+function get_relative_upload_path($filename) {
+    if (empty($filename)) return '';
+    $filename = str_replace('\\', '/', $filename);
+    $uploadPath = str_replace('\\', '/', rtrim(UPLOAD_PATH, '/'));
+    
+    if (str_starts_with($filename, $uploadPath . '/')) {
+        $filename = substr($filename, strlen($uploadPath) + 1);
+    } else {
+        $pos = strpos($filename, '/uploads/');
+        if ($pos !== false) {
+            $filename = substr($filename, $pos + 9);
+        } elseif (str_starts_with($filename, 'uploads/')) {
+            $filename = substr($filename, 8);
+        }
+    }
+    return ltrim($filename, '/');
+}
+
 function uploadUrl($filename) {
     if (empty($filename)) return '';
     if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
         return $filename;
     }
-    $filename = ltrim(str_replace('uploads/', '', ltrim($filename, '/')), '/');
+    
+    $relPath = get_relative_upload_path($filename);
     
     // Fallback: Jika file ada di server lokal, prioritaskan URL lokal agar gambar lama tidak pecah sebelum di-upload ke S3
-    $localPath = uploadPath($filename);
+    $localPath = uploadPath($relPath);
     if (!empty($localPath) && file_exists($localPath)) {
-        return rtrim(BASE_URL, '/') . '/uploads/' . $filename;
+        return rtrim(BASE_URL, '/') . '/uploads/' . $relPath;
     }
     
     if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
         $publicUrl = $_ENV['S3_PUBLIC_URL'] ?? '';
-        return rtrim($publicUrl, '/') . '/' . $filename;
+        return rtrim($publicUrl, '/') . '/' . $relPath;
     }
-    return rtrim(BASE_URL, '/') . '/uploads/' . $filename;
+    return rtrim(BASE_URL, '/') . '/uploads/' . $relPath;
 }
 
 function uploadPath($filename) {
     if (empty($filename)) return '';
-    $filename = ltrim(str_replace('uploads/', '', ltrim($filename, '/')), '/\\');
-    return rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . $filename;
+    if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+        return $filename;
+    }
+    $relPath = get_relative_upload_path($filename);
+    return rtrim(UPLOAD_PATH, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relPath);
 }
 
 function assetUrl($path) {
