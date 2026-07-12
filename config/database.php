@@ -72,19 +72,16 @@ if ($is_local) {
     // Helper function to aggressively find env vars
     $getEnvVal = function($key, $default) {
         $val = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
-        return ($val !== false && $val !== null && $val !== '') ? $val : $default;
+        return ($val !== false && $val !== null) ? $val : $default; // Allow empty string for DB_PASS
     };
 
     // --- KONFIGURASI PRODUKSI (MYSQL) ---
     defined('DB_CONNECTION') || define('DB_CONNECTION', $getEnvVal('DB_CONNECTION', 'mysql'));
-    defined('DB_HOST')       || define('DB_HOST',       $getEnvVal('DB_HOST',       'sql213.infinityfree.com'));
+    defined('DB_HOST')       || define('DB_HOST',       $getEnvVal('DB_HOST',       'db'));
     defined('DB_PORT')       || define('DB_PORT',       $getEnvVal('DB_PORT',       '3306'));
-    defined('DB_USER')       || define('DB_USER',       $getEnvVal('DB_USER',       'if0_41167793'));
-    defined('DB_PASS')       || define('DB_PASS',       $getEnvVal('DB_PASS',       'rtmiqtTCfJo'));
-    defined('DB_NAME')       || define('DB_NAME',       $getEnvVal('DB_NAME',       'if0_41167793_bem_astawidya'));
-
-    // Debugging (akan masuk ke /var/www/html/logs/php_error.log)
-    error_log("DB_DEBUG: DB_HOST is '" . DB_HOST . "'. Raw getenv('DB_HOST') is '" . getenv('DB_HOST') . "'");
+    defined('DB_USER')       || define('DB_USER',       $getEnvVal('DB_USER',       'bem_user'));
+    defined('DB_PASS')       || define('DB_PASS',       $getEnvVal('DB_PASS',       ''));
+    defined('DB_NAME')       || define('DB_NAME',       $getEnvVal('DB_NAME',       'bem_astawidya'));
     
     // Otomatis deteksi domain di server jika tidak ada di .env
     if (!defined('BASE_URL')) {
