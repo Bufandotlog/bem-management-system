@@ -73,6 +73,41 @@ if (isset($_GET['ajax_kementerian_id'])) {
         
         // Merge all executed prokers from both quarters (do not deduplicate)
         $proker_terlaksana = array_merge($pt1, $pt2);
+
+        // Resolve web paths for client-side display (supporting S3 and local storage)
+        foreach ($proker_terlaksana as &$pt) {
+            if (isset($pt['dokumentasi']) && is_array($pt['dokumentasi'])) {
+                foreach ($pt['dokumentasi'] as &$dok) {
+                    if (!empty($dok['file_path'])) {
+                        $uploads_pos = strpos($dok['file_path'], 'uploads/');
+                        if ($uploads_pos !== false) {
+                            $dok['web_url'] = uploadUrl(substr($dok['file_path'], $uploads_pos + 8));
+                        } else {
+                            $dok['web_url'] = uploadUrl($dok['file_path']);
+                        }
+                    } else {
+                        $dok['web_url'] = '';
+                    }
+                }
+                unset($dok);
+            }
+            if (isset($pt['nota_belanja']) && is_array($pt['nota_belanja'])) {
+                foreach ($pt['nota_belanja'] as &$nota) {
+                    if (!empty($nota['file_path'])) {
+                        $uploads_pos = strpos($nota['file_path'], 'uploads/');
+                        if ($uploads_pos !== false) {
+                            $nota['web_url'] = uploadUrl(substr($nota['file_path'], $uploads_pos + 8));
+                        } else {
+                            $nota['web_url'] = uploadUrl($nota['file_path']);
+                        }
+                    } else {
+                        $nota['web_url'] = '';
+                    }
+                }
+                unset($nota);
+            }
+        }
+        unset($pt);
         
         // Build map of executed program names to check against unimplemented ones
         $executed_names = [];
@@ -209,8 +244,19 @@ if (isset($_GET['ajax_get_berita_acara_id'])) {
                 } else {
                     $file_path = $img_path;
                 }
+                
+                // Resolve S3/local web URL
+                $web_url = '';
+                $uploads_pos = strpos($file_path, 'uploads/');
+                if ($uploads_pos !== false) {
+                    $web_url = uploadUrl(substr($file_path, $uploads_pos + 8));
+                } else {
+                    $web_url = uploadUrl($file_path);
+                }
+                
                 $dokumentasi[] = [
                     'file_path' => $file_path,
+                    'web_url' => $web_url,
                     'caption' => $dok['caption'] ?? 'Dokumentasi'
                 ];
             }
@@ -3112,13 +3158,15 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             const photosGrid = div.querySelector('.proker-existing-photos-grid');
             photosGrid.innerHTML = '';
             dokList.forEach((dok) => {
-                const basename = dok.file_path.split('/').pop();
-                let pathUrl = '';
-                const uploadsPos = dok.file_path.indexOf('uploads/');
-                if (uploadsPos !== -1) {
-                    pathUrl = '../' + dok.file_path.substring(uploadsPos);
-                } else {
-                    pathUrl = `../uploads/lpj/${basename}`;
+                let pathUrl = dok.web_url || '';
+                if (!pathUrl) {
+                    const basename = dok.file_path.split('/').pop();
+                    const uploadsPos = dok.file_path.indexOf('uploads/');
+                    if (uploadsPos !== -1) {
+                        pathUrl = '../' + dok.file_path.substring(uploadsPos);
+                    } else {
+                        pathUrl = `../uploads/lpj/${basename}`;
+                    }
                 }
                 const photoCard = document.createElement('div');
                 photoCard.className = 'photo-item photo-card';
@@ -3153,13 +3201,15 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             if (notasGrid) {
                 notasGrid.innerHTML = '';
                 notaList.forEach((nota) => {
-                    const basename = nota.file_path.split('/').pop();
-                    let pathUrl = '';
-                    const uploadsPos = nota.file_path.indexOf('uploads/');
-                    if (uploadsPos !== -1) {
-                        pathUrl = '../' + nota.file_path.substring(uploadsPos);
-                    } else {
-                        pathUrl = `../uploads/lpj/${basename}`;
+                    let pathUrl = nota.web_url || '';
+                    if (!pathUrl) {
+                        const basename = nota.file_path.split('/').pop();
+                        const uploadsPos = nota.file_path.indexOf('uploads/');
+                        if (uploadsPos !== -1) {
+                            pathUrl = '../' + nota.file_path.substring(uploadsPos);
+                        } else {
+                            pathUrl = `../uploads/lpj/${basename}`;
+                        }
                     }
                     const photoCard = document.createElement('div');
                     photoCard.className = 'photo-item photo-card';
@@ -4905,12 +4955,15 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         hiddenDocs.value = JSON.stringify(data.dokumentasi);
                         previewGrid.innerHTML = '';
                         data.dokumentasi.forEach(doc => {
-                            let webPath = doc.file_path || '';
-                            const uploadsIndex = webPath.indexOf('uploads/');
-                            if (uploadsIndex !== -1) {
-                                webPath = '../' + webPath.substring(uploadsIndex);
-                            } else if (!webPath.startsWith('http') && !webPath.startsWith('../')) {
-                                webPath = '../uploads/berita_acara/' + webPath.split('/').pop();
+                            let webPath = doc.web_url || '';
+                            if (!webPath) {
+                                webPath = doc.file_path || '';
+                                const uploadsIndex = webPath.indexOf('uploads/');
+                                if (uploadsIndex !== -1) {
+                                    webPath = '../' + webPath.substring(uploadsIndex);
+                                } else if (!webPath.startsWith('http') && !webPath.startsWith('../')) {
+                                    webPath = '../uploads/berita_acara/' + webPath.split('/').pop();
+                                }
                             }
                             const div = document.createElement('div');
                             div.className = 'photo-item photo-card';
