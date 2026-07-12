@@ -69,13 +69,22 @@ if ($is_local) {
     // Namun kita beri fallback jika dipanggil sebelum path-detection
     defined('BASE_URL')      || define('BASE_URL',      $_ENV['BASE_URL']      ?? 'http://localhost/bem/');
 } else {
+    // Helper function to aggressively find env vars
+    $getEnvVal = function($key, $default) {
+        $val = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+        return ($val !== false && $val !== null && $val !== '') ? $val : $default;
+    };
+
     // --- KONFIGURASI PRODUKSI (MYSQL) ---
-    defined('DB_CONNECTION') || define('DB_CONNECTION', $_ENV['DB_CONNECTION'] ?? getenv('DB_CONNECTION') ?: 'mysql');
-    defined('DB_HOST')       || define('DB_HOST',       $_ENV['DB_HOST']       ?? getenv('DB_HOST')       ?: 'sql213.infinityfree.com');
-    defined('DB_PORT')       || define('DB_PORT',       $_ENV['DB_PORT']       ?? getenv('DB_PORT')       ?: '3306');
-    defined('DB_USER')       || define('DB_USER',       $_ENV['DB_USER']       ?? getenv('DB_USER')       ?: 'if0_41167793');
-    defined('DB_PASS')       || define('DB_PASS',       $_ENV['DB_PASS']       ?? getenv('DB_PASS')       ?: 'rtmiqtTCfJo');
-    defined('DB_NAME')       || define('DB_NAME',       $_ENV['DB_NAME']       ?? getenv('DB_NAME')       ?: 'if0_41167793_bem_astawidya');
+    defined('DB_CONNECTION') || define('DB_CONNECTION', $getEnvVal('DB_CONNECTION', 'mysql'));
+    defined('DB_HOST')       || define('DB_HOST',       $getEnvVal('DB_HOST',       'sql213.infinityfree.com'));
+    defined('DB_PORT')       || define('DB_PORT',       $getEnvVal('DB_PORT',       '3306'));
+    defined('DB_USER')       || define('DB_USER',       $getEnvVal('DB_USER',       'if0_41167793'));
+    defined('DB_PASS')       || define('DB_PASS',       $getEnvVal('DB_PASS',       'rtmiqtTCfJo'));
+    defined('DB_NAME')       || define('DB_NAME',       $getEnvVal('DB_NAME',       'if0_41167793_bem_astawidya'));
+
+    // Debugging (akan masuk ke /var/www/html/logs/php_error.log)
+    error_log("DB_DEBUG: DB_HOST is '" . DB_HOST . "'. Raw getenv('DB_HOST') is '" . getenv('DB_HOST') . "'");
     
     // Otomatis deteksi domain di server jika tidak ada di .env
     if (!defined('BASE_URL')) {
