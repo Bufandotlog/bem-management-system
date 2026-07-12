@@ -380,17 +380,54 @@ function uploadUrl($filename) {
     
     $relPath = get_relative_upload_path($filename);
     
-    // Fallback: Jika file ada di server lokal, prioritaskan URL lokal agar gambar lama tidak pecah sebelum di-upload ke S3
+    // Fallback: Jika file ada di server lokal, prioritaskan URL lokal
     $localPath = uploadPath($relPath);
     if (!empty($localPath) && file_exists($localPath)) {
         return rtrim(BASE_URL, '/') . '/uploads/' . $relPath;
     }
     
     if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
-        $publicUrl = $_ENV['S3_PUBLIC_URL'] ?? '';
-        return rtrim($publicUrl, '/') . '/' . $relPath;
+        return getS3SignedUrl($relPath);
     }
     return rtrim(BASE_URL, '/') . '/uploads/' . $relPath;
+}
+
+/**
+ * Generate Presigned GET URL untuk mengakses file S3 secara aman.
+ * Bucket tidak perlu public — hanya URL yang ditandatangani yang bisa mengakses file.
+ * URL di-cache per-request agar tidak generate signature berulang untuk file yang sama.
+ *
+ * @param string $s3Key  Key objek di S3 (contoh: "lpj/abc123.webp")
+ * @param int    $expiry Durasi berlaku URL dalam detik (default: 2 jam)
+ * @return string Presigned URL
+ */
+function getS3SignedUrl($s3Key, $expiry = 7200) {
+    // Cache per-request agar tidak re-generate untuk file yang sama
+    static $urlCache = [];
+    if (isset($urlCache[$s3Key])) {
+        return $urlCache[$s3Key];
+    }
+    
+    try {
+        $s3 = getS3Client();
+        $bucket = $_ENV['S3_BUCKET'] ?? '';
+        
+        $cmd = $s3->getCommand('GetObject', [
+            'Bucket' => $bucket,
+            'Key'    => $s3Key,
+        ]);
+        
+        $request = $s3->createPresignedRequest($cmd, "+{$expiry} seconds");
+        $url = (string) $request->getUri();
+        
+        $urlCache[$s3Key] = $url;
+        return $url;
+    } catch (Exception $e) {
+        error_log("getS3SignedUrl Error [{$s3Key}]: " . $e->getMessage());
+        // Fallback ke public URL jika signing gagal
+        $publicUrl = $_ENV['S3_PUBLIC_URL'] ?? '';
+        return rtrim($publicUrl, '/') . '/' . $s3Key;
+    }
 }
 
 function uploadPath($filename) {
