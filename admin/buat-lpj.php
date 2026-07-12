@@ -2205,9 +2205,22 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     async function uploadToS3Presigned(file, folder = 'lpj') {
         const res = await fetch(`ajax-s3-presign.php?type=${encodeURIComponent(file.type)}&folder=${folder}`);
         if (!res.ok) {
-            throw new Error('Gagal mendapatkan signature upload');
+            if (res.status === 403) {
+                alert('Sesi login Anda telah berakhir. Halaman akan dimuat ulang untuk login kembali.');
+                window.location.reload();
+                throw new Error('Session expired');
+            }
+            let errMsg = 'Gagal mendapatkan signature upload';
+            try {
+                const errData = await res.json();
+                if (errData.error) errMsg += ': ' + errData.error;
+            } catch(e) {}
+            throw new Error(errMsg);
         }
         const data = await res.json();
+        if (data.error) {
+            throw new Error('Gagal mendapatkan signature: ' + data.error);
+        }
         
         const uploadRes = await fetch(data.presignedUrl, {
             method: 'PUT',
