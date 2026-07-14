@@ -809,8 +809,20 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
+        let isRendering = false;
         async function renderLampiran() {
-            const lampiranFiles = <?php echo json_encode($konten['lampiran_files'] ?? []); ?>;
+            if (isRendering) return;
+            isRendering = true;
+
+            const lampiranFiles = <?php 
+                $urls = [];
+                if (!empty($konten['lampiran_files']) && is_array($konten['lampiran_files'])) {
+                    foreach ($konten['lampiran_files'] as $f) {
+                        $urls[] = uploadUrl($f);
+                    }
+                }
+                echo json_encode($urls); 
+            ?>;
             const container = document.getElementById('lampiran-render-container');
             const loader = document.getElementById('pdf-loading');
             
@@ -824,18 +836,18 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
 
             for (const fileUrl of lampiranFiles) {
                 try {
-                    // Gunakan path relatif agar lebih aman dari masalah CORS/Protokol
-                    const fullUrl = '../uploads/' + fileUrl; 
+                    const fullUrl = fileUrl; 
+                    const isSameOrigin = fullUrl.startsWith('/') || fullUrl.startsWith(window.location.origin);
                     const loadingTask = pdfjsLib.getDocument({
                         url: fullUrl,
-                        withCredentials: true // Penting untuk beberapa hosting dengan security cookies
+                        withCredentials: isSameOrigin
                     });
                     
                     const pdf = await loadingTask.promise;
                     
                     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                         const page = await pdf.getPage(pageNum);
-                        const viewport = page.getViewport({ scale: 1.5 }); // Turunkan skala sedikit jika terlalu berat
+                        const viewport = page.getViewport({ scale: 1.5 });
                         
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
@@ -862,7 +874,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                     console.error('Gagal memuat PDF:', fileUrl, err);
                     const errorBox = document.createElement('div');
                     errorBox.style = "background:#fee; border:1px solid #fcc; color:#c33; padding:20px; margin:20px auto; width:210mm; border-radius:10px;";
-                    errorBox.innerHTML = `<strong>Gagal Memuat Lampiran:</strong> ${fileUrl.split('/').pop()}<br><small>${err.message}</small>`;
+                    errorBox.innerHTML = `<strong>Gagal Memuat Lampiran:</strong> ${fileUrl.split('/').pop().split('?')[0]}<br><small>${err.message}</small>`;
                     container.appendChild(errorBox);
                 }
             }
@@ -879,16 +891,21 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             window.print();
         }
 
-        // Inisialisasi
-        window.addEventListener('load', renderLampiran);
+        // Jalankan inisialisasi segera setelah DOM siap
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initRenderAndPrint);
+        } else {
+            initRenderAndPrint();
+        }
 
-        // Otomatis buka print jika ada parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('print')) {
-            window.addEventListener('load', async () => {
-                await renderLampiran();
+        async function initRenderAndPrint() {
+            await renderLampiran();
+            
+            // Otomatis buka print jika ada parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('print')) {
                 window.print();
-            });
+            }
         }
 
         // Export ke Word (.doc)
