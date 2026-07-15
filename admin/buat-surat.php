@@ -116,10 +116,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dir = rtrim(UPLOAD_PATH, '/\\') . '/ttd/';
             if (!is_dir($dir)) mkdir($dir, 0755, true);
             $data = explode(',', $base64String);
+            if (!isset($data[1])) return '';
             $imgData = base64_decode($data[1]);
             $filename = $prefix . '_' . uniqid() . '.png';
-            file_put_contents($dir . $filename, $imgData);
-            return 'ttd/' . $filename;
+            $destination = $dir . $filename;
+            file_put_contents($destination, $imgData);
+            
+            $relativePath = 'ttd/' . $filename;
+            if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+                if (uploadToS3($destination, $relativePath, 'image/png')) {
+                    if (file_exists($destination)) {
+                        @unlink($destination);
+                    }
+                    return $relativePath;
+                } else {
+                    if (file_exists($destination)) {
+                        @unlink($destination);
+                    }
+                    return '';
+                }
+            }
+            return $relativePath;
         }
 
         $konten_data = [
@@ -165,8 +182,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
                     if ($ext === 'pdf') {
                         $new_name = uniqid('lamp_', true) . '.pdf';
-                        if (move_uploaded_file($tmp_name, $upload_lampiran_dir . $new_name)) {
-                            $lampiran_files[] = 'umum/lampiran/' . $new_name;
+                        $destination = $upload_lampiran_dir . $new_name;
+                        if (move_uploaded_file($tmp_name, $destination)) {
+                            $relativePath = 'umum/lampiran/' . $new_name;
+                            if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+                                if (uploadToS3($destination, $relativePath, 'application/pdf')) {
+                                    if (file_exists($destination)) {
+                                        @unlink($destination);
+                                    }
+                                    $lampiran_files[] = $relativePath;
+                                }
+                            } else {
+                                $lampiran_files[] = $relativePath;
+                            }
                         }
                     }
                 }

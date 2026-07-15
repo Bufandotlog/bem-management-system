@@ -262,8 +262,12 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
         <!-- 1. KOP SURAT -->
         <?php 
         $kop_path = rtrim(UPLOAD_PATH, '/\\') . '/kop_surat.png';
-        if (file_exists($kop_path)): 
-            $kop_url = baseUrl('uploads/kop_surat.png') . '?v=' . filemtime($kop_path);
+        $kop_exists = file_exists($kop_path);
+        if (!$kop_exists && ($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+            $kop_exists = downloadFromS3('kop_surat.png', $kop_path);
+        }
+        if ($kop_exists): 
+            $kop_url = uploadUrl('kop_surat.png');
         ?>
             <div style="margin: -10mm -15mm -5px -15mm; text-align: center;">
                 <img src="<?php echo htmlspecialchars($kop_url); ?>" style="width:100%; height:auto; display:block;" alt="Kop Surat">

@@ -17,10 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_delete'])) {
         if ($lpj) {
             // Delete physical file
             if (!empty($lpj['file_path'])) {
-                $physical_path = UPLOAD_PATH . '/' . $lpj['file_path'];
-                if (file_exists($physical_path)) {
-                    unlink($physical_path);
-                }
+                deleteFile($lpj['file_path']);
             }
             dbQuery("DELETE FROM lpj_dokumen WHERE id = ?", [$delete_id], "i");
             $success = "LPJ berhasil dihapus.";

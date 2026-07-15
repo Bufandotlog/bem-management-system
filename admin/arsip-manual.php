@@ -49,8 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploaded) {
                 // Hapus file lama jika ada
                 if ($is_edit && !empty($edit_data['file_surat'])) {
-                    $old_path = UPLOAD_PATH . '/' . $edit_data['file_surat'];
-                    if(file_exists($old_path)) unlink($old_path);
+                    deleteFile($edit_data['file_surat']);
                 }
                 $file_path = $uploaded;
             } else {

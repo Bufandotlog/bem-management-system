@@ -81,6 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'uploa
             if (in_array($ext, ['png', 'jpg', 'jpeg'])) {
                 if (move_uploaded_file($_FILES['kop_surat']['tmp_name'], $kop_path)) {
                     $success = "Template Kop Surat berhasil disimpan/diperbarui.";
+                    if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+                        uploadToS3($kop_path, 'kop_surat.png', $_FILES['kop_surat']['type'] ?: 'image/png');
+                    }
                 } else {
                     $error = "Gagal memindahkan file yang diupload. Cek permissions.";
                 }
@@ -122,8 +125,7 @@ if (isset($_GET['hapus']) && is_numeric($_GET['hapus'])) {
             if ($can_delete) {
                 // 1. Hapus file utama (untuk manual/masuk)
                 if (!empty($surat_target['file_surat'])) {
-                    $file_path = UPLOAD_PATH . DIRECTORY_SEPARATOR . ltrim($surat_target['file_surat'], '/\\');
-                    if (file_exists($file_path)) @unlink($file_path);
+                    deleteFile($surat_target['file_surat']);
                 }
 
                 // 2. Hapus lampiran-lampiran (untuk surat otomatis)
@@ -131,8 +133,7 @@ if (isset($_GET['hapus']) && is_numeric($_GET['hapus'])) {
                     $konten = json_decode((string)$surat_target['konten_surat'], true);
                     if (isset($konten['lampiran_files']) && is_array($konten['lampiran_files'])) {
                         foreach ($konten['lampiran_files'] as $rel_path) {
-                            $lampiran_path = UPLOAD_PATH . DIRECTORY_SEPARATOR . ltrim($rel_path, '/\\');
-                            if (file_exists($lampiran_path)) @unlink($lampiran_path);
+                            deleteFile($rel_path);
                         }
                     }
                 }
@@ -401,7 +402,13 @@ $css = "
             <?php echo csrfField(); ?>
             <input type="hidden" name="action" value="upload_kop">
             
-            <?php $kop_exists = file_exists(rtrim(UPLOAD_PATH, '/\\') . '/kop_surat.png'); ?>
+            <?php 
+            $kop_path = rtrim(UPLOAD_PATH, '/\\') . '/kop_surat.png';
+            $kop_exists = file_exists($kop_path);
+            if (!$kop_exists && ($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+                $kop_exists = downloadFromS3('kop_surat.png', $kop_path);
+            }
+            ?>
             
             <div class="upload-drop-zone" id="dropZone">
                 <input type="file" name="kop_surat" id="kopInput" accept="image/png, image/jpeg" required>
