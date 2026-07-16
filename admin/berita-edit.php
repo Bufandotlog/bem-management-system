@@ -211,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
             <!-- Quill editor container -->
             <div id="editor-container" style="background:#222;color:#fff;border-radius:5px;font-family:inherit;line-height:1.6;margin-bottom:10px;"></div>
             <!-- Hidden textarea to store the actual HTML that will be submitted to PHP -->
-            <textarea name="konten" id="konten" style="display:none;"><?php echo htmlspecialchars($berita['konten'] ?? ''); ?></textarea>
+            <textarea name="konten" id="konten" style="display:none;"></textarea>
             <small>Gunakan editor teks di atas untuk menulis berita. Format teks seperti tebal (bold), miring (italic), garis bawah (underline), dan sematan foto didukung.</small>
         </div>
 
@@ -326,10 +326,12 @@ const quill = new Quill('#editor-container', {
     }
 });
 
-// Set isi awal editor dari textarea
+// Set isi awal editor dari PHP (via json_encode agar aman dari XSS & encoding issue)
 const kontenTextarea = document.getElementById('konten');
-if (kontenTextarea.value) {
-    quill.root.innerHTML = kontenTextarea.value;
+const initialKonten = <?php echo json_encode($berita['konten'] ?? ''); ?>;
+if (initialKonten) {
+    quill.root.innerHTML = initialKonten;
+    kontenTextarea.value = initialKonten;
 }
 
 // Double click to edit footnote
