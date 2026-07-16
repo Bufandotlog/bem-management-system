@@ -103,8 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
 }
 ?>
 
-<!-- Quill Rich Text Editor Stylesheet -->
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<!-- Quill Rich Text Editor Stylesheet (lokal, bukan CDN) -->
+<link href="<?php echo baseUrl('admin/css/quill.snow.css'); ?>" rel="stylesheet">
 
 <!-- Page Header -->
 <div class="page-header">
@@ -237,8 +237,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
     </div>
 </form>
 
-<!-- Quill JavaScript Library -->
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<!-- Quill JavaScript Library (lokal, bukan CDN) -->
+<script src="<?php echo baseUrl('admin/js/quill.min.js'); ?>"></script>
 
 <!-- JavaScript -->
 <script>
