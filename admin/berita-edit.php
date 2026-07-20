@@ -296,7 +296,12 @@ const quill = new Quill('#editor-container', {
 
 // Set isi awal editor dari PHP (via json_encode agar aman dari XSS & encoding issue)
 const kontenTextarea = document.getElementById('konten');
-const initialKonten = <?php echo json_encode($berita['konten'] ?? ''); ?>;
+const initialKonten = <?php 
+    $safeKonten = $berita['konten'] ?? '';
+    // Pastikan valid UTF-8 agar json_encode tidak me-return false yang dapat merusak syntax JS
+    $safeKonten = mb_convert_encoding($safeKonten, 'UTF-8', 'UTF-8');
+    echo json_encode($safeKonten, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); 
+?>;
 if (initialKonten) {
     quill.root.innerHTML = initialKonten;
     kontenTextarea.value = initialKonten;

@@ -641,29 +641,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Proker Belum Terlaksana
+        $pbt_proker_names = $_POST['pbt_proker_name'] ?? [];
         $pbt_names = $_POST['pbt_name'] ?? [];
+        $pbt_tempats = $_POST['pbt_tempat'] ?? [];
         $pbt_sifats = $_POST['pbt_sifat'] ?? [];
         $pbt_temas = $_POST['pbt_tema'] ?? [];
         $pbt_tujuans = $_POST['pbt_tujuan'] ?? [];
         $pbt_tanggals = $_POST['pbt_tanggal'] ?? [];
         $pbt_pjs = $_POST['pbt_pj'] ?? [];
         $pbt_pesertas = $_POST['pbt_peserta'] ?? [];
-        $pbt_anggarans = $_POST['pbt_anggaran'] ?? [];
         $pbt_dokuments = $_POST['pbt_dokumentasi'] ?? [];
         
         $proker_belum_terlaksana = [];
         for ($i = 0; $i < count($pbt_names); $i++) {
             if (!empty($pbt_names[$i])) {
                 $proker_belum_terlaksana[] = [
+                    'Nama Program Kerja' => sanitizeText($pbt_proker_names[$i] ?? ''),
                     'Nama Kegiatan' => sanitizeText($pbt_names[$i]),
+                    'Tempat Kegiatan' => sanitizeText($pbt_tempats[$i] ?? ''),
                     'Sifat' => sanitizeText($pbt_sifats[$i] ?? ''),
                     'Tema Kegiatan' => sanitizeText($pbt_temas[$i] ?? ''),
                     'Tujuan Kegiatan' => sanitizeText($pbt_tujuans[$i] ?? ''),
                     'Tanggal Kegiatan' => sanitizeText($pbt_tanggals[$i] ?? ''),
                     'Penanggung Jawab' => sanitizeText($pbt_pjs[$i] ?? ''),
                     'Peserta Kegiatan' => sanitizeText($pbt_pesertas[$i] ?? ''),
-                    'Anggaran' => sanitizeText($pbt_anggarans[$i] ?? ''),
-                    'Dokumentasi' => sanitizeText($pbt_dokuments[$i] ?? '')
+                    'Hambatan & Kendala' => sanitizeText($pbt_dokuments[$i] ?? '')
                 ];
             }
         }
@@ -2126,14 +2128,30 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             </div>
                         </div>
                         <div class="proker-body">
+                        <?php
+                        $pbt_tujuan_arr = get_points_array($pbt['Tujuan Kegiatan'] ?? '');
+                        $pbt_tujuan_json = json_encode($pbt_tujuan_arr);
+                        $pbt_peserta_arr = get_points_array($pbt['Peserta Kegiatan'] ?? '');
+                        $pbt_peserta_json = json_encode($pbt_peserta_arr);
+                        $pbt_kendala_arr = get_points_array($pbt['Hambatan & Kendala'] ?? $pbt['Dokumentasi'] ?? '');
+                        $pbt_kendala_json = json_encode($pbt_kendala_arr);
+                        ?>
                         <div class="form-row-grid">
                             <div class="form-group">
+                                <label>Nama Program Kerja</label>
+                                <input type="text" name="pbt_proker_name[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Nama Program Kerja'] ?? ''); ?>" required placeholder="Cth: JALIN RELASI">
+                            </div>
+                            <div class="form-group">
                                 <label>Nama Kegiatan</label>
-                                <input type="text" name="pbt_name[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Nama Kegiatan'] ?? ''); ?>" required placeholder="Nama kegiatan...">
+                                <input type="text" name="pbt_name[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Nama Kegiatan'] ?? ''); ?>" required placeholder="Cth: Menghadiri Undangan Bemnus">
+                            </div>
+                            <div class="form-group">
+                                <label>Tempat Kegiatan</label>
+                                <input type="text" name="pbt_tempat[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Tempat Kegiatan'] ?? $pbt['Tempat'] ?? ''); ?>" placeholder="Cth: Aula Kampus / Zoom Meeting">
                             </div>
                             <div class="form-group">
                                 <label>Sifat</label>
-                                <input type="text" name="pbt_sifat[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Sifat'] ?? ''); ?>" placeholder="Sifat...">
+                                <input type="text" name="pbt_sifat[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Sifat'] ?? ''); ?>" placeholder="Cth: Internal / Eksternal">
                             </div>
                             <div class="form-group">
                                 <label>Tema Kegiatan</label>
@@ -2142,31 +2160,56 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         </div>
                         <div class="form-row-grid" style="margin-top: 10px;">
                             <div class="form-group" style="grid-column: span 2;">
-                                <label>Tujuan Kegiatan</label>
-                                <input type="text" name="pbt_tujuan[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Tujuan Kegiatan'] ?? ''); ?>" placeholder="Tujuan...">
+                                <label>Tujuan Kegiatan <span class="required-star">*</span></label>
+                                <div class="multipoint-wrapper">
+                                    <input type="hidden" name="pbt_tujuan[]" class="pbt-tujuan-hidden" value="<?php echo htmlspecialchars($pbt_tujuan_json); ?>">
+                                    <div class="multipoint-list-container" data-placeholder="Tuliskan satu tujuan kegiatan..."></div>
+                                    <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
+                                </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group pbt-date-group">
                                 <label>Target Tanggal Rencana</label>
-                                <input type="date" name="pbt_tanggal[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Tanggal Kegiatan'] ?? ''); ?>">
+                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+                                    <input type="date" class="form-control pbt-tgl-mulai" onchange="formatTanggalRangePbt(this)" style="flex: 1; min-width: 130px;">
+                                    <span style="color:var(--text-muted); font-size: 0.8rem;">selama</span>
+                                    <div style="display:flex; gap:5px; align-items:center;">
+                                        <select class="form-control pbt-durasi-hari" onchange="handleDurasiChangePbt(this)" style="padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; outline:none; height: auto;">
+                                            <option value="1">1 Hari</option>
+                                            <option value="2">2 Hari</option>
+                                            <option value="3">3 Hari</option>
+                                            <option value="4">4 Hari</option>
+                                            <option value="5">5 Hari</option>
+                                            <option value="custom">Custom...</option>
+                                        </select>
+                                        <input type="number" class="form-control pbt-custom-hari" min="1" value="1" oninput="formatTanggalRangePbt(this)" style="display:none; width: 60px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; outline:none; height: auto;">
+                                        <span class="pbt-label-hari" style="color:var(--text-muted); font-size: 0.8rem; display:none;">Hari</span>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="pbt_tanggal[]" class="pbt-out-tanggal" value="<?php echo htmlspecialchars($pbt['Tanggal Kegiatan'] ?? ''); ?>">
+                                <div class="preview-bar pbt-preview-tanggal" style="margin-top: 10px;"><?php echo htmlspecialchars($pbt['Tanggal Kegiatan'] ?? '—'); ?></div>
                             </div>
                         </div>
                         <div class="form-row-grid" style="margin-top: 10px;">
                             <div class="form-group">
                                 <label>Penanggung Jawab</label>
-                                <input type="text" name="pbt_pj[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Penanggung Jawab'] ?? ''); ?>" placeholder="PJ...">
+                                <input type="text" name="pbt_pj[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Penanggung Jawab'] ?? ''); ?>" placeholder="Nama PJ...">
                             </div>
-                            <div class="form-group">
-                                <label>Peserta Rencana</label>
-                                <input type="text" name="pbt_peserta[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Peserta Kegiatan'] ?? ''); ?>" placeholder="Peserta...">
-                            </div>
-                            <div class="form-group">
-                                <label>Anggaran Rencana</label>
-                                <input type="text" name="pbt_anggaran[]" class="form-control" value="<?php echo htmlspecialchars($pbt['Anggaran'] ?? ''); ?>" placeholder="Anggaran...">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label>Peserta Kegiatan <span class="required-star">*</span></label>
+                            <div class="multipoint-wrapper">
+                                <input type="hidden" name="pbt_peserta[]" class="pbt-peserta-hidden" value="<?php echo htmlspecialchars($pbt_peserta_json); ?>">
+                                <div class="multipoint-list-container" data-placeholder="Tuliskan satu jenis peserta kegiatan..."></div>
+                                <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
                             </div>
                         </div>
                         <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
-                            <label>Hambatan & Kendala Dokumentasi</label>
-                            <textarea name="pbt_dokumentasi[]" rows="2" class="form-control" placeholder="Jelaskan alasan kendala penundaan kegiatan..."><?php echo htmlspecialchars($pbt['Dokumentasi'] ?? ''); ?></textarea>
+                            <label>Hambatan &amp; Kendala <span class="required-star">*</span></label>
+                            <div class="multipoint-wrapper">
+                                <input type="hidden" name="pbt_dokumentasi[]" class="pbt-kendala-hidden" value="<?php echo htmlspecialchars($pbt_kendala_json); ?>">
+                                <div class="multipoint-list-container" data-placeholder="Tuliskan satu poin hambatan atau kendala..."></div>
+                                <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
+                            </div>
                         </div>
                         </div>
                     </div>
@@ -2468,6 +2511,38 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         }
     }
 
+    function initDateRangePickerPbt(row, rawValue) {
+        const tglMulaiInput = row.querySelector('.pbt-tgl-mulai');
+        const durasiSelect = row.querySelector('.pbt-durasi-hari');
+        const customInput = row.querySelector('.pbt-custom-hari');
+        const labelHari = row.querySelector('.pbt-label-hari');
+        const outHidden = row.querySelector('.pbt-out-tanggal');
+        const previewDiv = row.querySelector('.pbt-preview-tanggal');
+
+        if (!outHidden || !previewDiv) return;
+
+        outHidden.value = rawValue || '';
+        previewDiv.innerText = rawValue || '—';
+
+        if (rawValue) {
+            const parsed = parseTanggalRange(rawValue);
+            if (parsed) {
+                tglMulaiInput.value = parsed.start;
+                const durVal = parsed.duration;
+                if (durVal >= 1 && durVal <= 5) {
+                    durasiSelect.value = String(durVal);
+                    customInput.style.display = 'none';
+                    labelHari.style.display = 'none';
+                } else {
+                    durasiSelect.value = 'custom';
+                    customInput.value = String(durVal);
+                    customInput.style.display = 'inline-block';
+                    labelHari.style.display = 'inline';
+                }
+            }
+        }
+    }
+
     function handleDurasiChangePt(selectEl) {
         const row = selectEl.closest('.pt-date-group');
         const custom = row.querySelector('.pt-custom-hari');
@@ -2492,6 +2567,64 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         const customInput = row.querySelector('.pt-custom-hari');
         const outHidden = row.querySelector('.pt-out-tanggal');
         const previewDiv = row.querySelector('.pt-preview-tanggal');
+
+        const mulai = tglMulaiInput.value;
+        if (!mulai) {
+            outHidden.value = '';
+            previewDiv.innerText = '—';
+            return;
+        }
+
+        let jmlHari = parseInt(durasiSelect.value);
+        if (durasiSelect.value === 'custom') {
+            jmlHari = parseInt(customInput.value) || 1;
+        }
+
+        const d1 = new Date(mulai + 'T00:00:00');
+        let result = '';
+
+        if (jmlHari <= 1) {
+            result = HARI_ID[d1.getDay()] + ', ' + d1.getDate() + ' ' + BULAN_ID[d1.getMonth()] + ' ' + d1.getFullYear();
+        } else {
+            const d2 = new Date(d1);
+            d2.setDate(d1.getDate() + (jmlHari - 1));
+
+            const hari = HARI_ID[d1.getDay()] === HARI_ID[d2.getDay()] ? HARI_ID[d1.getDay()] : HARI_ID[d1.getDay()] + '-' + HARI_ID[d2.getDay()];
+            const bln1 = BULAN_ID[d1.getMonth()], bln2 = BULAN_ID[d2.getMonth()];
+            const tgl  = bln1 === bln2 && d1.getFullYear() === d2.getFullYear()
+                ? d1.getDate() + '-' + d2.getDate() + ' ' + bln1 + ' ' + d1.getFullYear()
+                : d1.getDate() + ' ' + bln1 + ' ' + d1.getFullYear() + ' – ' + d2.getDate() + ' ' + bln2 + ' ' + d2.getFullYear();
+            result = hari + ', ' + tgl;
+        }
+
+        outHidden.value = result;
+        previewDiv.innerText = result;
+    }
+
+    function handleDurasiChangePbt(selectEl) {
+        const row = selectEl.closest('.pbt-date-group');
+        const custom = row.querySelector('.pbt-custom-hari');
+        const label = row.querySelector('.pbt-label-hari');
+        
+        if (selectEl.value === 'custom') {
+            custom.style.display = 'inline-block';
+            label.style.display = 'inline';
+        } else {
+            custom.style.display = 'none';
+            label.style.display = 'none';
+        }
+        formatTanggalRangePbt(selectEl);
+    }
+
+    function formatTanggalRangePbt(element) {
+        const row = element.closest('.pbt-date-group');
+        if (!row) return;
+
+        const tglMulaiInput = row.querySelector('.pbt-tgl-mulai');
+        const durasiSelect = row.querySelector('.pbt-durasi-hari');
+        const customInput = row.querySelector('.pbt-custom-hari');
+        const outHidden = row.querySelector('.pbt-out-tanggal');
+        const previewDiv = row.querySelector('.pbt-preview-tanggal');
 
         const mulai = tglMulaiInput.value;
         if (!mulai) {
@@ -3264,12 +3397,20 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="proker-body">
             <div class="form-row-grid">
                 <div class="form-group">
+                    <label>Nama Program Kerja</label>
+                    <input type="text" name="pbt_proker_name[]" class="form-control" required placeholder="Cth: JALIN RELASI">
+                </div>
+                <div class="form-group">
                     <label>Nama Kegiatan</label>
-                    <input type="text" name="pbt_name[]" class="form-control" required placeholder="Nama kegiatan...">
+                    <input type="text" name="pbt_name[]" class="form-control" required placeholder="Cth: Menghadiri Undangan Bemnus">
+                </div>
+                <div class="form-group">
+                    <label>Tempat Kegiatan</label>
+                    <input type="text" name="pbt_tempat[]" class="form-control" placeholder="Cth: Aula Kampus / Zoom Meeting">
                 </div>
                 <div class="form-group">
                     <label>Sifat</label>
-                    <input type="text" name="pbt_sifat[]" class="form-control" placeholder="Sifat...">
+                    <input type="text" name="pbt_sifat[]" class="form-control" placeholder="Cth: Internal / Eksternal">
                 </div>
                 <div class="form-group">
                     <label>Tema Kegiatan</label>
@@ -3278,46 +3419,84 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             </div>
             <div class="form-row-grid" style="margin-top: 10px;">
                 <div class="form-group" style="grid-column: span 2;">
-                    <label>Tujuan Kegiatan</label>
-                    <input type="text" name="pbt_tujuan[]" class="form-control" placeholder="Tujuan...">
+                    <label>Tujuan Kegiatan <span class="required-star">*</span></label>
+                    <div class="multipoint-wrapper">
+                        <input type="hidden" name="pbt_tujuan[]" class="pbt-tujuan-hidden" value="[]">
+                        <div class="multipoint-list-container" data-placeholder="Tuliskan satu tujuan kegiatan..."></div>
+                        <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
+                    </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group pbt-date-group">
                     <label>Target Tanggal Rencana</label>
-                    <input type="date" name="pbt_tanggal[]" class="form-control">
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+                        <input type="date" class="form-control pbt-tgl-mulai" onchange="formatTanggalRangePbt(this)" style="flex: 1; min-width: 130px;">
+                        <span style="color:var(--text-muted); font-size: 0.8rem;">selama</span>
+                        <div style="display:flex; gap:5px; align-items:center;">
+                            <select class="form-control pbt-durasi-hari" onchange="handleDurasiChangePbt(this)" style="padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; outline:none; height: auto;">
+                                <option value="1">1 Hari</option>
+                                <option value="2">2 Hari</option>
+                                <option value="3">3 Hari</option>
+                                <option value="4">4 Hari</option>
+                                <option value="5">5 Hari</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                            <input type="number" class="form-control pbt-custom-hari" min="1" value="1" oninput="formatTanggalRangePbt(this)" style="display:none; width: 60px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; outline:none; height: auto;">
+                            <span class="pbt-label-hari" style="color:var(--text-muted); font-size: 0.8rem; display:none;">Hari</span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="pbt_tanggal[]" class="pbt-out-tanggal" value="">
+                    <div class="preview-bar pbt-preview-tanggal" style="margin-top: 10px;">—</div>
                 </div>
             </div>
             <div class="form-row-grid" style="margin-top: 10px;">
                 <div class="form-group">
                     <label>Penanggung Jawab</label>
-                    <input type="text" name="pbt_pj[]" class="form-control" placeholder="PJ...">
+                    <input type="text" name="pbt_pj[]" class="form-control" placeholder="Nama PJ...">
                 </div>
-                <div class="form-group">
-                    <label>Peserta Rencana</label>
-                    <input type="text" name="pbt_peserta[]" class="form-control" placeholder="Peserta...">
-                </div>
-                <div class="form-group">
-                    <label>Anggaran Rencana</label>
-                    <input type="text" name="pbt_anggaran[]" class="form-control" placeholder="Anggaran...">
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+                <label>Peserta Kegiatan <span class="required-star">*</span></label>
+                <div class="multipoint-wrapper">
+                    <input type="hidden" name="pbt_peserta[]" class="pbt-peserta-hidden" value="[]">
+                    <div class="multipoint-list-container" data-placeholder="Tuliskan satu jenis peserta kegiatan..."></div>
+                    <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
                 </div>
             </div>
             <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
-                <label>Hambatan & Kendala Dokumentasi</label>
-                <textarea name="pbt_dokumentasi[]" rows="2" class="form-control" placeholder="Jelaskan alasan kendala penundaan kegiatan..."></textarea>
+                <label>Hambatan & Kendala <span class="required-star">*</span></label>
+                <div class="multipoint-wrapper">
+                    <input type="hidden" name="pbt_dokumentasi[]" class="pbt-kendala-hidden" value="[]">
+                    <div class="multipoint-list-container" data-placeholder="Tuliskan satu poin hambatan atau kendala..."></div>
+                    <button type="button" class="btn-add-point" onclick="addNewPointField(this)"><i class="fas fa-plus"></i> Tambah Poin</button>
+                </div>
             </div>
             </div>
         `;
         container.appendChild(div);
         
         if (pbtData) {
+            div.querySelector('input[name="pbt_proker_name[]"]').value = pbtData['Nama Program Kerja'] || '';
             div.querySelector('input[name="pbt_name[]"]').value = pbtData['Nama Kegiatan'] || '';
+            div.querySelector('input[name="pbt_tempat[]"]').value = pbtData['Tempat Kegiatan'] || pbtData['Tempat'] || '';
             div.querySelector('input[name="pbt_sifat[]"]').value = pbtData['Sifat'] || '';
             div.querySelector('input[name="pbt_tema[]"]').value = pbtData['Tema Kegiatan'] || '';
-            div.querySelector('input[name="pbt_tujuan[]"]').value = pbtData['Tujuan Kegiatan'] || '';
-            div.querySelector('input[name="pbt_tanggal[]"]').value = pbtData['Tanggal Kegiatan'] || pbtData['Target Tanggal Rencana'] || '';
+            // Tujuan multipoint
+            const pbtTujuanData = pbtData['Tujuan Kegiatan'] || '';
+            const pbtTujuanArr = Array.isArray(pbtTujuanData) ? pbtTujuanData : (pbtTujuanData ? [pbtTujuanData] : []);
+            div.querySelector('.pbt-tujuan-hidden').value = JSON.stringify(pbtTujuanArr);
+            // Peserta multipoint
+            const pbtPesertaData = pbtData['Peserta Kegiatan'] || pbtData['Peserta Rencana'] || '';
+            const pbtPesertaArr = Array.isArray(pbtPesertaData) ? pbtPesertaData : (pbtPesertaData ? [pbtPesertaData] : []);
+            div.querySelector('.pbt-peserta-hidden').value = JSON.stringify(pbtPesertaArr);
+            // Kendala multipoint
+            const pbtKendalaData = pbtData['Hambatan & Kendala'] || pbtData['Dokumentasi'] || '';
+            const pbtKendalaArr = Array.isArray(pbtKendalaData) ? pbtKendalaData : (pbtKendalaData ? [pbtKendalaData] : []);
+            div.querySelector('.pbt-kendala-hidden').value = JSON.stringify(pbtKendalaArr);
+            // Tanggal
+            const pbtTanggal = pbtData['Tanggal Kegiatan'] || pbtData['Target Tanggal Rencana'] || '';
+            div.querySelector('.pbt-out-tanggal').value = pbtTanggal;
+            div.querySelector('.pbt-preview-tanggal').textContent = pbtTanggal || '—';
             div.querySelector('input[name="pbt_pj[]"]').value = pbtData['Penanggung Jawab'] || '';
-            div.querySelector('input[name="pbt_peserta[]"]').value = pbtData['Peserta Kegiatan'] || pbtData['Peserta Rencana'] || '';
-            div.querySelector('input[name="pbt_anggaran[]"]').value = pbtData['Anggaran'] || pbtData['Anggaran Rencana'] || '';
-            div.querySelector('textarea[name="pbt_dokumentasi[]"]').value = pbtData['Dokumentasi'] || pbtData['Hambatan & Kendala Dokumentasi'] || '';
             
             div.querySelector('.proker-body').style.display = 'none';
             updateProkerSummary(div);
@@ -4668,6 +4847,14 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                     <button type="button" class="btn-reorder-row" onclick="moveRowDown(this, 'pbt')" title="Geser ke bawah"><i class="fas fa-arrow-down"></i> Bawah</button>
                 `;
                 row.insertBefore(controls, row.firstChild);
+            }
+            
+            // Initialize date range picker for this row
+            const dateGroup = row.querySelector('.pbt-date-group');
+            if (dateGroup) {
+                const outHidden = dateGroup.querySelector('.pbt-out-tanggal');
+                const rawVal = outHidden ? outHidden.value : '';
+                initDateRangePickerPbt(dateGroup, rawVal);
             }
             // Collapse on load
             row.querySelector('.proker-body').style.display = 'none';
