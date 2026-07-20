@@ -353,13 +353,7 @@ function updateFootnoteInputs() {
         const alt = img.getAttribute('alt') || '';
         
         const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.alignItems = 'center';
-        row.style.gap = '15px';
-        row.style.padding = '10px 0';
-        if (index < imgs.length - 1) {
-            row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-        }
+        row.className = 'footnote-item';
         
         const thumb = document.createElement('img');
         thumb.src = src;
@@ -368,9 +362,11 @@ function updateFootnoteInputs() {
         thumb.style.objectFit = 'cover';
         thumb.style.borderRadius = '6px';
         thumb.style.border = '1px solid rgba(255,255,255,0.1)';
+        thumb.style.flexShrink = '0';
         
         const inputWrapper = document.createElement('div');
         inputWrapper.style.flex = '1';
+        inputWrapper.style.minWidth = '200px';
         
         const label = document.createElement('div');
         label.style.fontSize = '0.8rem';
@@ -401,8 +397,37 @@ function updateFootnoteInputs() {
         
         inputWrapper.appendChild(label);
         inputWrapper.appendChild(input);
+        
+        // Container tombol aksi (Ganti Foto & Hapus Foto)
+        const actionsWrapper = document.createElement('div');
+        actionsWrapper.className = 'footnote-actions';
+        
+        // Tombol Ganti Foto
+        const btnChange = document.createElement('button');
+        btnChange.type = 'button';
+        btnChange.className = 'btn-footnote-change';
+        btnChange.innerHTML = '<i class="fas fa-sync-alt"></i> Ganti Foto';
+        btnChange.title = 'Ganti gambar ini dengan foto baru';
+        btnChange.addEventListener('click', function() {
+            gantiFotoKonten(img, btnChange);
+        });
+        
+        // Tombol Hapus Foto
+        const btnDelete = document.createElement('button');
+        btnDelete.type = 'button';
+        btnDelete.className = 'btn-footnote-delete';
+        btnDelete.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus';
+        btnDelete.title = 'Hapus gambar ini dari konten';
+        btnDelete.addEventListener('click', function() {
+            hapusFotoKonten(img);
+        });
+        
+        actionsWrapper.appendChild(btnChange);
+        actionsWrapper.appendChild(btnDelete);
+        
         row.appendChild(thumb);
         row.appendChild(inputWrapper);
+        row.appendChild(actionsWrapper);
         footnoteList.appendChild(row);
         
         // Restore focus and cursor position
@@ -413,6 +438,81 @@ function updateFootnoteInputs() {
             }
         }
     });
+}
+
+function gantiFotoKonten(img, btn) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    
+    fileInput.onchange = function() {
+        if (!fileInput.files || !fileInput.files[0]) return;
+        const file = fileInput.files[0];
+        
+        if (!/^image\//.test(file.type)) {
+            alert('Hanya diperbolehkan mengunggah file gambar.');
+            return;
+        }
+        
+        // State loading pada tombol
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengunggah...';
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        formData.append('csrf_token', csrfToken);
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'upload-editor-image.php', true);
+        
+        xhr.onload = function() {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            
+            if (xhr.status === 200) {
+                try {
+                    const result = JSON.parse(xhr.responseText);
+                    if (result.success) {
+                        img.setAttribute('src', result.url);
+                        quill.update();
+                        kontenTextarea.value = quill.root.innerHTML;
+                        updateFootnoteInputs();
+                    } else {
+                        alert('Gagal mengganti gambar: ' + (result.message || 'Terjadi kesalahan'));
+                    }
+                } catch (e) {
+                    alert('Terjadi kesalahan respon dari server.');
+                }
+            } else {
+                alert('Gagal mengunggah gambar (Status HTTP: ' + xhr.status + ').');
+            }
+        };
+        
+        xhr.onerror = function() {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            alert('Terjadi kesalahan koneksi saat mengunggah gambar.');
+        };
+        
+        xhr.send(formData);
+    };
+    
+    fileInput.click();
+}
+
+function hapusFotoKonten(img) {
+    if (confirm('Apakah Anda yakin ingin menghapus foto ini dari konten berita?')) {
+        const parent = img.parentNode;
+        img.remove();
+        if (parent && parent !== quill.root && parent.children.length === 0 && parent.innerText.trim() === '') {
+            parent.remove();
+        }
+        quill.update();
+        kontenTextarea.value = quill.root.innerHTML;
+        updateFootnoteInputs();
+    }
 }
 
 // Watch for changes in editor
