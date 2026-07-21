@@ -1683,9 +1683,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 <div class="step-progress" id="stepProgress">
     <div class="step active" data-step="1">1. Informasi Dasar</div>
     <div class="step" data-step="2">2. Keanggotaan</div>
-    <div class="step" data-step="3">3. Proker Terlaksana</div>
-    <div class="step" data-step="4">4. Proker Belum Terlaksana</div>
-    <div class="step step-evaluasi" data-step="5" style="display: <?php echo ($selected_triwulan === 'MUBESMA') ? 'block' : 'none'; ?>;">5. Evaluasi</div>
+    <div class="step" data-step="3">3. Proker Terealisasi</div>
+    <div class="step" data-step="4">4. Proker Belum Terealisasi</div>
+    <div class="step step-evaluasi" data-step="5" style="display: <?php echo ($selected_triwulan === 'MUBESMA') ? 'block' : 'none'; ?>;">5. Evaluasi Kinerja Menteri</div>
 </div>
 
 <form method="POST" enctype="multipart/form-data" id="lpjForm" class="admin-form">
@@ -2222,38 +2222,15 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     </div>
     
 
-    <!-- STEP 5: EVALUASI KINERJA & ANGGOTA (Only for MUBESMA) -->
+    <!-- STEP 5: EVALUASI KINERJA MENTERI (Only for MUBESMA) -->
     <div class="wizard-panel wizard-panel-evaluasi" data-step="5">
         <div class="card">
-            <div class="card-header"><i class="fas fa-users-cog"></i> Langkah 5: Evaluasi Kinerja Pribadi & Anggota</div>
+            <div class="card-header"><i class="fas fa-user-check"></i> Langkah 5: Evaluasi Kinerja Menteri</div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="evaluasiKinerjaPribadi" style="font-weight: bold;">Evaluasi Kinerja Pribadi</label>
-                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 10px;">Berikan deskripsi evaluasi kinerja pribadi Anda sebagai Menteri/Ketua selama periode triwulan berjalan.</p>
-                    <textarea name="evaluasi_kinerja_pribadi" id="evaluasiKinerjaPribadi" rows="5" class="form-control" placeholder="Tuliskan evaluasi kinerja pribadi secara rinci..."><?php echo htmlspecialchars($edit_data['evaluasi_kinerja_pribadi'] ?? ''); ?></textarea>
-                </div>
-                
-                <hr style="border: 0; border-top: 1px solid #3a4555; margin: 30px 0;">
-                
-                <div class="form-group">
-                    <label style="font-weight: bold; margin-bottom: 5px; display: block;">Evaluasi Anggota & Internal Menteri</label>
-                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 15px;">Tabel evaluasi ini otomatis memuat nama-nama pengurus kementerian dari Langkah 2. Berikan penilaian deskriptif mengenai Kepribadian dan Kinerja masing-masing anggota.</p>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                            <thead>
-                                <tr style="background-color: #2a3545; color: #fff;">
-                                    <th style="width: 50px; text-align: center; padding: 10px; border: 1px solid #3a4555;">No</th>
-                                    <th style="width: 250px; text-align: left; padding: 10px; border: 1px solid #3a4555;">Nama Anggota</th>
-                                    <th style="text-align: left; padding: 10px; border: 1px solid #3a4555;">Kepribadian</th>
-                                    <th style="text-align: left; padding: 10px; border: 1px solid #3a4555;">Kinerja</th>
-                                </tr>
-                            </thead>
-                            <tbody id="evaluasiAnggotaTableBody">
-                                <!-- Will be populated dynamically by JavaScript syncEvaluasiAnggota() -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <label for="evaluasiKinerjaPribadi" style="font-weight: bold;">Evaluasi Kinerja Menteri</label>
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 10px;">Berikan deskripsi evaluasi kinerja menteri selama periode kepengurusan.</p>
+                    <textarea name="evaluasi_kinerja_pribadi" id="evaluasiKinerjaPribadi" rows="5" class="form-control" placeholder="Tuliskan evaluasi kinerja menteri secara rinci..."><?php echo htmlspecialchars($edit_data['evaluasi_kinerja_pribadi'] ?? ''); ?></textarea>
                 </div>
             </div>
         </div>

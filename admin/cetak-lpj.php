@@ -554,7 +554,7 @@ if (!function_exists('cleanPointPrefix')) {
         <!-- 4. REALISASI PROGRAM KERJA -->
         <div class="page">
             <div class="section-header">
-                <?php echo $is_mubesma ? "VI. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN" : "C. REALISASI PROGRAM KERJA YANG SUDAH DILAKSANAKAN"; ?>
+                <?php echo $is_mubesma ? "VI. PROGRAM KERJA YANG TEREALISASI" : "C. PROGRAM KERJA YANG TEREALISASI"; ?>
             </div>
 
             <?php if (empty($proker_terlaksana)): ?>
@@ -748,7 +748,7 @@ if (!function_exists('cleanPointPrefix')) {
         <?php if ($is_mubesma): ?>
         <div class="page">
             <div class="section-header">
-                <?php echo $is_mubesma ? "VII. PROGRAM KERJA YANG BELUM TERLAKSANA" : "D. PROGRAM KERJA YANG BELUM TERLAKSANA"; ?>
+                <?php echo $is_mubesma ? "VII. PROGRAM KERJA YANG TIDAK TEREALISASI" : "D. PROGRAM KERJA YANG BELUM TEREALISASI"; ?>
             </div>
 
             <?php if (empty($proker_belum_terlaksana)): ?>
@@ -840,11 +840,11 @@ if (!function_exists('cleanPointPrefix')) {
         </div>
         <?php endif; ?>
 
-        <!-- 5. EVALUASI KINERJA PRIBADI & INTERNAL MENTERI & PENUTUP -->
+        <!-- 5. EVALUASI KINERJA MENTERI & PENUTUP -->
         <?php if ($is_mubesma): ?>
         <div class="page">
             <div class="section-header">
-                <?php echo "VIII. EVALUASI KINERJA PRIBADI"; ?>
+                <?php echo "VIII. EVALUASI KINERJA MENTERI"; ?>
             </div>
             <?php 
             $eval_pribadi = trim($lpj['evaluasi_kinerja_pribadi'] ?? '');
@@ -857,41 +857,9 @@ if (!function_exists('cleanPointPrefix')) {
                 <p class="narrative-p"><?php echo htmlspecialchars($line); ?></p>
             <?php endforeach; ?>
 
-            <div class="section-header" style="margin-top: 30px;">
-                <?php echo $is_mubesma ? "IX. EVALUASI ANGGOTA DAN INTERNAL MENTERI" : "F. EVALUASI ANGGOTA DAN INTERNAL MENTERI"; ?>
-            </div>
-            
-            <?php
-            $eval_anggota = json_decode($lpj['evaluasi_anggota_internal'] ?? '', true) ?: [];
-            if (empty($eval_anggota)):
-            ?>
-                <p class="narrative-p" style="font-style: italic; text-indent: 0; margin-left: 0.5cm;">(Tidak ada data evaluasi anggota)</p>
-            <?php else: ?>
-                <table class="budget-table" style="margin-left: 0.5cm; width: calc(100% - 0.5cm); margin-top: 10px;">
-                    <thead>
-                        <tr>
-                            <th style="width: 7%; text-align: center;">NO</th>
-                            <th style="width: 25%; text-align: center;">NAMA ANGGOTA</th>
-                            <th style="width: 34%; text-align: center;">KEPRIBADIAN</th>
-                            <th style="width: 34%; text-align: center;">KINERJA</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($eval_anggota as $idx => $eva): ?>
-                            <tr>
-                                <td style="text-align: center; vertical-align: top;"><?php echo ($idx + 1); ?></td>
-                                <td style="text-align: justify; vertical-align: top; font-weight: bold;"><?php echo htmlspecialchars($eva['nama'] ?? '—'); ?></td>
-                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($eva['kepribadian'] ?? '—'); ?></td>
-                                <td style="text-align: justify; vertical-align: top;"><?php echo htmlspecialchars($eva['kinerja'] ?? '—'); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-
             <!-- PENUTUP SECTION -->
             <div class="section-header" style="margin-top: 30px;">
-                <?php echo $is_mubesma ? "X. PENUTUP" : "D. PENUTUP"; ?>
+                <?php echo $is_mubesma ? "IX. PENUTUP" : "D. PENUTUP"; ?>
             </div>
             <?php 
             $penutup = trim($lpj['penutup'] ?? '');
