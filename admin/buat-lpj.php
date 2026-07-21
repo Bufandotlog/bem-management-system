@@ -2660,6 +2660,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     }
 
     window.initialEvaluasiAnggota = <?php echo json_encode(json_decode($edit_data['evaluasi_anggota_internal'] ?? '', true) ?: []); ?>;
+    const isEditMode = <?php echo $edit_data ? 'true' : 'false'; ?>;
     let currentStep = 1;
     
     let lastFetchedKementerianId = <?php echo $edit_data ? (int)$edit_data['kementerian_id'] : 'null'; ?>;
@@ -2716,11 +2717,11 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         
         currentStep = step;
         
-        // Fetch membership data when Step 2 is shown
-        if (step === 2) {
+        // Fetch membership data when Step 2 is shown (only if NOT in edit mode)
+        if (step === 2 && !isEditMode) {
             const kemSelect = document.getElementById('kementerianSelect');
             const kId = kemSelect ? kemSelect.value : '';
-            if (kId && kId !== lastFetchedKementerianId) {
+            if (kId && String(kId) !== String(lastFetchedKementerianId)) {
                 const triwulan = document.getElementById('triwulanSelect').value;
                 if (triwulan === 'MUBESMA') {
                     checkAndFetchMubesma();
@@ -4240,6 +4241,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 
     // --- AJAX default values loader ---
     document.getElementById('kementerianSelect').addEventListener('change', function() {
+        if (isEditMode) return;
         const kId = this.value;
         if (!kId) return;
         
@@ -4266,12 +4268,14 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     document.getElementById('triwulanSelect').addEventListener('change', function() {
         const triwulan = this.value;
         updateEvaluasiVisibility();
+        if (isEditMode) return;
         if (triwulan === 'MUBESMA') {
             checkAndFetchMubesma();
         }
     });
 
     function checkAndFetchMubesma() {
+        if (isEditMode) return;
         const kId = document.getElementById('kementerianSelect').value;
         const triwulan = document.getElementById('triwulanSelect').value;
         if (!kId || triwulan !== 'MUBESMA') return;
@@ -4422,6 +4426,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 
     // --- Autofill Keanggotaan from kepengurusan.php ---
     function fetchKepengurusan(kId) {
+        if (isEditMode) return;
         const alertDiv = document.getElementById('kepengurusanAlert');
         if (alertDiv) {
             alertDiv.style.display = 'none';
