@@ -212,10 +212,16 @@ if (!function_exists('cleanPointPrefix')) {
         }
 
         .list-item-justify {
-            display: block;
-            padding-left: 0.5cm;
-            text-indent: -0.5cm;
+            display: flex;
+            align-items: flex-start;
             margin-bottom: 4px;
+        }
+        .list-item-justify .item-no {
+            min-width: 0.5cm;
+            flex-shrink: 0;
+        }
+        .list-item-justify .item-text {
+            flex-grow: 1;
             text-align: justify;
         }
         .list-item-justify:last-child {
@@ -597,7 +603,7 @@ if (!function_exists('cleanPointPrefix')) {
                                     } else {
                                         foreach ($tujuans as $t_idx => $t_val) {
                                             $t_val_clean = cleanPointPrefix($t_val);
-                                            echo '<div class="list-item-justify">' . ($t_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($t_val_clean) . '</div>';
+                                            echo '<div class="list-item-justify"><span class="item-no">' . ($t_idx + 1) . '.</span><span class="item-text">' . htmlspecialchars($t_val_clean) . '</span></div>';
                                         }
                                     }
                                     ?>
@@ -624,7 +630,7 @@ if (!function_exists('cleanPointPrefix')) {
                                     } else {
                                         foreach ($pesertas as $p_idx => $p_val) {
                                             $p_val_clean = cleanPointPrefix($p_val);
-                                            echo '<div class="list-item-justify">' . ($p_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($p_val_clean) . '</div>';
+                                            echo '<div class="list-item-justify"><span class="item-no">' . ($p_idx + 1) . '.</span><span class="item-text">' . htmlspecialchars($p_val_clean) . '</span></div>';
                                         }
                                     }
                                     ?>
@@ -641,7 +647,7 @@ if (!function_exists('cleanPointPrefix')) {
                                     } else {
                                         foreach ($evals as $e_idx => $e_val) {
                                             $e_val_clean = cleanPointPrefix($e_val);
-                                            echo '<div class="list-item-justify">' . ($e_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($e_val_clean) . '</div>';
+                                            echo '<div class="list-item-justify"><span class="item-no">' . ($e_idx + 1) . '.</span><span class="item-text">' . htmlspecialchars($e_val_clean) . '</span></div>';
                                         }
                                     }
                                     ?>
@@ -786,7 +792,7 @@ if (!function_exists('cleanPointPrefix')) {
                                     } else {
                                         foreach ($tujuans as $t_idx => $t_val) {
                                             $t_val_clean = cleanPointPrefix($t_val);
-                                            echo '<div class="list-item-justify">' . ($t_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($t_val_clean) . '</div>';
+                                            echo '<div class="list-item-justify"><span class="item-no">' . ($t_idx + 1) . '.</span><span class="item-text">' . htmlspecialchars($t_val_clean) . '</span></div>';
                                         }
                                     }
                                     ?>
@@ -813,7 +819,7 @@ if (!function_exists('cleanPointPrefix')) {
                                     } else {
                                         foreach ($pesertas as $p_idx => $p_val) {
                                             $p_val_clean = cleanPointPrefix($p_val);
-                                            echo '<div class="list-item-justify">' . ($p_idx + 1) . '.&nbsp;&nbsp;' . htmlspecialchars($p_val_clean) . '</div>';
+                                            echo '<div class="list-item-justify"><span class="item-no">' . ($p_idx + 1) . '.</span><span class="item-text">' . htmlspecialchars($p_val_clean) . '</span></div>';
                                         }
                                     }
                                     ?>

@@ -671,7 +671,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Evaluasi Kinerja Pribadi
-        $evaluasi_kinerja_pribadi = sanitizeText($_POST['evaluasi_kinerja_pribadi'] ?? '');
+        $evaluasi_kinerja_pribadi = sanitizeText($_POST['evaluasi_kinerja_pribadi'] ?? '', 10000);
 
         // Evaluasi Anggota dan Internal Menteri
         $eva_nama = $_POST['eva_nama'] ?? [];

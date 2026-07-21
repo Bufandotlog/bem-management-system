@@ -304,6 +304,28 @@ def set_table_indent(table, indent_cm):
             tblPr.remove(existing_ind)
         tblPr.append(tblInd)
 
+def parse_points(val):
+    if not val:
+        return []
+    if isinstance(val, list):
+        items = []
+        for item in val:
+            items.extend(parse_points(str(item)))
+        return items
+    
+    val_str = str(val).strip()
+    if not val_str or val_str in ["—", "-"]:
+        return []
+    
+    lines = [l.strip() for l in val_str.split("\n") if l.strip()]
+    items = []
+    import re
+    for line in lines:
+        cleaned = re.sub(r'^(\d+[\.\)]|[a-zA-Z][\.\)]|\-|\*)\s*', '', line).strip()
+        if cleaned:
+            items.append(cleaned)
+    return items
+
 def render_table_rows(table, fields, indent_cm=0, bold_label=True, prefix_alpha=False):
     remove_table_borders(table)
     if indent_cm > 0:
@@ -327,35 +349,30 @@ def render_table_rows(table, fields, indent_cm=0, bold_label=True, prefix_alpha=
         row.cells[1].text = ":"
         
         cell = row.cells[2]
-        if isinstance(f_val, list):
-            # Filter out empty items
-            clean_items = [clean_proker_name(str(it)) for it in f_val if str(it).strip()]
-            clean_items = [it for it in clean_items if it]  # remove blanks after cleaning
-            
-            p0 = cell.paragraphs[0]
-            p0.text = ""
-            
-            is_single = len(clean_items) == 1
-            
+        clean_items = parse_points(f_val)
+        
+        p0 = cell.paragraphs[0]
+        p0.text = ""
+        
+        if not clean_items:
+            run = p0.add_run("—")
+            format_run(run, size_pt=12)
+        elif len(clean_items) == 1:
+            run = p0.add_run(clean_items[0])
+            format_run(run, size_pt=12)
+            p0.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        else:
             for item_idx, clean_item in enumerate(clean_items):
-                if item_idx == 0:
-                    p = p0
-                else:
-                    p = cell.add_paragraph()
+                p = p0 if item_idx == 0 else cell.add_paragraph()
                 p.paragraph_format.line_spacing = 1.15
                 p.paragraph_format.space_before = Pt(0)
                 p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.left_indent = Cm(0.6)
+                p.paragraph_format.first_line_indent = Cm(-0.6)
+                p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 
-                if is_single:
-                    # Single item — no numbering needed
-                    run = p.add_run(clean_item)
-                else:
-                    # Multiple items — numbered with hanging indent
-                    run = p.add_run(f"{item_idx + 1}. {clean_item}")
-                    p.paragraph_format.left_indent = Cm(0.6)
-                    p.paragraph_format.first_line_indent = Cm(-0.6)
-        else:
-            cell.text = str(f_val) if f_val else "—"
+                run = p.add_run(f"{item_idx + 1}.\t{clean_item}")
+                format_run(run, size_pt=12)
             
         # Formatting
         for c_idx, cell_item in enumerate(row.cells):
@@ -716,8 +733,14 @@ def parse_docx(doc_path):
             eval_pribadi_header_found = True
             continue
         if eval_pribadi_header_found:
-            # stop when we reach Section IX / Penutup or Section F
-            if "penutup" in p_text.lower() or "evaluasi anggota dan internal" in p_text.lower() or p_text.startswith("IX.") or p_text.startswith("X.") or p_text.startswith("F.") or p_text.startswith("G.") or "ringkasan anggaran" in p_text.lower():
+            # stop when we reach Section IX / Penutup or Section F header
+            p_lower = p_text.lower()
+            is_stop_header = (
+                p_lower in ["penutup", "evaluasi anggota dan internal menteri", "evaluasi anggota dan internal"]
+                or bool(re.match(r'^(ix\.|x\.|d\.|f\.|g\.|h\.)\s*(penutup|evaluasi|ringkasan)', p_lower))
+                or (("penutup" in p_lower or "evaluasi anggota" in p_lower) and len(p_text) < 40)
+            )
+            if is_stop_header:
                 break
             if p_text:
                 eval_pribadi_paras.append(p_text)
