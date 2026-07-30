@@ -522,7 +522,7 @@ if (isset($page_css)) {
             <?php foreach ($my_workspaces as $ws): ?>
             <?php 
                 $active_kegiatan_id = $_GET['kegiatan_id'] ?? 0;
-                $is_ws_active = ($active_kegiatan_id == $ws['id'] && in_array($current_page, ['workspace-panitia.php']));
+                $is_ws_active = ($active_kegiatan_id == $ws['id'] && in_array($current_page, ['workspace-panitia.php', 'workspace-rundown.php', 'workspace-logistik.php']));
             ?>
             <div class="sidebar-dropdown <?php echo $is_ws_active ? 'active open' : ''; ?>" style="background: rgba(255,255,255,0.03); border-left: 3px solid #f39c12;">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
@@ -534,6 +534,18 @@ if (isset($page_css)) {
                     <?php if (in_array($ws['event_role'], ['ketuplat', 'sekretaris_panitia'])): ?>
                     <a href="workspace-panitia.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-panitia.php') ? 'active' : ''; ?>">
                         <i class="fas fa-users-cog"></i><span>Susunan Panitia</span>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if (in_array($ws['event_role'], ['ketuplat', 'sie_acara'])): ?>
+                    <a href="workspace-rundown.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-rundown.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-calendar-alt"></i><span>Rundown Acara</span>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if (in_array($ws['event_role'], ['ketuplat', 'sie_logistik'])): ?>
+                    <a href="workspace-logistik.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-logistik.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-boxes"></i><span>Peminjaman Logistik</span>
                     </a>
                     <?php endif; ?>
                 </div>
