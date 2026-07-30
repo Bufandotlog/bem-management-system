@@ -1036,7 +1036,38 @@ function isSekretaris() {
 function requireSekretaris() {
     if (!isSekretaris()) {
         redirect('admin/dashboard.php', 'Akses ditolak: Hanya Sekretaris atau Superadmin yang diizinkan untuk mengelola Modul Surat.', 'error');
+}
+
+// ============================================
+// FUNGSI HYBRID RBAC (EVENT-LEVEL ROLE)
+// ============================================
+
+/**
+ * Mendapatkan Event-Role dari user yang sedang login untuk kegiatan tertentu
+ */
+function getEventRole($user_id, $kegiatan_id) {
+    if (!$user_id || !$kegiatan_id) return null;
+    $row = dbFetchOne("SELECT event_role FROM kegiatan_panitia WHERE user_id = ? AND kegiatan_id = ?", [(int)$user_id, (int)$kegiatan_id], "ii");
+    return $row ? $row['event_role'] : null;
+}
+
+/**
+ * Middleware validasi akses khusus per-kegiatan (Event-Level)
+ */
+function requireEventAccess($kegiatan_id, $allowed_event_roles = []) {
+    $system_role = $_SESSION['admin_role'] ?? '';
+    
+    // Bypass untuk System-Level Role yang berwenang memonitor seluruh kegiatan
+    if (in_array($system_role, ['superadmin', 'admin', 'sekretaris']) || !empty($_SESSION['admin_can_access_all'])) {
+        return true; 
     }
+    
+    $event_role = getEventRole($_SESSION['admin_id'] ?? 0, $kegiatan_id);
+    if (!$event_role || !in_array($event_role, $allowed_event_roles)) {
+        redirect('admin/dashboard.php', 'Akses ditolak: Divisi Anda tidak diizinkan mengakses menu kepanitiaan ini.', 'error');
+        exit();
+    }
+    return true;
 }
 
 function logout() {
