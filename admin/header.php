@@ -58,6 +58,20 @@ $isSekretaris = (strpos($admin_role, 'sekretaris') !== false || strpos($admin_ro
 // ============================================
 // PROTEKSI AKSES ROLE SEKRETARIS
 // ============================================
+
+// ============================================
+// LOAD WORKSPACE KEGIATAN (HYBRID RBAC)
+// ============================================
+$my_workspaces = [];
+if (isset($_SESSION['admin_id'])) {
+    $my_workspaces = dbFetchAll("
+        SELECT k.id, k.nama_kegiatan, kp.event_role 
+        FROM kegiatan_panitia kp
+        JOIN kegiatan k ON kp.kegiatan_id = k.id
+        WHERE kp.user_id = ? AND k.periode_id = ?
+        ORDER BY k.created_at DESC
+    ", [$_SESSION['admin_id'], getUserPeriode()]);
+}
 if ($isSekretaris && !isset($user_can_access_all)) {
     $restricted_pages = [
         'berita.php', 'berita-edit.php', 'berita-hapus.php',
@@ -503,6 +517,28 @@ if (isset($page_css)) {
                class="<?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>">
                 <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
             </a>
+
+            <!-- Workspaces (Dinamis) -->
+            <?php foreach ($my_workspaces as $ws): ?>
+            <?php 
+                $active_kegiatan_id = $_GET['kegiatan_id'] ?? 0;
+                $is_ws_active = ($active_kegiatan_id == $ws['id'] && in_array($current_page, ['workspace-panitia.php']));
+            ?>
+            <div class="sidebar-dropdown <?php echo $is_ws_active ? 'active open' : ''; ?>" style="background: rgba(255,255,255,0.03); border-left: 3px solid #f39c12;">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-briefcase" style="color: #f39c12;"></i>
+                    <span>WS: <?php echo htmlspecialchars((strlen($ws['nama_kegiatan']) > 15 ? substr($ws['nama_kegiatan'],0,12).'...' : $ws['nama_kegiatan'])); ?></span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <?php if (in_array($ws['event_role'], ['ketuplat', 'sekretaris_panitia'])): ?>
+                    <a href="workspace-panitia.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-panitia.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-users-cog"></i><span>Susunan Panitia</span>
+                    </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
 
             <!-- Manajemen Kegiatan (Direct Link) -->
             <?php if (in_array($admin_role, ['superadmin', 'admin'])): ?>
