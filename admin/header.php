@@ -505,7 +505,7 @@ if (isset($page_css)) {
             </a>
 
             <!-- Informasi BEM (Dropdown) -->
-            <?php if (!$isSekretaris || $isSuperadmin): ?>
+            <?php if (in_array($admin_role, ['superadmin', 'admin', 'kominfo'])): ?>
             <div class="sidebar-dropdown <?php echo $is_info_bem_active ? 'active open' : ''; ?>">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
                     <i class="fas fa-university"></i>

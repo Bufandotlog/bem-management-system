@@ -25,7 +25,7 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
 
 <div class="page-header">
     <div>
-        <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ($admin_role === 'kominfo' ? 'Kominfo' : ($admin_role === 'admin' ? 'Admin' : ''))); ?></h1>
+        <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ($admin_role === 'kominfo' ? 'Kominfo' : ($admin_role === 'admin' ? 'Admin' : ($admin_role === 'anggota' ? 'Anggota' : '')))); ?></h1>
         <p>Selamat datang di panel kendali BEM Kabinet Astawidya</p>
     </div>
     <div class="date-display">
@@ -164,10 +164,11 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
 
 </div>
 
+<?php if ($showGeneralStats || $showLetterStats): ?>
 <!-- Quick Actions -->
 <h2 style="margin-bottom: 20px; margin-top: 30px;"><i class="fas fa-bolt"></i> Aksi Cepat</h2>
 <div class="quick-actions" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;">
-    <?php if ($isSuperadmin || $admin_role !== 'sekretaris'): ?>
+    <?php if ($isSuperadmin || $admin_role === 'admin' || $admin_role === 'kominfo'): ?>
         <a href="berita-edit.php" class="action-card"><i class="fas fa-plus-circle"></i><span>Tambah Berita</span></a>
         <a href="kepengurusan.php?action=new" class="action-card"><i class="fas fa-user-plus"></i><span>Tambah Anggota</span></a>
     <?php endif; ?>
@@ -181,5 +182,16 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
         <a href="kelola-admin.php" class="action-card" style="background: rgba(255,255,255,0.05);"><i class="fas fa-user-shield"></i><span>Kelola Admin</span></a>
     <?php endif; ?>
 </div>
+<?php endif; ?>
+
+<?php if ($admin_role === 'anggota'): ?>
+<div class="empty-state" style="text-align: center; padding: 50px 20px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-top: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+    <i class="fas fa-user-clock" style="font-size: 4rem; color: #666; margin-bottom: 20px;"></i>
+    <h2 style="color: #ddd; margin-bottom: 10px;">Belum Ada Akses Kepanitiaan</h2>
+    <p style="color: #888; max-width: 500px; margin: 0 auto; line-height: 1.6;">
+        Akun Anda saat ini berada pada role standar <strong>Anggota</strong>. Anda belum di-assign atau ditunjuk ke dalam kepanitiaan/kegiatan apa pun oleh Administrator atau Ketua Pelaksana. <br><br>Jika Anda merasa ini adalah kesalahan, silakan hubungi pengurus terkait.
+    </p>
+</div>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
