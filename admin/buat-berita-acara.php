@@ -984,7 +984,12 @@ if (!empty($tanggal_kegiatan_val)) {
                     </div>
                     <div class="form-group">
                         <label>Nama Kegiatan</label>
-                        <input type="text" id="input_nama_kegiatan" name="nama_kegiatan" value="<?php echo htmlspecialchars($edit_data['nama_kegiatan']); ?>" placeholder="Cth: Kuliah Umum" required>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="input_nama_kegiatan" name="nama_kegiatan" value="<?php echo htmlspecialchars($edit_data['nama_kegiatan']); ?>" placeholder="Cth: Kuliah Umum" required style="flex:1;">
+                            <button type="button" class="btn-outline" onclick="tarikDataKegiatan()" title="Tarik data dari Rundown & Logistik" style="flex:none; background: rgba(74,144,226,0.1); color: #4facfe;">
+                                <i class="fas fa-sync-alt"></i> Tarik Data
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1847,6 +1852,76 @@ function formatTanggalRange() {
 document.addEventListener('DOMContentLoaded', () => {
     initDateRangePicker();
 });
+
+// Fitur Tarik Data dari API
+function tarikDataKegiatan() {
+    const namaAcara = document.getElementById('input_nama_kegiatan').value.trim();
+    if (!namaAcara) {
+        alert("Silakan isi Nama Kegiatan terlebih dahulu!");
+        return;
+    }
+    
+    // Tampilkan loading state
+    const btn = event.currentTarget;
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menarik...';
+    btn.disabled = true;
+    
+    fetch('api-get-kegiatan-data.php?nama_acara=' + encodeURIComponent(namaAcara))
+        .then(res => res.json())
+        .then(data => {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            
+            if (data.status === 'success') {
+                let msg = "Data berhasil ditarik:\n";
+                let rincianFilled = false;
+                
+                // Isi rincian_kegiatan dengan Rundown
+                if (data.rundown && data.rundown.rincian && data.rundown.rincian.length > 0) {
+                    const listContainer = document.getElementById('list-rincian');
+                    if (listContainer) {
+                        listContainer.innerHTML = '';
+                        data.rundown.rincian.forEach((item, index) => {
+                            if (index === 0) {
+                                listContainer.innerHTML += `
+                                    <div class="dynamic-list-row">
+                                        <input type="text" name="rincian_kegiatan[]" value="${item.replace(/"/g, '&quot;')}" placeholder="Cth: Pembukaan" required>
+                                        <button type="button" class="btn-remove-row" style="visibility:hidden;"><i class="fas fa-times"></i></button>
+                                    </div>
+                                `;
+                            } else {
+                                listContainer.innerHTML += `
+                                    <div class="dynamic-list-row">
+                                        <input type="text" name="rincian_kegiatan[]" value="${item.replace(/"/g, '&quot;')}" placeholder="Cth: Pembukaan" required>
+                                        <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                                    </div>
+                                `;
+                            }
+                        });
+                        rincianFilled = true;
+                        msg += "- Susunan Acara (Rundown)\n";
+                    }
+                }
+                
+                if (!rincianFilled && !data.logistik) {
+                    alert("Data Rundown atau Logistik tidak ditemukan untuk kegiatan ini.");
+                } else {
+                    alert(msg + "Silakan cek kembali form Anda.");
+                }
+            } else {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            alert("Gagal menghubungi server.");
+            console.error(err);
+        });
+}
 </script>
 
 <?php require_once __DIR__ . '/footer.php';

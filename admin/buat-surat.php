@@ -810,10 +810,15 @@ if ($is_edit || $is_clone) {
                         <div class="form-group">
                             <label>Nama Kegiatan</label>
                             <div class="rte-mini-wrap">
-                                <div class="rte-mini-toolbar">
-                                    <button type="button" onclick="execMiniRTE('rte_nama_keg','bold')" class="rte-mini-btn" title="Bold"><b>B</b></button>
-                                    <button type="button" onclick="execMiniRTE('rte_nama_keg','italic')" class="rte-mini-btn" title="Italic"><i>I</i></button>
-                                    <button type="button" onclick="execMiniRTE('rte_nama_keg','unbold')" class="rte-mini-btn" title="Unbold Text (Normal)" style="font-weight:normal;">A</button>
+                                <div class="rte-mini-toolbar" style="display:flex; justify-content:space-between;">
+                                    <div style="display:flex; gap:4px;">
+                                        <button type="button" onclick="execMiniRTE('rte_nama_keg','bold')" class="rte-mini-btn" title="Bold"><b>B</b></button>
+                                        <button type="button" onclick="execMiniRTE('rte_nama_keg','italic')" class="rte-mini-btn" title="Italic"><i>I</i></button>
+                                        <button type="button" onclick="execMiniRTE('rte_nama_keg','unbold')" class="rte-mini-btn" title="Unbold Text (Normal)" style="font-weight:normal;">A</button>
+                                    </div>
+                                    <button type="button" class="btn-outline" onclick="tarikDataSurat()" title="Tarik dari Rundown & Logistik" style="padding: 2px 10px; font-size: 0.75rem; border:none; background: rgba(74,144,226,0.1); color: #4facfe;">
+                                        <i class="fas fa-sync-alt"></i> Tarik Data
+                                    </button>
                                 </div>
                                 <div id="rte_nama_keg" class="rte-mini-editor" contenteditable="true" data-placeholder="Cth: LDKM 2026" oninput="syncMiniRTE('rte_nama_keg','input_nama_kegiatan')"><?php echo $edit_data['nama_kegiatan'] ?? ''; ?></div>
                                 <input type="hidden" id="input_nama_kegiatan" name="nama_kegiatan" value="<?php echo htmlspecialchars($edit_data['nama_kegiatan'] ?? ''); ?>">
@@ -1670,6 +1675,66 @@ function removeExistingFile(filePath, elementId) {
 }
 
 document.querySelector('form').addEventListener('submit', syncRTE);
+
+// Fitur Tarik Data dari API
+function tarikDataSurat() {
+    let namaAcara = document.getElementById('input_nama_kegiatan').value.trim();
+    // Hilangkan tag HTML kalau ada
+    namaAcara = namaAcara.replace(/<[^>]*>?/gm, '');
+    
+    if (!namaAcara) {
+        alert("Silakan isi Nama Kegiatan (di kotak atas) terlebih dahulu!");
+        return;
+    }
+    
+    const btn = event.currentTarget;
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
+    btn.disabled = true;
+    
+    fetch('api-get-kegiatan-data.php?nama_acara=' + encodeURIComponent(namaAcara))
+        .then(res => res.json())
+        .then(data => {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            
+            if (data.status === 'success') {
+                let msg = "Data ditemukan:\n";
+                let tgl = '';
+                
+                if (data.rundown && data.rundown.tanggal_mulai) {
+                    tgl = data.rundown.tanggal_mulai;
+                    msg += "- Tanggal Pelaksanaan (dari Rundown): " + tgl + "\n";
+                } else if (data.logistik && data.logistik.tanggal_kegiatan) {
+                    tgl = data.logistik.tanggal_kegiatan;
+                    msg += "- Tanggal Pelaksanaan (dari Logistik): " + tgl + "\n";
+                }
+                
+                if (!tgl) {
+                    alert("Data Rundown atau Logistik tidak ditemukan untuk kegiatan ini.");
+                    return;
+                }
+                
+                // Isi tanggal pelaksanaan
+                const tglMulaiInput = document.getElementById('tgl-mulai');
+                if (tglMulaiInput && tgl) {
+                    tglMulaiInput.value = tgl;
+                    formatTanggalRange();
+                    alert(msg + "Tanggal Pelaksanaan telah diperbarui!");
+                }
+            } else {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+            alert("Gagal menghubungi server.");
+            console.error(err);
+        });
+}
 </script>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
