@@ -33,7 +33,7 @@ CREATE TABLE "users" (
   "password" VARCHAR(255) NOT NULL,
   "nama" VARCHAR(100) NOT NULL,
   "email" VARCHAR(100),
-  "role" VARCHAR(20) NOT NULL DEFAULT 'kominfo' CHECK ("role" IN ('superadmin', 'admin', 'kominfo', 'sekretaris')),
+  "role" VARCHAR(20) NOT NULL DEFAULT 'anggota' CHECK ("role" IN ('superadmin', 'admin', 'kominfo', 'sekretaris', 'anggota')),
   "periode_id" INTEGER REFERENCES "periode_kepengurusan"("id") ON DELETE SET NULL,
   "can_access_all" BOOLEAN DEFAULT FALSE,
   "totp_secret" VARCHAR(32),
@@ -335,6 +335,37 @@ CREATE TABLE "arsip_berita_acara" (
   "konten_json" TEXT,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------
+-- 17. Tabel `kegiatan` (Program Kerja Master)
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS "kegiatan" CASCADE;
+CREATE TABLE "kegiatan" (
+  "id" SERIAL PRIMARY KEY,
+  "periode_id" INTEGER NOT NULL REFERENCES "periode_kepengurusan"("id") ON DELETE CASCADE,
+  "nama_kegiatan" VARCHAR(255) NOT NULL,
+  "deskripsi" TEXT,
+  "tanggal_mulai" DATE,
+  "tanggal_selesai" DATE,
+  "status" VARCHAR(20) DEFAULT 'persiapan' CHECK ("status" IN ('persiapan', 'berjalan', 'selesai')),
+  "created_by" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------
+-- 18. Tabel `kegiatan_panitia` (Event-Level Role)
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS "kegiatan_panitia" CASCADE;
+CREATE TABLE "kegiatan_panitia" (
+  "id" SERIAL PRIMARY KEY,
+  "kegiatan_id" INTEGER NOT NULL REFERENCES "kegiatan"("id") ON DELETE CASCADE,
+  "user_id" INTEGER NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "event_role" VARCHAR(50) NOT NULL CHECK ("event_role" IN ('ketuplat', 'sekretaris_panitia', 'sie_acara', 'sie_logistik', 'sie_humas', 'sie_konsumsi', 'anggota_panitia')),
+  "ditunjuk_oleh" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ----------------------------------------

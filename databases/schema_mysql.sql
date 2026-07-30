@@ -39,7 +39,7 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `nama` varchar(100) NOT NULL,
   `email` varchar(100) DEFAULT NULL,
-  `role` enum('superadmin','admin','kominfo','sekretaris') NOT NULL DEFAULT 'kominfo',
+  `role` enum('superadmin','admin','kominfo','sekretaris','anggota') NOT NULL DEFAULT 'anggota',
   `periode_id` int(11) DEFAULT NULL,
   `can_access_all` tinyint(1) DEFAULT 0,
   `totp_secret` varchar(32) DEFAULT NULL,
@@ -423,6 +423,49 @@ CREATE TABLE `arsip_berita_acara` (
   KEY `fk_berita_acara_user` (`created_by`),
   CONSTRAINT `fk_berita_acara_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_berita_acara_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------------------
+-- 17. Tabel `kegiatan` (Program Kerja Master)
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS `kegiatan`;
+CREATE TABLE `kegiatan` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `periode_id` int(11) NOT NULL,
+  `nama_kegiatan` varchar(255) NOT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `tanggal_mulai` date DEFAULT NULL,
+  `tanggal_selesai` date DEFAULT NULL,
+  `status` enum('persiapan','berjalan','selesai') DEFAULT 'persiapan',
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `fk_kegiatan_periode` (`periode_id`),
+  KEY `fk_kegiatan_user` (`created_by`),
+  CONSTRAINT `fk_kegiatan_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_kegiatan_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------------------
+-- 18. Tabel `kegiatan_panitia` (Event-Level Role)
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS `kegiatan_panitia`;
+CREATE TABLE `kegiatan_panitia` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `kegiatan_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `event_role` enum('ketuplat','sekretaris_panitia','sie_acara','sie_logistik','sie_humas','sie_konsumsi','anggota_panitia') NOT NULL,
+  `ditunjuk_oleh` int(11) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `fk_panitia_kegiatan` (`kegiatan_id`),
+  KEY `fk_panitia_user` (`user_id`),
+  KEY `fk_panitia_ditunjuk_oleh` (`ditunjuk_oleh`),
+  CONSTRAINT `fk_panitia_kegiatan` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_panitia_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_panitia_ditunjuk_oleh` FOREIGN KEY (`ditunjuk_oleh`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------------------

@@ -290,6 +290,94 @@ try {
     }
 }
 
+// Auto-migration: Update role enum in users table
+try {
+    $db_type = DB_CONNECTION;
+    if ($db_type === 'pgsql') {
+        dbQuery("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+        dbQuery("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('superadmin', 'admin', 'kominfo', 'sekretaris', 'anggota'))");
+        dbQuery("ALTER TABLE users ALTER COLUMN role SET DEFAULT 'anggota'");
+    } else {
+        dbQuery("ALTER TABLE users MODIFY COLUMN role ENUM('superadmin','admin','kominfo','sekretaris','anggota') NOT NULL DEFAULT 'anggota'");
+    }
+} catch (Exception $e) {
+    // Abaikan
+}
+
+// Auto-migration: Pastikan tabel kegiatan ada
+try {
+    dbQuery("SELECT 1 FROM kegiatan LIMIT 1");
+} catch (Exception $e) {
+    try {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery('CREATE TABLE "kegiatan" (
+              "id" SERIAL PRIMARY KEY,
+              "periode_id" INTEGER NOT NULL REFERENCES "periode_kepengurusan"("id") ON DELETE CASCADE,
+              "nama_kegiatan" VARCHAR(255) NOT NULL,
+              "deskripsi" TEXT,
+              "tanggal_mulai" DATE,
+              "tanggal_selesai" DATE,
+              "status" VARCHAR(20) DEFAULT \'persiapan\' CHECK ("status" IN (\'persiapan\', \'berjalan\', \'selesai\')),
+              "created_by" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
+              "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )');
+        } else {
+            dbQuery("CREATE TABLE IF NOT EXISTS `kegiatan` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `periode_id` int(11) NOT NULL,
+              `nama_kegiatan` varchar(255) NOT NULL,
+              `deskripsi` text DEFAULT NULL,
+              `tanggal_mulai` date DEFAULT NULL,
+              `tanggal_selesai` date DEFAULT NULL,
+              `status` enum('persiapan','berjalan','selesai') DEFAULT 'persiapan',
+              `created_by` int(11) DEFAULT NULL,
+              `created_at` timestamp NULL DEFAULT current_timestamp(),
+              PRIMARY KEY (`id`),
+              KEY `fk_kegiatan_periode` (`periode_id`),
+              KEY `fk_kegiatan_user` (`created_by`),
+              CONSTRAINT `fk_kegiatan_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE CASCADE,
+              CONSTRAINT `fk_kegiatan_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+    } catch (Exception $ex) {}
+}
+
+// Auto-migration: Pastikan tabel kegiatan_panitia ada
+try {
+    dbQuery("SELECT 1 FROM kegiatan_panitia LIMIT 1");
+} catch (Exception $e) {
+    try {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery('CREATE TABLE "kegiatan_panitia" (
+              "id" SERIAL PRIMARY KEY,
+              "kegiatan_id" INTEGER NOT NULL REFERENCES "kegiatan"("id") ON DELETE CASCADE,
+              "user_id" INTEGER NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+              "event_role" VARCHAR(50) NOT NULL CHECK ("event_role" IN (\'ketuplat\', \'sekretaris_panitia\', \'sie_acara\', \'sie_logistik\', \'sie_humas\', \'sie_konsumsi\', \'anggota_panitia\')),
+              "ditunjuk_oleh" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
+              "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )');
+        } else {
+            dbQuery("CREATE TABLE IF NOT EXISTS `kegiatan_panitia` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `kegiatan_id` int(11) NOT NULL,
+              `user_id` int(11) NOT NULL,
+              `event_role` enum('ketuplat','sekretaris_panitia','sie_acara','sie_logistik','sie_humas','sie_konsumsi','anggota_panitia') NOT NULL,
+              `ditunjuk_oleh` int(11) DEFAULT NULL,
+              `created_at` timestamp NULL DEFAULT current_timestamp(),
+              PRIMARY KEY (`id`),
+              KEY `fk_panitia_kegiatan` (`kegiatan_id`),
+              KEY `fk_panitia_user` (`user_id`),
+              KEY `fk_panitia_ditunjuk_oleh` (`ditunjuk_oleh`),
+              CONSTRAINT `fk_panitia_kegiatan` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan` (`id`) ON DELETE CASCADE,
+              CONSTRAINT `fk_panitia_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+              CONSTRAINT `fk_panitia_ditunjuk_oleh` FOREIGN KEY (`ditunjuk_oleh`) REFERENCES `users` (`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+    } catch (Exception $ex) {}
+}
+
 // ============================================
 // FUNGSI IP-BASED LOGIN TRACKING
 // ============================================
