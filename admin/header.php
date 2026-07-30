@@ -504,6 +504,13 @@ if (isset($page_css)) {
                 <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
             </a>
 
+            <!-- Manajemen Kegiatan (Direct Link) -->
+            <?php if (in_array($admin_role, ['superadmin', 'admin'])): ?>
+            <a href="master-kegiatan.php" class="<?php echo $current_page === 'master-kegiatan.php' ? 'active' : ''; ?>">
+                <i class="fas fa-calendar-check"></i><span>Manajemen Kegiatan</span>
+            </a>
+            <?php endif; ?>
+
             <!-- Informasi BEM (Dropdown) -->
             <?php if (in_array($admin_role, ['superadmin', 'admin', 'kominfo'])): ?>
             <div class="sidebar-dropdown <?php echo $is_info_bem_active ? 'active open' : ''; ?>">
