@@ -85,26 +85,26 @@ Cara tercepat tanpa konfigurasi *Virtual Host* yang rumit adalah menggunakan bui
 Sistem BEM (Astawidya) didesain agar mudah dioperasikan secara mandiri dari halaman admin:
 
 1. **Mengaktifkan Periode Kepengurusan (Langkah Wajib Pertama)**
-   * Masuk ke **Periode Kepengurusan** (`/admin/periode-kepengurusan.php`).
-   * Buat periode baru (misalnya: Periode 2026-2027) dan tandai sebagai **"Aktif"**. Sistem hanya akan menampilkan dan memproses surat-menyurat yang masuk dalam periode kepengurusan yang sedang aktif. Anda juga bisa berganti periode dengan cepat melalui menu `/admin/ganti-periode.php`.
+   * Masuk ke **Periode Kepengurusan** (`/admin/system/periode-kepengurusan.php`).
+   * Buat periode baru (misalnya: Periode 2026-2027) dan tandai sebagai **"Aktif"**. Sistem hanya akan menampilkan dan memproses surat-menyurat yang masuk dalam periode kepengurusan yang sedang aktif. Anda juga bisa berganti periode dengan cepat melalui menu `/admin/system/ganti-periode.php`.
 
 2. **Mengisi Data Master (Inventaris & Lokasi)**
    * Sebelum Anda membuat surat peminjaman barang atau menyusun susunan acara (rundown), isi terlebih dahulu master data berikut:
-     * **Master Barang** (`/admin/master-barang.php`): Menyimpan daftar inventaris BEM (cth: Sound System, Proyektor).
-     * **Master Tempat** (`/admin/master-tempat.php`): Daftar lokasi kegiatan (cth: Aula, Gedung Serbaguna).
-     * **Master Penanggung Jawab** (`/admin/master-penanggung-jawab.php`): Nama & jabatan penanggung jawab sesi rundown.
+     * **Master Barang** (`/admin/logistik/master-barang.php`): Menyimpan daftar inventaris BEM (cth: Sound System, Proyektor).
+     * **Master Tempat** (`/admin/logistik/master-tempat.php`): Daftar lokasi kegiatan (cth: Aula, Gedung Serbaguna).
+     * **Master Penanggung Jawab** (`/admin/rundown/master-penanggung-jawab.php`): Nama & jabatan penanggung jawab sesi rundown.
 
 3. **Mengunggah Kop Surat & Profil Kabinet**
-   * Masuk ke menu **Visi, Misi & Kabinet** (`/admin/kabinet.php`).
+   * Masuk ke menu **Visi, Misi & Kabinet** (`/admin/konten/kabinet.php`).
    * Unggah Logo Kabinet Anda. Logo ini otomatis akan di-render di pojok kiri atas pada KOP Surat resmi saat mencetak surat dalam format PDF/Cetak Dokumen.
 
 4. **Konfigurasi Template Surat**
-   * Masuk ke menu **Pengaturan Surat** (`/admin/pengaturan-surat.php`).
+   * Masuk ke menu **Pengaturan Surat** (`/admin/surat/pengaturan-surat.php`).
    * Anda bisa menambahkan template perihal surat (cth: "Undangan Rapat"), sasaran tujuan (cth: "Badan Perwakilan Mahasiswa"), tempat pelaksanaan, dan kode surat. Ini akan mempercepat pembuatan surat baru karena sekretaris tinggal mengklik saran pencarian saat mengetik form surat.
 
 5. **Manajemen Admin & Keamanan 2FA**
-   * Untuk keamanan ekstra, sekretaris dan admin dapat mengaktifkan **Autentikasi Dua Faktor (2FA)** via Google Authenticator di menu `/admin/2fa-setup.php`. Setiap login akan membutuhkan kode OTP dinamis dari ponsel admin.
-   * Catatan audit semua tindakan admin disimpan dengan aman di `/admin/audit-log.php`.
+   * Untuk keamanan ekstra, sekretaris dan admin dapat mengaktifkan **Autentikasi Dua Faktor (2FA)** via Google Authenticator di menu `/admin/auth/2fa-setup.php`. Setiap login akan membutuhkan kode OTP dinamis dari ponsel admin.
+   * Catatan audit semua tindakan admin disimpan dengan aman di `/admin/system/audit-log.php`.
 
 ---
 

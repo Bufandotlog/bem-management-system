@@ -125,6 +125,13 @@ fi
 cd "${APP_DIR}"
 
 # ─────────────────────────────────────────────────────────────
+# LANGKAH 6.5: Audit Keamanan Dependensi (Composer & NPM)
+# ─────────────────────────────────────────────────────────────
+info "Audit keamanan paket dependensi..."
+composer audit || warn "Perhatian: Celah keamanan terdeteksi pada Composer dependencies!"
+npm audit || warn "Perhatian: Celah keamanan terdeteksi pada NPM dependencies!"
+
+# ─────────────────────────────────────────────────────────────
 # LANGKAH 7: Setup .env
 # ─────────────────────────────────────────────────────────────
 if [ ! -f "${APP_DIR}/.env" ]; then

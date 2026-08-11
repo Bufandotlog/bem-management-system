@@ -3,6 +3,7 @@
 // Terlindungi oleh Cookie Gate
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/google-oauth.php';
 
 // Ambil kunci gerbang dari .env, default jika tidak ada
 $adminGateKey = $_ENV['ADMIN_GATE_KEY'] ?? 'astawidya-bem';
@@ -39,7 +40,7 @@ if (!isset($_COOKIE['admin_access']) || $_COOKIE['admin_access'] !== '1') {
 }
 
 if (isLoggedIn()) {
-    redirect('admin/dashboard.php');
+    redirect('admin/core/dashboard.php');
     exit();
 }
 
@@ -54,6 +55,13 @@ $lockedUntil  = $_SESSION['login_locked_until'] ?? 0;
 $isLocked     = $lockedUntil > 0 && time() < $lockedUntil;
 $lockWaitMins = $isLocked ? ceil(($lockedUntil - time()) / 60) : 0;
 $error = '';
+
+if (isset($_SESSION['flash'])) {
+    if (($_SESSION['flash']['type'] ?? '') === 'error') {
+        $error = $_SESSION['flash']['message'] ?? '';
+    }
+    unset($_SESSION['flash']);
+}
 
 // IP-based lockout
 $ipMaxAttempts = 15;
@@ -133,6 +141,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (empty($username) || empty($password)) {
                 $error = 'Username dan password harus diisi.';
+            } elseif (isRateLimited('login_failed', 5, 15, $username)) {
+                $error = 'Terlalu banyak percobaan login gagal untuk akun ini. Dikunci 15 menit.';
+                recordFailedAttempt('lockout', $username);
             } else {
                 $user = dbFetchOne(
                     "SELECT id, nama, username, password, role,
@@ -172,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 [$ip, $user['id']], "si");
 
                         auditLog('LOGIN', 'users', $user['id'], 'Login berhasil (2FA Bypassed)');
-                        redirect('admin/dashboard.php', "Selamat datang, {$user['nama']}!", 'success');
+                        redirect('admin/core/dashboard.php', "Selamat datang, {$user['nama']}!", 'success');
                         exit();
                     } else {
                         session_regenerate_id(true);
@@ -180,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['2fa_user_id']    = $user['id'];
                         $_SESSION['2fa_attempts']   = 0;
                         $_SESSION['_last_activity'] = time();
-                        redirect('admin/2fa-verify.php');
+                        redirect('admin/auth/2fa-verify.php');
                         exit();
                     }
                 } else {
@@ -289,6 +300,25 @@ $cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ .
                 <?php echo $isLocked ? "Dikunci ({$lockWaitMins} menit)" : 'Login'; ?>
             </button>
         </form>
+
+        <?php $googleCfg = getGoogleAuthConfig(); ?>
+        <?php if ($googleCfg['configured']): ?>
+            <div style="display:flex;align-items:center;margin: 1.5rem 0 1rem 0;color:#666;">
+                <div style="flex:1;height:1px;background:#2a3545;"></div>
+                <span style="padding:0 12px;font-size:0.85rem;color:#888;">atau</span>
+                <div style="flex:1;height:1px;background:#2a3545;"></div>
+            </div>
+
+            <a href="../admin/auth/google-auth.php?action=login" class="btn-google-login" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;background:#ffffff;color:#333333;font-weight:600;font-size:0.95rem;border-radius:8px;text-decoration:none;transition:all 0.2s;box-sizing:border-box;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+                <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.11 0-5.74-2.1-6.68-4.93H1.34v3.13C3.33 21.34 7.38 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.32 14.25c-.24-.72-.38-1.49-.38-2.25s.14-1.53.38-2.25V6.62H1.34C.48 8.33 0 10.11 0 12s.48 3.67 1.34 5.38l3.98-3.13z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.38 0 3.33 2.66 1.34 6.62l3.98 3.13c.94-2.83 3.57-5 6.68-5z"/>
+                </svg>
+                <span>Login dengan Google</span>
+            </a>
+        <?php endif; ?>
 
         <div class="login-footer">
             &copy; 2025 BEM Kabinet Astawidya

@@ -74,7 +74,7 @@ graph TD
 
 #### Langkah 3: Pratampilan & Rendering Cetak (`cetak-surat.php`)
 Saat tombol "Cetak" ditekan:
-1. Aplikasi memuat berkas `/admin/cetak-surat.php` dengan menyertakan parameter ID surat (`?id=xx`).
+1. Aplikasi memuat berkas `/admin/surat/cetak-surat.php` dengan menyertakan parameter ID surat (`?id=xx`).
 2. PHP memuat baris surat dari database, lalu melakukan operasi decode JSON:
    ```php
    $konten = json_decode($surat['konten_surat'], true);

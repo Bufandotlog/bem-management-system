@@ -256,6 +256,15 @@ try {
     try { dbQuery("ALTER TABLE pendaftaran_anggota ADD COLUMN file_ttd VARCHAR(255) DEFAULT NULL"); } catch (Exception $ex) {}
 }
 
+// Auto-migration: Pastikan kolom google_id, google_email, google_linked_at ada di tabel users
+try {
+    dbQuery("SELECT google_id FROM users LIMIT 1");
+} catch (Exception $e) {
+    try {
+        dbQuery("ALTER TABLE users ADD COLUMN google_id VARCHAR(255) DEFAULT NULL, ADD COLUMN google_email VARCHAR(255) DEFAULT NULL, ADD COLUMN google_linked_at TIMESTAMP NULL DEFAULT NULL");
+    } catch (Exception $ex) {}
+}
+
 // Auto-migration: Pastikan kolom fungsi ada di tabel kementerian
 try {
     dbQuery("SELECT fungsi FROM kementerian LIMIT 1");
@@ -265,6 +274,40 @@ try {
     } catch (Exception $ex) {
         // Abaikan jika database belum siap
     }
+}
+
+// Auto-migration: Pastikan tabel fcm_tokens ada
+try {
+    dbQuery("SELECT 1 FROM fcm_tokens LIMIT 1");
+} catch (Exception $e) {
+    try {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery('CREATE TABLE "fcm_tokens" (
+              "id" SERIAL PRIMARY KEY,
+              "user_id" INTEGER NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+              "fcm_token" VARCHAR(255) NOT NULL UNIQUE,
+              "device_type" VARCHAR(50) DEFAULT \'android\',
+              "app_version" VARCHAR(20) DEFAULT NULL,
+              "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )');
+        } else {
+            dbQuery("CREATE TABLE IF NOT EXISTS `fcm_tokens` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `user_id` int(11) NOT NULL,
+              `fcm_token` varchar(255) NOT NULL,
+              `device_type` varchar(50) DEFAULT 'android',
+              `app_version` varchar(20) DEFAULT NULL,
+              `created_at` timestamp NULL DEFAULT current_timestamp(),
+              `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uk_fcm_token` (`fcm_token`),
+              KEY `idx_fcm_user` (`user_id`),
+              CONSTRAINT `fk_fcm_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+    } catch (Exception $ex) {}
 }
 
 // Auto-migration: Pastikan tabel login_attempts_ip ada
@@ -451,6 +494,36 @@ try {
 
 
 // ============================================
+// FUNGSI SECURITY & CSP NONCE GENERATOR
+// ============================================
+
+/**
+ * Menghasilkan token Nonce cryptographically secure per-request untuk Content-Security-Policy (CSP).
+ */
+function getCspNonce(): string {
+    static $nonce = null;
+    if ($nonce === null) {
+        $nonce = base64_encode(random_bytes(16));
+    }
+    return $nonce;
+}
+
+/**
+ * Mengirim header Content-Security-Policy berbasis Nonce (Strict CSP).
+ */
+function sendCspHeader(): void {
+    if (headers_sent()) return;
+    $csp = "default-src 'self'; " .
+           "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cdnjs.cloudflare.com; " .
+           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " .
+           "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " .
+           "img-src 'self' data: http: https:; " .
+           "frame-src 'self' https://challenges.cloudflare.com https://www.google.com; " .
+           "connect-src 'self' https://challenges.cloudflare.com https://*.nevaobjects.id https://*.s3.nevaobjects.id;";
+    header("Content-Security-Policy: " . $csp);
+}
+
+// ============================================
 // FUNGSI IP-BASED LOGIN TRACKING
 // ============================================
 
@@ -508,6 +581,40 @@ function countIpFailedAttempts(int $windowMinutes = 30): int {
         return 0;
     }
 }
+
+/**
+ * Memeriksa apakah percobaan aksi sensitif melebihi batas rate limit berbasis DB/IP.
+ *
+ * @param string      $action       Tipe aksi (mis: 'login_failed', '2fa_failed', 'pwd_change_failed')
+ * @param int         $maxAttempts  Batas maksimum percobaan gagal (default: 5)
+ * @param int         $windowMins   Jendela waktu evaluasi dalam menit (default: 15)
+ * @param string|null $username     Username atau identifier target (opsional)
+ * @return bool True jika MELEBIHI batas (terblokir), False jika MASIH DIIZINKAN
+ */
+function isRateLimited(string $action = 'login_failed', int $maxAttempts = 5, int $windowMins = 15, ?string $username = null): bool {
+    try {
+        $ip = getClientIp();
+        $sql = "SELECT COUNT(*) AS cnt FROM login_attempts_ip 
+                WHERE ip_address = ? AND attempt_type = ? AND created_at > NOW() - INTERVAL ? MINUTE";
+        $params = [$ip, $action, $windowMins];
+        $types = "ssi";
+
+        if (!empty($username)) {
+            $sql .= " AND username = ?";
+            $params[] = $username;
+            $types .= "s";
+        }
+
+        $row = dbFetchOne($sql, $params, $types);
+        $count = (int)($row['cnt'] ?? 0);
+
+        return $count >= $maxAttempts;
+    } catch (Exception $e) {
+        error_log("isRateLimited error: " . $e->getMessage());
+        return false;
+    }
+}
+
 
 
 // ============================================
@@ -651,8 +758,8 @@ function csrfField(): string {
          . '">';
 }
 
-function csrfVerify(): bool {
-    $submitted = $_POST['csrf_token'] ?? '';
+function csrfVerify(?string $token = null): bool {
+    $submitted = $token ?? $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? '';
     $stored    = $_SESSION['csrf_token'] ?? '';
 
     if (empty($stored) || empty($submitted)) {
@@ -1118,7 +1225,7 @@ function isSekretaris() {
 
 function requireSekretaris() {
     if (!isSekretaris()) {
-        redirect('admin/dashboard.php', 'Akses ditolak: Hanya Sekretaris atau Superadmin yang diizinkan untuk mengelola Modul Surat.', 'error');
+        redirect('admin/core/dashboard.php', 'Akses ditolak: Hanya Sekretaris atau Superadmin yang diizinkan untuk mengelola Modul Surat.', 'error');
     }
 }
 
@@ -1155,7 +1262,7 @@ function isLogistik() {
 
 function requireLogistik() {
     if (!isLogistik()) {
-        redirect('admin/dashboard.php', 'Akses ditolak: Hanya Sie Logistik, Sekretaris, atau Admin yang diizinkan untuk mengelola Master Barang & Tempat.', 'error');
+        redirect('admin/core/dashboard.php', 'Akses ditolak: Hanya Sie Logistik, Sekretaris, atau Admin yang diizinkan untuk mengelola Master Barang & Tempat.', 'error');
     }
 }
 
@@ -1186,14 +1293,14 @@ function requireEventAccess($kegiatan_id, $allowed_event_roles = []) {
     // Jika bukan admin, cek status kegiatan. Jika selesai, blokir akses.
     $status_row = dbFetchOne("SELECT status FROM kegiatan WHERE id = ?", [(int)$kegiatan_id], "i");
     if ($status_row && $status_row['status'] === 'selesai') {
-        redirect('admin/dashboard.php', 'Akses ditolak: Kegiatan ini sudah selesai dan diarsipkan.', 'error');
+        redirect('admin/core/dashboard.php', 'Akses ditolak: Kegiatan ini sudah selesai dan diarsipkan.', 'error');
         exit();
     }
     
     $event_role = getEventRole($_SESSION['admin_id'] ?? 0, $kegiatan_id);
     // Ketuplat (Ketua Pelaksana) berhak mengakses seluruh divisi/workspace pada kegiatan yang dipimpinnya
     if (!$event_role || ($event_role !== 'ketuplat' && !in_array($event_role, $allowed_event_roles))) {
-        redirect('admin/dashboard.php', 'Akses ditolak: Divisi Anda tidak diizinkan mengakses menu kepanitiaan ini.', 'error');
+        redirect('admin/core/dashboard.php', 'Akses ditolak: Divisi Anda tidak diizinkan mengakses menu kepanitiaan ini.', 'error');
         exit();
     }
     return true;
@@ -1481,6 +1588,33 @@ function truncateText($text, $length = 100, $suffix = '...') {
         $truncated = mb_substr($truncated, 0, $lastSpace);
     }
     return $truncated . $suffix;
+}
+
+if (!function_exists('getDefaultPassword')) {
+    /**
+     * Ambil password default pendaftaran untuk periode tertentu.
+     *
+     * @param  int|null $periode_id
+     * @return string
+     */
+    function getDefaultPassword($periode_id = null) {
+        if ($periode_id === null) {
+            $periode_id = function_exists('getUserPeriode') ? getUserPeriode() : 1;
+        }
+        $periode_id = (int) $periode_id;
+
+        $row = dbFetchOne("SELECT nilai FROM pengaturan WHERE kunci = ?", ['default_password_periode_' . $periode_id]);
+        if ($row && !empty($row['nilai'])) {
+            return $row['nilai'];
+        }
+
+        $global_row = dbFetchOne("SELECT nilai FROM pengaturan WHERE kunci = 'default_password'");
+        if ($global_row && !empty($global_row['nilai'])) {
+            return $global_row['nilai'];
+        }
+
+        return 'Bem2026!';
+    }
 }
 
 // ============================================
@@ -1997,3 +2131,149 @@ function saveLogistikPeminjamanAndDraftLetter($kegiatan_id, $periode_id, $acara,
 
     return $saved_lampiran_id;
 }
+
+/**
+ * Generates OAuth2 Access Token for Google FCM HTTP v1 using Service Account JSON
+ */
+function getFcmOAuthAccessToken(string $jsonKeyPath): ?string {
+    static $cachedToken = null;
+    static $expiresAt = 0;
+
+    if ($cachedToken && time() < ($expiresAt - 60)) {
+        return $cachedToken;
+    }
+
+    if (!file_exists($jsonKeyPath)) {
+        return null;
+    }
+
+    $sa = json_decode(file_get_contents($jsonKeyPath), true);
+    if (!is_array($sa) || empty($sa['private_key']) || empty($sa['client_email'])) {
+        return null;
+    }
+
+    $now = time();
+    $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
+    $payload = json_encode([
+        'iss'   => $sa['client_email'],
+        'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+        'aud'   => 'https://oauth2.googleapis.com/token',
+        'exp'   => $now + 3600,
+        'iat'   => $now
+    ]);
+
+    $base64UrlHeader = rtrim(strtr(base64_encode($header), '+/', '-_'), '=');
+    $base64UrlPayload = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+
+    $signatureData = $base64UrlHeader . "." . $base64UrlPayload;
+    $binarySignature = '';
+
+    $success = openssl_sign($signatureData, $binarySignature, $sa['private_key'], 'SHA256');
+    if (!$success) {
+        return null;
+    }
+
+    $base64UrlSignature = rtrim(strtr(base64_encode($binarySignature), '+/', '-_'), '=');
+    $jwt = $signatureData . "." . $base64UrlSignature;
+
+    $ch = curl_init('https://oauth2.googleapis.com/token');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        'assertion'  => $jwt
+    ]));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200 || !$response) {
+        return null;
+    }
+
+    $tokenData = json_decode($response, true);
+    if (isset($tokenData['access_token'])) {
+        $cachedToken = $tokenData['access_token'];
+        $expiresAt = time() + ($tokenData['expires_in'] ?? 3600);
+        return $cachedToken;
+    }
+
+    return null;
+}
+
+/**
+ * Sends Push Notification via Firebase Cloud Messaging HTTP v1 API
+ */
+function sendFcmNotification($targetUserIds, string $title, string $body, array $dataPayload = []): bool {
+    try {
+        $userIds = is_array($targetUserIds) ? $targetUserIds : [$targetUserIds];
+        $userIds = array_filter(array_map('intval', $userIds));
+        if (empty($userIds)) return false;
+
+        $inClause = implode(',', array_fill(0, count($userIds), '?'));
+        $tokens = dbFetchAll(
+            "SELECT DISTINCT fcm_token FROM fcm_tokens WHERE user_id IN ($inClause)",
+            $userIds,
+            str_repeat('i', count($userIds))
+        );
+
+        if (empty($tokens)) return false;
+
+        $jsonKeyPath = __DIR__ . '/../config/firebase-service-account.json';
+        $accessToken = getFcmOAuthAccessToken($jsonKeyPath);
+        if (!$accessToken) return false;
+
+        $sa = json_decode(file_get_contents($jsonKeyPath), true);
+        $projectId = $sa['project_id'] ?? '';
+        if (empty($projectId)) return false;
+
+        $fcmUrl = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
+
+        $successCount = 0;
+        foreach ($tokens as $tRow) {
+            $fcmToken = $tRow['fcm_token'];
+            $data = [];
+            foreach ($dataPayload as $k => $v) {
+                $data[(string)$k] = (string)$v;
+            }
+            if (!isset($data['click_action'])) {
+                $data['click_action'] = '/admin/core/dashboard.php';
+            }
+
+            $message = [
+                'message' => [
+                    'token' => $fcmToken,
+                    'notification' => [
+                        'title' => $title,
+                        'body'  => $body
+                    ],
+                    'data' => $data
+                ]
+            ];
+
+            $ch = curl_init($fcmUrl);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $accessToken,
+                'Content-Type: application/json'
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            $res = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($code === 200) {
+                $successCount++;
+            }
+        }
+
+        return $successCount > 0;
+    } catch (Throwable $e) {
+        error_log("FCM Send Error: " . $e->getMessage());
+        return false;
+    }
+}
+

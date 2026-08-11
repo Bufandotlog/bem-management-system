@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "162415501575",
+    "project_id": "bem-astawidya-mobile",
+    "storage_bucket": "bem-astawidya-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:162415501575:android:cd8c470e730ac824d7a5a2",
+        "android_client_info": {
+          "package_name": "com.bem.astawidya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIq_Kv2a1N9hoM1ioz6-XPz7NP5TVEtq4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

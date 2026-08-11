@@ -77,6 +77,30 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
             closeSidebar();
+            closeMobileBottomSheet();
         }
     });
 })();
+
+// ===== BOTTOM SHEET DRAWER HANDLER =====
+function toggleMobileBottomSheet() {
+    const sheet = document.getElementById('bottomSheetPanel');
+    const overlay = document.getElementById('bottomSheetOverlay');
+    if (!sheet || !overlay) return;
+    
+    if (sheet.classList.contains('open')) {
+        closeMobileBottomSheet();
+    } else {
+        sheet.classList.add('open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeMobileBottomSheet() {
+    const sheet = document.getElementById('bottomSheetPanel');
+    const overlay = document.getElementById('bottomSheetOverlay');
+    if (sheet) sheet.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}

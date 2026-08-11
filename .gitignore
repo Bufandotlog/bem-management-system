@@ -33,6 +33,12 @@ migrate-direct.php
 init-admin.php
 test-db.php
 dump_pengaturan.php
+astawidya/env-test.php
+config/database-backup.php
+admin/auth/dev-login.php
+admin/system/test-url.php
+admin/system/test_foreach.php
+admin/system/setup-s3-*.php
 
 # ============================================
 # 5. Docker & Server Config

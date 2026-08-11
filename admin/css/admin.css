@@ -990,3 +990,203 @@ body {
 .admin-table tbody tr:hover {
     background: var(--dark-300);
 }
+
+/* =====================================================
+   MOBILE BOTTOM NAVIGATION BAR & BOTTOM SHEET
+   ===================================================== */
+.mobile-bottom-nav {
+    display: none;
+}
+
+.bottom-sheet-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1150;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.bottom-sheet-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.bottom-sheet-panel {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    right: 0;
+    background: #161616;
+    border-top: 1px solid #333;
+    border-radius: 18px 18px 0 0;
+    z-index: 1200;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 16px 20px 28px;
+    box-shadow: 0 -10px 35px rgba(0, 0, 0, 0.7);
+}
+
+.bottom-sheet-panel.open {
+    bottom: 0;
+}
+
+.sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: #444;
+    border-radius: 2px;
+    margin: 0 auto 16px;
+}
+
+.sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #282828;
+}
+
+.sheet-header h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sheet-header h4 i {
+    color: #4A90E2;
+}
+
+.sheet-close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.sheet-close-btn:hover {
+    color: #fff;
+}
+
+.sheet-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sheet-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.sheet-menu-item i {
+    width: 20px;
+    text-align: center;
+    font-size: 1rem;
+    color: var(--text-dim);
+}
+
+.sheet-menu-item.active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-weight: 600;
+}
+
+.sheet-menu-item.active i {
+    color: #fff;
+}
+
+.sheet-menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: #111111;
+        border-top: 1px solid #2a2a2a;
+        z-index: 1000;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .mobile-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: #777;
+        text-decoration: none;
+        font-size: 0.7rem;
+        height: 100%;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        position: relative;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
+    }
+
+    .mobile-nav-item i {
+        font-size: 1.15rem;
+    }
+
+    .mobile-nav-item.active {
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .mobile-nav-item.active i {
+        color: #ffffff;
+    }
+
+    .mobile-nav-badge {
+        position: absolute;
+        top: 5px;
+        right: calc(50% - 18px);
+        background: #e74c3c;
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 10px;
+        line-height: 1.2;
+    }
+
+    body.has-bottom-nav .main-content {
+        padding-bottom: 75px;
+    }
+
+    /* Sembunyikan tombol sidebar yang redundant karena sudah ada di Bottom Navbar / Bottom Sheet */
+    body.has-bottom-nav .sidebar-menu .mobile-nav-redundant {
+        display: none !important;
+    }
+}

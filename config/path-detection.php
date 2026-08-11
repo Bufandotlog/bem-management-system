@@ -42,9 +42,10 @@ function detectBaseUrl() {
         $scriptName = preg_replace('/\.\.+/', '', $scriptName);
         $basePath   = dirname($scriptName);
         
-        // Hapus '/admin' jika script sedang dieksekusi di dalam folder admin
-        if (str_ends_with($basePath, '/admin')) {
-            $basePath = substr($basePath, 0, -6);
+        // Hapus '/admin' (dan subfolder di dalamnya) jika script sedang dieksekusi di dalam folder admin
+        $adminPos = strpos($basePath, '/admin');
+        if ($adminPos !== false) {
+            $basePath = substr($basePath, 0, $adminPos);
         }
     }
 

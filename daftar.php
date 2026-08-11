@@ -65,6 +65,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $status_pendaftaran === 'buka') {
                     $_COOKIE['pendaftar_id'] = $pendaftar_id;
                     
                     $success_msg = "Pendaftaran berhasil dikirim. Silakan tunggu persetujuan dari Admin.";
+
+                    // FCM Notification ke Superadmin & Admin Keanggotaan
+                    $adminUsers = dbFetchAll("SELECT id FROM users WHERE role IN ('superadmin', 'admin_keanggotaan', 'ketua_bem') AND is_active = 1");
+                    $adminIds = array_column($adminUsers, 'id');
+                    if (!empty($adminIds)) {
+                        sendFcmNotification(
+                            $adminIds,
+                            "👤 Pendaftar BEM Baru",
+                            "{$nama_lengkap} ({$username}) mendaftar sebagai pengurus di {$penempatan}.",
+                            [
+                                'click_action' => '/admin/konten/pendaftaran.php?tab=pending',
+                                'type' => 'new_registration'
+                            ]
+                        );
+                    }
                 } catch (Exception $e) {
                     $error_msg = "Terjadi kesalahan sistem saat menyimpan data.";
                 }
@@ -165,10 +180,11 @@ if ($periode_id > 0) {
                                 <p style="color: #ddd;">Halo <strong>'.$nama.'</strong>, pendaftaran Anda dari perangkat ini sedang menunggu peninjauan Admin.</p>
                               </div>';
                     } elseif ($st === 'approved') {
+                        $def_pw = htmlspecialchars(getDefaultPassword($periode_id));
                         echo '<div style="text-align: center; padding: 40px 20px; background: rgba(46, 204, 113, 0.1); border: 1px solid #2ecc71; border-radius: 12px; margin-top: 20px;">
                                 <i class="fas fa-check-circle fa-4x" style="color: #2ecc71; margin-bottom: 20px;"></i>
                                 <h3 style="color: #2ecc71;">Selamat, Anda Diterima!</h3>
-                                <p style="color: #ddd;">Selamat <strong>'.$nama.'</strong>! Pendaftaran Anda telah disetujui. Akun Anda (dengan password default <code>Bem2026!</code>) kini sudah aktif.</p>
+                                <p style="color: #ddd;">Selamat <strong>'.$nama.'</strong>! Pendaftaran Anda telah disetujui. Akun Anda (dengan password default <code>'.$def_pw.'</code>) kini sudah aktif.</p>
                                 <a href="?action=clear_cookie" class="btn-submit" style="display: inline-block; margin-top: 20px; background: rgba(255,255,255,0.1); width: auto;">Tutup & Daftar Baru</a>
                               </div>';
                     } elseif ($st === 'rejected') {
