@@ -1,0 +1,328 @@
+
+<div class="admin-wrapper" style="overflow-x: hidden;">
+
+
+    <!-- Mobile Topbar -->
+    <div class="mobile-topbar">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="mobile-brand">
+            <span>BEM Admin</span>
+                        <small>ASTAWIDYA</small>
+                    </div>
+        <div class="mobile-user">
+            <i class="fas fa-user-circle"></i>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div class="sidebar-header">
+            <h2>BEM Admin</h2>
+            <p>Kabinet Astawidya</p>
+        </div>
+
+                <div class="periode-info">
+            <div class="periode-info-label">Periode Aktif</div>
+            <div class="periode-info-nama">
+                ASTAWIDYA            </div>
+            <div class="periode-info-tahun">
+                2025/2026            </div>
+        </div>
+        
+        
+        <nav class="sidebar-menu">
+            <!-- Dashboard (Direct Link) -->
+            <a href="dashboard.php" class="">
+                <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+            </a>
+
+            <!-- Workspaces (Dinamis) -->
+            
+            <!-- Manajemen Kegiatan (Direct Link) -->
+                        <a href="master-kegiatan.php" class="active">
+                <i class="fas fa-calendar-check"></i><span>Manajemen Kegiatan</span>
+            </a>
+            
+            <!-- Informasi BEM (Dropdown) -->
+                        <div class="sidebar-dropdown ">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-university"></i>
+                    <span>Informasi BEM</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="berita.php" class="">
+                        <i class="fas fa-newspaper"></i><span>Berita</span>
+                    </a>
+                    <a href="kepengurusan.php" class="">
+                        <i class="fas fa-users"></i><span>Kepengurusan</span>
+                    </a>
+                    <a href="kabinet.php" class="">
+                        <i class="fas fa-crown"></i><span>Kabinet</span>
+                    </a>
+                    <a href="visi-misi.php" class="">
+                        <i class="fas fa-bullseye"></i><span>Visi Misi</span>
+                    </a>
+                    <a href="kontak.php" class="">
+                        <i class="fas fa-address-book"></i><span>Kontak</span>
+                    </a>
+                    <a href="upload-struktur.php" class="">
+                        <i class="fas fa-image"></i><span>Upload Struktur</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Surat & Arsip (Dropdown) -->
+                        <div class="sidebar-dropdown ">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-envelope"></i>
+                    <span>Surat &amp; Arsip</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="arsip-surat.php" class="">
+                        <i class="fas fa-folder-open"></i><span>Arsip Surat</span>
+                    </a>
+                    <a href="buat-surat.php" class="">
+                        <i class="fas fa-file-signature"></i><span>Buat Surat Otomatis</span>
+                    </a>
+                    <a href="arsip-berita-acara.php" class="">
+                        <i class="fas fa-file-alt"></i><span>Arsip Berita Acara</span>
+                    </a>
+                    <a href="buat-berita-acara.php" class="">
+                        <i class="fas fa-pen-nib"></i><span>Buat Berita Acara</span>
+                    </a>
+                    <a href="pengaturan-surat.php" class="">
+                        <i class="fas fa-cogs"></i><span>Pengaturan Surat</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- LPJ (Dropdown) -->
+                        <div class="sidebar-dropdown ">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>LPJ</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="arsip-lpj.php" class="">
+                        <i class="fas fa-archive"></i><span>Arsip LPJ</span>
+                    </a>
+                    <a href="buat-lpj.php" class="">
+                        <i class="fas fa-file-medical"></i><span>Buat LPJ</span>
+                    </a>
+                    <a href="pengaturan-lpj.php" class="">
+                        <i class="fas fa-sliders-h"></i><span>Pengaturan LPJ</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Peminjaman Barang (Dropdown) -->
+                        <div class="sidebar-dropdown ">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-boxes"></i>
+                    <span>Peminjaman Barang</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="master-barang.php" class="">
+                        <i class="fas fa-boxes"></i><span>Master Barang</span>
+                    </a>
+                    <a href="master-tempat.php" class="">
+                        <i class="fas fa-map-marker-alt"></i><span>Master Tempat</span>
+                    </a>
+                    <a href="cetak-lampiran.php" class="">
+                        <i class="fas fa-print"></i><span>Cetak Lampiran</span>
+                    </a>
+                    <a href="arsip-lampiran.php" class="">
+                        <i class="fas fa-archive"></i><span>Arsip Lampiran</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Rundown Acara (Dropdown) -->
+                        <div class="sidebar-dropdown ">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Rundown Acara</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="master-penanggung-jawab.php" class="">
+                        <i class="fas fa-user-tie"></i><span>Master PJ</span>
+                    </a>
+                    <a href="master-keterangan.php" class="">
+                        <i class="fas fa-list"></i><span>Master Keterangan</span>
+                    </a>
+                    <a href="master-tempat-kegiatan.php" class="">
+                        <i class="fas fa-map-marked-alt"></i><span>Master Tempat Kegiatan</span>
+                    </a>
+                    <a href="cetak-rundown.php" class="">
+                        <i class="fas fa-calendar-check"></i><span>Cetak Rundown</span>
+                    </a>
+                    <a href="arsip-rundown.php" class="">
+                        <i class="fas fa-clipboard-list"></i><span>Arsip Rundown</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Susunan Panitia (Dropdown) -->
+                        <div class="sidebar-dropdown ">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Susunan Panitia</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="buat-panitia.php" class="">
+                        <i class="fas fa-user-plus"></i><span>Buat Panitia</span>
+                    </a>
+                    <a href="arsip-panitia.php" class="">
+                        <i class="fas fa-archive"></i><span>Arsip Panitia</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Akun (Direct Link) -->
+            <div class="menu-divider"></div>
+            <a href="pengaturan.php" class="">
+                <i class="fas fa-user-cog"></i><span>Profil &amp; Keamanan</span>
+            </a>
+            
+            <!-- Superadmin (Dropdown) -->
+                        <div class="sidebar-dropdown ">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Superadmin</span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="periode-kepengurusan.php" class="">
+                        <i class="fas fa-calendar-alt"></i><span>Periode</span>
+                    </a>
+                    <a href="kelola-admin.php" class="">
+                        <i class="fas fa-user-shield"></i><span>Kelola Admin</span>
+                    </a>
+                    <a href="ganti-periode.php" class="">
+                        <i class="fas fa-sync-alt"></i><span>Ganti Periode</span>
+                    </a>
+                    <a href="audit-log.php" class="">
+                        <i class="fas fa-history"></i><span>Audit Log</span>
+                    </a>
+                </div>
+            </div>
+                    </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <div>
+                    <div class="user-name">
+                        Test E2E Admin                    </div>
+                    <div class="user-role">
+                        superadmin                    </div>
+                </div>
+            </div>
+            <a href="javascript:void(0)" class="logout-btn" onclick="confirmLogout('d83f4c0efb63b433fcfa4deb1c4f6f2c183bb05d216883d099b3631cffc854a9')">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+                <div class="breadcrumb">
+            <i class="fas fa-home"></i>
+            <a href="dashboard.php">Dashboard</a>
+                            <span class="separator">/</span>
+                <span>Master Kegiatan</span>
+            
+                        <span class="separator">|</span>
+            <span class="breadcrumb-periode">
+                <i class="fas fa-calendar-alt"></i>
+                ASTAWIDYA                (2025/2026)
+            </span>
+                    </div>
+        
+<!-- Logout Modal -->
+<div id="logoutModal" class="header-custom-modal">
+    <div class="header-modal-content">
+        <div class="header-modal-header">
+            <i class="fas fa-sign-out-alt"></i>
+            <h4>Konfirmasi Logout</h4>
+        </div>
+        <div class="header-modal-body">
+            <p>Apakah Anda yakin ingin keluar dari sistem admin?</p>
+        </div>
+        <div class="header-modal-footer">
+            <button type="button" class="header-btn-cancel" onclick="closeLogoutModal()">Batal</button>
+            <a href="#" id="confirmLogoutBtn" class="header-btn-confirm" style="text-decoration:none;">Ya, Logout</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.header-custom-modal {
+    display: none;
+    position: fixed;
+    z-index: 10001; /* Di atas sidebar & konten */
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+}
+.header-modal-content {
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 380px;
+    padding: 25px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    animation: headerModalSlide 0.3s ease-out;
+}
+@keyframes headerModalSlide {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.header-modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; color: #4A90E2; }
+.header-modal-header h4 { margin: 0; font-size: 1.2rem; }
+.header-modal-body p { color: #ccc; margin: 0; }
+.header-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+.header-btn-cancel { background: #333; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+.header-btn-confirm { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+</style>
+
+<script>
+function confirmLogout(token) {
+    const modal = document.getElementById('logoutModal');
+    const btn = document.getElementById('confirmLogoutBtn');
+    btn.href = 'logout.php?csrf_token=' + token;
+    modal.style.display = 'flex';
+}
+function closeLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+}
+// Tutup modal jika klik di luar box
+window.onclick = function(event) {
+    const modal = document.getElementById('logoutModal');
+    if (event.target == modal) closeLogoutModal();
+}
+</script><br>
+<b>Fatal error</b>:  Uncaught Error: Call to undefined function getDb() in /var/www/html/bem/admin/master-kegiatan.php:40
+Stack trace:
+#0 {main}
+  thrown in <b>/var/www/html/bem/admin/master-kegiatan.php</b> on line <b>40</b><br>
+</main></div>

@@ -48,12 +48,11 @@ if ($target_id > 0) {
 }
 
 function getLastSequence($jenis, $periode_id) {
-    // Ambil nomor urut TERTINGGI (bukan terakhir di-insert)
-    // CAST prefix sebelum '/' pertama sebagai angka, lalu ambil MAX-nya
+    // Ambil nomor urut TERTINGGI dari Arsip Utama (mengabaikan Staging Index)
     $last = dbFetchOne(
         "SELECT MAX(CAST(SUBSTRING_INDEX(nomor_surat, '/', 1) AS UNSIGNED)) AS max_urut 
          FROM arsip_surat 
-         WHERE periode_id = ? AND jenis_surat = ?",
+         WHERE periode_id = ? AND jenis_surat = ? AND (status_arsip IS NULL OR status_arsip != 'staging')",
         [$periode_id, $jenis], "is"
     );
     return ($last && $last['max_urut']) ? (int)$last['max_urut'] : 0;
@@ -85,6 +84,36 @@ $lampiran_internal_list = dbFetchAll("SELECT id, nama_acara, tanggal_kegiatan, t
 
 // Ambil data arsip rundown (Susunan Acara)
 $rundown_internal_list = dbFetchAll("SELECT id, nama_acara, tanggal_mulai, durasi_hari, tahun FROM arsip_rundown WHERE periode_id = ? ORDER BY created_at DESC", [$periode_id], "i");
+
+// Ambil seluruh kegiatan untuk pilihan Nama Kegiatan / Acara (Hanya status 'persiapan')
+// Sekaligus ambil data Ketua Pelaksana dan Sekretaris Kementeriannya untuk autofill TTD
+$all_kegiatan_list = dbFetchAll(
+    "SELECT 
+        k.id, k.nama_kegiatan, k.status, k.deskripsi, k.tanggal_mulai, k.tanggal_selesai,
+        u_ketua.nama AS ketua_nama,
+        u_ketua.file_ttd AS ketua_ttd,
+        ak_sek.nama AS sekretaris_nama,
+        u_sek.file_ttd AS sekretaris_ttd
+     FROM kegiatan k
+     LEFT JOIN kegiatan_panitia kp ON kp.kegiatan_id = k.id AND kp.event_role = 'ketuplat'
+     LEFT JOIN users u_ketua ON u_ketua.id = kp.user_id
+     LEFT JOIN anggota_kementerian ak ON ak.nama = u_ketua.nama AND ak.periode_id = k.periode_id
+     LEFT JOIN anggota_kementerian ak_sek ON ak_sek.kementerian_id = ak.kementerian_id AND LOWER(ak_sek.jabatan) LIKE '%sekretaris%' AND ak_sek.periode_id = k.periode_id
+     LEFT JOIN users u_sek ON u_sek.nama = ak_sek.nama AND u_sek.periode_id = k.periode_id
+     WHERE k.periode_id = ? AND k.status = 'persiapan' 
+     ORDER BY k.id DESC",
+    [$periode_id], "i"
+);
+$default_kegiatan_id = 0;
+foreach ($all_kegiatan_list as $kg) {
+    if ($kg['status'] === 'persiapan') {
+        $default_kegiatan_id = (int)$kg['id'];
+        break;
+    }
+}
+if ($default_kegiatan_id === 0 && !empty($all_kegiatan_list)) {
+    $default_kegiatan_id = (int)$all_kegiatan_list[0]['id'];
+}
 
 // Proses Simpan / Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -140,6 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $konten_data = [
+            'is_edited'               => 1,
             'sapaan_tujuan'           => sanitizeText($_POST['sapaan_tujuan'] ?? '', 50),
             'nama_kegiatan'           => strip_tags(trim($_POST['nama_kegiatan'] ?? ''), '<b><strong><i><em><span>'),
             'tema'                    => strip_tags(trim($_POST['tema'] ?? ''), '<b><strong><i><em><span>'),
@@ -216,6 +246,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Gagal memproses data surat (JSON Error).';
         } else {
             $created_by = $_SESSION['admin_id'];
+            $raw_keg_id = isset($_POST['kegiatan_id']) ? (int)$_POST['kegiatan_id'] : 0;
+            $kegiatan_id = $raw_keg_id > 0 ? $raw_keg_id : NULL;
+            $status_arsip = ($kegiatan_id !== NULL) ? 'staging' : 'archived';
+
             try {
                 if ($action_type === 'update' && $is_edit) {
                     $old_nomor_surat = $existing['nomor_surat'];
@@ -230,15 +264,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $new_konten['sapaan_tujuan'] = $conn_konten_old['sapaan_tujuan'] ?? '';
                         }
                         $final_konten_json = json_encode($new_konten);
-                        dbQuery("UPDATE arsip_surat SET jenis_surat=?, tanggal_dikirim=?, nomor_surat=?, perihal=?, tujuan=?, tempat_tanggal=?, konten_surat=? WHERE id=? AND periode_id=?", [$jenis_surat, $tanggal_dikirim, $nomor_surat, $perihal, $final_tujuan, $tempat_tanggal, $final_konten_json, $conn_id, $periode_id], "sssssssii");
+                        dbQuery("UPDATE arsip_surat SET jenis_surat=?, tanggal_dikirim=?, nomor_surat=?, perihal=?, tujuan=?, tempat_tanggal=?, konten_surat=?, kegiatan_id=? WHERE id=? AND periode_id=?", [$jenis_surat, $tanggal_dikirim, $nomor_surat, $perihal, $final_tujuan, $tempat_tanggal, $final_konten_json, $kegiatan_id, $conn_id, $periode_id], "sssssssiii");
                     }
                     auditLog('UPDATE', 'arsip_surat', $edit_id, 'Mengubah arsip surat: ' . $nomor_surat);
-                    redirect('admin/cetak-surat.php?id=' . $edit_id, 'Surat berhasil diperbarui!', 'success');
+                    if (($existing['status_arsip'] ?? 'archived') === 'staging' && $kegiatan_id !== NULL) {
+                        redirect('admin/staging-surat.php?kegiatan_id=' . $kegiatan_id, 'Surat berhasil diperbarui!', 'success');
+                    } else {
+                        redirect('admin/cetak-surat.php?id=' . $edit_id, 'Surat berhasil diperbarui!', 'success');
+                    }
                 } else {
-                    dbQuery("INSERT INTO arsip_surat (periode_id, jenis_surat, tanggal_dikirim, nomor_surat, perihal, tujuan, tempat_tanggal, konten_surat, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [$periode_id, $jenis_surat, $tanggal_dikirim, $nomor_surat, $perihal, $tujuan, $tempat_tanggal, $konten_json, $created_by], "isssssssi");
+                    dbQuery("INSERT INTO arsip_surat (periode_id, kegiatan_id, status_arsip, jenis_surat, tanggal_dikirim, nomor_surat, perihal, tujuan, tempat_tanggal, konten_surat, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [$periode_id, $kegiatan_id, $status_arsip, $jenis_surat, $tanggal_dikirim, $nomor_surat, $perihal, $tujuan, $tempat_tanggal, $konten_json, $created_by], "iissssssssi");
                     $new_id = dbLastId();
                     auditLog('CREATE', 'arsip_surat', $new_id, 'Membuat surat baru: ' . $nomor_surat);
-                    redirect('admin/cetak-surat.php?id=' . $new_id, 'Surat berhasil dibuat!', 'success');
+                    resyncStagingNumbers($periode_id);
+                    if ($status_arsip === 'staging') {
+                        redirect('admin/staging-surat.php?kegiatan_id=' . $kegiatan_id, 'Surat berhasil dibuat dan masuk ke Staging Index!', 'success');
+                    } else {
+                        redirect('admin/cetak-surat.php?id=' . $new_id, 'Surat berhasil dibuat dan langsung masuk ke Arsip Surat Utama!', 'success');
+                    }
                 }
                 exit();
             } catch (Exception $e) {
@@ -272,8 +315,10 @@ if ($is_edit || $is_clone) {
         $edit_data['tujuan'] = '';
         $edit_data['sapaan_tujuan'] = '';
     }
+    $selected_kegiatan_id = isset($edit_data['kegiatan_id']) ? (int)$edit_data['kegiatan_id'] : $default_kegiatan_id;
 } else {
     $edit_data = $def;
+    $selected_kegiatan_id = $default_kegiatan_id;
 }
 ?>
 
@@ -699,6 +744,49 @@ if ($is_edit || $is_clone) {
                         <i class="fas fa-info-circle"></i> <strong>Multi-Recipient Group</strong> — Mengedit surat ini akan memperbarui <strong><?php echo $group_count - 1; ?> salinan</strong> lainnya secara otomatis.
                     </div>
                 <?php endif; ?>
+
+                <!-- PILIHAN KEGIATAN / ACARA (GIT-LIKE STAGING FLOW) -->
+                <div class="form-group" style="background: rgba(74, 144, 226, 0.05); padding: 18px; border-radius: 16px; border: 1px solid rgba(74, 144, 226, 0.2); margin-bottom: 24px;">
+                    <label style="color: #8BB9F0; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                        <span><i class="fas fa-calendar-alt" style="color: #4A90E2;"></i> Nama Kegiatan / Acara (Alur Staging Surat)</span>
+                        <span style="font-size: 0.75rem; text-transform: none; color: #aaa; font-weight: normal;">
+                            <i class="fas fa-info-circle"></i> Otomatis mengacu ke kegiatan status <b>Persiapan</b>
+                        </span>
+                    </label>
+                    <select name="kegiatan_id" id="kegiatan_id_select" style="border-color: rgba(74, 144, 226, 0.4); background: #0c1017; color: #fff; font-weight: 600;" onchange="filterLampiran()">
+                        <option value="0" data-nama="" data-nama-asli="" data-tema="" <?php echo ((int)$selected_kegiatan_id === 0) ? 'selected' : ''; ?>>-- Tanpa Kegiatan / Surat Umum (Langsung Masuk Arsip Utama) --</option>
+                        <?php foreach ($all_kegiatan_list as $kg): 
+                            $tgl_mulai = $kg['tanggal_mulai'] ?? '';
+                            $tgl_selesai = $kg['tanggal_selesai'] ?? '';
+                            $durasi = 1;
+                            if ($tgl_mulai && $tgl_selesai && $tgl_mulai !== '0000-00-00' && $tgl_selesai !== '0000-00-00') {
+                                try {
+                                    $d1 = new DateTime($tgl_mulai);
+                                    $d2 = new DateTime($tgl_selesai);
+                                    $durasi = $d1->diff($d2)->days + 1;
+                                } catch (Exception $e) {}
+                            }
+                        ?>
+                            <option value="<?php echo $kg['id']; ?>" 
+                                data-nama="<?php echo htmlspecialchars(strtolower(trim($kg['nama_kegiatan']))); ?>" 
+                                data-nama-asli="<?php echo htmlspecialchars(trim($kg['nama_kegiatan'])); ?>" 
+                                data-tema="<?php echo htmlspecialchars(trim($kg['deskripsi'] ?? '')); ?>" 
+                                data-tgl-mulai="<?php echo htmlspecialchars($tgl_mulai); ?>" 
+                                data-durasi="<?php echo $durasi; ?>"
+                                data-ketua-nama="<?php echo htmlspecialchars(strtoupper($kg['ketua_nama'] ?? '')); ?>"
+                                data-ketua-ttd="<?php echo htmlspecialchars($kg['ketua_ttd'] ?? ''); ?>"
+                                data-sekretaris-nama="<?php echo htmlspecialchars(strtoupper($kg['sekretaris_nama'] ?? '')); ?>"
+                                data-sekretaris-ttd="<?php echo htmlspecialchars($kg['sekretaris_ttd'] ?? ''); ?>"
+                                <?php echo ((int)$selected_kegiatan_id === (int)$kg['id']) ? 'selected' : ''; ?>>
+                                [<?php echo strtoupper($kg['status']); ?>] <?php echo htmlspecialchars($kg['nama_kegiatan']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div style="font-size: 0.75rem; color: #888; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-lightbulb" style="color: #f1c40f;"></i>
+                        <span>Bila diisi, surat akan masuk ke <b>Staging Index</b> (siap disebar). Jika dikosongkan/tanpa kegiatan, surat langsung masuk ke <b>Arsip Utama</b>.</span>
+                    </div>
+                </div>
                 <div class="grid-2">
                     <div class="form-group">
                         <label>Nomor Urut</label>
@@ -718,7 +806,7 @@ if ($is_edit || $is_clone) {
                         <label>Kode Kegiatan</label>
                         <div class="tpl-picker" id="picker-kegiatan">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" id="kode_kegiatan_input" name="kode_kegiatan" class="tpl-search-input" placeholder="Cari atau ketik kode..." value="<?php echo htmlspecialchars($kode_kegiatan); ?>" required <?php echo $is_clone ? 'readonly style="opacity:0.6;"' : ''; ?> onfocus="showTplResults('kegiatan')" onkeyup="filterTpl('kegiatan')">
+                            <input type="text" id="kode_kegiatan_input" name="kode_kegiatan" class="tpl-search-input" placeholder="Cari atau ketik kode..." value="<?php echo htmlspecialchars($kode_kegiatan); ?>" required <?php echo $is_clone ? 'readonly style="opacity:0.6;"' : ''; ?> autocomplete="off" onfocus="showTplResults('kegiatan')" onkeyup="filterTpl('kegiatan')">
                             <div class="tpl-results" id="results-kegiatan">
                                 <?php foreach($list_kegiatan as $k): ?>
                                 <div class="tpl-item" onclick='selectKegiatan(<?php echo json_encode(["nama" => $k["label"], "kode" => $k["perihal_default"]]); ?>)'>
@@ -733,7 +821,7 @@ if ($is_edit || $is_clone) {
                         <label>Perihal Surat</label>
                         <div class="tpl-picker" id="picker-perihal">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" id="input_perihal" name="perihal" class="tpl-search-input" placeholder="Cari atau ketik perihal..." value="<?php echo htmlspecialchars($edit_data['perihal']); ?>" required onfocus="showTplResults('perihal')" onkeyup="filterTpl('perihal')">
+                            <input type="text" id="input_perihal" name="perihal" class="tpl-search-input" placeholder="Cari atau ketik perihal..." value="<?php echo htmlspecialchars($edit_data['perihal']); ?>" required autocomplete="off" onfocus="showTplResults('perihal')" onkeyup="filterTpl('perihal')">
                             <div class="tpl-results" id="results-perihal">
                                 <?php foreach($list_perihal as $p): ?>
                                 <div class="tpl-item" onclick='selectTpl("input_perihal", <?php echo json_encode($p["isi_teks"]); ?>, "perihal")'>
@@ -778,7 +866,7 @@ if ($is_edit || $is_clone) {
                         <label>Kepada Yth (Tujuan)</label>
                         <div class="tpl-picker" id="picker-tujuan">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" class="tpl-search-input" placeholder="Cari template tujuan..." onfocus="showTplResults('tujuan')" onkeyup="filterTpl('tujuan')">
+                            <input type="text" class="tpl-search-input" placeholder="Cari template tujuan..." autocomplete="off" onfocus="showTplResults('tujuan')" onkeyup="filterTpl('tujuan')">
                             <div class="tpl-results" id="results-tujuan">
                                 <?php foreach($list_tujuan as $t): ?>
                                 <div class="tpl-item" onclick='selectTpl("textarea_tujuan", <?php echo json_encode($t["isi_teks"]); ?>, "tujuan")'>
@@ -933,7 +1021,7 @@ if ($is_edit || $is_clone) {
                         <label>Tempat Pelaksanaan</label>
                         <div class="tpl-picker" id="picker-tempat">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" id="input_tempat" name="pelaksanaan_tempat" class="tpl-search-input" placeholder="Cari atau ketik tempat..." value="<?php echo htmlspecialchars($edit_data['pelaksanaan_tempat']); ?>" required onfocus="showTplResults('tempat')" onkeyup="filterTpl('tempat')">
+                            <input type="text" id="input_tempat" name="pelaksanaan_tempat" class="tpl-search-input" placeholder="Cari atau ketik tempat..." value="<?php echo htmlspecialchars($edit_data['pelaksanaan_tempat']); ?>" required autocomplete="off" onfocus="showTplResults('tempat')" onkeyup="filterTpl('tempat')">
                             <div class="tpl-results" id="results-tempat">
                                 <?php foreach($list_tempat as $t): ?>
                                 <div class="tpl-item" onclick='selectTpl("input_tempat", <?php echo json_encode($t["label"]); ?>, "tempat")'>
@@ -973,7 +1061,7 @@ if ($is_edit || $is_clone) {
                         <?php foreach($lampiran_internal_list as $li): 
                             $isSelected = in_array($li['id'], ($konten['lampiran_internal_ids'] ?? []));
                         ?>
-                        <label style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid transparent;" onmouseover="this.style.borderColor='var(--accent-color)'" onmouseout="this.style.borderColor='transparent'">
+                        <label class="lampiran-item-pinjam" data-nama-acara="<?php echo htmlspecialchars(strtolower(trim($li['nama_acara']))); ?>" style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid transparent;" onmouseover="this.style.borderColor='var(--accent-color)'" onmouseout="this.style.borderColor='transparent'">
                             <input type="checkbox" name="lampiran_internal[]" value="<?php echo $li['id']; ?>" <?php echo $isSelected ? 'checked' : ''; ?> style="width:18px; height:18px; accent-color: var(--accent-color);">
                             <div style="flex-grow:1;">
                                 <div style="font-weight: 600; font-size: 0.95rem;"><?php echo htmlspecialchars($li['nama_acara']); ?></div>
@@ -995,7 +1083,7 @@ if ($is_edit || $is_clone) {
                             $isSelectedRundown = in_array($ri['id'], ($konten['rundown_internal_ids'] ?? []));
                             $durasi_text = (int)$ri['durasi_hari'] > 1 ? (int)$ri['durasi_hari'] . ' Hari' : '1 Hari';
                         ?>
-                        <label style="display: flex; align-items: center; gap: 12px; background: rgba(155, 89, 182, 0.05); padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid transparent;" onmouseover="this.style.borderColor='#9b59b6'" onmouseout="this.style.borderColor='transparent'">
+                        <label class="lampiran-item-rundown" data-nama-acara="<?php echo htmlspecialchars(strtolower(trim($ri['nama_acara']))); ?>" style="display: flex; align-items: center; gap: 12px; background: rgba(155, 89, 182, 0.05); padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid transparent;" onmouseover="this.style.borderColor='#9b59b6'" onmouseout="this.style.borderColor='transparent'">
                             <input type="checkbox" name="rundown_internal[]" value="<?php echo $ri['id']; ?>" <?php echo $isSelectedRundown ? 'checked' : ''; ?> style="width:18px; height:18px; accent-color: #9b59b6;">
                             <div style="flex-grow:1;">
                                 <div style="font-weight: 600; font-size: 0.95rem;"><?php echo htmlspecialchars($ri['nama_acara']); ?></div>
@@ -1053,7 +1141,7 @@ if ($is_edit || $is_clone) {
                         <label>Nama Ketua Pelaksana</label>
                         <div class="tpl-picker" id="picker-panitia-ketua">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" name="panitia_ketua" class="tpl-search-input" placeholder="Cari atau ketik nama..." value="<?php echo htmlspecialchars($edit_data['panitia_ketua'] ?? ''); ?>" required style="text-transform: uppercase;" onfocus="showTplResults('panitia-ketua')" onkeyup="filterTpl('panitia-ketua')" oninput="handleCustomName('ketua', this.value)">
+                            <input type="text" name="panitia_ketua" class="tpl-search-input" placeholder="Cari atau ketik nama..." value="<?php echo htmlspecialchars($edit_data['panitia_ketua'] ?? ''); ?>" required style="text-transform: uppercase;" autocomplete="off" onfocus="showTplResults('panitia-ketua')" onkeyup="filterTpl('panitia-ketua')" oninput="handleCustomName('ketua', this.value)">
                             <div class="tpl-results" id="results-panitia-ketua">
                                 <?php foreach($panitia_ketua_list as $pk): ?>
                                 <div class="tpl-item" onclick="selectSavedPanitia('ketua', <?php echo htmlspecialchars(json_encode(['nama' => $pk['nama'], 'ttd' => $pk['file_ttd']])); ?>)">
@@ -1086,7 +1174,7 @@ if ($is_edit || $is_clone) {
                         <label>Nama Sekretaris Pelaksana</label>
                         <div class="tpl-picker" id="picker-panitia-sekretaris">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" name="panitia_sekretaris" class="tpl-search-input" placeholder="Cari atau ketik nama..." value="<?php echo htmlspecialchars($edit_data['panitia_sekretaris'] ?? ''); ?>" required style="text-transform: uppercase;" onfocus="showTplResults('panitia-sekretaris')" onkeyup="filterTpl('panitia-sekretaris')" oninput="handleCustomName('sekretaris', this.value)">
+                            <input type="text" name="panitia_sekretaris" class="tpl-search-input" placeholder="Cari atau ketik nama..." value="<?php echo htmlspecialchars($edit_data['panitia_sekretaris'] ?? ''); ?>" required style="text-transform: uppercase;" autocomplete="off" onfocus="showTplResults('panitia-sekretaris')" onkeyup="filterTpl('panitia-sekretaris')" oninput="handleCustomName('sekretaris', this.value)">
                             <div class="tpl-results" id="results-panitia-sekretaris">
                                 <?php foreach($panitia_sekretaris_list as $ps): ?>
                                 <div class="tpl-item" onclick="selectSavedPanitia('sekretaris', <?php echo htmlspecialchars(json_encode(['nama' => $ps['nama'], 'ttd' => $ps['file_ttd']])); ?>)">
@@ -1330,10 +1418,122 @@ function updatePreviewParagraf() {
     document.getElementById('preview-paragraf-text').innerHTML = html;
 }
 
+function filterLampiran() {
+    const select = document.getElementById('kegiatan_id_select');
+    if (!select) return;
+    const selectedOption = select.options[select.selectedIndex];
+    const namaKegiatan = selectedOption.getAttribute('data-nama') || '';
+    const namaKegiatanAsli = selectedOption.getAttribute('data-nama-asli') || '';
+    const temaKegiatan = selectedOption.getAttribute('data-tema') || '';
+    
+    // Auto-fill Paragraf Pembuka
+    const rteNamaKeg = document.getElementById('rte_nama_keg');
+    const inputNamaKeg = document.getElementById('input_nama_kegiatan');
+    const rteTema = document.getElementById('rte_tema');
+    const inputTema = document.getElementById('input_tema_kegiatan_val');
+    
+    if (rteNamaKeg && inputNamaKeg) {
+        if (namaKegiatanAsli !== '') {
+            rteNamaKeg.innerHTML = namaKegiatanAsli;
+            inputNamaKeg.value = namaKegiatanAsli;
+        } else {
+            rteNamaKeg.innerHTML = '';
+            inputNamaKeg.value = '';
+        }
+    }
+    
+    if (rteTema && inputTema) {
+        if (temaKegiatan !== '') {
+            rteTema.innerHTML = temaKegiatan;
+            inputTema.value = temaKegiatan;
+        } else {
+            rteTema.innerHTML = '';
+            inputTema.value = '';
+        }
+    }
+    
+    if(typeof updatePreviewParagraf === 'function') updatePreviewParagraf();
+    
+    // Auto-fill Waktu & Tempat Pelaksanaan (Hari & Tanggal)
+    const tglMulai = selectedOption.getAttribute('data-tgl-mulai') || '';
+    const durasi = selectedOption.getAttribute('data-durasi') || '1';
+    const inputTglMulai = document.getElementById('tgl-mulai');
+    const selectDurasi = document.getElementById('durasi-hari');
+    const inputCustomHari = document.getElementById('custom-hari');
+    const labelHari = document.getElementById('label-hari');
+    
+    if (inputTglMulai && selectDurasi) {
+        if (tglMulai) {
+            inputTglMulai.value = tglMulai;
+            const durasiInt = parseInt(durasi);
+            if (durasiInt >= 1 && durasiInt <= 5) {
+                selectDurasi.value = durasiInt;
+                if(inputCustomHari) inputCustomHari.style.display = 'none';
+                if(labelHari) labelHari.style.display = 'none';
+            } else {
+                selectDurasi.value = 'custom';
+                if(inputCustomHari) {
+                    inputCustomHari.style.display = 'block';
+                    inputCustomHari.value = durasiInt;
+                }
+                if(labelHari) labelHari.style.display = 'block';
+            }
+        } else {
+            inputTglMulai.value = '';
+            selectDurasi.value = '1';
+            if(inputCustomHari) inputCustomHari.style.display = 'none';
+            if(labelHari) labelHari.style.display = 'none';
+        }
+        if (typeof formatTanggalRange === 'function') formatTanggalRange();
+    }
+    
+    // Auto-fill Panitia (Ketua & Sekretaris Pelaksana)
+    const ketuaNama = selectedOption.getAttribute('data-ketua-nama') || '';
+    const ketuaTtd = selectedOption.getAttribute('data-ketua-ttd') || '';
+    const sekNama = selectedOption.getAttribute('data-sekretaris-nama') || '';
+    const sekTtd = selectedOption.getAttribute('data-sekretaris-ttd') || '';
+    
+    if (typeof selectSavedPanitia === 'function') {
+        if (ketuaNama !== '') {
+            selectSavedPanitia('ketua', { nama: ketuaNama, ttd: ketuaTtd });
+        }
+        if (sekNama !== '') {
+            selectSavedPanitia('sekretaris', { nama: sekNama, ttd: sekTtd });
+        }
+    }
+    
+    document.querySelectorAll('.lampiran-item-pinjam').forEach(item => {
+        if (namaKegiatan === '') {
+            item.style.display = 'flex';
+        } else {
+            const namaAcara = item.getAttribute('data-nama-acara') || '';
+            if (namaAcara.includes(namaKegiatan) || namaKegiatan.includes(namaAcara)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+
+    document.querySelectorAll('.lampiran-item-rundown').forEach(item => {
+        if (namaKegiatan === '') {
+            item.style.display = 'flex';
+        } else {
+            const namaAcara = item.getAttribute('data-nama-acara') || '';
+            if (namaAcara.includes(namaKegiatan) || namaKegiatan.includes(namaAcara)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     if(document.getElementById('preview-paragraf-text')) {
         updatePreviewParagraf();
     }
+    filterLampiran();
 });
 
 function execRTE(cmd) {

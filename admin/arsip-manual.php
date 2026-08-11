@@ -78,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                     $new_id = dbLastId();
                     auditLog('CREATE', 'arsip_surat', $new_id, 'Mencatat Arsip Manual ('.$jenis_surat.'): ' . $nomor_surat);
+                    resyncStagingNumbers($periode_id);
                     redirect('admin/arsip-surat.php?jenis='.$jenis_surat, 'Arsip manual berhasil dicatat!', 'success');
                 }
                 exit();

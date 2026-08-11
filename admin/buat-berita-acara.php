@@ -282,7 +282,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'manfaat' => array_values($manfaat),
                 'bentuk_kegiatan' => $bentuk_kegiatan,
                 'dokumentasi' => $dokumentasi,
-                'tanggal_kegiatan' => $tanggal_kegiatan_raw
+                'tanggal_kegiatan' => $tanggal_kegiatan_raw,
+                'kegiatan_id' => isset($_POST['kegiatan_id']) ? (int)$_POST['kegiatan_id'] : 0
             ];
             
             $konten_json = json_encode($konten_data);
@@ -421,6 +422,19 @@ foreach ($list_kementerian as $kem) {
     }
 }
 
+// Fetch Master Kegiatan
+$all_kegiatan_list = dbFetchAll("
+    SELECT k.*, 
+           (SELECT u.nama FROM kegiatan_panitia kp JOIN users u ON kp.user_id = u.id WHERE kp.kegiatan_id = k.id AND kp.event_role = 'ketuplat' LIMIT 1) as ketua_nama,
+           (SELECT u.nama FROM kegiatan_panitia kp JOIN users u ON kp.user_id = u.id WHERE kp.kegiatan_id = k.id AND kp.event_role = 'sekretaris_kegiatan' LIMIT 1) as sekretaris_nama,
+           (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(nomor_surat, '/', 3), '/', -1) FROM arsip_surat WHERE kegiatan_id = k.id ORDER BY id ASC LIMIT 1) as slug_surat
+    FROM kegiatan k 
+    WHERE k.periode_id = ? AND k.status IN ('persiapan', 'pelaksanaan', 'selesai')
+    ORDER BY k.id DESC
+", [$periode_id], "i");
+
+$selected_kegiatan_id = $edit_data['kegiatan_id'] ?? 0;
+
 $ketua = getKetua($periode_id);
 $fallback_presma = $ketua ? ($ketua['nama'] ?? $ketua['nama_lengkap'] ?? '') : '';
 $def_presma_name = $pengaturan['ttd_presma_name'] ?? $fallback_presma;
@@ -449,12 +463,7 @@ $def = [
     'waktu_mulai' => '08.00',
     'nama_rektor' => 'Dr. H. Sudibyo BO, S.Sos., S.E., M.M.',
     'nama_bupati' => 'Drs. H. Eman Suherman, M.M.',
-    'rincian_kegiatan' => [
-        'Pembukaan',
-        'Menyanyikan Lagu Kebangsaan Indonesia Raya',
-        'Sambutan Rektor INSTBUNAS',
-        'Doa dan Penutup'
-    ],
+    'rincian_kegiatan' => [],
     'tempat_pembuatan' => 'Majalengka',
     'tanggal_pembuatan' => tanggalIndonesia(),
     'ketua_bem_nama' => $def_presma_name,
@@ -961,6 +970,45 @@ if (!empty($tanggal_kegiatan_val)) {
                 <span>Bagian 1: Berita Acara & Rincian Acara</span>
             </div>
             <div class="card-body">
+                <!-- PILIHAN KEGIATAN (INTEGRASI MASTER KEGIATAN) -->
+                <div class="form-group" style="background: rgba(74, 144, 226, 0.05); padding: 18px; border-radius: 16px; border: 1px solid rgba(74, 144, 226, 0.2); margin-bottom: 24px;">
+                    <label style="color: #8BB9F0; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                        <span><i class="fas fa-calendar-alt" style="color: #4A90E2;"></i> Nama Kegiatan / Acara (Integrasi Master Kegiatan)</span>
+                    </label>
+                    <select name="kegiatan_id" id="kegiatan_id_select" style="border-color: rgba(74, 144, 226, 0.4); background: #0c1017; color: #fff; font-weight: 600;" onchange="syncKegiatanData()">
+                        <option value="0" data-nama="" data-tema="" data-tgl="" data-tempat="" data-ketuplat="" <?php echo ((int)$selected_kegiatan_id === 0) ? 'selected' : ''; ?>>-- Tanpa Kegiatan Khusus (Isi Manual) --</option>
+                        <?php foreach ($all_kegiatan_list as $kg): 
+                            $tgl_mulai = $kg['tanggal_mulai'] ?? '';
+                            $tgl_selesai = $kg['tanggal_selesai'] ?? '';
+                            
+                            $tgl_format = '';
+                            if ($tgl_mulai && $tgl_mulai !== '0000-00-00') {
+                                if ($tgl_selesai && $tgl_selesai !== '0000-00-00' && $tgl_selesai !== $tgl_mulai) {
+                                    $tgl_format = $tgl_mulai . ' s.d ' . $tgl_selesai; // We can parse this later in JS
+                                } else {
+                                    $tgl_format = $tgl_mulai;
+                                }
+                            }
+                        ?>
+                            <option value="<?php echo $kg['id']; ?>" 
+                                data-nama="<?php echo htmlspecialchars(trim($kg['nama_kegiatan'])); ?>" 
+                                data-tema="<?php echo htmlspecialchars(trim($kg['deskripsi'] ?? '')); ?>" 
+                                data-tgl="<?php echo htmlspecialchars($tgl_format); ?>" 
+                                data-tgl-raw="<?php echo htmlspecialchars($tgl_mulai); ?>"
+                                data-tempat="<?php echo htmlspecialchars(trim($kg['tempat'] ?? '')); ?>"
+                                data-ketuplat="<?php echo htmlspecialchars(trim($kg['ketua_nama'] ?? '')); ?>"
+                                data-slug="<?php echo htmlspecialchars(trim($kg['slug_surat'] ?? '')); ?>"
+                                <?php echo ((int)$selected_kegiatan_id === (int)$kg['id']) ? 'selected' : ''; ?>>
+                                [<?php echo strtoupper($kg['status']); ?>] <?php echo htmlspecialchars($kg['nama_kegiatan']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div style="font-size: 0.75rem; color: #888; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-lightbulb" style="color: #f1c40f;"></i>
+                        <span>Pilih kegiatan untuk meng-autofill data acara secara otomatis (Nama, Tema, Tanggal, Tempat, dan Penanggung Jawab).</span>
+                    </div>
+                </div>
+
                 <div class="grid-3">
                     <div class="form-group">
                         <label>Nomor Urut Berita Acara</label>
@@ -970,7 +1018,7 @@ if (!empty($tanggal_kegiatan_val)) {
                         <label>Kode / Slug Kegiatan</label>
                         <div class="tpl-picker" id="picker-kegiatan">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" id="kode_kegiatan_input" name="kode_kegiatan" class="tpl-search-input" placeholder="Cari atau ketik kode..." value="<?php echo htmlspecialchars($edit_data['kode_kegiatan']); ?>" required onfocus="showTplResults('kegiatan')" onkeyup="filterTpl('kegiatan')">
+                            <input type="text" id="kode_kegiatan_input" name="kode_kegiatan" class="tpl-search-input" placeholder="Cari atau ketik kode..." value="<?php echo htmlspecialchars($edit_data['kode_kegiatan']); ?>" required autocomplete="off" onfocus="showTplResults('kegiatan')" onkeyup="filterTpl('kegiatan')">
                             <div class="tpl-results" id="results-kegiatan">
                                 <?php foreach($list_kegiatan as $k): ?>
                                 <div class="tpl-item" onclick='selectKegiatan(<?php echo json_encode(["nama" => $k["label"], "kode" => $k["perihal_default"]]); ?>)'>
@@ -1853,6 +1901,54 @@ document.addEventListener('DOMContentLoaded', () => {
     initDateRangePicker();
 });
 
+function syncKegiatanData() {
+    const sel = document.getElementById('kegiatan_id_select');
+    if (!sel) return;
+    const opt = sel.options[sel.selectedIndex];
+    
+    if (opt.value === "0") {
+        return; // Manual mode, don't overwrite
+    }
+    
+    const nama = opt.getAttribute('data-nama');
+    const tema = opt.getAttribute('data-tema');
+    const tglRaw = opt.getAttribute('data-tgl-raw'); // For YYYY-MM-DD input
+    const tempat = opt.getAttribute('data-tempat');
+    const ketuplat = opt.getAttribute('data-ketuplat');
+    const slug = opt.getAttribute('data-slug');
+    
+    if (nama) document.getElementById('input_nama_kegiatan').value = nama;
+    if (tema) document.querySelector('input[name="tema_kegiatan"]').value = tema;
+    if (tglRaw) {
+        const inputTgl = document.getElementById('tgl-mulai');
+        if (inputTgl) {
+            inputTgl.value = tglRaw;
+            if (typeof formatTanggalRange === 'function') formatTanggalRange();
+        }
+    }
+    if (tempat) document.querySelector('input[name="tempat"]').value = tempat;
+    if (ketuplat) document.querySelector('input[name="penanggung_jawab"]').value = ketuplat;
+    
+    // Auto-fill kode/slug (prioritize DB slug from arsip_surat)
+    if (slug) {
+        document.getElementById('kode_kegiatan_input').value = slug;
+    } else if (nama) {
+        let words = nama.replace(/[^a-zA-Z0-9 ]/g, '').split(' ');
+        let kode = '';
+        if (words.length === 1) {
+            kode = words[0].toUpperCase();
+        } else {
+            kode = words.map(w => w.charAt(0)).join('').toUpperCase();
+        }
+        document.getElementById('kode_kegiatan_input').value = kode;
+    }
+    
+    // Auto-fetch rundown/logistik based on the newly set event name
+    if (nama) {
+        tarikDataKegiatan();
+    }
+}
+
 // Fitur Tarik Data dari API
 function tarikDataKegiatan() {
     const namaAcara = document.getElementById('input_nama_kegiatan').value.trim();
@@ -1860,6 +1956,10 @@ function tarikDataKegiatan() {
         alert("Silakan isi Nama Kegiatan terlebih dahulu!");
         return;
     }
+    
+    // Kirim juga kegiatan_id jika ada untuk akurasi penuh
+    const sel = document.getElementById('kegiatan_id_select');
+    const kegiatanId = sel ? sel.value : 0;
     
     // Tampilkan loading state
     const btn = event.currentTarget;
@@ -1879,35 +1979,59 @@ function tarikDataKegiatan() {
                 
                 // Isi rincian_kegiatan dengan Rundown
                 if (data.rundown && data.rundown.rincian && data.rundown.rincian.length > 0) {
-                    const listContainer = document.getElementById('list-rincian');
+                    const listContainer = document.getElementById('rincian-kegiatan-container');
                     if (listContainer) {
                         listContainer.innerHTML = '';
                         data.rundown.rincian.forEach((item, index) => {
-                            if (index === 0) {
-                                listContainer.innerHTML += `
-                                    <div class="dynamic-list-row">
-                                        <input type="text" name="rincian_kegiatan[]" value="${item.replace(/"/g, '&quot;')}" placeholder="Cth: Pembukaan" required>
-                                        <button type="button" class="btn-remove-row" style="visibility:hidden;"><i class="fas fa-times"></i></button>
-                                    </div>
-                                `;
-                            } else {
-                                listContainer.innerHTML += `
-                                    <div class="dynamic-list-row">
-                                        <input type="text" name="rincian_kegiatan[]" value="${item.replace(/"/g, '&quot;')}" placeholder="Cth: Pembukaan" required>
-                                        <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
-                                    </div>
-                                `;
-                            }
+                            listContainer.innerHTML += `
+                                <div class="dynamic-list-row">
+                                    <input type="text" name="rincian_kegiatan[]" value="${item.replace(/"/g, '&quot;')}" placeholder="Cth: Pembukaan" required>
+                                    <button type="button" class="btn-remove-row" onclick="removeRow(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `;
                         });
                         rincianFilled = true;
                         msg += "- Susunan Acara (Rundown)\n";
                     }
                 }
                 
-                if (!rincianFilled && !data.logistik) {
-                    alert("Data Rundown atau Logistik tidak ditemukan untuk kegiatan ini.");
+                // Isi Dokumentasi (Kominfo)
+                if (data.dokumentasi && data.dokumentasi.length > 0) {
+                    data.dokumentasi.forEach((doc, idx) => {
+                        const imgEl = document.getElementById('img_doc_preview_' + idx);
+                        const captionInput = document.querySelector('input[name="doc_caption[' + idx + ']"]');
+                        if (imgEl && doc.image_url) {
+                            imgEl.src = doc.image_url;
+                        }
+                        if (captionInput && doc.caption) {
+                            captionInput.value = doc.caption;
+                        }
+                        const card = document.querySelector('.photo-card[data-index="' + idx + '"]');
+                        if (card && doc.image) {
+                            let hiddenInput = card.querySelector('input[name="doc_existing_img[' + idx + ']"]');
+                            if (!hiddenInput) {
+                                card.insertAdjacentHTML('beforeend', `<input type="hidden" name="doc_existing_img[${idx}]" value="${doc.image.replace(/"/g, '&quot;')}">`);
+                            } else {
+                                hiddenInput.value = doc.image;
+                            }
+                        }
+                    });
+                    msg += "- Dokumentasi Kegiatan (Kominfo)\n";
+                }
+                
+                if (!rincianFilled && !data.logistik && !data.dokumentasi) {
+                    const listContainer = document.getElementById('rincian-kegiatan-container');
+                    if (listContainer) listContainer.innerHTML = '';
+                    
+                    if (!confirm("Rundown tidak tersedia, cek ulang dan batalkan atau terus lanjutkan?")) {
+                        // Jika user pilih batalkan, reset dropdown ke pilihan awal
+                        const sel = document.getElementById('kegiatan_id_select');
+                        if(sel) sel.value = "0";
+                        syncKegiatanData(); // Trigger ulang untuk mengosongkan
+                    }
                 } else {
-                    alert(msg + "Silakan cek kembali form Anda.");
+                    // Berhasil ditarik (silently, tanpa alert yang mengganggu)
+                    console.log(msg + "Berhasil ditarik otomatis.");
                 }
             } else {
                 btn.innerHTML = oldHtml;

@@ -44,6 +44,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 if ($current_page !== 'login.php') {
     requireLogin();
+    autoCommitSentStagingLetters();
 }
 
 $admin_name = $_SESSION['admin_name'] ?? 'Admin';
@@ -54,6 +55,37 @@ $isSuperadmin = $admin_role === 'superadmin'
 
 // Deteksi Role Sekretaris (Toleran terhadap ejaan)
 $isSekretaris = (strpos($admin_role, 'sekretaris') !== false || strpos($admin_role, 'sekertaris') !== false);
+
+$isHumas = false;
+if (strpos($admin_role, 'humas') !== false) {
+    $isHumas = true;
+} else if (isset($_SESSION['admin_nama'])) {
+    $cek_humas = dbFetchOne("
+        SELECT k.id 
+        FROM anggota_kementerian ak 
+        JOIN kementerian k ON ak.kementerian_id = k.id 
+        WHERE ak.nama = ? AND LOWER(k.nama) LIKE '%humas%' 
+        LIMIT 1
+    ", [$_SESSION['admin_nama']]);
+    if ($cek_humas) $isHumas = true;
+}
+
+$isKetuplat = false;
+if (isset($_SESSION['admin_id'])) {
+    $unread_cnt = 0;
+
+    $pending_dokumentasi = dbFetchOne("
+        SELECT COUNT(*) as cnt 
+        FROM kegiatan k 
+        LEFT JOIN arsip_dokumentasi d ON k.id = d.kegiatan_id 
+        WHERE k.status = 'selesai' AND k.periode_id = ? AND d.id IS NULL
+    ", [getUserPeriode()], "i");
+    $pending_dokumentasi_cnt = $pending_dokumentasi['cnt'] ?? 0;
+
+    // Notifikasi Pendaftaran (hanya superadmin)
+    $cek_ketuplat = dbFetchOne("SELECT id FROM kegiatan_panitia WHERE user_id = ? AND event_role = 'ketuplat' LIMIT 1", [$_SESSION['admin_id']], "i");
+    if($cek_ketuplat) $isKetuplat = true;
+}
 
 // ============================================
 // PROTEKSI AKSES ROLE SEKRETARIS
@@ -68,7 +100,7 @@ if (isset($_SESSION['admin_id'])) {
         SELECT k.id, k.nama_kegiatan, kp.event_role 
         FROM kegiatan_panitia kp
         JOIN kegiatan k ON kp.kegiatan_id = k.id
-        WHERE kp.user_id = ? AND k.periode_id = ?
+        WHERE kp.user_id = ? AND k.periode_id = ? AND k.status != 'selesai'
         ORDER BY k.created_at DESC
     ", [$_SESSION['admin_id'], getUserPeriode()]);
 }
@@ -83,6 +115,15 @@ if ($isSekretaris && !isset($user_can_access_all)) {
         redirect('admin/dashboard.php', 'Akses ditolak! Sekretaris hanya diizinkan mengelola persuratan.', 'error');
         exit();
     }
+}
+
+// ============================================
+// Cek Ketersediaan Kegiatan Persiapan
+// ============================================
+$has_persiapan_kegiatan = false;
+$cek_persiapan = dbFetchOne("SELECT id FROM kegiatan WHERE status = 'persiapan' AND periode_id = ? LIMIT 1", [getUserPeriode()]);
+if ($cek_persiapan) {
+    $has_persiapan_kegiatan = true;
 }
 
 // ============================================
@@ -470,12 +511,12 @@ if (isset($page_css)) {
             'kepengurusan.php', 'kepengurusan-edit.php', 'kepengurusan-hapus.php',
             'kabinet.php', 'visi-misi.php', 'kontak.php',
             'upload-struktur.php', 'upload-struktur-hapus.php',
-            'kementerian-anggota.php', 'kementerian-edit.php', 'kementerian-hapus.php'
+            'kementerian-anggota.php', 'kementerian-edit.php', 'kementerian-hapus.php', 'pendaftaran.php'
         ];
         $is_info_bem_active = in_array($current_page, $info_bem_pages);
         
         $surat_pages = [
-            'arsip-surat.php', 'buat-surat.php', 'pengaturan-surat.php', 'cetak-surat.php', 'arsip-manual.php', 'catat-surat-masuk.php',
+            'arsip-surat.php', 'staging-surat.php', 'buat-surat.php', 'pengaturan-surat.php', 'cetak-surat.php', 'arsip-manual.php', 'catat-surat-masuk.php',
             'buat-berita-acara.php', 'arsip-berita-acara.php', 'cetak-berita-acara.php'
         ];
         $is_surat_active = in_array($current_page, $surat_pages);
@@ -491,7 +532,7 @@ if (isset($page_css)) {
         $is_barang_active = in_array($current_page, $barang_pages);
         
         $rundown_pages = [
-            'master-penanggung-jawab.php', 'master-keterangan.php', 'master-tempat-kegiatan.php', 'cetak-rundown.php', 'arsip-rundown.php', 'cetak-rundown-pdf.php'
+            'master-penanggung-jawab.php', 'master-keterangan.php', 'master-tempat-kegiatan.php', 'cetak-rundown.php', 'arsip-rundown.php', 'cetak-rundown-pdf.php', 'workspace-teks-mc.php', 'arsip-teks-mc.php', 'reader-teks-mc.php', 'cetak-teks-mc-pdf.php'
         ];
         $is_rundown_active = in_array($current_page, $rundown_pages);
         
@@ -518,41 +559,96 @@ if (isset($page_css)) {
                 <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
             </a>
 
-            <!-- Workspaces (Dinamis) -->
+            <!-- Workspaces & Monitoring (Dinamis per Kegiatan) -->
             <?php foreach ($my_workspaces as $ws): ?>
             <?php 
                 $active_kegiatan_id = $_GET['kegiatan_id'] ?? 0;
-                $is_ws_active = ($active_kegiatan_id == $ws['id'] && in_array($current_page, ['workspace-panitia.php', 'workspace-rundown.php', 'workspace-logistik.php']));
+                $is_ws_active = ($active_kegiatan_id == $ws['id'] && in_array($current_page, ['buat-panitia.php', 'tamu-undangan.php', 'workspace-panitia.php', 'distribusi-surat.php', 'workspace-rundown.php', 'workspace-teks-mc.php']));
+                $is_mon_active = ($active_kegiatan_id == $ws['id'] && in_array($current_page, ['workspace-rundown.php', 'workspace-teks-mc.php', 'workspace-logistik.php', 'distribusi-surat.php']));
+                $ws_nama_short = htmlspecialchars((strlen($ws['nama_kegiatan']) > 15 ? substr($ws['nama_kegiatan'],0,12).'...' : $ws['nama_kegiatan']));
             ?>
+            
+            <!-- WS Utama (Tugas Langsung) -->
             <div class="sidebar-dropdown <?php echo $is_ws_active ? 'active open' : ''; ?>" style="background: rgba(255,255,255,0.03); border-left: 3px solid #f39c12;">
                 <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
                     <i class="fas fa-briefcase" style="color: #f39c12;"></i>
-                    <span>WS: <?php echo htmlspecialchars((strlen($ws['nama_kegiatan']) > 15 ? substr($ws['nama_kegiatan'],0,12).'...' : $ws['nama_kegiatan'])); ?></span>
+                    <span>WS: <?php echo $ws_nama_short; ?></span>
                     <i class="fas fa-chevron-right chevron-icon"></i>
                 </button>
                 <div class="sidebar-dropdown-menu">
                     <?php if (in_array($ws['event_role'], ['ketuplat', 'sekretaris_panitia'])): ?>
-                    <a href="workspace-panitia.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-panitia.php') ? 'active' : ''; ?>">
+                    <a href="buat-panitia.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'buat-panitia.php') ? 'active' : ''; ?>">
                         <i class="fas fa-users-cog"></i><span>Susunan Panitia</span>
                     </a>
+                    <a href="tamu-undangan.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'tamu-undangan.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-user-tie" style="color: #f1c40f;"></i><span>Tamu Undangan VVIP</span>
+                    </a>
                     <?php endif; ?>
-                    
-                    <?php if (in_array($ws['event_role'], ['ketuplat', 'sie_acara'])): ?>
+
+                    <?php if ($ws['event_role'] === 'sie_acara'): ?>
                     <a href="workspace-rundown.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-rundown.php') ? 'active' : ''; ?>">
                         <i class="fas fa-calendar-alt"></i><span>Rundown Acara</span>
                     </a>
+                    <a href="workspace-teks-mc.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-teks-mc.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-microphone-alt"></i><span>Teks MC</span>
+                    </a>
                     <?php endif; ?>
                     
-                    <?php if (in_array($ws['event_role'], ['ketuplat', 'sie_logistik'])): ?>
+                    <?php if ($ws['event_role'] === 'sie_logistik'): ?>
                     <a href="workspace-logistik.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'workspace-logistik.php') ? 'active' : ''; ?>">
-                        <i class="fas fa-boxes"></i><span>Peminjaman Logistik</span>
+                        <i class="fas fa-boxes"></i><span>Logistik</span>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if ($ws['event_role'] === 'sie_humas'): ?>
+                    <a href="distribusi-surat.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_ws_active && $current_page === 'distribusi-surat.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-paper-plane"></i><span>Distribusi Surat</span>
                     </a>
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- Monitoring Divisi (Khusus Ketuplak) -->
+            <?php if ($ws['event_role'] === 'ketuplat'): ?>
+            <div class="sidebar-dropdown <?php echo $is_mon_active ? 'active open' : ''; ?>" style="background: rgba(255,255,255,0.03); border-left: 3px solid #3498db;">
+                <button type="button" class="sidebar-dropdown-toggle" onclick="toggleSidebarDropdown(this)">
+                    <i class="fas fa-desktop" style="color: #3498db;"></i>
+                    <span>Monitoring: <?php echo $ws_nama_short; ?></span>
+                    <i class="fas fa-chevron-right chevron-icon"></i>
+                </button>
+                <div class="sidebar-dropdown-menu">
+                    <a href="workspace-rundown.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_mon_active && $current_page === 'workspace-rundown.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-calendar-alt"></i><span>Rundown Acara</span>
+                    </a>
+                    <a href="workspace-teks-mc.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_mon_active && $current_page === 'workspace-teks-mc.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-microphone-alt"></i><span>Teks MC</span>
+                    </a>
+                    <a href="workspace-logistik.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_mon_active && $current_page === 'workspace-logistik.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-boxes"></i><span>Logistik</span>
+                    </a>
+                    <a href="distribusi-surat.php?kegiatan_id=<?php echo $ws['id']; ?>" class="<?php echo ($is_mon_active && $current_page === 'distribusi-surat.php') ? 'active' : ''; ?>">
+                        <i class="fas fa-paper-plane"></i><span>Staging Distribusi Surat</span>
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php endforeach; ?>
 
             <!-- Manajemen Kegiatan (Direct Link) -->
+            <?php if ($isHumas): ?>
+                <a href="<?php echo baseUrl('admin/distribusi-surat.php'); ?>" class="nav-item <?php echo strpos($_SERVER['PHP_SELF'], 'distribusi-surat.php') !== false && empty($_GET['kegiatan_id']) ? 'active' : ''; ?>">
+                    <i class="fas fa-paper-plane"></i> Staging Distribusi Surat
+                </a>
+            <?php endif; ?>
+
+            <?php if ($admin_role === 'kominfo' && $pending_dokumentasi_cnt > 0): ?>
+                <a href="<?php echo baseUrl('admin/staging-dokumentasi.php'); ?>" class="nav-item <?php echo $current_page === 'staging-dokumentasi.php' ? 'active' : ''; ?>">
+                    <i class="fas fa-camera"></i> Staging Dokumentasi 
+                    <span class="badge" style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto;"><?php echo $pending_dokumentasi_cnt; ?></span>
+                </a>
+            <?php endif; ?>
+
             <?php if (in_array($admin_role, ['superadmin', 'admin'])): ?>
             <a href="master-kegiatan.php" class="<?php echo $current_page === 'master-kegiatan.php' ? 'active' : ''; ?>">
                 <i class="fas fa-calendar-check"></i><span>Manajemen Kegiatan</span>
@@ -586,6 +682,9 @@ if (isset($page_css)) {
                     <a href="upload-struktur.php" class="<?php echo in_array($current_page, ['upload-struktur.php', 'upload-struktur-hapus.php']) ? 'active' : ''; ?>">
                         <i class="fas fa-image"></i><span>Upload Struktur</span>
                     </a>
+                    <a href="pendaftaran.php" class="<?php echo $current_page === 'pendaftaran.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-user-plus"></i><span>Pendaftaran Anggota</span>
+                    </a>
                 </div>
             </div>
             <?php endif; ?>
@@ -599,8 +698,13 @@ if (isset($page_css)) {
                     <i class="fas fa-chevron-right chevron-icon"></i>
                 </button>
                 <div class="sidebar-dropdown-menu">
+                    <?php if ($has_persiapan_kegiatan): ?>
+                    <a href="staging-surat.php" class="<?php echo $current_page === 'staging-surat.php' ? 'active' : ''; ?>" style="color: #f1c40f; font-weight: bold; background: rgba(241, 196, 15, 0.1); border-left: 3px solid #f1c40f;">
+                        <i class="fas fa-layer-group" style="color: #f1c40f;"></i><span style="color: #f1c40f;">Staging Index Surat</span>
+                    </a>
+                    <?php endif; ?>
                     <a href="arsip-surat.php" class="<?php echo $current_page === 'arsip-surat.php' ? 'active' : ''; ?>">
-                        <i class="fas fa-folder-open"></i><span>Arsip Surat</span>
+                        <i class="fas fa-folder-open"></i><span>Arsip Surat Utama</span>
                     </a>
                     <a href="buat-surat.php" class="<?php echo in_array($current_page, ['buat-surat.php', 'cetak-surat.php']) ? 'active' : ''; ?>">
                         <i class="fas fa-file-signature"></i><span>Buat Surat Otomatis</span>
@@ -688,6 +792,9 @@ if (isset($page_css)) {
                     </a>
                     <a href="arsip-rundown.php" class="<?php echo $current_page === 'arsip-rundown.php' ? 'active' : ''; ?>">
                         <i class="fas fa-clipboard-list"></i><span>Arsip Rundown</span>
+                    </a>
+                    <a href="arsip-teks-mc.php" class="<?php echo $current_page === 'arsip-teks-mc.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-microphone-alt"></i><span>Arsip Teks MC</span>
                     </a>
                 </div>
             </div>

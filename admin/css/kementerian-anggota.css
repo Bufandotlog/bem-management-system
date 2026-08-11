@@ -113,7 +113,7 @@
     max-width: var(--form-max-width);
     margin: 0 auto;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     transition: border-color 0.3s;
 }
 
@@ -166,7 +166,7 @@
     position: relative;
     /* cegah overflow */
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .anggota-item:hover {

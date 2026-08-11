@@ -298,6 +298,7 @@ $download_name = "RUNDOWN - $nama_acara - $tahun";
             <?php endforeach; ?>
         </table>
         
+        <div style="font-size: 10pt; font-style: italic; margin-top: -15px; margin-bottom: 20px;">*Catatan: Rundown acara dapat berubah sewaktu-waktu menyesuaikan kondisi dan kebutuhan di lapangan.</div>
     </div>
 
 </body>

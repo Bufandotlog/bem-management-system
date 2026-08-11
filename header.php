@@ -21,6 +21,7 @@ $pageClassMap = [
     'kepengurusan.php' => 'page-kepengurusan',
     'arsip-periode.php' => 'page-arsip',        // ✅ TAMBAHKAN
     'kontak.php' => 'page-kontak',
+    'daftar.php' => 'page-daftar',
     'berita-detail.php' => 'page-berita-detail',
     'detail-menteri.php' => 'page-detail-menteri'
 ];
@@ -169,4 +170,4 @@ $isHomePage = ($current_page == 'index.php');
     </nav>
     
     <!-- Konten utama - CATATAN: Tag pembuka <main> akan ditutup di footer -->
-    <main></main>
+    <main>

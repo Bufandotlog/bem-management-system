@@ -87,6 +87,31 @@ if (empty($list_barang) && empty($list_tempat)) {
     die("Tidak ada barang atau tempat yang dipilih untuk dicetak.");
 }
 
+// Otomatis simpan ke lampiran_pinjam & generate draft surat Sarpras jika kegiatan_id tersedia
+$pdf_kegiatan_id = (int)($_POST['kegiatan_id'] ?? 0);
+if ($pdf_kegiatan_id > 0) {
+    $periode_id = function_exists('getUserPeriode') ? getUserPeriode() : 1;
+    $items_to_save = [];
+    foreach ($qtys as $item_id => $qty) {
+        if ((int)$qty > 0) {
+            $items_to_save[] = [
+                'id' => $item_id,
+                'nama' => $_POST['item_name'][$item_id] ?? 'Barang',
+                'qty' => (int)$qty
+            ];
+        }
+    }
+    if (!empty($items_to_save)) {
+        $barang_json = json_encode($items_to_save);
+        $target_edit_id = (int)($_POST['edit_id'] ?? 0);
+        $auto_create = isset($_POST['auto_create_surat']) ? (int)$_POST['auto_create_surat'] : 1;
+        $admin_id = $_SESSION['admin_id'] ?? null;
+        saveLogistikPeminjamanAndDraftLetter(
+            $pdf_kegiatan_id, $periode_id, $acara, $tanggal, $tahun, $barang_json, $target_edit_id, $auto_create, $admin_id
+        );
+    }
+}
+
 $download_name = "LAMPIRAN PINJAM BARANG - $acara - $tahun";
 ?>
 

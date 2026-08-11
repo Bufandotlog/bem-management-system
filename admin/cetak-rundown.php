@@ -8,6 +8,7 @@ $periode_id = getUserPeriode();
 $pj_list = dbFetchAll("SELECT * FROM rundown_pj ORDER BY nama_pj ASC");
 $ket_list = dbFetchAll("SELECT * FROM rundown_keterangan ORDER BY nama_keterangan ASC");
 $tempat_list = dbFetchAll("SELECT * FROM rundown_tempat ORDER BY nama_tempat ASC");
+$all_kegiatan_list = dbFetchAll("SELECT id, nama_kegiatan, tanggal_mulai, tanggal_selesai FROM kegiatan WHERE periode_id = ? ORDER BY id DESC", [$periode_id], "i");
 
 // --- INITIALIZE EDIT MODE ---
 $edit_id = isset($_GET['edit_id']) ? (int)$_GET['edit_id'] : 0;
@@ -84,16 +85,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $rundown_json = json_encode($rundown_days);
 
         try {
+            $matching_keg = dbFetchOne("SELECT id FROM kegiatan WHERE (nama_kegiatan = ? OR nama_kegiatan LIKE ?) AND periode_id = ? LIMIT 1", [$nama_acara, '%' . $nama_acara . '%', $periode_id]);
+            $linked_keg_id = $matching_keg ? (int)$matching_keg['id'] : NULL;
+
             if ($target_edit_id > 0) {
-                dbQuery("UPDATE arsip_rundown SET nama_acara = ?, tahun = ?, tanggal_mulai = ?, durasi_hari = ?, rundown_json = ? WHERE id = ? AND periode_id = ?", [
-                    $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $target_edit_id, $periode_id
+                dbQuery("UPDATE arsip_rundown SET kegiatan_id = ?, nama_acara = ?, tahun = ?, tanggal_mulai = ?, durasi_hari = ?, rundown_json = ? WHERE id = ? AND periode_id = ?", [
+                    $linked_keg_id, $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $target_edit_id, $periode_id
                 ]);
                 $success_msg = "Data rundown berhasil diperbarui di arsip.";
                 $edit_id = $target_edit_id;
                 $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$edit_id, $periode_id], "ii");
             } else {
-                $new_id = dbInsert("INSERT INTO arsip_rundown (nama_acara, tahun, tanggal_mulai, durasi_hari, rundown_json, periode_id) VALUES (?, ?, ?, ?, ?, ?)", [
-                    $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $periode_id
+                $new_id = dbInsert("INSERT INTO arsip_rundown (kegiatan_id, nama_acara, tahun, tanggal_mulai, durasi_hari, rundown_json, periode_id) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                    $linked_keg_id, $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $periode_id
                 ]);
                 $success_msg = "Data rundown berhasil disimpan ke arsip.";
                 // Switch to edit mode so subsequent saves update instead of inserting duplicates
@@ -614,7 +618,28 @@ input.barang-qty::-webkit-outer-spin-button {
             <div class="info-grid">
                 <div class="form-group">
                     <label>Nama Acara / Kegiatan</label>
-                    <input type="text" name="nama_acara" id="nama_acara" required placeholder="Contoh: BEM CUP" oninput="updateDayNumbers()" value="<?php echo $edit_data ? htmlspecialchars($edit_data['nama_acara']) : ''; ?>">
+                    <div style="display: flex; gap: 10px;">
+                        <select id="kegiatan_picker" style="flex: 1;" onchange="syncKegiatanToRundown()">
+                            <option value="">-- Ketik Manual atau Pilih Kegiatan --</option>
+                            <?php foreach ($all_kegiatan_list as $kg): 
+                                $durasi = 1;
+                                if (!empty($kg['tanggal_mulai']) && !empty($kg['tanggal_selesai'])) {
+                                    try {
+                                        $d1 = new DateTime($kg['tanggal_mulai']);
+                                        $d2 = new DateTime($kg['tanggal_selesai']);
+                                        $durasi = $d1->diff($d2)->days + 1;
+                                    } catch (Exception $e) {}
+                                }
+                            ?>
+                                <option value="<?php echo htmlspecialchars(trim($kg['nama_kegiatan'])); ?>" 
+                                    data-tgl="<?php echo htmlspecialchars($kg['tanggal_mulai'] ?? ''); ?>"
+                                    data-durasi="<?php echo $durasi; ?>">
+                                    <?php echo htmlspecialchars($kg['nama_kegiatan']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <input type="text" name="nama_acara" id="nama_acara" required placeholder="Contoh: BEM CUP" oninput="updateDayNumbers()" value="<?php echo $edit_data ? htmlspecialchars($edit_data['nama_acara']) : ''; ?>" style="flex: 2;">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Tahun Periode</label>
@@ -909,7 +934,7 @@ function addRow(dayId, afterRow = null) {
                     <option value="tempat">Tmpt</option>
                 </select>
                 <div class="tpl-picker" style="flex: 1; min-width: 150px;">
-                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                     <div class="tpl-results">
                         ${ketList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                     </div>
@@ -918,7 +943,7 @@ function addRow(dayId, afterRow = null) {
         </td>
         <td data-label="PENANGGUNG JAWAB">
             <div class="tpl-picker" style="width: 100%;">
-                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                 <div class="tpl-results">
                     ${pjList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                 </div>
@@ -989,7 +1014,7 @@ function addParallelRow(btn, dayId) {
                     <option value="tempat">Tmpt</option>
                 </select>
                 <div class="tpl-picker" style="flex: 1; min-width: 150px;">
-                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                     <div class="tpl-results">
                         ${ketList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                     </div>
@@ -998,7 +1023,7 @@ function addParallelRow(btn, dayId) {
         </td>
         <td data-label="PENANGGUNG JAWAB">
             <div class="tpl-picker" style="width: 100%;">
-                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                 <div class="tpl-results">
                     ${pjList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                 </div>
@@ -1415,6 +1440,29 @@ function submitPrint() {
     document.body.appendChild(clonedForm);
     clonedForm.submit();
     setTimeout(() => clonedForm.remove(), 2000);
+}
+
+function syncKegiatanToRundown() {
+    const sel = document.getElementById('kegiatan_picker');
+    if (!sel || sel.value === "") return;
+    
+    const opt = sel.options[sel.selectedIndex];
+    const nama = opt.value;
+    const tgl = opt.getAttribute('data-tgl');
+    const durasi = opt.getAttribute('data-durasi');
+    
+    if (nama) {
+        document.getElementById('nama_acara').value = nama;
+        updateDayNumbers();
+    }
+    if (tgl) {
+        document.getElementById('tanggal_mulai').value = tgl;
+    }
+    if (durasi) {
+        document.getElementById('durasi_hari').value = durasi;
+    }
+    
+    generateDays();
 }
 
 // --- Form validation on save ---

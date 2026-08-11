@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEM Kabinet Astawidya - Beranda</title>
+    
+    <!-- ===== FAVICON ===== -->
+    <!-- SVG untuk browser modern -->
+    <link rel="icon" type="image/svg+xml" href="http://localhost:8000/assets/images/favicon/favicon.svg">
+    
+    <!-- Fallback ICO untuk browser lama -->
+    <link rel="icon" type="image/x-icon" href="http://localhost:8000/assets/images/favicon/favicon.ico">
+    
+    <!-- PNG untuk berbagai ukuran -->
+    <link rel="icon" type="image/png" sizes="96x96" href="http://localhost:8000/assets/images/favicon/favicon-96x96.png">
+    
+    <!-- Apple Touch Icon untuk iOS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="http://localhost:8000/assets/images/favicon/apple-touch-icon.png">
+    
+    <!-- Manifest untuk PWA -->
+    <link rel="manifest" href="http://localhost:8000/assets/images/favicon/site.webmanifest">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#4A90E2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- CSS - Gunakan assetUrl() -->
+        <link rel="stylesheet" href="http://localhost:8000/assets/css/style.css?v=1783076564">
+    
+    <!-- TAMBAHKAN: CSS per halaman -->
+        <link rel="stylesheet" href="http://localhost:8000/assets/css/berita.css?v=1783076564">
+        <link rel="stylesheet" href="http://localhost:8000/assets/css/kepengurusan.css?v=1783076564">
+    
+    <!-- External CSS (tetap) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Meta tags untuk SEO -->
+    <meta name="description" content="Website resmi BEM Kabinet ASTAWIDYA - Delapan Arah Kejayaan">
+    <meta property="og:title" content="BEM Kabinet Astawidya">
+    <meta property="og:image" content="https://s3.nevaobjects.id/bucket-bem/kabinet/2026-02-28_112826_69a26eea886fc.png?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=FP60HXUVG5A4UZPTTRGL%2F20260801%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260801T034520Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Signature=f6489ffc60b3796feddb7dee39026e9894308bd223a793682dbbc1e921af519a">
+</head>
+<body class="">
+
+    <!-- HERO SECTION - Tampil di semua halaman -->
+    <section class="hero">
+        <div class="hero-background">
+                            <!-- PERBAIKAN: Gunakan uploadUrl() -->
+                <img src="https://s3.nevaobjects.id/bucket-bem/kabinet/cf1efe9e01d4c58bb48714b799e3869f.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=FP60HXUVG5A4UZPTTRGL%2F20260801%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260801T034520Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Signature=229a53fc4ca06bee1957837c0bdbd29fa48ce702684e16dce23771843f3c5d95" 
+                     alt="Foto Bersama BEM Kabinet ASTAWIDYA"
+                     loading="lazy">
+                    </div>
+        <div class="hero-gradient-overlay"></div>
+        
+        <!-- Konten hero - HANYA TAMPIL DI INDEX -->
+            </section>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <!-- PERBAIKAN: Gunakan baseUrl() untuk link -->
+                <a href="http://localhost:8000/">
+                                            <!-- PERBAIKAN: Gunakan uploadUrl() -->
+                        <img src="https://s3.nevaobjects.id/bucket-bem/kabinet/2026-02-28_112826_69a26eea886fc.png?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=FP60HXUVG5A4UZPTTRGL%2F20260801%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260801T034520Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Signature=f6489ffc60b3796feddb7dee39026e9894308bd223a793682dbbc1e921af519a" 
+                             alt="Logo BEM" 
+                             class="logo-img"
+                             loading="lazy">
+                                        <span>BEM <span class="text-biru">INST</span>BUNAS</span>
+                </a>
+            </div>
+            
+            <!-- Menu Navigasi - SUDAH DITAMBAH ARSIP -->
+            <ul class="nav-menu">
+                <li class="">
+                    <a href="http://localhost:8000/">Beranda</a>
+                </li>
+                <li class="">
+                    <a href="http://localhost:8000/berita.php">Berita</a>
+                </li>
+                <li class="">
+                    <a href="http://localhost:8000/kepengurusan.php">Kepengurusan</a>
+                </li>
+                <!-- ✅ TAMBAHKAN: Menu Arsip -->
+                <li class="">
+                    <a href="http://localhost:8000/arsip-periode.php">Arsip</a>
+                </li>
+                <li class="">
+                    <a href="http://localhost:8000/kontak.php">Kontak</a>
+                </li>
+                <li class="active">
+                    <a href="http://localhost:8000/daftar.php" style="color: #4A90E2; font-weight: bold;">Daftar</a>
+                </li>
+            </ul>
+            
+            <!-- Mobile Menu Toggle -->
+            <div class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Konten utama - CATATAN: Tag pembuka <main> akan ditutup di footer -->
+    <main></main>
+Warning: Undefined array key "REQUEST_METHOD" in /var/www/html/bem/daftar.php on line 13
+
+<style>
+.daftar-container {
+    max-width: 800px;
+    margin: 50px auto;
+    background: #0f1217;
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid #2a3545;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ccc;
+}
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 12px;
+    background: #1a1e24;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+}
+.btn-submit {
+    background: linear-gradient(135deg, #e52d27 0%, #b31217 100%);
+    color: #fff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+}
+.alert-success { background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+.alert-danger { background: rgba(231, 76, 60, 0.2); color: #e74c3c; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+</style>
+
+<div class="container">
+    <div class="daftar-container">
+        <h2 style="text-align: center; margin-bottom: 30px;">Pendaftaran Pengurus BEM</h2>
+
+                    <div style="text-align: center; padding: 50px 20px;">
+                <i class="fas fa-lock fa-4x text-merah" style="margin-bottom: 20px;"></i>
+                <h3>Mohon Maaf, Pendaftaran Saat Ini Ditutup.</h3>
+                <p style="color: #888;">Silakan hubungi administrator jika ini adalah sebuah kesalahan.</p>
+            </div>
+            </div>
+</div>
+
+<script>
+function toggleKementerian() {
+    var val = document.getElementById('penempatan').value;
+    var kemGroup = document.getElementById('kementerian_group');
+    var kemSelect = document.getElementById('kementerian_id');
+    
+    if (val === 'Kementerian') {
+        kemGroup.style.display = 'block';
+        kemSelect.setAttribute('required', 'required');
+    } else {
+        kemGroup.style.display = 'none';
+        kemSelect.removeAttribute('required');
+        kemSelect.value = '';
+    }
+}
+</script>
+
+    </main>
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>BEM Kabinet Astawidya</h3>
+                <p>Mewujudkan BEM yang responsif, aspiratif, dan inovatif dalam membangun mahasiswa yang berkarakter, berkualitas, dan bermanfaat bagi masyarakat..</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/beminstbunas?igsh=MTQ3ZmxndmJhZ24xMA=="><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@bem.instbunas?is_from_webapp=1&sender_device=pc"><i class="fab fa-tiktok"></i></a>
+                    <!-- <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a> -->
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Tautan Cepat</h3>
+                <a href="index.php">Beranda</a>
+                <a href="berita.php">Berita</a>
+                <a href="kepengurusan.php">Kepengurusan</a>
+                <a href="kontak.php">Kontak</a>
+            </div>
+            <div class="footer-section">
+                <h3>Kontak</h3>
+                <p><i class="fas fa-map-marker-alt"></i> Jl. Siliwangi No. 121, Desa Heuleut, Kecamatan Kadipaten, Kabupaten Majalengka, Jawa Barat, 45452</p>
+                <p><i class="fas fa-phone"></i> +62 838-0585-3345</p>
+                <p><i class="fas fa-envelope"></i> beminstbunasastawidya@gmail.com</p>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2025 BEM Kabinet Astawidya.BFN.v1.2.27. Hak Cipta Dilindungi.</p>
+        </div>
+    </footer>
+
+    <!-- HAPUS SCRIPT LAMA INI:
+    <script>
+        // Mobile menu toggle
+        document.querySelector('.menu-toggle').addEventListener('click', function() {
+            document.querySelector('.nav-menu').classList.toggle('active');
+        });
+
+        // Active menu highlight
+        const currentPage = window.location.pathname.split('/').pop();
+        const navLinks = document.querySelectorAll('.nav-menu a');
+        navLinks.forEach(link => {
+            const linkPage = link.getAttribute('href');
+            if (currentPage === linkPage || (currentPage === '' && linkPage === 'index.php')) {
+                link.classList.add('active');
+            }
+        });
+    </script>
+    <script src="script.js"></script>
+    -->
+
+    <!-- GANTI DENGAN YANG INI - JavaScript Modular -->
+    
+    <!-- 1. Jquery (jika diperlukan, opsional) -->
+    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+    
+    <!-- 2. Font Awesome (sudah di header, tapi amannya di sini juga) -->
+    <!-- <script src="https://kit.fontawesome.com/your-kit.js"></script> -->
+    
+    <!-- 3. JavaScript Modular - menggunakan type="module" -->
+        <script type="module" src="http://localhost:8000/assets/js/script.js?v=1783076564"></script>
+    
+    <!-- 4. Fallback untuk browser lama (jika diperlukan) -->
+    <script nomodule src="assets/js/fallback.js"></script>
+    
+    <!-- 5. Inisialisasi tambahan jika diperlukan (opsional) -->
+    <script>
+        // Fallback sederhana jika module tidak jalan
+        (function() {
+            if (!window.fetch) {
+                console.warn('Browser lama terdeteksi, menggunakan fallback');
+                // Browser lama, fallback sudah disediakan
+            }
+        })();
+    </script>
+</body>
+</html>

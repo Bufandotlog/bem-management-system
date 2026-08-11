@@ -51,15 +51,38 @@ function getS3Client() {
  */
 function uploadToS3($localFile, $s3Key, $mimeType) {
     try {
+        if (!file_exists($localFile) || !is_readable($localFile)) {
+            $_SESSION['error'] = "Gagal membaca file (File tidak ada atau permissions salah).";
+            return false;
+        }
+        
+        clearstatcache(true, $localFile);
+        $size = filesize($localFile);
+        if ($size === false || $size === 0) {
+            $_SESSION['error'] = "File kosong atau gagal membaca ukuran file.";
+            return false;
+        }
+
         $s3 = getS3Client();
         $bucket = $_ENV['S3_BUCKET'] ?? '';
         
+        $stream = fopen($localFile, 'r');
+        if (!$stream) {
+            $_SESSION['error'] = "Gagal membuka stream file lokal.";
+            return false;
+        }
+
         $s3->putObject([
-            'Bucket'      => $bucket,
-            'Key'         => $s3Key,
-            'SourceFile'  => $localFile,
-            'ContentType' => $mimeType,
+            'Bucket'        => $bucket,
+            'Key'           => $s3Key,
+            'Body'          => $stream,
+            'ContentLength' => (int)$size,
+            'ContentType'   => $mimeType,
         ]);
+        
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
         return true;
     } catch (Exception $e) {
         error_log("uploadToS3 Error: " . $e->getMessage());
@@ -210,6 +233,27 @@ try {
     } catch (Exception $ex) {
         // Abaikan jika database belum siap
     }
+}
+
+// Auto-migration: Pastikan kolom waktu dan tempat ada di tabel kegiatan
+try {
+    dbQuery("SELECT waktu_pelaksanaan, tempat_pelaksanaan FROM kegiatan LIMIT 1");
+} catch (Exception $e) {
+    try {
+        dbQuery("ALTER TABLE kegiatan ADD COLUMN waktu_pelaksanaan VARCHAR(100) DEFAULT NULL, ADD COLUMN tempat_pelaksanaan TEXT DEFAULT NULL");
+    } catch (Exception $ex) {}
+}
+
+// Auto-migration: Pastikan kolom file_ttd ada di tabel users dan pendaftaran_anggota
+try {
+    dbQuery("SELECT file_ttd FROM users LIMIT 1");
+} catch (Exception $e) {
+    try { dbQuery("ALTER TABLE users ADD COLUMN file_ttd VARCHAR(255) DEFAULT NULL"); } catch (Exception $ex) {}
+}
+try {
+    dbQuery("SELECT file_ttd FROM pendaftaran_anggota LIMIT 1");
+} catch (Exception $e) {
+    try { dbQuery("ALTER TABLE pendaftaran_anggota ADD COLUMN file_ttd VARCHAR(255) DEFAULT NULL"); } catch (Exception $ex) {}
 }
 
 // Auto-migration: Pastikan kolom fungsi ada di tabel kementerian
@@ -377,6 +421,34 @@ try {
         }
     } catch (Exception $ex) {}
 }
+
+// Auto-migration: Pastikan kolom kegiatan_id dan status_arsip ada di tabel arsip_surat
+try {
+    dbQuery("SELECT kegiatan_id FROM arsip_surat LIMIT 1");
+} catch (Exception $e) {
+    try {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery("ALTER TABLE arsip_surat ADD COLUMN kegiatan_id INTEGER DEFAULT NULL");
+        } else {
+            dbQuery("ALTER TABLE arsip_surat ADD COLUMN kegiatan_id INT(11) DEFAULT NULL AFTER periode_id");
+        }
+    } catch (Exception $ex) {}
+}
+
+try {
+    dbQuery("SELECT status_arsip FROM arsip_surat LIMIT 1");
+} catch (Exception $e) {
+    try {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery("ALTER TABLE arsip_surat ADD COLUMN status_arsip VARCHAR(20) DEFAULT 'archived'");
+        } else {
+            dbQuery("ALTER TABLE arsip_surat ADD COLUMN status_arsip ENUM('staging','archived') NOT NULL DEFAULT 'archived'");
+        }
+    } catch (Exception $ex) {}
+}
+
 
 // ============================================
 // FUNGSI IP-BASED LOGIN TRACKING
@@ -753,7 +825,7 @@ function uploadFile($file, $folder = 'umum') {
                 imagesavealpha($resized, true);
                 
                 imagecopyresampled($resized, $img, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
-                imagedestroy($img);
+                @imagedestroy($img);
                 $img = $resized;
             } else {
                 imagealphablending($img, false);
@@ -761,12 +833,12 @@ function uploadFile($file, $folder = 'umum') {
             }
 
             if (@imagewebp($img, $destination, 75)) {
-                imagedestroy($img);
+                @imagedestroy($img);
                 chmod($destination, 0644);
                 $success = true;
                 error_log("uploadFile: SUKSES (Image converted to WebP) - {$destination} | path: {$relativePath}");
             } else {
-                if ($img) imagedestroy($img);
+                if ($img) @imagedestroy($img);
             }
         }
     }
@@ -782,6 +854,17 @@ function uploadFile($file, $folder = 'umum') {
         error_log("uploadFile: SUKSES - {$destination} | path: {$relativePath}");
     }
 
+    // Fallback if image conversion left a 0-byte file despite returning true
+    if ($success && file_exists($destination) && filesize($destination) === 0) {
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            // just in case tmp_name is gone, we can't do much
+            error_log("uploadFile: imagewebp created 0-byte file, fallback move_uploaded_file failed.");
+        } else {
+            error_log("uploadFile: imagewebp created 0-byte file, successfully recovered using move_uploaded_file.");
+            chmod($destination, 0644);
+        }
+    }
+
     // Jika menggunakan Object Storage, unggah ke S3 dan hapus lokal
     if (($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
         $mimeType = $is_image ? 'image/webp' : ($file['type'] ?? 'application/octet-stream');
@@ -792,9 +875,9 @@ function uploadFile($file, $folder = 'umum') {
             return $relativePath;
         } else {
             // Jika upload S3 gagal, hapus file lokal dan return false
-            if (file_exists($destination)) {
-                @unlink($destination);
-            }
+            // if (file_exists($destination)) {
+            //     @unlink($destination);
+            // }
             return false;
         }
     }
@@ -1036,6 +1119,44 @@ function isSekretaris() {
 function requireSekretaris() {
     if (!isSekretaris()) {
         redirect('admin/dashboard.php', 'Akses ditolak: Hanya Sekretaris atau Superadmin yang diizinkan untuk mengelola Modul Surat.', 'error');
+    }
+}
+
+function isKetuplat() {
+    $role = $_SESSION['admin_role'] ?? '';
+    if (in_array($role, ['superadmin', 'admin', 'sekretaris']) || !empty($_SESSION['admin_can_access_all'])) {
+        return true;
+    }
+    $user_id = $_SESSION['admin_id'] ?? 0;
+    if (!$user_id) return false;
+
+    $row = dbFetchOne(
+        "SELECT 1 FROM kegiatan_panitia WHERE user_id = ? AND event_role = 'ketuplat' LIMIT 1",
+        [(int)$user_id], "i"
+    );
+    return !empty($row);
+}
+
+
+function isLogistik() {
+    $role = $_SESSION['admin_role'] ?? '';
+    if (in_array($role, ['superadmin', 'admin', 'sekretaris']) || !empty($_SESSION['admin_can_access_all'])) {
+        return true;
+    }
+    $user_id = $_SESSION['admin_id'] ?? 0;
+    if (!$user_id) return false;
+
+    $row = dbFetchOne(
+        "SELECT 1 FROM kegiatan_panitia WHERE user_id = ? AND event_role IN ('sie_logistik', 'ketuplat') LIMIT 1",
+        [(int)$user_id], "i"
+    );
+    return !empty($row);
+}
+
+function requireLogistik() {
+    if (!isLogistik()) {
+        redirect('admin/dashboard.php', 'Akses ditolak: Hanya Sie Logistik, Sekretaris, atau Admin yang diizinkan untuk mengelola Master Barang & Tempat.', 'error');
+    }
 }
 
 // ============================================
@@ -1062,8 +1183,16 @@ function requireEventAccess($kegiatan_id, $allowed_event_roles = []) {
         return true; 
     }
     
+    // Jika bukan admin, cek status kegiatan. Jika selesai, blokir akses.
+    $status_row = dbFetchOne("SELECT status FROM kegiatan WHERE id = ?", [(int)$kegiatan_id], "i");
+    if ($status_row && $status_row['status'] === 'selesai') {
+        redirect('admin/dashboard.php', 'Akses ditolak: Kegiatan ini sudah selesai dan diarsipkan.', 'error');
+        exit();
+    }
+    
     $event_role = getEventRole($_SESSION['admin_id'] ?? 0, $kegiatan_id);
-    if (!$event_role || !in_array($event_role, $allowed_event_roles)) {
+    // Ketuplat (Ketua Pelaksana) berhak mengakses seluruh divisi/workspace pada kegiatan yang dipimpinnya
+    if (!$event_role || ($event_role !== 'ketuplat' && !in_array($event_role, $allowed_event_roles))) {
         redirect('admin/dashboard.php', 'Akses ditolak: Divisi Anda tidak diizinkan mengakses menu kepanitiaan ini.', 'error');
         exit();
     }
@@ -1228,8 +1357,8 @@ function getSekretarisUmum($periode_id = null) {
             ? "SELECT * FROM anggota_bph WHERE bph_id = ? AND periode_id = ? ORDER BY urutan"
             : "SELECT * FROM anggota_bph WHERE bph_id = ? ORDER BY urutan";
         $data['anggota'] = dbFetchAll($sql, $params, $types);
-        $data['tugas']   = json_decode($data['tugas'],  true) ?? [];
-        $data['proker']  = json_decode($data['proker'], true) ?? [];
+        $data['tugas']   = json_decode($data['tugas'] ?? '[]',  true) ?? [];
+        $data['proker']  = json_decode($data['proker'] ?? '[]', true) ?? [];
     }
     return $data;
 }
@@ -1247,8 +1376,8 @@ function getBendaharaUmum($periode_id = null) {
             ? "SELECT * FROM anggota_bph WHERE bph_id = ? AND periode_id = ? ORDER BY urutan"
             : "SELECT * FROM anggota_bph WHERE bph_id = ? ORDER BY urutan";
         $data['anggota'] = dbFetchAll($sql, $params, $types);
-        $data['tugas']   = json_decode($data['tugas'],  true) ?? [];
-        $data['proker']  = json_decode($data['proker'], true) ?? [];
+        $data['tugas']   = json_decode($data['tugas'] ?? '[]',  true) ?? [];
+        $data['proker']  = json_decode($data['proker'] ?? '[]', true) ?? [];
     }
     return $data;
 }
@@ -1401,4 +1530,470 @@ function debugVar($data, $die = false) {
     print_r($data);
     echo '</pre>';
     if ($die) die('<b style="color:red;">--- DEBUG STOP ---</b>');
+}
+function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
+    // 1. Ambil data rundown jika ada
+    $rundown = dbFetchOne("SELECT id, rundown_json FROM arsip_rundown WHERE kegiatan_id = ? AND periode_id = ? LIMIT 1", [$kegiatan_id, $periode_id]);
+
+    $kegiatan = dbFetchOne("SELECT * FROM kegiatan WHERE id = ?", [$kegiatan_id]);
+    if (!$kegiatan) return;
+
+    $ketuplat_nama = '';
+    $sekretaris_nama = '';
+    $panitia_inti = dbFetchAll("SELECT u.nama, p.event_role FROM kegiatan_panitia p JOIN users u ON p.user_id = u.id WHERE p.kegiatan_id = ? AND p.event_role IN ('ketuplat', 'ketua_pelaksana', 'sekretaris', 'sekretaris_panitia')", [$kegiatan_id]);
+    foreach ($panitia_inti as $p) {
+        if (in_array($p['event_role'], ['sekretaris', 'sekretaris_panitia'])) $sekretaris_nama = $p['nama'];
+        else $ketuplat_nama = $p['nama'];
+    }
+
+    // Tentukan target default BPM
+    $bpm_target = dbFetchOne(
+        "SELECT isi_teks FROM surat_templates WHERE jenis = 'tujuan' AND LOWER(TRIM(label)) = 'bpm' AND (periode_id = ? OR periode_id IS NULL) LIMIT 1",
+        [$periode_id]
+    );
+    $bpm_nama = ($bpm_target && !empty($bpm_target['isi_teks'])) ? trim($bpm_target['isi_teks']) : "Badan Perwakilan Mahasiswa\nINSTBUNAS Majalengka";
+
+    $rapat_perihals = [
+        'Undangan Rapat Persiapan',
+        'Undangan Rapat Pemantapan',
+        'Undangan Rapat Final'
+    ];
+
+    // Item Rapat BPM otomatis (Persiapan, Pemantapan, Final)
+    $rapat_items = [];
+    foreach ($rapat_perihals as $r_perihal) {
+        $rapat_items[] = [
+            'nama' => $bpm_nama,
+            'perihal' => $r_perihal,
+            'kategori' => 'D'
+        ];
+    }
+
+    $tamu_val = $kegiatan['tamu_undangan'] ?? '';
+    $clean_items = json_decode($tamu_val, true) ?: [];
+    
+    // Gabungkan item rapat di posisi terawal agar selalu memiliki nomor urut paling awal
+    $clean_items = array_merge($rapat_items, $clean_items);
+
+    // Daftar Pihak Wajib yang Otomatis Mendapatkan Surat Pemberitahuan Kegiatan Jika Tidak Diundang
+    $mandatory_notif_targets = [
+        [
+            'regex' => '/\b(bpm|badan perwakilan mahasiswa)\b/i',
+            'label' => 'BPM',
+            'default_nama' => "Badan Perwakilan Mahasiswa\nINSTBUNAS Majalengka"
+        ],
+        [
+            'regex' => '/\b(warek\s*i\b|warek\s*1\b|wakil\s*rektor\s*i\b|wakil\s*rektor\s*1\b|anto\s*herianto)/i',
+            'label' => 'WAREK I',
+            'default_nama' => "Bapak Anto Herianto, SE. MM.\nWAREK I\nBid. Akademik"
+        ],
+        [
+            'regex' => '/\b(warek\s*ii\b|warek\s*2\b|wakil\s*rektor\s*ii\b|wakil\s*rektor\s*2\b|abrar\s*farhan)/i',
+            'label' => 'WAREK II',
+            'default_nama' => "Bapak Abrar Farhan Sudibyo, S.Kel., S.M., M.M.\nWAREK II\nBid. Administrasi Umum  dan Keuangan"
+        ],
+        [
+            'regex' => '/\b(warek\s*iii\b|warek\s*3\b|wakil\s*rektor\s*iii\b|wakil\s*rektor\s*3\b|ii\s*muhamad\s*misbah)/i',
+            'label' => 'WAREK III',
+            'default_nama' => "Bapak Ii Muhamad Misbah, S.Pd.I., S.E., M.M.\nWAREK III\nBid. Kemahasiswaan"
+        ]
+    ];
+
+    foreach ($mandatory_notif_targets as $target) {
+        $has_target = false;
+        foreach ($clean_items as $g_item) {
+            $g_nama_check = trim($g_item['nama'] ?? '');
+            if (preg_match($target['regex'], $g_nama_check)) {
+                $has_target = true;
+                break;
+            }
+        }
+        if (!$has_target) {
+            $tpl_target = dbFetchOne(
+                "SELECT isi_teks FROM surat_templates WHERE jenis = 'tujuan' AND LOWER(TRIM(label)) = LOWER(TRIM(?)) AND (periode_id = ? OR periode_id IS NULL) LIMIT 1",
+                [$target['label'], $periode_id]
+            );
+            $nama_final = ($tpl_target && !empty($tpl_target['isi_teks'])) ? trim($tpl_target['isi_teks']) : $target['default_nama'];
+
+            $clean_items[] = [
+                'nama' => $nama_final,
+                'perihal' => 'Pemberitahuan Kegiatan',
+                'kategori' => 'D'
+            ];
+        }
+    }
+    
+    $processed_staging_ids = [];
+    $tgl_indo = function_exists('tanggalIndonesia') ? tanggalIndonesia() : date('d F Y');
+    $kode_kegiatan = !empty($kegiatan['kode_kegiatan']) ? strtoupper(trim($kegiatan['kode_kegiatan'])) : 'UND';
+
+    foreach ($clean_items as $g_item) {
+        $g_nama = trim($g_item['nama']);
+        $g_perihal_label = trim($g_item['perihal']);
+        $g_kat = ($g_item['kategori'] ?? 'D') === 'L' ? 'L' : 'D';
+
+        $tpl_perihal_row = dbFetchOne("SELECT isi_teks FROM surat_templates WHERE jenis = 'perihal' AND LOWER(TRIM(label)) = LOWER(TRIM(?)) AND (periode_id = ? OR periode_id IS NULL) LIMIT 1", [$g_perihal_label, $periode_id]);
+        $g_perihal_surat = ($tpl_perihal_row && !empty($tpl_perihal_row['isi_teks'])) ? $tpl_perihal_row['isi_teks'] : $g_perihal_label;
+
+        $existing_staging = dbFetchOne("SELECT id, nomor_surat, jenis_surat, konten_surat, tujuan, perihal FROM arsip_surat WHERE kegiatan_id = ? AND status_arsip = 'staging' AND tujuan = ? AND perihal = ? LIMIT 1", [$kegiatan_id, $g_nama, $g_perihal_surat]);
+        if (!$existing_staging) {
+            // Flexible matching for mandatory targets (BPM, Warek I, Warek II, Warek III)
+            $all_staging = dbFetchAll("SELECT id, nomor_surat, jenis_surat, konten_surat, tujuan, perihal FROM arsip_surat WHERE kegiatan_id = ? AND status_arsip = 'staging'", [$kegiatan_id]);
+            foreach ($all_staging as $stg) {
+                foreach ($mandatory_notif_targets as $tgt) {
+                    if (preg_match($tgt['regex'], $g_nama) && preg_match($tgt['regex'], $stg['tujuan']) && $stg['perihal'] === $g_perihal_surat) {
+                        $existing_staging = $stg;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        $perihal_lower = strtolower($g_perihal_surat);
+        $is_pemateri = (strpos($perihal_lower, 'pemateri') !== false || strpos($perihal_lower, 'narasumber') !== false);
+        $is_undangan_kegiatan = (strpos($perihal_lower, 'undangan') !== false && !in_array($g_perihal_label, $rapat_perihals) && !in_array($g_perihal_surat, $rapat_perihals)) || (strpos($perihal_lower, 'kegiatan') !== false && strpos($perihal_lower, 'pemberitahuan') === false) || strpos($perihal_lower, 'sambutan') !== false || strpos($perihal_lower, 'tamu') !== false;
+
+        // Jika perihal adalah pemateri atau undangan kegiatan & rundown belum dibuat oleh Sie Acara:
+        // Tahan & tarik kembali (hapus draft staging) surat jika sebelumnya pernah dibuat
+        if (($is_pemateri || $is_undangan_kegiatan) && !$rundown) {
+            if ($existing_staging) {
+                dbQuery("DELETE FROM arsip_surat WHERE id = ?", [$existing_staging['id']]);
+            }
+            continue;
+        }
+
+        $pelaksanaan_hari = 'Sesuai Jadwal Kegiatan';
+        $pelaksanaan_waktu = '08.00 s.d Selesai';
+
+        if (in_array($g_perihal_label, $rapat_perihals) || in_array($g_perihal_surat, $rapat_perihals)) {
+            $konteks_narasi = 'untuk menghadiri ' . $g_perihal_surat . ' kegiatan tersebut';
+            $pelaksanaan_waktu = 'Menyesuaikan';
+            $pelaksanaan_hari = 'Menyesuaikan (Belum Ditetapkan)';
+        } elseif ($is_pemateri) {
+            $konteks_narasi = 'untuk berkenan penyampaikan materi pada acara tersebut';
+        } elseif (strpos($perihal_lower, 'sambutan') !== false) {
+            $konteks_narasi = 'untuk berkenan penyampaikan sambutan pada acara tersebut';
+        } elseif (strpos($perihal_lower, 'undangan') !== false) {
+            $konteks_narasi = 'agar dapat menghadiri kegiatan tersebut';
+        } elseif (strpos($perihal_lower, 'peminjaman') !== false) {
+            $konteks_narasi = 'untuk dapat menggunakan fasilitas tersebut';
+        } elseif (strpos($perihal_lower, 'pemberitahuan') !== false) {
+            $konteks_narasi = '';
+        } else {
+            $konteks_narasi = 'demi mendukung terselenggaranya acara tersebut';
+        }
+        
+        $lampiran_ids = [];
+        if ($rundown && ($is_pemateri || $is_undangan_kegiatan)) {
+            $lampiran_ids = [$rundown['id']];
+            
+            if ($is_pemateri || strpos($perihal_lower, 'sambutan') !== false) {
+                // Cari waktu spesifik dari rundown
+                $rd_json = json_decode($rundown['rundown_json'], true) ?: [];
+                $found_waktu = false;
+                
+                // Ekstrak nama pendek untuk pencarian di rundown
+                $g_nama_parts = explode(',', $g_nama);
+                $g_nama_pendek = trim($g_nama_parts[0]);
+                
+                foreach ($rd_json as $dayData) {
+                    if ($found_waktu) break;
+                    foreach ($dayData['items'] ?? [] as $item) {
+                        if (stripos($item['keterangan'] ?? '', $g_nama_pendek) !== false || stripos($item['acara'] ?? '', $g_nama_pendek) !== false) {
+                            $pelaksanaan_waktu = $item['waktu'];
+                            $found_waktu = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        $konten_data = [
+            'sapaan_tujuan'            => '',
+            'nama_kegiatan'            => $kegiatan['nama_kegiatan'],
+            'tema'                     => $kegiatan['deskripsi'] ?? '',
+            'tema_kegiatan'            => $kegiatan['deskripsi'] ?? '',
+            'pelaksanaan_hari_tanggal' => $pelaksanaan_hari,
+            'pelaksanaan_waktu'        => $pelaksanaan_waktu,
+            'pelaksanaan_tempat'       => 'Lingkungan Kampus INSTBUNAS Majalengka',
+            'konteks'                  => $konteks_narasi,
+            'label_panitia'            => strtoupper($kegiatan['nama_kegiatan']),
+            'panitia_ketua'            => $ketuplat_nama,
+            'panitia_sekretaris'       => $sekretaris_nama,
+            'use_ttd_warek'            => '1',
+            'use_ttd_presma'           => '1',
+            'use_cap_panitia'          => '1',
+            'use_cap_warek'            => '1',
+            'use_cap_presma'           => '1',
+            'rundown_internal_ids'     => $lampiran_ids,
+            'is_edited'                => 0
+        ];
+
+        if ($existing_staging) {
+            $old_jenis = $existing_staging['jenis_surat'];
+            $nomor_surat_cur = $existing_staging['nomor_surat'];
+            $old_konten = json_decode($existing_staging['konten_surat'], true) ?: [];
+            if (!empty($old_konten['is_edited'])) {
+                $konten_data = array_merge($konten_data, $old_konten);
+                $konten_data['is_edited'] = 1;
+            }
+
+            if ($old_jenis !== $g_kat || strpos($nomor_surat_cur, "/{$g_kat}/{$kode_kegiatan}/") === false) {
+                $last_seq = dbFetchOne("SELECT MAX(CAST(SUBSTRING_INDEX(nomor_surat, '/', 1) AS UNSIGNED)) AS max_urut FROM arsip_surat WHERE periode_id = ? AND jenis_surat = ?", [$periode_id, $g_kat]);
+                $next_num = str_pad((($last_seq['max_urut'] ?? 0) + 1), 3, '0', STR_PAD_LEFT);
+                $romawi = ['1'=>'I', '2'=>'II', '3'=>'III', '4'=>'IV', '5'=>'V', '6'=>'VI', '7'=>'VII', '8'=>'VIII', '9'=>'IX', '10'=>'X', '11'=>'XI', '12'=>'XII'];
+                $b_rom = $romawi[(int)date('n')] ?? 'I';
+                $thn_now = date('Y');
+                $nomor_surat_cur = "{$next_num}/{$g_kat}/{$kode_kegiatan}/BEM/{$b_rom}/{$thn_now}";
+            }
+
+            dbQuery(
+                "UPDATE arsip_surat SET jenis_surat = ?, nomor_surat = ?, perihal = ?, tujuan = ?, konten_surat = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                [$g_kat, $nomor_surat_cur, $g_perihal_surat, $g_nama, json_encode($konten_data, JSON_UNESCAPED_UNICODE), $existing_staging['id']]
+            );
+            $processed_staging_ids[] = (int)$existing_staging['id'];
+        } else {
+            $last_seq = dbFetchOne("SELECT MAX(CAST(SUBSTRING_INDEX(nomor_surat, '/', 1) AS UNSIGNED)) AS max_urut FROM arsip_surat WHERE periode_id = ? AND jenis_surat = ?", [$periode_id, $g_kat]);
+            $next_num = str_pad((($last_seq['max_urut'] ?? 0) + 1), 3, '0', STR_PAD_LEFT);
+            $romawi = ['1'=>'I', '2'=>'II', '3'=>'III', '4'=>'IV', '5'=>'V', '6'=>'VI', '7'=>'VII', '8'=>'VIII', '9'=>'IX', '10'=>'X', '11'=>'XI', '12'=>'XII'];
+            $b_rom = $romawi[(int)date('n')] ?? 'I';
+            $thn_now = date('Y');
+            $nomor_surat_draft = "{$next_num}/{$g_kat}/{$kode_kegiatan}/BEM/{$b_rom}/{$thn_now}";
+            $created_by = !empty($_SESSION['admin_id']) ? (int)$_SESSION['admin_id'] : NULL;
+
+            dbQuery(
+                "INSERT INTO arsip_surat (periode_id, kegiatan_id, status_arsip, jenis_surat, nomor_surat, perihal, tujuan, tempat_tanggal, konten_surat, created_by) VALUES (?, ?, 'staging', ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $periode_id,
+                    $kegiatan_id,
+                    $g_kat,
+                    $nomor_surat_draft,
+                    $g_perihal_surat,
+                    $g_nama,
+                    'Majalengka, ' . $tgl_indo,
+                    json_encode($konten_data, JSON_UNESCAPED_UNICODE),
+                    $created_by
+                ]
+            );
+            $new_id = dbLastId();
+            if ($new_id > 0) {
+                $processed_staging_ids[] = $new_id;
+            }
+        }
+    }
+
+    if (!empty($processed_staging_ids)) {
+        $in_ids = implode(',', array_fill(0, count($processed_staging_ids), '?'));
+        $delete_params = array_merge([$kegiatan_id], $processed_staging_ids);
+        dbQuery("DELETE FROM arsip_surat WHERE kegiatan_id = ? AND status_arsip = 'staging' AND id NOT IN ({$in_ids})", $delete_params);
+    } else {
+        dbQuery("DELETE FROM arsip_surat WHERE kegiatan_id = ? AND status_arsip = 'staging'", [$kegiatan_id]);
+    }
+
+    resyncStagingNumbers($periode_id);
+}
+
+/**
+ * Sinkronisasi ulang nomor urut untuk seluruh draft surat di Staging Index.
+ * Nomor urut staging selalu meneruskan dari nomor urut tertinggi di Arsip Surat Utama.
+ */
+function resyncStagingNumbers($periode_id = null) {
+    if (!$periode_id) {
+        $periode_id = function_exists('getUserPeriode') ? getUserPeriode() : 1;
+    }
+
+    $categories = ['D', 'L'];
+    foreach ($categories as $kat) {
+        // Ambil nomor urut tertinggi dari Arsip Utama (status_arsip != 'staging')
+        $max_archived = dbFetchOne(
+            "SELECT MAX(CAST(SUBSTRING_INDEX(nomor_surat, '/', 1) AS UNSIGNED)) AS max_urut 
+             FROM arsip_surat 
+             WHERE periode_id = ? AND jenis_surat = ? AND (status_arsip IS NULL OR status_arsip != 'staging')",
+            [$periode_id, $kat]
+        );
+        
+        $current_num = ($max_archived && $max_archived['max_urut']) ? (int)$max_archived['max_urut'] : 0;
+        
+        // Ambil semua surat staging untuk jenis_surat ini, diurutkan agar Rapat BPM selalu mendapatkan nomor paling awal
+        $staging_list = dbFetchAll(
+            "SELECT id, nomor_surat FROM arsip_surat 
+             WHERE periode_id = ? AND jenis_surat = ? AND status_arsip = 'staging' 
+             ORDER BY kegiatan_id ASC, 
+                      CASE 
+                        WHEN perihal = 'Undangan Rapat Persiapan' THEN 1
+                        WHEN perihal = 'Undangan Rapat Pemantapan' THEN 2
+                        WHEN perihal = 'Undangan Rapat Final' THEN 3
+                        ELSE 4
+                      END ASC, 
+                      id ASC",
+            [$periode_id, $kat]
+        );
+        
+        foreach ($staging_list as $stg) {
+            $current_num++;
+            $next_str = str_pad($current_num, 3, '0', STR_PAD_LEFT);
+            
+            $old_nomor = $stg['nomor_surat'];
+            $parts = explode('/', $old_nomor);
+            if (count($parts) >= 2) {
+                $parts[0] = $next_str;
+                $new_nomor = implode('/', $parts);
+                if ($new_nomor !== $old_nomor) {
+                    dbQuery("UPDATE arsip_surat SET nomor_surat = ? WHERE id = ?", [$new_nomor, $stg['id']]);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Otomatis commit (pindahkan ke Arsip Utama) surat di Staging Index 
+ * yang statusnya sudah 'terkirim' oleh Humas selama >= 30 menit.
+ */
+function autoCommitSentStagingLetters($periode_id = null) {
+    if (!$periode_id) {
+        $periode_id = function_exists('getUserPeriode') ? getUserPeriode() : 1;
+    }
+
+    $sent_letters = dbFetchAll(
+        "SELECT id, nomor_surat FROM arsip_surat 
+         WHERE periode_id = ? 
+           AND status_arsip = 'staging' 
+           AND (status_humas = 'terkirim' OR (tanggal_dikirim IS NOT NULL AND tanggal_dikirim != '0000-00-00'))
+           AND updated_at <= (NOW() - INTERVAL 30 MINUTE)",
+        [$periode_id]
+    );
+
+    if (!empty($sent_letters)) {
+        foreach ($sent_letters as $s) {
+            dbQuery(
+                "UPDATE arsip_surat SET status_arsip = 'archived', status_humas = 'terkirim' WHERE id = ? AND periode_id = ?",
+                [$s['id'], $periode_id]
+            );
+            if (function_exists('auditLog')) {
+                auditLog('UPDATE', 'arsip_surat', $s['id'], 'Auto-commit otomatis (30 menit terkirim oleh Humas): ' . $s['nomor_surat']);
+            }
+        }
+        resyncStagingNumbers($periode_id);
+    }
+}
+
+/**
+ * Menyimpan data peminjaman ke lampiran_pinjam dan secara otomatis
+ * membuat / memperbarui draft surat peminjaman di Staging Index.
+ */
+function saveLogistikPeminjamanAndDraftLetter($kegiatan_id, $periode_id, $acara, $tanggal, $tahun, $barang_json, $target_edit_id = 0, $auto_create = 1, $admin_id = null) {
+    if (!$kegiatan_id || !$periode_id) return false;
+
+    $saved_lampiran_id = 0;
+    if ($target_edit_id > 0) {
+        dbQuery("UPDATE lampiran_pinjam SET nama_acara = ?, tanggal_kegiatan = ?, tahun = ?, barang_json = ? WHERE id = ? AND periode_id = ?", [
+            $acara, $tanggal, $tahun, $barang_json, $target_edit_id, $periode_id
+        ]);
+        $saved_lampiran_id = $target_edit_id;
+    } else {
+        dbQuery("INSERT INTO lampiran_pinjam (nama_acara, tanggal_kegiatan, tahun, barang_json, periode_id) VALUES (?, ?, ?, ?, ?)", [
+            $acara, $tanggal, $tahun, $barang_json, $periode_id
+        ]);
+        $saved_lampiran_id = dbLastId();
+    }
+
+    if ($saved_lampiran_id > 0 && $auto_create) {
+        try {
+            $kegiatan = dbFetchOne("SELECT * FROM kegiatan WHERE id = ?", [$kegiatan_id]);
+            if (!$kegiatan) return $saved_lampiran_id;
+
+            // Cari Ketuplak & Sekretaris
+            $kp_row = dbFetchOne("SELECT u.nama FROM kegiatan_panitia kp JOIN users u ON kp.user_id = u.id WHERE kp.kegiatan_id = ? AND kp.event_role IN ('ketuplat', 'ketua_pelaksana') LIMIT 1", [$kegiatan_id]);
+            $ketuplat_nama = $kp_row ? strtoupper($kp_row['nama']) : '';
+
+            $sek_row = dbFetchOne("SELECT u.nama FROM kegiatan_panitia kp JOIN users u ON kp.user_id = u.id WHERE kp.kegiatan_id = ? AND kp.event_role IN ('sekretaris_panitia', 'sekretaris', 'sekretaris_kegiatan', 'sekretaris_1', 'sekretaris_2') LIMIT 1", [$kegiatan_id]);
+            $sekretaris_nama = $sek_row ? strtoupper($sek_row['nama']) : '';
+
+            // Default Tujuan Sarpras
+            $tujuan_sarpras = "Tim Sarpras INSTBUNAS Majalengka";
+            $tpl_tujuan = dbFetchOne("SELECT isi_teks FROM surat_templates WHERE jenis = 'tujuan' AND (LOWER(label) LIKE '%sarpras%' OR LOWER(isi_teks) LIKE '%sarpras%') LIMIT 1");
+            if ($tpl_tujuan && !empty($tpl_tujuan['isi_teks'])) {
+                $tujuan_sarpras = strip_tags($tpl_tujuan['isi_teks']);
+            }
+
+            $kode_keg_surat = !empty($kegiatan['kode_kegiatan']) ? strtoupper(trim($kegiatan['kode_kegiatan'])) : 'SARPRAS';
+
+            // Validate created_by user ID against users table to prevent FK integrity errors
+            $created_by = NULL;
+            if (!empty($admin_id)) {
+                $user_chk = dbFetchOne("SELECT id FROM users WHERE id = ?", [(int)$admin_id]);
+                if ($user_chk) $created_by = (int)$admin_id;
+            }
+
+            $existing_surat = dbFetchOne("SELECT id, nomor_surat, konten_surat FROM arsip_surat WHERE kegiatan_id = ? AND status_arsip = 'staging' AND (perihal LIKE '%Peminjaman%' OR perihal LIKE '%Sarpras%') ORDER BY id DESC LIMIT 1", [$kegiatan_id]);
+
+            $konten_data = [
+                'sapaan_tujuan'            => '',
+                'nama_kegiatan'            => $kegiatan['nama_kegiatan'],
+                'tema'                     => $kegiatan['deskripsi'] ?? '',
+                'tema_kegiatan'            => $kegiatan['deskripsi'] ?? '',
+                'pelaksanaan_hari_tanggal' => $tanggal,
+                'pelaksanaan_waktu'        => '08.00 s.d Selesai',
+                'pelaksanaan_tempat'       => 'Lingkungan Kampus INSTBUNAS Majalengka',
+                'konteks'                  => 'untuk dapat menggunakan fasilitas tersebut',
+                'label_panitia'            => '',
+                'panitia_ketua'            => $ketuplat_nama,
+                'panitia_sekretaris'       => $sekretaris_nama,
+                'use_ttd_warek'            => '1',
+                'use_ttd_presma'           => '1',
+                'use_cap_panitia'          => '1',
+                'use_cap_warek'            => '1',
+                'use_cap_presma'           => '1',
+                'lampiran_internal_ids'    => [(string)$saved_lampiran_id]
+            ];
+
+            if ($existing_surat) {
+                $ex_konten = json_decode($existing_surat['konten_surat'], true) ?: [];
+                $existing_ids = $ex_konten['lampiran_internal_ids'] ?? [];
+                if (!in_array((string)$saved_lampiran_id, $existing_ids)) {
+                    $existing_ids[] = (string)$saved_lampiran_id;
+                }
+                $konten_data['lampiran_internal_ids'] = array_values(array_unique($existing_ids));
+
+                $nomor_surat_cur = $existing_surat['nomor_surat'];
+                if (strpos($nomor_surat_cur, "/{$kode_keg_surat}/") === false) {
+                    $last_seq = dbFetchOne("SELECT MAX(CAST(SUBSTRING_INDEX(nomor_surat, '/', 1) AS UNSIGNED)) AS max_urut FROM arsip_surat WHERE periode_id = ? AND jenis_surat = 'D' AND (status_arsip IS NULL OR status_arsip != 'staging')", [$periode_id]);
+                    $next_num = str_pad((($last_seq['max_urut'] ?? 0) + 1), 3, '0', STR_PAD_LEFT);
+                    $romawi = ['1'=>'I', '2'=>'II', '3'=>'III', '4'=>'IV', '5'=>'V', '6'=>'VI', '7'=>'VII', '8'=>'VIII', '9'=>'IX', '10'=>'X', '11'=>'XI', '12'=>'XII'];
+                    $b_rom = $romawi[(int)date('n')] ?? 'I';
+                    $thn_now = date('Y');
+                    $nomor_surat_cur = "{$next_num}/D/{$kode_keg_surat}/BEM/{$b_rom}/{$thn_now}";
+                }
+
+                dbQuery("UPDATE arsip_surat SET nomor_surat = ?, konten_surat = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$nomor_surat_cur, json_encode($konten_data), $existing_surat['id']]);
+            } else {
+                $last_seq = dbFetchOne("SELECT MAX(CAST(SUBSTRING_INDEX(nomor_surat, '/', 1) AS UNSIGNED)) AS max_urut FROM arsip_surat WHERE periode_id = ? AND jenis_surat = 'D' AND (status_arsip IS NULL OR status_arsip != 'staging')", [$periode_id]);
+                $next_num = str_pad((($last_seq['max_urut'] ?? 0) + 1), 3, '0', STR_PAD_LEFT);
+                $romawi = ['1'=>'I', '2'=>'II', '3'=>'III', '4'=>'IV', '5'=>'V', '6'=>'VI', '7'=>'VII', '8'=>'VIII', '9'=>'IX', '10'=>'X', '11'=>'XI', '12'=>'XII'];
+                $b_rom = $romawi[(int)date('n')] ?? 'I';
+                $thn_now = date('Y');
+                $nomor_surat_draft = "{$next_num}/D/{$kode_keg_surat}/BEM/{$b_rom}/{$thn_now}";
+
+                dbQuery(
+                    "INSERT INTO arsip_surat (periode_id, kegiatan_id, status_arsip, jenis_surat, nomor_surat, perihal, tujuan, tempat_tanggal, konten_surat, created_by) VALUES (?, ?, 'staging', 'D', ?, 'Permohonan Peminjaman Barang & Tempat', ?, ?, ?, ?)",
+                    [
+                        $periode_id,
+                        $kegiatan_id,
+                        $nomor_surat_draft,
+                        $tujuan_sarpras,
+                        'Majalengka, ' . tanggalIndonesia(),
+                        json_encode($konten_data),
+                        $created_by
+                    ]
+                );
+                resyncStagingNumbers($periode_id);
+            }
+        } catch (Exception $e) {
+            error_log("Error generating Sarpras letter: " . $e->getMessage());
+        }
+    }
+
+    return $saved_lampiran_id;
 }

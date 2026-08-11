@@ -50,10 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus_kementerian_id'
 // AMBIL DATA KEPENGURUSAN UNTUK PERIODE AKTIF
 // ============================================
 $bph = [
-    'ketua'           => dbFetchOne("SELECT * FROM struktur_bph WHERE posisi = 'ketua' AND periode_id = ?",           [$active_periode], "i"),
-    'wakil_ketua'     => dbFetchOne("SELECT * FROM struktur_bph WHERE posisi = 'wakil_ketua' AND periode_id = ?",     [$active_periode], "i"),
-    'sekretaris_umum' => dbFetchOne("SELECT * FROM struktur_bph WHERE posisi = 'sekretaris_umum' AND periode_id = ?", [$active_periode], "i"),
-    'bendahara_umum'  => dbFetchOne("SELECT * FROM struktur_bph WHERE posisi = 'bendahara_umum' AND periode_id = ?",  [$active_periode], "i"),
+    'ketua'           => dbFetchOne("SELECT s.*, u.nama AS uname, u.username FROM struktur_bph s LEFT JOIN users u ON s.user_id = u.id WHERE s.posisi = 'ketua' AND s.periode_id = ?",           [$active_periode], "i"),
+    'wakil_ketua'     => dbFetchOne("SELECT s.*, u.nama AS uname, u.username FROM struktur_bph s LEFT JOIN users u ON s.user_id = u.id WHERE s.posisi = 'wakil_ketua' AND s.periode_id = ?",     [$active_periode], "i"),
+    'sekretaris_umum' => dbFetchOne("SELECT s.*, u.nama AS uname, u.username FROM struktur_bph s LEFT JOIN users u ON s.user_id = u.id WHERE s.posisi = 'sekretaris_umum' AND s.periode_id = ?", [$active_periode], "i"),
+    'bendahara_umum'  => dbFetchOne("SELECT s.*, u.nama AS uname, u.username FROM struktur_bph s LEFT JOIN users u ON s.user_id = u.id WHERE s.posisi = 'bendahara_umum' AND s.periode_id = ?",  [$active_periode], "i"),
 ];
 
 $total_bph_terisi = 0;
@@ -64,14 +64,14 @@ foreach ($bph as $posisi) {
 $total_anggota_bph = 0;
 if ($bph['sekretaris_umum']) {
     $bph['sekretaris_umum']['anggota'] = dbFetchAll(
-        "SELECT * FROM anggota_bph WHERE bph_id = ? AND periode_id = ? ORDER BY urutan",
+        "SELECT a.*, u.nama AS uname, u.username FROM anggota_bph a LEFT JOIN users u ON a.user_id = u.id WHERE a.bph_id = ? AND a.periode_id = ? ORDER BY a.urutan",
         [$bph['sekretaris_umum']['id'], $active_periode], "ii"
     );
     $total_anggota_bph += count($bph['sekretaris_umum']['anggota']);
 }
 if ($bph['bendahara_umum']) {
     $bph['bendahara_umum']['anggota'] = dbFetchAll(
-        "SELECT * FROM anggota_bph WHERE bph_id = ? AND periode_id = ? ORDER BY urutan",
+        "SELECT a.*, u.nama AS uname, u.username FROM anggota_bph a LEFT JOIN users u ON a.user_id = u.id WHERE a.bph_id = ? AND a.periode_id = ? ORDER BY a.urutan",
         [$bph['bendahara_umum']['id'], $active_periode], "ii"
     );
     $total_anggota_bph += count($bph['bendahara_umum']['anggota']);
@@ -86,7 +86,7 @@ $total_anggota_kementerian = 0;
 $kementerian = [];
 foreach ($kementerian_raw as $item) {
     $item['anggota'] = dbFetchAll(
-        "SELECT * FROM anggota_kementerian WHERE kementerian_id = ? AND periode_id = ? ORDER BY urutan",
+        "SELECT a.*, u.nama AS uname, u.username FROM anggota_kementerian a LEFT JOIN users u ON a.user_id = u.id WHERE a.kementerian_id = ? AND a.periode_id = ? ORDER BY a.urutan",
         [$item['id'], $active_periode], "ii"
     );
     $total_anggota_kementerian += count($item['anggota']);
@@ -192,7 +192,7 @@ $periode_info = htmlspecialchars(
             <?php if ($bph['ketua']): ?>
                 <div class="bph-info">
                     <img src="<?php echo !empty($bph['ketua']['foto']) ? uploadUrl($bph['ketua']['foto']) : $default_avatar; ?>" class="bph-photo">
-                    <p><strong><?php echo htmlspecialchars($bph['ketua']['nama']); ?></strong></p>
+                    <p><strong><?php echo htmlspecialchars($bph['ketua']['user_id'] ? $bph['ketua']['uname'] : $bph['ketua']['nama']); ?></strong></p>
                     <a href="kepengurusan-edit.php?posisi=ketua" class="btn-edit">
                         <i class="fas fa-edit"></i> Edit
                     </a>
@@ -214,7 +214,7 @@ $periode_info = htmlspecialchars(
             <?php if ($bph['wakil_ketua']): ?>
                 <div class="bph-info">
                     <img src="<?php echo !empty($bph['wakil_ketua']['foto']) ? uploadUrl($bph['wakil_ketua']['foto']) : $default_avatar; ?>" class="bph-photo">
-                    <p><strong><?php echo htmlspecialchars($bph['wakil_ketua']['nama']); ?></strong></p>
+                    <p><strong><?php echo htmlspecialchars($bph['wakil_ketua']['user_id'] ? $bph['wakil_ketua']['uname'] : $bph['wakil_ketua']['nama']); ?></strong></p>
                     <a href="kepengurusan-edit.php?posisi=wakil_ketua" class="btn-edit">
                         <i class="fas fa-edit"></i> Edit
                     </a>
@@ -242,7 +242,7 @@ $periode_info = htmlspecialchars(
                             <?php foreach ($bph['sekretaris_umum']['anggota'] as $anggota): ?>
                                 <div class="anggota-item">
                                     <img src="<?php echo !empty($anggota['foto']) ? uploadUrl($anggota['foto']) : $default_avatar; ?>" class="anggota-photo">
-                                    <span><?php echo htmlspecialchars($anggota['nama']); ?></span>
+                                    <span><?php echo htmlspecialchars($anggota['user_id'] ? $anggota['uname'] : $anggota['nama']); ?></span>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -276,7 +276,7 @@ $periode_info = htmlspecialchars(
                             <?php foreach ($bph['bendahara_umum']['anggota'] as $anggota): ?>
                                 <div class="anggota-item">
                                     <img src="<?php echo !empty($anggota['foto']) ? uploadUrl($anggota['foto']) : $default_avatar; ?>" class="anggota-photo">
-                                    <span><?php echo htmlspecialchars($anggota['nama']); ?></span>
+                                    <span><?php echo htmlspecialchars($anggota['user_id'] ? $anggota['uname'] : $anggota['nama']); ?></span>
                                 </div>
                             <?php endforeach; ?>
                         </div>

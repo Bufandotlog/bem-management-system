@@ -88,7 +88,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus'])) {
         exit();
     }
 
-    $nama    = sanitizeText($_POST['nama']    ?? '', 100);
+    $user_id = !empty($_POST['user_id']) ? (int)$_POST['user_id'] : null;
+    if (!$user_id) {
+        redirect('admin/kepengurusan-edit.php?posisi=' . urlencode($posisi), 'Harap pilih akun anggota terdaftar.', 'error');
+        exit();
+    }
+    
+    $u = dbFetchOne("SELECT nama FROM users WHERE id = ?", [$user_id], "i");
+    $nama = $u['nama'] ?? '';
+    
     $jabatan = sanitizeText($_POST['jabatan'] ?? '', 100);
     $foto    = $data['foto'] ?? '';
     $logo    = $data['logo'] ?? '';
@@ -135,18 +143,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus'])) {
     try {
         if ($data) {
             dbQuery(
-                "UPDATE struktur_bph SET nama=?, jabatan=?, foto=?, logo=?, deskripsi=?, tugas=?, proker=?
+                "UPDATE struktur_bph SET user_id=?, nama=?, jabatan=?, foto=?, logo=?, deskripsi=?, tugas=?, proker=?
                  WHERE posisi=? AND periode_id=?",
-                [$nama, $jabatan, $foto, $logo, $deskripsi, $tugas_json, $proker_json, $posisi, $active_periode],
-                "ssssssssi"
+                [$user_id, $nama, $jabatan, $foto, $logo, $deskripsi, $tugas_json, $proker_json, $posisi, $active_periode],
+                "issssssssi"
             );
             $bph_id = $data['id'];
         } else {
             dbQuery(
-                "INSERT INTO struktur_bph (periode_id, created_by, posisi, nama, jabatan, foto, logo, deskripsi, tugas, proker)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [$active_periode, $_SESSION['admin_id'], $posisi, $nama, $jabatan, $foto, $logo, $deskripsi, $tugas_json, $proker_json],
-                "iissssssss"
+                "INSERT INTO struktur_bph (periode_id, created_by, posisi, user_id, nama, jabatan, foto, logo, deskripsi, tugas, proker)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [$active_periode, $_SESSION['admin_id'], $posisi, $user_id, $nama, $jabatan, $foto, $logo, $deskripsi, $tugas_json, $proker_json],
+                "iisssssssss"
             );
             $bph_id = dbLastId();
         }
@@ -159,10 +167,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus'])) {
             $processed_ids  = [];
 
             // Batasi max 50 anggota
-            $anggota_names = array_slice($_POST['anggota_nama'] ?? [], 0, 50);
+            $anggota_user_ids = array_slice($_POST['anggota_user_id'] ?? [], 0, 50);
 
-            foreach ($anggota_names as $index => $nama_anggota) {
-                $nama_anggota = sanitizeText($nama_anggota, 100);
+            foreach ($anggota_user_ids as $index => $anggota_user_id) {
+                $anggota_user_id = !empty($anggota_user_id) ? (int)$anggota_user_id : null;
+                
+                if (!$anggota_user_id) continue;
+                
+                $u = dbFetchOne("SELECT nama FROM users WHERE id = ?", [$anggota_user_id], "i");
+                $nama_anggota = $u['nama'] ?? '';
+
                 if (empty($nama_anggota)) continue;
 
                 $jabatan_anggota = sanitizeText($_POST['anggota_jabatan'][$index] ?? '', 100);
@@ -189,14 +203,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus'])) {
                 }
 
                 if ($anggota_id > 0) {
-                    dbQuery("UPDATE anggota_bph SET nama=?, jabatan=?, foto=?, urutan=? WHERE id=? AND periode_id=?",
-                            [$nama_anggota, $jabatan_anggota, $foto_anggota, $index, $anggota_id, $active_periode],
-                            "sssiii");
+                    dbQuery("UPDATE anggota_bph SET user_id=?, nama=?, jabatan=?, foto=?, urutan=? WHERE id=? AND periode_id=?",
+                            [$anggota_user_id, $nama_anggota, $jabatan_anggota, $foto_anggota, $index, $anggota_id, $active_periode],
+                            "isssiii");
                     $processed_ids[] = $anggota_id;
                 } else {
-                    dbQuery("INSERT INTO anggota_bph (periode_id, created_by, bph_id, nama, jabatan, foto, urutan) VALUES (?,?,?,?,?,?,?)",
-                            [$active_periode, $_SESSION['admin_id'], $bph_id, $nama_anggota, $jabatan_anggota, $foto_anggota, $index],
-                            "iiisssi");
+                    dbQuery("INSERT INTO anggota_bph (periode_id, created_by, bph_id, user_id, nama, jabatan, foto, urutan) VALUES (?,?,?,?,?,?,?,?)",
+                            [$active_periode, $_SESSION['admin_id'], $bph_id, $anggota_user_id, $nama_anggota, $jabatan_anggota, $foto_anggota, $index],
+                            "iiiisssi");
                     $processed_ids[] = dbLastId();
                 }
             }
@@ -229,10 +243,17 @@ if ($data) {
 }
 
 $anggota_list = [];
+$digunakan = [];
+if ($data && $data['user_id']) {
+    $digunakan[] = $data['user_id'];
+}
 if (in_array($posisi, ['sekretaris_umum', 'bendahara_umum']) && $data) {
     $anggota_list = dbFetchAll("SELECT * FROM anggota_bph WHERE bph_id=? AND periode_id=? ORDER BY urutan",
                                [$data['id'], $active_periode], "ii");
+    $digunakan = array_merge($digunakan, array_filter(array_column($anggota_list, 'user_id')));
 }
+
+$list_akun = dbFetchAll("SELECT id, nama, username FROM users WHERE is_active = 1 AND (periode_id = ? OR periode_id IS NULL) AND role != 'superadmin' ORDER BY nama ASC", [$active_periode]);
 
 $icon_map = ['ketua'=>'crown','wakil_ketua'=>'user-tie','sekretaris_umum'=>'file-alt','bendahara_umum'=>'coins'];
 $judul    = ['ketua'=>'Ketua BEM','wakil_ketua'=>'Wakil Ketua BEM','sekretaris_umum'=>'Sekretaris Umum','bendahara_umum'=>'Bendahara Umum'];
@@ -308,11 +329,18 @@ $posisiEncoded = urlencode($posisi);
     <!-- Informasi Dasar -->
     <div class="form-section">
         <h2><i class="fas fa-info-circle"></i> Informasi Dasar</h2>
-        <div class="form-group">
-            <label><?php echo in_array($posisi, ['sekretaris_umum', 'bendahara_umum']) ? 'Nama Menteri' : 'Nama Lengkap'; ?></label>
-            <input type="text" name="nama"
-                   value="<?php echo htmlspecialchars($data['nama'] ?? ''); ?>"
-                   placeholder="Masukkan nama..." required>
+        <div class="form-group" id="bphFieldContainer">
+            <label>Pilih Akun Terdaftar</label>
+            <select name="user_id" class="form-control" required>
+                <option value="">-- Pilih Akun Terdaftar --</option>
+                <?php foreach($list_akun as $akun): 
+                    if (in_array($akun['id'], $digunakan) && ($data['user_id'] ?? 0) != $akun['id']) continue;
+                ?>
+                    <option value="<?php echo $akun['id']; ?>" data-nama="<?php echo htmlspecialchars($akun['nama'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($data['user_id'] ?? 0) == $akun['id'] ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($akun['nama']); ?> (@<?php echo htmlspecialchars($akun['username']); ?>)
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div class="form-group">
             <label>Jabatan</label>
@@ -470,9 +498,18 @@ $posisiEncoded = urlencode($posisi);
                 <div class="anggota-item">
                     <input type="hidden" name="anggota_id[]"
                            value="<?php echo $is_new ? '0' : (int)$anggota['id']; ?>">
-                    <input type="text" name="anggota_nama[]"
-                           value="<?php echo $is_new ? '' : htmlspecialchars($anggota['nama']); ?>"
-                           placeholder="Nama Anggota" required>
+                    <div class="anggota-fields">
+                        <select name="anggota_user_id[]" class="form-control" style="margin-bottom:10px;" required>
+                            <option value="">-- Pilih Akun Terdaftar --</option>
+                            <?php foreach($list_akun as $akun): 
+                                if (in_array($akun['id'], $digunakan) && ($anggota['user_id'] ?? 0) != $akun['id']) continue;
+                            ?>
+                                <option value="<?php echo $akun['id']; ?>" data-nama="<?php echo htmlspecialchars($akun['nama'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo (!$is_new && ($anggota['user_id'] ?? 0) == $akun['id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($akun['nama']); ?> (@<?php echo htmlspecialchars($akun['username']); ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <input type="text" name="anggota_jabatan[]"
                            value="<?php echo $is_new ? '' : htmlspecialchars($anggota['jabatan']); ?>"
                            placeholder="Jabatan" required>
@@ -547,12 +584,23 @@ function hapusListItem(btn) {
 }
 
 function tambahAnggota() {
+    const akunOptions = `
+        <option value="">-- Pilih Akun Terdaftar --</option>
+        <?php foreach($list_akun as $akun): 
+            if (in_array($akun['id'], $digunakan)) continue;
+        ?>
+            <option value="<?php echo $akun['id']; ?>" data-nama="<?php echo htmlspecialchars(addslashes($akun['nama'])); ?>"><?php echo htmlspecialchars(addslashes($akun['nama'])); ?> (@<?php echo htmlspecialchars(addslashes($akun['username'])); ?>)</option>
+        <?php endforeach; ?>
+    `;
+
     const container = document.getElementById('anggotaContainer');
     const div = document.createElement('div');
     div.className = 'anggota-item';
     div.innerHTML =
         `<input type="hidden" name="anggota_id[]" value="0">` +
-        `<input type="text" name="anggota_nama[]" placeholder="Nama Anggota" required>` +
+        `<div class="anggota-fields">` +
+            `<select name="anggota_user_id[]" class="form-control" style="margin-bottom:10px;" required>${akunOptions}</select>` +
+        `</div>` +
         `<input type="text" name="anggota_jabatan[]" placeholder="Jabatan" required>` +
         `<div class="anggota-foto-container">` +
             `<input type="file" name="anggota_foto[]" accept="image/*" onchange="previewAnggotaFoto(this)">` +
@@ -560,7 +608,7 @@ function tambahAnggota() {
         `</div>` +
         `<button type="button" class="btn-remove" onclick="hapusAnggotaItem(this)" title="Hapus">×</button>`;
     container.appendChild(div);
-    div.querySelector('input[name="anggota_nama[]"]').focus();
+    div.querySelector('select[name="anggota_user_id[]"]').focus();
 }
 
 function hapusAnggotaItem(btn) {
@@ -612,6 +660,7 @@ function hapusFotoAnggota(id) {
     document.getElementById('hapusFotoAnggotaId').value = id;
     document.getElementById('formHapusFotoAnggota').submit();
 }
+
 
 document.getElementById('bphForm').addEventListener('submit', function () {
     const btn = document.getElementById('submitBtn');

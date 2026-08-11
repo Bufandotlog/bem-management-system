@@ -16,11 +16,12 @@ if (empty($nama_acara)) {
 $response = [
     'status' => 'success',
     'rundown' => null,
-    'logistik' => null
+    'logistik' => null,
+    'dokumentasi' => null
 ];
 
 // Fetch Rundown
-$rundown = dbFetchOne("SELECT * FROM arsip_rundown WHERE nama_acara = ? AND periode_id = ? ORDER BY id DESC LIMIT 1", [$nama_acara, $periode_id]);
+$rundown = dbFetchOne("SELECT * FROM arsip_rundown WHERE LOWER(TRIM(nama_acara)) = LOWER(TRIM(?)) AND periode_id = ? ORDER BY id DESC LIMIT 1", [$nama_acara, $periode_id]);
 if ($rundown) {
     $rundown_json = json_decode($rundown['rundown_json'], true);
     
@@ -45,7 +46,7 @@ if ($rundown) {
 }
 
 // Fetch Logistik
-$logistik = dbFetchOne("SELECT * FROM lampiran_pinjam WHERE nama_acara = ? AND periode_id = ? ORDER BY id DESC LIMIT 1", [$nama_acara, $periode_id]);
+$logistik = dbFetchOne("SELECT * FROM lampiran_pinjam WHERE LOWER(TRIM(nama_acara)) = LOWER(TRIM(?)) AND periode_id = ? ORDER BY id DESC LIMIT 1", [$nama_acara, $periode_id]);
 if ($logistik) {
     $barang_json = json_decode($logistik['barang_json'], true);
     $barang_list = [];
@@ -60,6 +61,28 @@ if ($logistik) {
         'tanggal_kegiatan' => $logistik['tanggal_kegiatan'],
         'barang' => $barang_list
     ];
+}
+
+// Fetch Dokumentasi
+$dok_kegiatan = dbFetchOne("SELECT id FROM kegiatan WHERE LOWER(TRIM(nama_kegiatan)) = LOWER(TRIM(?)) AND periode_id = ? LIMIT 1", [$nama_acara, $periode_id]);
+if ($dok_kegiatan) {
+    $dokumentasi = dbFetchOne("SELECT dokumentasi_json FROM arsip_dokumentasi WHERE kegiatan_id = ? LIMIT 1", [$dok_kegiatan['id']]);
+    if ($dokumentasi && !empty($dokumentasi['dokumentasi_json'])) {
+        $docs_arr = json_decode($dokumentasi['dokumentasi_json'], true) ?: [];
+        $docs = [];
+        foreach ($docs_arr as $d) {
+            if (!empty($d['foto'])) {
+                $docs[] = [
+                    'image' => $d['foto'],
+                    'image_url' => uploadUrl($d['foto']),
+                    'caption' => $d['caption'] ?? ''
+                ];
+            }
+        }
+        if (!empty($docs)) {
+            $response['dokumentasi'] = $docs;
+        }
+    }
 }
 
 echo json_encode($response);

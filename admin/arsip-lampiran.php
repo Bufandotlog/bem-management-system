@@ -7,7 +7,7 @@ ini_set('display_errors', 1);
 $page_css = 'arsip-surat';
 require_once __DIR__ . '/header.php';
 
-requireSekretaris();
+requireLogistik();
 $periode_id = getUserPeriode();
 
 $success = '';

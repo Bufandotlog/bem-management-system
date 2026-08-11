@@ -53,8 +53,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'tamba
                     "INSERT INTO periode_kepengurusan (nama, tahun_mulai, tahun_selesai, deskripsi, is_active) VALUES (?, ?, ?, ?, 0)",
                     [$nama, $tahun_mulai, $tahun_selesai, $deskripsi], "siis"
                 );
-                auditLog('CREATE', 'periode_kepengurusan', dbLastId(), 'Tambah periode: ' . $nama);
-                redirect('admin/periode-kepengurusan.php', 'Periode berhasil ditambahkan!', 'success');
+                $new_periode_id = dbLastId();
+                auditLog('CREATE', 'periode_kepengurusan', $new_periode_id, 'Tambah periode: ' . $nama);
+
+                // Auto-seed kementerian default untuk periode baru
+                $default_kementerian = [
+                    ['nama' => 'Pendidikan dan Kaderisasi', 'slug' => 'pendidikan-kaderisasi'],
+                    ['nama' => 'ADKESMA',                   'slug' => 'adkesma'],
+                    ['nama' => 'Kerohanian',                'slug' => 'kerohanian'],
+                    ['nama' => 'Menteri Dalam Kampus',      'slug' => 'menteri-dalam-kampus'],
+                    ['nama' => 'Menteri Luar Kampus',       'slug' => 'menteri-luar-kampus'],
+                    ['nama' => 'KOMINFO',                   'slug' => 'kominfo'],
+                ];
+                $admin_id_session = (int)($_SESSION['admin_id'] ?? 0);
+                foreach ($default_kementerian as $idx => $kem) {
+                    $existing = dbFetchOne("SELECT id FROM kementerian WHERE periode_id = ? AND nama = ?", [$new_periode_id, $kem['nama']], "is");
+                    if (!$existing) {
+                        dbQuery(
+                            "INSERT INTO kementerian (periode_id, created_by, nama, slug, logo, deskripsi, tugas, proker, fungsi, urutan) VALUES (?, ?, ?, ?, '', '', '', '', '', ?)",
+                            [$new_periode_id, $admin_id_session, $kem['nama'], $kem['slug'], $idx],
+                            "iissi"
+                        );
+                        $kem_id = dbLastId();
+
+                        // Auto-register user dengan role 'kominfo' ke kementerian KOMINFO
+                        if ($kem['nama'] === 'KOMINFO') {
+                            $kominfo_users = dbFetchAll("SELECT id, nama FROM users WHERE role = 'kominfo' AND is_active = 1");
+                            foreach ($kominfo_users as $ku_idx => $ku) {
+                                $already = dbFetchOne("SELECT id FROM anggota_kementerian WHERE user_id = ? AND kementerian_id = ?", [$ku['id'], $kem_id], "ii");
+                                if (!$already) {
+                                    dbQuery(
+                                        "INSERT INTO anggota_kementerian (periode_id, created_by, kementerian_id, user_id, nama, jabatan, foto, urutan) VALUES (?, ?, ?, ?, ?, ?, '', ?)",
+                                        [$new_periode_id, $admin_id_session, $kem_id, $ku['id'], $ku['nama'], 'Anggota KOMINFO', $ku_idx],
+                                        "iiiissi"
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+                auditLog('CREATE', 'kementerian', null, 'Auto-seed 6 kementerian default untuk periode: ' . $nama);
+
+                redirect('admin/periode-kepengurusan.php', 'Periode berhasil ditambahkan beserta 6 kementerian default!', 'success');
                 exit();
             }
         }

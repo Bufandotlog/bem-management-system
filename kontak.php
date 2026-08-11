@@ -110,6 +110,15 @@ if (!$kontak_data) {
                 <?php endif; ?>
             </div>
         </div>
+        
+        <!-- Pendaftaran Pengurus -->
+        <div style="margin-top: 3rem; padding: 20px; background: rgba(74, 144, 226, 0.1); border: 1px solid rgba(74, 144, 226, 0.3); border-radius: 12px; text-align: center;">
+            <h3 style="margin-bottom: 10px; color: var(--biru-primary);">Tertarik Bergabung?</h3>
+            <p style="margin-bottom: 20px; font-size: 0.95rem; color: #ccc;">Jadilah bagian dari kepengurusan BEM periode ini.</p>
+            <a href="daftar.php" style="display: inline-block; background: var(--biru-primary); color: #fff; padding: 12px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; transition: background 0.3s;">
+                <i class="fas fa-user-plus" style="margin-right: 8px;"></i> Daftar Sekarang
+            </a>
+        </div>
     </div>
     
     <!-- Google Maps -->

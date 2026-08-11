@@ -2,7 +2,7 @@
 // admin/cetak-lampiran.php
 require_once __DIR__ . '/header.php';
 
-requireSekretaris();
+requireLogistik();
 $periode_id = getUserPeriode();
 
 // --- INITIALIZE EDIT MODE ---
@@ -390,7 +390,7 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
                     <label>Nama Acara / Kegiatan</label>
                     <div class="tpl-picker" id="picker-acara">
                         <i class="fas fa-search tpl-search-icon"></i>
-                        <input type="text" id="input_acara" name="acara" class="tpl-search-input" placeholder="Cari atau ketik nama acara..." value="<?php echo $edit_data ? htmlspecialchars($edit_data['nama_acara']) : ''; ?>" required onfocus="showTplResults()" onkeyup="filterTpl()">
+                        <input type="text" id="input_acara" name="acara" class="tpl-search-input" placeholder="Cari atau ketik nama acara..." value="<?php echo $edit_data ? htmlspecialchars($edit_data['nama_acara']) : ''; ?>" required autocomplete="off" onfocus="showTplResults()" onkeyup="filterTpl()">
                         <div class="tpl-results" id="results-acara">
                             <?php foreach($list_kegiatan as $k): ?>
                             <div class="tpl-item" onclick="selectTpl('<?php echo htmlspecialchars(addslashes($k['label'])); ?>')">

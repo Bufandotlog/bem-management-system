@@ -232,26 +232,29 @@ $download_name = "PANITIA - " . ($data['nama_kegiatan'] ?? 'KEGIATAN') . " - " .
                     </td>
                 </tr>
 
-                <!-- Seksi-Seksi Heading -->
-                <?php if (!empty($data['seksi_seksi'])): ?>
+                <!-- Seksi-Seksi Heading & Details -->
+                <?php 
+                $valid_seksi_list = array_filter($data['seksi_seksi'] ?? [], function($seksi) {
+                    $valid_anggota = array_filter($seksi['anggota'] ?? [], function($item) { return trim($item) !== ''; });
+                    return !empty($valid_anggota);
+                });
+                ?>
+                <?php if (!empty($valid_seksi_list)): ?>
                     <tr>
                         <td colspan="2" class="section-heading">Seksi - Seksi</td>
                     </tr>
 
-                    <!-- Seksi-Seksi Details -->
-                    <?php foreach ($data['seksi_seksi'] as $seksi): ?>
+                    <?php foreach ($valid_seksi_list as $seksi): 
+                        $valid_anggota = array_filter($seksi['anggota'] ?? [], function($item) { return trim($item) !== ''; });
+                    ?>
                         <tr>
                             <td class="role-title"><?php echo htmlspecialchars($seksi['nama_seksi']); ?></td>
                             <td class="names-list">
-                                <?php if (!empty($seksi['anggota'])): ?>
-                                    <ol>
-                                        <?php foreach ($seksi['anggota'] as $name): ?>
-                                            <li><?php echo htmlspecialchars($name); ?></li>
-                                        <?php endforeach; ?>
-                                    </ol>
-                                <?php else: ?>
-                                    -
-                                <?php endif; ?>
+                                <ol>
+                                    <?php foreach ($valid_anggota as $name): ?>
+                                        <li><?php echo htmlspecialchars($name); ?></li>
+                                    <?php endforeach; ?>
+                                </ol>
                             </td>
                         </tr>
                     <?php endforeach; ?>

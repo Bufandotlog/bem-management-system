@@ -31,7 +31,16 @@ body {
     background: var(--bg-dark);
     color: var(--text-white); /* Ubah warna teks dasar menjadi putih */
     line-height: 1.5;
+    color-scheme: dark; /* Paksa popup OS seperti kalender agar berwarna gelap */
 }
+
+/* =====================================================
+   GLOBAL SCROLLBAR
+   ===================================================== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-card); }
+::-webkit-scrollbar-thumb { background: #1a2f4a; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* =====================================================
    LAYOUT UTAMA
@@ -666,6 +675,7 @@ body {
 .form-group input[type="number"],
 .form-group input[type="password"],
 .form-group input[type="file"],
+.form-group input[type="date"],
 .form-group textarea,
 .form-group select {
     width: 100%;
@@ -677,6 +687,13 @@ body {
     font-size: 0.9rem;
     transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
+    color-scheme: dark; /* Force datepicker popup to be dark */
+}
+
+/* Memperjelas icon kalender di dalam input date (karena defaultnya hitam) */
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(0.8);
+    cursor: pointer;
 }
 .form-group input:focus,
 .form-group textarea:focus,

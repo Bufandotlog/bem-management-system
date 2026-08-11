@@ -151,7 +151,7 @@ if (isset($_GET['hapus']) && is_numeric($_GET['hapus'])) {
 
 // Ambil data arsip
 $surat_list_raw = dbFetchAll(
-    "SELECT * FROM arsip_surat WHERE periode_id = ? AND jenis_surat = ? ORDER BY id ASC",
+    "SELECT * FROM arsip_surat WHERE periode_id = ? AND jenis_surat = ? AND (status_arsip = 'archived' OR status_arsip IS NULL) ORDER BY id ASC",
     [$periode_id, $jenis], "is"
 );
 
@@ -451,6 +451,7 @@ $css = "
                 <?php if (in_array($jenis, ['M', 'I'])): ?>
                     <a href="arsip-manual.php?type=<?php echo $jenis; ?>" class="btn-buat" style="background:#f39c12; flex:1; justify-content:center; white-space: nowrap;"><i class="fas fa-file-import"></i> Catat Manual</a>
                 <?php else: ?>
+                    <a href="staging-surat.php" class="btn-buat" style="background:#8e44ad; flex:1.2; justify-content:center; white-space: nowrap;"><i class="fas fa-layer-group"></i> Staging Index</a>
                     <a href="buat-surat.php" class="btn-buat" style="flex:1.2; justify-content:center; white-space: nowrap;"><i class="fas fa-plus"></i> Buat Otomatis</a>
                     <a href="arsip-manual.php?type=<?php echo $jenis; ?>" class="btn-buat" style="background:#f39c12; flex:1; justify-content:center; white-space: nowrap;"><i class="fas fa-file-import"></i> Catat Manual</a>
                 <?php endif; ?>

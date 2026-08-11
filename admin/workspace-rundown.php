@@ -19,6 +19,39 @@ $edit_data = null;
 
 if ($edit_id > 0) {
     $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$edit_id, $periode_id], "ii");
+} else if ($kegiatan_id > 0) {
+    // 1. Cek berdasarkan kegiatan_id
+    $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE kegiatan_id = ? AND periode_id = ? ORDER BY id DESC LIMIT 1", [$kegiatan_id, $periode_id]);
+    
+    // 2. Cek via arsip_surat staging yang terikat ke kegiatan ini
+    if (!$edit_data) {
+        $surat_stg = dbFetchOne("SELECT konten_surat FROM arsip_surat WHERE kegiatan_id = ? AND status_arsip = 'staging' ORDER BY id DESC LIMIT 1", [$kegiatan_id]);
+        if ($surat_stg && !empty($surat_stg['konten_surat'])) {
+            $stg_k = json_decode((string)$surat_stg['konten_surat'], true);
+            if (!empty($stg_k['rundown_internal_ids'][0])) {
+                $r_id = (int)$stg_k['rundown_internal_ids'][0];
+                $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$r_id, $periode_id], "ii");
+            }
+        }
+    }
+    
+    // 3. Fallback: Cek berdasarkan nama_acara
+    if (!$edit_data && !empty($kegiatan['nama_kegiatan'])) {
+        $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE (nama_acara = ? OR nama_acara LIKE ?) AND periode_id = ? ORDER BY id DESC LIMIT 1", [
+            $kegiatan['nama_kegiatan'],
+            '%' . $kegiatan['nama_kegiatan'] . '%',
+            $periode_id
+        ]);
+    }
+    
+    if ($edit_data) {
+        $edit_id = (int)$edit_data['id'];
+        // Tautkan kegiatan_id secara otomatis ke arsip_rundown jika belum terhubung
+        if (empty($edit_data['kegiatan_id']) || (int)$edit_data['kegiatan_id'] !== $kegiatan_id) {
+            dbQuery("UPDATE arsip_rundown SET kegiatan_id = ? WHERE id = ?", [$kegiatan_id, $edit_id]);
+            $edit_data['kegiatan_id'] = $kegiatan_id;
+        }
+    }
 }
 
 // --- POST HANDLER: SIMPAN KE ARSIP ---
@@ -89,20 +122,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         try {
             if ($target_edit_id > 0) {
-                dbQuery("UPDATE arsip_rundown SET nama_acara = ?, tahun = ?, tanggal_mulai = ?, durasi_hari = ?, rundown_json = ? WHERE id = ? AND periode_id = ?", [
-                    $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $target_edit_id, $periode_id
+                dbQuery("UPDATE arsip_rundown SET kegiatan_id = ?, nama_acara = ?, tahun = ?, tanggal_mulai = ?, durasi_hari = ?, rundown_json = ? WHERE id = ? AND periode_id = ?", [
+                    $kegiatan_id, $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $target_edit_id, $periode_id
                 ]);
                 $success_msg = "Data rundown berhasil diperbarui di arsip.";
                 $edit_id = $target_edit_id;
                 $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$edit_id, $periode_id], "ii");
             } else {
-                $new_id = dbInsert("INSERT INTO arsip_rundown (nama_acara, tahun, tanggal_mulai, durasi_hari, rundown_json, periode_id) VALUES (?, ?, ?, ?, ?, ?)", [
-                    $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $periode_id
+                $new_id = dbInsert("INSERT INTO arsip_rundown (kegiatan_id, nama_acara, tahun, tanggal_mulai, durasi_hari, rundown_json, periode_id) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                    $kegiatan_id, $nama_acara, $tahun, $tanggal_mulai, $durasi_hari, $rundown_json, $periode_id
                 ]);
                 $success_msg = "Data rundown berhasil disimpan ke arsip.";
                 // Switch to edit mode so subsequent saves update instead of inserting duplicates
                 $edit_id = $new_id;
                 $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$edit_id, $periode_id], "ii");
+            }
+            
+            // Sync letters
+            if (function_exists('syncTamuUndanganLetters')) {
+                syncTamuUndanganLetters($kegiatan_id, $periode_id);
+                $success_msg .= " 📩 Surat permohonan/undangan otomatis disinkronkan karena rundown telah dibuat.";
             }
         } catch (Exception $e) {
             $error_msg = "Gagal menyimpan: " . $e->getMessage();
@@ -661,10 +700,44 @@ input.barang-qty::-webkit-outer-spin-button {
     </form>
 </div>
 
+<?php
+// Siapkan rekomendasi pemateri
+$tamu_arr = json_decode($kegiatan['tamu_undangan'], true) ?: [];
+$pemateri_list = [];
+$acara_recommendations = [];
+$ket_pemateri_recommendations = [];
+
+foreach ($tamu_arr as $t) {
+    if (stripos($t['perihal'] ?? '', 'pemateri') !== false) {
+        $nama_raw = trim($t['nama'] ?? '');
+        $parts = explode(',', $nama_raw);
+        $nama_pendek = trim($parts[0]);
+        if (!empty($nama_pendek)) {
+            $pemateri_list[] = $nama_pendek;
+            $acara_recommendations[] = "Penyampaian Materi (....)";
+            $ket_pemateri_recommendations[] = "Yang disampaikan oleh " . $nama_pendek;
+        }
+    }
+}
+// Remove duplicates in case of multiple pemateris resulting in same placeholder
+$acara_recommendations = array_values(array_unique($acara_recommendations));
+
+$def_jam = '07';
+$def_menit = '00';
+$w_pelaksanaan = $kegiatan['waktu_pelaksanaan'] ?? '';
+if (preg_match('/(\d{1,2})[\.\:](\d{2})/', $w_pelaksanaan, $m)) {
+    $def_jam = str_pad($m[1], 2, '0', STR_PAD_LEFT);
+    $def_menit = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+}
+?>
 <script>
 const ketList = <?php echo json_encode(array_column($ket_list, 'nama_keterangan')); ?>;
 const tempatList = <?php echo json_encode(array_column($tempat_list, 'nama_tempat')); ?>;
 const pjList = <?php echo json_encode(array_column($pj_list, 'nama_pj')); ?>;
+const acaraRecommendations = <?php echo json_encode(array_values($acara_recommendations)); ?>;
+const ketPemateriRecommendations = <?php echo json_encode(array_values($ket_pemateri_recommendations)); ?>;
+const defaultStartHour = '<?php echo $def_jam; ?>';
+const defaultStartMinute = '<?php echo $def_menit; ?>';
 
 let dayCount = 0;
 
@@ -687,14 +760,14 @@ function addDay() {
             <input type="hidden" name="tipe_ket[${dayCount}]" class="tipe-ket-hidden" value="ket">
         </div>
         
-        <div class="info-grid">
+        <div class="info-grid" style="display: none;">
             <div class="form-group" style="margin-bottom: 0;">
                 <label>Waktu Mulai Acara (24 Jam)</label>
                 <div style="display: flex; gap: 10px; align-items: center; max-width: 100%;">
                     <div style="width: 100px;">
                         <div class="qty-wrapper">
                             <button type="button" class="qty-btn" onclick="const i=this.nextElementSibling; if(i.value>0) {i.value--; recalculateTimes(${dayCount});}">-</button>
-                            <input type="number" class="barang-qty waktu-mulai-jam" name="waktu_mulai_jam[${dayCount}]" required value="07" min="0" max="23" onchange="recalculateTimes(${dayCount})" onkeyup="recalculateTimes(${dayCount})">
+                            <input type="number" class="barang-qty waktu-mulai-jam" name="waktu_mulai_jam[${dayCount}]" required value="${defaultStartHour}" min="0" max="23" onchange="recalculateTimes(${dayCount})" onkeyup="recalculateTimes(${dayCount})">
                             <button type="button" class="qty-btn" onclick="const i=this.previousElementSibling; if(i.value<23) {i.value++; recalculateTimes(${dayCount});}">+</button>
                         </div>
                     </div>
@@ -702,7 +775,7 @@ function addDay() {
                     <div style="width: 100px;">
                         <div class="qty-wrapper">
                             <button type="button" class="qty-btn" onclick="const i=this.nextElementSibling; if(i.value>0) {i.value--; recalculateTimes(${dayCount});}">-</button>
-                            <input type="number" class="barang-qty waktu-mulai-menit" name="waktu_mulai_menit[${dayCount}]" required value="00" min="0" max="59" onchange="recalculateTimes(${dayCount})" onkeyup="recalculateTimes(${dayCount})">
+                            <input type="number" class="barang-qty waktu-mulai-menit" name="waktu_mulai_menit[${dayCount}]" required value="${defaultStartMinute}" min="0" max="59" onchange="recalculateTimes(${dayCount})" onkeyup="recalculateTimes(${dayCount})">
                             <button type="button" class="qty-btn" onclick="const i=this.previousElementSibling; if(i.value<59) {i.value++; recalculateTimes(${dayCount});}">+</button>
                         </div>
                     </div>
@@ -904,7 +977,12 @@ function addRow(dayId, afterRow = null) {
             </div>
         </td>
         <td data-label="ACARA">
-            <input type="text" name="acara[${dayId}][]" placeholder="Nama Acara/Materi" required style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%;">
+            <div class="tpl-picker" style="width: 100%;">
+                <input type="text" name="acara[${dayId}][]" class="tpl-search-input" placeholder="Nama Acara/Materi" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%;">
+                <div class="tpl-results">
+                    ${acaraRecommendations.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                </div>
+            </div>
         </td>
         <td data-label="KET / TEMPAT">
             <div style="display: flex; gap: 5px;">
@@ -913,16 +991,16 @@ function addRow(dayId, afterRow = null) {
                     <option value="tempat">Tmpt</option>
                 </select>
                 <div class="tpl-picker" style="flex: 1; min-width: 150px;">
-                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                     <div class="tpl-results">
-                        ${ketList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                        ${[...ketPemateriRecommendations, ...ketList].map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                     </div>
                 </div>
             </div>
         </td>
         <td data-label="PENANGGUNG JAWAB">
             <div class="tpl-picker" style="width: 100%;">
-                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                 <div class="tpl-results">
                     ${pjList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                 </div>
@@ -984,7 +1062,12 @@ function addParallelRow(btn, dayId) {
         <td data-label="ACARA">
             <input type="hidden" name="waktu[${dayId}][]" class="waktu-hidden" value="00.00 - 00.00">
             <input type="hidden" name="is_parallel[${dayId}][]" class="is-parallel-hidden" value="1">
-            <input type="text" name="acara[${dayId}][]" placeholder="Kegiatan Paralel..." required style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; border-color: rgba(74, 144, 226, 0.4); box-shadow: inset 0 0 10px rgba(74, 144, 226, 0.05);">
+            <div class="tpl-picker" style="width: 100%;">
+                <input type="text" name="acara[${dayId}][]" class="tpl-search-input" placeholder="Kegiatan Paralel..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; border-color: rgba(74, 144, 226, 0.4); box-shadow: inset 0 0 10px rgba(74, 144, 226, 0.05);">
+                <div class="tpl-results">
+                    ${acaraRecommendations.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                </div>
+            </div>
         </td>
         <td data-label="KET / TEMPAT">
             <div style="display: flex; gap: 5px;">
@@ -993,16 +1076,16 @@ function addParallelRow(btn, dayId) {
                     <option value="tempat">Tmpt</option>
                 </select>
                 <div class="tpl-picker" style="flex: 1; min-width: 150px;">
-                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                    <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                     <div class="tpl-results">
-                        ${ketList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                        ${[...ketPemateriRecommendations, ...ketList].map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                     </div>
                 </div>
             </div>
         </td>
         <td data-label="PENANGGUNG JAWAB">
             <div class="tpl-picker" style="width: 100%;">
-                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
+                <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                 <div class="tpl-results">
                     ${pjList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
                 </div>
@@ -1252,6 +1335,26 @@ document.addEventListener('focusin', function(e) {
     if (e.target.classList.contains('tpl-search-input')) {
         const results = e.target.nextElementSibling;
         if (results && results.classList.contains('tpl-results')) {
+            const allInputs = document.querySelectorAll('.tpl-search-input');
+            const usedValues = new Set();
+            allInputs.forEach(inp => {
+                if (inp !== e.target && inp.value.trim() !== '') {
+                    usedValues.add(inp.value.trim().toLowerCase());
+                }
+            });
+            
+            const items = results.querySelectorAll('.tpl-item');
+            items.forEach(item => {
+                const val = (item.dataset.val || item.innerText).trim().toLowerCase();
+                const isRecommendation = val.startsWith('yang disampaikan oleh') || val.startsWith('penyampaian materi (');
+                if (isRecommendation && usedValues.has(val)) {
+                    item.style.display = 'none';
+                    item.classList.add('filtered-out');
+                } else {
+                    item.style.display = 'block';
+                    item.classList.remove('filtered-out');
+                }
+            });
             results.style.display = 'block';
         }
     }
@@ -1264,6 +1367,10 @@ document.addEventListener('keyup', function(e) {
         if (results && results.classList.contains('tpl-results')) {
             const items = results.querySelectorAll('.tpl-item');
             items.forEach(item => {
+                if (item.classList.contains('filtered-out')) {
+                    item.style.display = 'none';
+                    return;
+                }
                 const text = item.innerText.toLowerCase();
                 item.style.display = text.includes(inputVal) ? 'block' : 'none';
             });

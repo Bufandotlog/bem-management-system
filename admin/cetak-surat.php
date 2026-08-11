@@ -9,15 +9,49 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/config.php';
 
 requireLogin();
-requireSekretaris();
+requireLogin();
 
 $id = (int)($_GET['id'] ?? 0);
 $periode_id = getUserPeriode();
 
-$surat = dbFetchOne("SELECT * FROM arsip_surat WHERE id = ? AND periode_id = ?", [$id, $periode_id], "ii");
+$surat = dbFetchOne("
+    SELECT s.*, s.kegiatan_id as id_kegiatan 
+    FROM arsip_surat s 
+    WHERE s.id = ? AND s.periode_id = ?
+", [$id, $periode_id], "ii");
 
 if (!$surat) {
     die("Surat tidak ditemukan atau Anda tidak memiliki akses ke periode ini.");
+}
+
+// Otorisasi Akses
+$admin_role = strtolower($_SESSION['admin_role'] ?? '');
+$isSekretaris = (strpos($admin_role, 'sekretaris') !== false || strpos($admin_role, 'sekertaris') !== false || $admin_role === 'superadmin' || $admin_role === 'admin');
+
+$isHumas = false;
+if (strpos($admin_role, 'humas') !== false) {
+    $isHumas = true;
+} else if (isset($_SESSION['admin_nama'])) {
+    $cek_humas = dbFetchOne("
+        SELECT k.id 
+        FROM anggota_kementerian ak 
+        JOIN kementerian k ON ak.kementerian_id = k.id 
+        WHERE ak.nama = ? AND LOWER(k.nama) LIKE '%humas%' 
+        LIMIT 1
+    ", [$_SESSION['admin_nama']]);
+    if ($cek_humas) $isHumas = true;
+}
+
+$isPanitiaBerhak = false;
+if (!empty($surat['id_kegiatan'])) {
+    $cek_panitia = dbFetchOne("SELECT event_role FROM kegiatan_panitia WHERE kegiatan_id = ? AND user_id = ? AND event_role IN ('ketuplat', 'sie_humas') LIMIT 1", [$surat['id_kegiatan'], $_SESSION['admin_id'] ?? 0], "ii");
+    if ($cek_panitia) {
+        $isPanitiaBerhak = true;
+    }
+}
+
+if (!$isSekretaris && !$isHumas && !$isPanitiaBerhak) {
+    die("Akses ditolak: Anda tidak memiliki izin untuk mengunduh/mencetak surat ini. Hanya Sekretaris, Superadmin, Humas, atau Ketua Pelaksana/Sie Humas terkait yang diizinkan.");
 }
 
 $konten = json_decode($surat['konten_surat'], true) ?? [];
@@ -254,7 +288,13 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
     <div class="no-print">
         <button onclick="safePrint()" class="btn"><i class="fas fa-print"></i> Cetak Dokumen</button>
         <button onclick="exportWord()" class="btn" style="background:#27ae60;"><i class="fas fa-file-word"></i> Download Word</button>
-        <a href="arsip-surat.php" class="btn btn-warning"><i class="fas fa-arrow-left"></i> Kembali ke Arsip</a>
+        <?php
+        $back_link = "arsip-surat.php";
+        if (!$isSekretaris) {
+            $back_link = "distribusi-surat.php" . (!empty($surat['id_kegiatan']) ? "?kegiatan_id=" . $surat['id_kegiatan'] : "");
+        }
+        ?>
+        <a href="<?php echo htmlspecialchars($back_link); ?>" class="btn btn-warning"><i class="fas fa-arrow-left"></i> Kembali</a>
     </div>
     <?php endif; ?>
 
@@ -364,9 +404,24 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 $tahun_surat = end($parts_nomor) ?: date('Y');
 
                 if (!empty($nama_keg)) {
+                    $prefix_rapat = '';
+                    $perihal_lower_p = strtolower($surat['perihal']);
+                    if (strpos($perihal_lower_p, 'rapat persiapan') !== false) {
+                        $prefix_rapat = 'rapat persiapan ';
+                    } elseif (strpos($perihal_lower_p, 'rapat pemantapan') !== false) {
+                        $prefix_rapat = 'rapat pemantapan ';
+                    } elseif (strpos($perihal_lower_p, 'rapat final') !== false) {
+                        $prefix_rapat = 'rapat final ';
+                    } elseif (strpos($perihal_lower_p, 'rapat') !== false) {
+                        $prefix_rapat = 'rapat ';
+                    }
+
+                    $dot = (substr(trim(strip_tags($nama_keg)), -1) === '.') ? '' : '.';
+
                     // Mode template: generate dari nama_kegiatan + tema
-                    $pembuka = 'Sehubungan akan diadakannya kegiatan <b>'
-                        . $nama_keg . '</b> Tahun ' . htmlspecialchars($tahun_surat)
+                    $pembuka = 'Sehubungan akan diadakannya kegiatan '
+                        . $prefix_rapat
+                        . '<b>' . $nama_keg . '</b>' . $dot . ' Tahun ' . htmlspecialchars($tahun_surat)
                         . (!empty($tema_keg) ? ' dengan tema "<b>' . $tema_keg . '</b>"' : '')
                         . ' yang akan dilaksanakan pada :';
                 } elseif (!empty($custom)) {
@@ -400,7 +455,11 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             <?php
             // Paragraf Permohonan: generate dinamis dengan akhiran cerdas
             // Gabungkan semua baris tujuan dengan spasi agar tidak ada kata yang terlewat
-            $tujuan_baris_pertama = trim(str_replace(["\r\n", "\r", "\n"], ' ', $surat['tujuan']));
+            $tujuan_raw = trim(str_replace(["\r\n", "\r", "\n"], ' ', $surat['tujuan']));
+            // Ekstrak nama pendek (sebelum tanda koma pertama)
+            $tujuan_parts = explode(',', $tujuan_raw);
+            $tujuan_nama_pendek = trim($tujuan_parts[0]);
+            
             $konteks_text         = trim($konten['konteks'] ?? '');
             
             // Tentukan "buntut" kalimat (suffix) secara pintar
@@ -410,7 +469,11 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             } else {
                 // Suffix otomatis berdasarkan Perihal
                 $perihal_lower = strtolower($surat['perihal']);
-                if (strpos($perihal_lower, 'undangan') !== false) {
+                if (strpos($perihal_lower, 'pemateri') !== false) {
+                    $suffix = ' untuk berkenan penyampaikan materi pada acara tersebut.';
+                } else if (strpos($perihal_lower, 'sambutan') !== false) {
+                    $suffix = ' untuk berkenan penyampaikan sambutan pada acara tersebut.';
+                } else if (strpos($perihal_lower, 'undangan') !== false) {
                     $suffix = ' agar dapat menghadiri kegiatan tersebut.';
                 } else if (strpos($perihal_lower, 'peminjaman') !== false || strpos($perihal_lower, 'permohonan tempat') !== false) {
                     $suffix = ' untuk dapat menggunakan fasilitas tersebut.';
@@ -449,6 +512,10 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 $perihal_paragraf_1 = 'utusan' . $suffix_word;
             } elseif (strpos($perihal_paragraf_1, 'peminjaman') !== false) {
                 $perihal_paragraf_1 = 'permohonan peminjaman' . $suffix_word;
+            } elseif (strpos($perihal_paragraf_1, 'permohonan pemateri') !== false) {
+                $perihal_paragraf_1 = 'permohonan pemateri' . $suffix_word;
+            } elseif (strpos($perihal_paragraf_1, 'permohonan sambutan') !== false) {
+                $perihal_paragraf_1 = 'permohonan sambutan' . $suffix_word;
             } elseif (strpos($perihal_paragraf_1, 'permohonan') !== false) {
                 $perihal_paragraf_1 = 'permohonan' . $suffix_word;
             }
@@ -457,7 +524,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 . htmlspecialchars($perihal_paragraf_1)
                 . ' kepada '
                 . $sapaan
-                . htmlspecialchars($tujuan_baris_pertama)
+                . htmlspecialchars($tujuan_nama_pendek)
                 . $suffix;
             ?>
             <p class="indent"><?php echo $paragraf_permohonan; ?></p>
@@ -465,7 +532,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             <?php
             // Paragraf Penutup: dinamis (mengikuti perihal)
             $perihal_penutup = mb_strtolower($surat['perihal']);
-            $perihal_penutup = str_replace(['podcast', 'poadcast'], '', $perihal_penutup);
+            $perihal_penutup = str_replace(['podcast', 'poadcast', 'pemateri', 'sambutan'], '', $perihal_penutup);
             $perihal_penutup = preg_replace('/\s+/', ' ', trim($perihal_penutup));
             $paragraf_penutup = 'Demikian surat ' . $perihal_penutup . ' ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terimakasih.';
             ?>
@@ -779,14 +846,26 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             }
                         }
                     ?>
-                        <tr style="page-break-inside: avoid;">
+                        <?php 
+                        $is_highlight = false;
+                        $perihal_surat_lower = strtolower($surat['perihal'] ?? '');
+                        $is_pemateri_letter = (strpos($perihal_surat_lower, 'pemateri') !== false || strpos($perihal_surat_lower, 'narasumber') !== false);
+                        
+                        if ($is_pemateri_letter && isset($tujuan_nama_pendek) && !empty($tujuan_nama_pendek)) {
+                            if (stripos($item['keterangan'], $tujuan_nama_pendek) !== false || stripos($item['acara'], $tujuan_nama_pendek) !== false) {
+                                $is_highlight = true;
+                            }
+                        }
+                        $bg_style = $is_highlight ? 'background-color: #d9e2f3; -webkit-print-color-adjust: exact;' : '';
+                        ?>
+                        <tr style="page-break-inside: avoid; <?php echo $bg_style; ?>">
                             <?php if (!$is_par): ?>
-                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo $num++; ?>.</td>
-                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; white-space: nowrap;" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo htmlspecialchars($item['waktu']); ?></td>
+                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo $num++; ?>.</td>
+                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; white-space: nowrap; <?php echo $bg_style; ?>" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo htmlspecialchars($item['waktu']); ?></td>
                             <?php endif; ?>
-                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;"><?php echo nl2br(htmlspecialchars($item['acara'])); ?></td>
-                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;"><?php echo htmlspecialchars($item['keterangan']); ?></td>
-                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle;"><?php echo htmlspecialchars($item['pj']); ?></td>
+                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>"><?php echo nl2br(htmlspecialchars($item['acara'])); ?></td>
+                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>"><?php echo htmlspecialchars($item['keterangan']); ?></td>
+                            <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>"><?php echo htmlspecialchars($item['pj'] ?? $item['penanggung_jawab'] ?? ''); ?></td>
                         </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -795,6 +874,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             endforeach; 
             ?>
             </table>
+            <div style="font-size: 10pt; font-style: italic; margin-top: -15px; margin-bottom: 20px;">*Catatan: Rundown acara dapat berubah sewaktu-waktu menyesuaikan kondisi dan kebutuhan di lapangan.</div>
         </div>
         <?php endforeach; ?>
     <?php endif; ?>

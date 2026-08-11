@@ -33,6 +33,18 @@ $anggota = dbFetchAll(
     [$kementerian_id], "i"
 );
 
+// Ambil list semua akun terdaftar untuk JS
+// Jika kementerian ini BUKAN KOMINFO, exclude user dengan role 'kominfo'
+$is_kominfo_kementerian = (stripos($kementerian['nama'], 'kominfo') !== false);
+if ($is_kominfo_kementerian) {
+    // Untuk KOMINFO: hanya tampilkan user dengan role 'kominfo'
+    $list_akun = dbFetchAll("SELECT id, nama, username FROM users WHERE is_active = 1 AND role = 'kominfo' AND (periode_id = ? OR periode_id IS NULL) ORDER BY nama ASC", [$active_periode]);
+} else {
+    // Untuk kementerian lain: exclude user kominfo
+    $list_akun = dbFetchAll("SELECT id, nama, username FROM users WHERE is_active = 1 AND role != 'kominfo' AND role != 'superadmin' AND (periode_id = ? OR periode_id IS NULL) ORDER BY nama ASC", [$active_periode]);
+}
+$digunakan = array_filter(array_column($anggota, 'user_id'));
+
 // ============================================
 // PROSES SUBMIT
 // ============================================
@@ -79,10 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Simpan / update setiap baris — batasi max 100 anggota
-    $nama_list = array_slice($_POST['nama'] ?? [], 0, 100);
+    $user_ids = array_slice($_POST['user_id'] ?? [], 0, 100);
 
-    foreach ($nama_list as $index => $nama) {
-        $nama = sanitizeText($nama, 100);
+    foreach ($user_ids as $index => $user_id) {
+        $user_id = !empty($user_id) ? (int)$user_id : null;
+        
+        if (!$user_id) continue;
+        
+        $u = dbFetchOne("SELECT nama FROM users WHERE id = ?", [$user_id], "i");
+        $nama = $u['nama'] ?? '';
+
         if (empty($nama)) continue;
 
         $jabatan    = sanitizeText($_POST['jabatan'][$index] ?? '', 100);
@@ -119,16 +137,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($anggota_id > 0) {
             dbQuery(
-                "UPDATE anggota_kementerian SET nama=?, jabatan=?, foto=?, urutan=? WHERE id=? AND kementerian_id=?",
-                [$nama, $jabatan, $foto, $index, $anggota_id, $kementerian_id],
-                "sssiii"
+                "UPDATE anggota_kementerian SET user_id=?, nama=?, jabatan=?, foto=?, urutan=? WHERE id=? AND kementerian_id=?",
+                [$user_id, $nama, $jabatan, $foto, $index, $anggota_id, $kementerian_id],
+                "isssiii"
             );
         } else {
             dbQuery(
-                "INSERT INTO anggota_kementerian (periode_id, created_by, kementerian_id, nama, jabatan, foto, urutan)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [$kementerian['periode_id'], $_SESSION['admin_id'], $kementerian_id, $nama, $jabatan, $foto, $index],
-                "iiisssi"
+                "INSERT INTO anggota_kementerian (periode_id, created_by, kementerian_id, user_id, nama, jabatan, foto, urutan)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [$kementerian['periode_id'], $_SESSION['admin_id'], $kementerian_id, $user_id, $nama, $jabatan, $foto, $index],
+                "iiiisssi"
             );
         }
     }
@@ -184,9 +202,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="anggota-fields">
-                    <input type="text" name="nama[]"
-                           value="<?php echo htmlspecialchars($a['nama'], ENT_QUOTES, 'UTF-8'); ?>"
-                           placeholder="Nama Lengkap" required>
+                    <div class="tpl-picker" style="margin-bottom:10px;">
+                        <?php 
+                            $akun_nama = '';
+                            foreach($list_akun as $akun) {
+                                if ($a['user_id'] == $akun['id']) {
+                                    $akun_nama = $akun['nama'];
+                                    break;
+                                }
+                            }
+                        ?>
+                        <i class="fas fa-search tpl-search-icon"></i>
+                        <input type="text" class="tpl-search-input form-control tpl-display-input" placeholder="Cari atau pilih anggota..." value="<?php echo htmlspecialchars($akun_nama); ?>" autocomplete="off" onfocus="showTplAnggota(this)" onkeyup="filterTplAnggota(this)">
+                        <input type="hidden" name="user_id[]" class="tpl-hidden-input" value="<?php echo htmlspecialchars($a['user_id']); ?>">
+                        <div class="tpl-results">
+                            <div class="tpl-item" onclick='selectTplAnggota(this, "", "")'>
+                                <div class="tpl-item-label" style="color:#aaa;">-- Kosongkan (Batal Pilih) --</div>
+                            </div>
+                            <?php foreach($list_akun as $akun): 
+                                if (in_array($akun['id'], $digunakan) && $a['user_id'] != $akun['id']) continue;
+                            ?>
+                            <div class="tpl-item" onclick='selectTplAnggota(this, <?php echo json_encode($akun["id"]); ?>, <?php echo json_encode($akun["nama"]); ?>)'>
+                                <div class="tpl-item-label"><?php echo htmlspecialchars($akun['nama']); ?></div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                     <select name="jabatan[]" required style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 15px; color: var(--text-main); font-size: 0.95rem;">
                         <option value="">-- Pilih Jabatan --</option>
                         <?php 
@@ -235,7 +276,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="preview-placeholder"><i class="fas fa-user"></i></div>
                 </div>
                 <div class="anggota-fields">
-                    <input type="text" name="nama[]" placeholder="Nama Lengkap" required>
+                    <select name="user_id[]" class="form-control" style="margin-bottom:10px;">
+                        <option value="">-- Pilih Akun Terdaftar --</option>
+                        <?php foreach($list_akun as $akun): 
+                            if (in_array($akun['id'], $digunakan)) continue;
+                        ?>
+                            <option value="<?php echo $akun['id']; ?>" data-nama="<?php echo htmlspecialchars($akun['nama'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($akun['nama']); ?> (@<?php echo htmlspecialchars($akun['username']); ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                     <select name="jabatan[]" required style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 15px; color: var(--text-main); font-size: 0.95rem;">
                         <option value="">-- Pilih Jabatan --</option>
                         <?php 
@@ -281,6 +331,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- JavaScript — tidak diubah -->
 <script>
 function tambahAnggota() {
+    const akunOptions = `
+        <div class="tpl-item" onclick='selectTplAnggota(this, "", "")'>
+            <div class="tpl-item-label" style="color:#aaa;">-- Kosongkan (Batal Pilih) --</div>
+        </div>
+        <?php foreach($list_akun as $akun): 
+            if (in_array($akun['id'], $digunakan)) continue;
+        ?>
+            <div class="tpl-item" onclick='selectTplAnggota(this, <?php echo json_encode($akun["id"]); ?>, <?php echo json_encode($akun["nama"]); ?>)'>
+                <div class="tpl-item-label"><?php echo htmlspecialchars($akun['nama']); ?></div>
+            </div>
+        <?php endforeach; ?>
+    `;
+
     const container = document.getElementById('anggotaContainer');
     const div = document.createElement('div');
     div.className = 'anggota-item';
@@ -290,7 +353,12 @@ function tambahAnggota() {
             `<div class="preview-placeholder"><i class="fas fa-user"></i></div>` +
         `</div>` +
         `<div class="anggota-fields">` +
-            `<input type="text" name="nama[]" placeholder="Nama Lengkap" required>` +
+            `<div class="tpl-picker" style="margin-bottom:10px;">` +
+                `<i class="fas fa-search tpl-search-icon"></i>` +
+                `<input type="text" class="tpl-search-input form-control tpl-display-input" placeholder="Cari atau pilih anggota..." value="" autocomplete="off" onfocus="showTplAnggota(this)" onkeyup="filterTplAnggota(this)">` +
+                `<input type="hidden" name="user_id[]" class="tpl-hidden-input" value="">` +
+                `<div class="tpl-results">${akunOptions}</div>` +
+            `</div>` +
             `<select name="jabatan[]" required style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 15px; color: var(--text-main); font-size: 0.95rem;">` +
                 `<option value="">-- Pilih Jabatan --</option>` +
                 `<option value="Ketua Umum <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?>">Ketua Umum <?php echo htmlspecialchars($kementerian['nama'], ENT_QUOTES, 'UTF-8'); ?></option>` +
@@ -319,24 +387,123 @@ function hapusAnggotaItem(btn) {
     }
 }
 
+
 document.addEventListener('change', function (e) {
-    if (e.target.type !== 'file' || e.target.name !== 'foto[]') return;
-    const file = e.target.files[0];
-    if (!file) return;
-    const preview = e.target.closest('.anggota-item').querySelector('.anggota-photo-preview');
-    const reader = new FileReader();
-    reader.onload = ev => {
-        preview.innerHTML = `<img src="${ev.target.result}" class="preview-img" alt="Preview">`;
-    };
-    reader.readAsDataURL(file);
+    if (e.target.name === 'delete_ids[]') {
+        const item = e.target.closest('.anggota-item');
+        if (item) {
+            const inputs = item.querySelectorAll('select, input:not([name="delete_ids[]"]):not([name="anggota_id[]"])');
+            if (e.target.checked) {
+                inputs.forEach(input => input.removeAttribute('required'));
+                item.style.opacity = '0.5';
+            } else {
+                inputs.forEach(input => input.setAttribute('required', 'required'));
+                item.style.opacity = '1';
+            }
+        }
+    }
+    
+    if (e.target.type === 'file' && e.target.name === 'foto[]') {
+        const file = e.target.files[0];
+        if (!file) return;
+        const preview = e.target.closest('.anggota-item').querySelector('.anggota-photo-preview');
+        const reader = new FileReader();
+        reader.onload = ev => {
+            preview.innerHTML = `<img src="${ev.target.result}" class="preview-img" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+    }
 });
 
-document.getElementById('submitBtn').addEventListener('click', function () {
-    if (this.classList.contains('loading')) return;
-    this.classList.add('loading');
-    this.innerHTML = '<i class="fas fa-spinner"></i> Menyimpan...';
+const adminForm = document.querySelector('.admin-form');
+if (adminForm) {
+    adminForm.addEventListener('submit', function () {
+        document.querySelectorAll('.anggota-item').forEach(item => {
+            const delCheckbox = item.querySelector('input[name="delete_ids[]"]');
+            if (delCheckbox && delCheckbox.checked) {
+                item.querySelectorAll('select, input').forEach(input => input.removeAttribute('required'));
+            }
+        });
+        const btn = document.getElementById('submitBtn');
+        if (btn && !btn.classList.contains('loading')) {
+            btn.classList.add('loading');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        }
+    });
+}
+
+function _elevatePickerCard(res) {
+    const card = res.closest('.anggota-item');
+    if (card) card.style.zIndex = '99';
+}
+function _resetPickerCards() {
+    document.querySelectorAll('.anggota-item').forEach(c => c.style.zIndex = '');
+}
+function showTplAnggota(input) {
+    document.querySelectorAll('.tpl-results').forEach(el => el.style.display = 'none');
+    const picker = input.closest('.tpl-picker');
+    const res = picker.querySelector('.tpl-results');
+    if(res) {
+        res.style.display = 'block';
+        _elevatePickerCard(res);
+    }
+}
+function filterTplAnggota(input) {
+    const filter = input.value.toLowerCase();
+    const picker = input.closest('.tpl-picker');
+    const results = picker.querySelector('.tpl-results');
+    const items = results.getElementsByClassName('tpl-item');
+    let hasMatch = false;
+    for(let i=0;i<items.length;i++) {
+        const label = items[i].querySelector('.tpl-item-label').innerText.toLowerCase();
+        if(label.includes(filter)) {
+            items[i].style.display = "";
+            hasMatch = true;
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+    let emptyMsg = results.querySelector('.tpl-empty');
+    if(!hasMatch) {
+        if(!emptyMsg) {
+            emptyMsg = document.createElement('div');
+            emptyMsg.className = 'tpl-empty';
+            emptyMsg.innerText = 'Tidak ada hasil...';
+            emptyMsg.style.padding = '15px';
+            emptyMsg.style.textAlign = 'center';
+            emptyMsg.style.color = '#888';
+            emptyMsg.style.fontStyle = 'italic';
+            results.appendChild(emptyMsg);
+        }
+    } else if(emptyMsg) {
+        emptyMsg.remove();
+    }
+}
+function selectTplAnggota(item, id, name) {
+    const picker = item.closest('.tpl-picker');
+    picker.querySelector('.tpl-hidden-input').value = id;
+    picker.querySelector('.tpl-display-input').value = name;
+    picker.querySelector('.tpl-results').style.display = 'none';
+    _resetPickerCards();
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.tpl-picker')) {
+        document.querySelectorAll('.tpl-results').forEach(el => el.style.display = 'none');
+        _resetPickerCards();
+    }
 });
 </script>
+
+<style>
+/* CSS Tambahan untuk tpl-picker */
+.tpl-picker { position: relative; }
+.tpl-search-input { padding-left: 44px !important; }
+.tpl-search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--accent-color); font-size: 1rem; pointer-events: none; z-index: 5; }
+.tpl-results { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #121822; border: 1px solid var(--border-color); border-radius: 16px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; padding: 8px; }
+.tpl-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
+.tpl-item:hover { background: rgba(74, 144, 226, 0.1); border-color: rgba(74, 144, 226, 0.3); }
+.tpl-item-label { font-weight: 600; color: #fff; margin-bottom: 4px; }
+</style>
 
 <link rel="stylesheet" href="css/kementerian-anggota.css">
 
