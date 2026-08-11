@@ -383,6 +383,7 @@ foreach($db_pengaturan as $p) {
     $pengaturan[$p['kunci']] = $p['nilai'];
 }
 $list_kegiatan = dbFetchAll("SELECT * FROM surat_templates WHERE periode_id = ? AND jenis = 'kegiatan' ORDER BY label ASC", [$periode_id], "i");
+$list_tempat = dbFetchAll("SELECT * FROM surat_templates WHERE periode_id = ? AND jenis = 'tempat' ORDER BY label ASC", [$periode_id], "i");
 $list_kementerian = dbFetchAll("SELECT nama, proker FROM kementerian WHERE periode_id = ? ORDER BY urutan ASC", [$periode_id], "i");
 
 $proker_map = [];
@@ -458,7 +459,7 @@ $def = [
     'tema_kegiatan' => '',
     'tanggal_kegiatan' => tanggalIndonesia(),
     'hari_kegiatan' => tanggalIndonesia(null, true) ? explode(',', tanggalIndonesia(null, true))[0] : 'Senin',
-    'tempat' => 'Institut Budi Utomo Nasional Majalengka',
+    'tempat' => '',
     'waktu' => '08.00 WIB s.d Selesai',
     'waktu_mulai' => '08.00',
     'nama_rektor' => 'Dr. H. Sudibyo BO, S.Sos., S.E., M.M.',
@@ -626,7 +627,47 @@ if (!empty($tanggal_kegiatan_val)) {
     margin-bottom: 1.5rem;
 }
 
-.buat-ba-container label {
+.form-floating {
+    position: relative;
+}
+.form-floating input, .form-floating select, .form-floating textarea {
+    padding: 1.6rem 1rem 0.4rem 1rem;
+    height: 64px;
+    background: var(--input-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 14px;
+    color: var(--text-main);
+    width: 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+}
+.form-floating label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 16px;
+    pointer-events: none;
+    transform-origin: 0 0;
+    transition: all 0.2s ease-in-out;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+.form-floating input:focus, .form-floating select:focus, .form-floating textarea:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.15);
+}
+.form-floating input:focus ~ label,
+.form-floating input:not(:placeholder-shown) ~ label,
+.form-floating textarea:focus ~ label,
+.form-floating textarea:not(:placeholder-shown) ~ label,
+.form-floating select ~ label {
+    transform: scale(0.8) translateY(-12px) translateX(-4px);
+    color: var(--accent-color);
+}
+
+.buat-ba-container label.static-label {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
@@ -636,7 +677,7 @@ if (!empty($tanggal_kegiatan_val)) {
     letter-spacing: 1px;
 }
 
-.buat-ba-container input,
+.buat-ba-container input:not(.tpl-search-input):not(.item-checkbox):not([type="checkbox"]):not([type="file"]),
 .buat-ba-container select,
 .buat-ba-container textarea {
     background: var(--input-bg);
@@ -649,7 +690,7 @@ if (!empty($tanggal_kegiatan_val)) {
     font-size: 0.95rem;
 }
 
-.buat-ba-container input:focus,
+.buat-ba-container input:not(.tpl-search-input):not(.item-checkbox):not([type="checkbox"]):not([type="file"]):focus,
 .buat-ba-container select:focus,
 .buat-ba-container textarea:focus {
     border-color: var(--accent-color);
@@ -929,12 +970,27 @@ if (!empty($tanggal_kegiatan_val)) {
 .drum-arrow-up { margin-bottom: 5px; }
 .drum-arrow-down { margin-top: 5px; }
 .drum-arrow:hover { background: #333; color: #fff; }
-.drum-time-label { font-size: 0.7rem; color: #555; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+.drum-time-label { font-size: 0.7rem; color: #555; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; text-align: center; }
 .drum-groups-wrap { display: flex; gap: 20px; align-items: flex-start; margin-top: 15px; flex-wrap: wrap; }
 .drum-colon { color: var(--accent-color); font-weight: 700; font-size: 1.2rem; padding-top: 104px; }
+.time-group-inner { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.sd-label { padding-top:24px; color:var(--text-muted); font-size:0.8rem; }
+.toggle-selesai-container { padding-top: 24px; }
+
 @media (max-width: 600px) {
-    .buat-ba-container .drum-groups-wrap { justify-content: center; }
-    .drum-colon { display: none; }
+    .buat-ba-container .drum-groups-wrap { 
+        justify-content: center; 
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .time-group-inner { gap: 5px; }
+    .drum-col { width: 45px; height: 130px; }
+    .drum-item { height: 30px; line-height: 30px; font-size: 1rem; }
+    .drum-highlight { top: 50px; height: 30px; left: 2px; right: 2px; }
+    .drum-arrow { padding: 4px; font-size: 0.7rem; }
+    .drum-colon { display: block; padding-top: 75px; font-size: 1rem; margin: 0 2px; }
+    .sd-label { padding-top: 15px; font-size: 0.75rem; margin: 0 2px; align-self: center; }
+    .toggle-selesai-container { width: 100%; display: flex; justify-content: center; padding-top: 10px; }
 }
 
 .buat-ba-container .date-range-wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -971,11 +1027,8 @@ if (!empty($tanggal_kegiatan_val)) {
             </div>
             <div class="card-body">
                 <!-- PILIHAN KEGIATAN (INTEGRASI MASTER KEGIATAN) -->
-                <div class="form-group" style="background: rgba(74, 144, 226, 0.05); padding: 18px; border-radius: 16px; border: 1px solid rgba(74, 144, 226, 0.2); margin-bottom: 24px;">
-                    <label style="color: #8BB9F0; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                        <span><i class="fas fa-calendar-alt" style="color: #4A90E2;"></i> Nama Kegiatan / Acara (Integrasi Master Kegiatan)</span>
-                    </label>
-                    <select name="kegiatan_id" id="kegiatan_id_select" style="border-color: rgba(74, 144, 226, 0.4); background: #0c1017; color: #fff; font-weight: 600;" onchange="syncKegiatanData()">
+                <div class="form-group form-floating" style="margin-bottom: 24px;">
+                    <select name="kegiatan_id" id="kegiatan_id_select" onchange="syncKegiatanData()" style="padding-left: 12px;">
                         <option value="0" data-nama="" data-tema="" data-tgl="" data-tempat="" data-ketuplat="" <?php echo ((int)$selected_kegiatan_id === 0) ? 'selected' : ''; ?>>-- Tanpa Kegiatan Khusus (Isi Manual) --</option>
                         <?php foreach ($all_kegiatan_list as $kg): 
                             $tgl_mulai = $kg['tanggal_mulai'] ?? '';
@@ -998,27 +1051,28 @@ if (!empty($tanggal_kegiatan_val)) {
                                 data-tempat="<?php echo htmlspecialchars(trim($kg['tempat'] ?? '')); ?>"
                                 data-ketuplat="<?php echo htmlspecialchars(trim($kg['ketua_nama'] ?? '')); ?>"
                                 data-slug="<?php echo htmlspecialchars(trim($kg['slug_surat'] ?? '')); ?>"
+                                data-pelaksana="<?php echo htmlspecialchars(trim($kg['pelaksana'] ?? '')); ?>"
+                                data-proker="<?php echo htmlspecialchars(trim($kg['program_kerja'] ?? '')); ?>"
+                                data-tujuan="<?php echo htmlspecialchars(trim($kg['tujuan'] ?? '')); ?>"
+                                data-manfaat="<?php echo htmlspecialchars(trim($kg['manfaat'] ?? '')); ?>"
                                 <?php echo ((int)$selected_kegiatan_id === (int)$kg['id']) ? 'selected' : ''; ?>>
                                 [<?php echo strtoupper($kg['status']); ?>] <?php echo htmlspecialchars($kg['nama_kegiatan']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <div style="font-size: 0.75rem; color: #888; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
-                        <i class="fas fa-lightbulb" style="color: #f1c40f;"></i>
-                        <span>Pilih kegiatan untuk meng-autofill data acara secara otomatis (Nama, Tema, Tanggal, Tempat, dan Penanggung Jawab).</span>
-                    </div>
+                    <label for="kegiatan_id_select"><i class="fas fa-calendar-alt"></i> Master Kegiatan</label>
                 </div>
 
                 <div class="grid-3">
-                    <div class="form-group">
-                        <label>Nomor Urut Berita Acara</label>
-                        <input type="text" name="nomor_urut" value="<?php echo htmlspecialchars($edit_data['nomor_urut']); ?>" placeholder="Cth: 020" required>
+                    <div class="form-group form-floating">
+                        <input type="text" name="nomor_urut" id="nomor_urut" value="<?php echo htmlspecialchars($edit_data['nomor_urut']); ?>" placeholder=" " required>
+                        <label for="nomor_urut">Nomor Urut</label>
                     </div>
-                    <div class="form-group">
-                        <label>Kode / Slug Kegiatan</label>
-                        <div class="tpl-picker" id="picker-kegiatan">
+                    <div class="form-group form-floating">
+                        <div class="tpl-picker" id="picker-kegiatan" style="height: 100%;">
                             <i class="fas fa-search tpl-search-icon"></i>
-                            <input type="text" id="kode_kegiatan_input" name="kode_kegiatan" class="tpl-search-input" placeholder="Cari atau ketik kode..." value="<?php echo htmlspecialchars($edit_data['kode_kegiatan']); ?>" required autocomplete="off" onfocus="showTplResults('kegiatan')" onkeyup="filterTpl('kegiatan')">
+                            <input type="text" id="kode_kegiatan_input" name="kode_kegiatan" class="tpl-search-input" placeholder=" " value="<?php echo htmlspecialchars($edit_data['kode_kegiatan']); ?>" required autocomplete="off" onfocus="showTplResults('kegiatan')" onkeyup="filterTpl('kegiatan')">
+                            <label for="kode_kegiatan_input" style="padding-left: 44px;">Kode / Slug Kegiatan</label>
                             <div class="tpl-results" id="results-kegiatan">
                                 <?php foreach($list_kegiatan as $k): ?>
                                 <div class="tpl-item" onclick='selectKegiatan(<?php echo json_encode(["nama" => $k["label"], "kode" => $k["perihal_default"]]); ?>)'>
@@ -1028,33 +1082,44 @@ if (!empty($tanggal_kegiatan_val)) {
                                 <?php endforeach; ?>
                             </div>
                         </div>
-                        <span style="font-size: 0.75rem; color: #666; margin-top: 4px; display: block;">Format nomor: XXX/BA-[KODE]/BEM/<?php echo $bulan_romawi; ?>/<?php echo $tahun; ?></span>
                     </div>
-                    <div class="form-group">
-                        <label>Nama Kegiatan</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="input_nama_kegiatan" name="nama_kegiatan" value="<?php echo htmlspecialchars($edit_data['nama_kegiatan']); ?>" placeholder="Cth: Kuliah Umum" required style="flex:1;">
-                            <button type="button" class="btn-outline" onclick="tarikDataKegiatan()" title="Tarik data dari Rundown & Logistik" style="flex:none; background: rgba(74,144,226,0.1); color: #4facfe;">
-                                <i class="fas fa-sync-alt"></i> Tarik Data
+                    <div class="form-group form-floating">
+                        <div style="display: flex; gap: 10px; height: 100%;">
+                            <div style="position: relative; flex: 1;">
+                                <input type="text" id="input_nama_kegiatan" name="nama_kegiatan" value="<?php echo htmlspecialchars($edit_data['nama_kegiatan']); ?>" placeholder=" " required style="height: 100%;">
+                                <label for="input_nama_kegiatan">Nama Kegiatan</label>
+                            </div>
+                            <button type="button" class="btn-outline" onclick="tarikDataKegiatan()" title="Tarik data dari Rundown & Logistik" style="flex:none; background: rgba(74,144,226,0.1); color: #4facfe; height: 100%; padding: 0 15px;">
+                                <i class="fas fa-sync-alt"></i>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid-2">
-                    <div class="form-group">
-                        <label>Tema Kegiatan</label>
-                        <input type="text" name="tema_kegiatan" value="<?php echo htmlspecialchars($edit_data['tema_kegiatan']); ?>" placeholder="Cth: Arah Transformasi Majalengka..." required>
+                    <div class="form-group form-floating">
+                        <input type="text" id="tema_kegiatan" name="tema_kegiatan" value="<?php echo htmlspecialchars($edit_data['tema_kegiatan']); ?>" placeholder=" " required>
+                        <label for="tema_kegiatan">Tema Kegiatan</label>
                     </div>
-                    <div class="form-group">
-                        <label>Tempat Pelaksanaan</label>
-                        <input type="text" name="tempat" value="<?php echo htmlspecialchars($edit_data['tempat']); ?>" placeholder="Cth: Pendopo Majalengka" required>
+                    <div class="form-group form-floating">
+                        <div class="tpl-picker" id="picker-tempat" style="height: 100%;">
+                            <i class="fas fa-map-marker-alt tpl-search-icon"></i>
+                            <input type="text" id="tempat" name="tempat" class="tpl-search-input" placeholder=" " value="<?php echo htmlspecialchars($edit_data['tempat']); ?>" required autocomplete="off" onfocus="showTplResults('tempat')" onkeyup="filterTpl('tempat')">
+                            <label for="tempat" style="padding-left: 44px;">Tempat Pelaksanaan</label>
+                            <div class="tpl-results" id="results-tempat">
+                                <?php foreach($list_tempat as $t): ?>
+                                <div class="tpl-item" onclick='selectTempat(<?php echo json_encode($t["label"]); ?>)'>
+                                    <div class="tpl-item-label"><?php echo htmlspecialchars($t['label']); ?></div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="grid-2">
                     <div class="form-group">
-                        <label>Tanggal Kegiatan</label>
+                        <label class="static-label">Tanggal Kegiatan</label>
                         <div class="wakpel-card" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 18px; padding: 20px;">
                             <div class="date-range-wrap" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                                 <input type="date" id="tgl-mulai" onchange="formatTanggalRange()" value="<?php echo htmlspecialchars($tanggal_kegiatan_val); ?>" style="flex: 2; min-width: 140px;">
@@ -1077,45 +1142,47 @@ if (!empty($tanggal_kegiatan_val)) {
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Waktu Kegiatan</label>
+                        <label class="static-label">Waktu Kegiatan</label>
                         <div class="wakpel-card">
                             <input type="hidden" id="out-waktu" name="waktu" value="<?php echo htmlspecialchars($edit_data['waktu'] ?: '08.00 s.d Selesai'); ?>">
                             <div class="drum-groups-wrap" style="margin-top: 0;">
-                                <div>
-                                    <div class="drum-time-label">Mulai</div>
-                                    <div class="drum-group">
-                                        <div>
-                                            <button type="button" class="drum-arrow drum-arrow-up" onclick="drumHS.scrollBy(-1)">▲</button>
-                                            <div class="drum-col" id="drum-h-start"></div>
-                                            <button type="button" class="drum-arrow drum-arrow-down" onclick="drumHS.scrollBy(1)">▼</button>
+                                <div class="time-group-inner">
+                                    <div>
+                                        <div class="drum-time-label">Mulai</div>
+                                        <div class="drum-group">
+                                            <div>
+                                                <button type="button" class="drum-arrow drum-arrow-up" onclick="drumHS.scrollBy(-1)">▲</button>
+                                                <div class="drum-col" id="drum-h-start"></div>
+                                                <button type="button" class="drum-arrow drum-arrow-down" onclick="drumHS.scrollBy(1)">▼</button>
+                                            </div>
+                                            <span class="drum-colon">:</span>
+                                            <div>
+                                                <button type="button" class="drum-arrow drum-arrow-up" onclick="drumMS.scrollBy(-1)">▲</button>
+                                                <div class="drum-col" id="drum-m-start"></div>
+                                                <button type="button" class="drum-arrow drum-arrow-down" onclick="drumMS.scrollBy(1)">▼</button>
+                                            </div>
                                         </div>
-                                        <span class="drum-colon">:</span>
-                                        <div>
-                                            <button type="button" class="drum-arrow drum-arrow-up" onclick="drumMS.scrollBy(-1)">▲</button>
-                                            <div class="drum-col" id="drum-m-start"></div>
-                                            <button type="button" class="drum-arrow drum-arrow-down" onclick="drumMS.scrollBy(1)">▼</button>
+                                    </div>
+                                    <div class="sd-label">s.d</div>
+                                    <div id="drum-end-wrap">
+                                        <div class="drum-time-label">Selesai</div>
+                                        <div class="drum-group">
+                                            <div>
+                                                <button type="button" class="drum-arrow drum-arrow-up" onclick="drumHE.scrollBy(-1)">▲</button>
+                                                <div class="drum-col" id="drum-h-end"></div>
+                                                <button type="button" class="drum-arrow drum-arrow-down" onclick="drumHE.scrollBy(1)">▼</button>
+                                            </div>
+                                            <span class="drum-colon">:</span>
+                                            <div>
+                                                <button type="button" class="drum-arrow drum-arrow-up" onclick="drumME.scrollBy(-1)">▲</button>
+                                                <div class="drum-col" id="drum-m-end"></div>
+                                                <button type="button" class="drum-arrow drum-arrow-down" onclick="drumME.scrollBy(1)">▼</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div style="padding-top:24px; color:var(--text-muted); font-size:0.8rem;">s.d</div>
-                                <div id="drum-end-wrap">
-                                    <div class="drum-time-label">Selesai</div>
-                                    <div class="drum-group">
-                                        <div>
-                                            <button type="button" class="drum-arrow drum-arrow-up" onclick="drumHE.scrollBy(-1)">▲</button>
-                                            <div class="drum-col" id="drum-h-end"></div>
-                                            <button type="button" class="drum-arrow drum-arrow-down" onclick="drumHE.scrollBy(1)">▼</button>
-                                        </div>
-                                        <span class="drum-colon">:</span>
-                                        <div>
-                                            <button type="button" class="drum-arrow drum-arrow-up" onclick="drumME.scrollBy(-1)">▲</button>
-                                            <div class="drum-col" id="drum-m-end"></div>
-                                            <button type="button" class="drum-arrow drum-arrow-down" onclick="drumME.scrollBy(1)">▼</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style="padding-top:24px;">
-                                    <div class="toggle-switch-wrap" id="toggle-selesai-wrap" onclick="doToggleSelesai()" style="background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                                <div class="toggle-selesai-container">
+                                    <div class="toggle-switch-wrap" id="toggle-selesai-wrap" onclick="doToggleSelesai()" style="background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
                                         <div class="toggle-switch" id="ts-switch" style="position:relative; width:36px; height:20px; background:#222; border-radius:10px; transition: .3s;"><div class="toggle-knob" style="position:absolute; top:2px; left:2px; width:16px; height:16px; background:#fff; border-radius:50%; transition:.3s;"></div></div>
                                         <span class="toggle-label" id="ts-label" style="font-size:0.75rem; color:#888;">Tanpa waktu akhir</span>
                                     </div>
@@ -1484,6 +1551,12 @@ function selectKegiatan(data) {
     document.getElementById('input_nama_kegiatan').value = data.nama;
     document.getElementById('kode_kegiatan_input').value = data.kode;
     document.getElementById('results-kegiatan').style.display = 'none';
+    _resetPickerCards();
+}
+
+function selectTempat(nama) {
+    document.getElementById('tempat').value = nama;
+    document.getElementById('results-tempat').style.display = 'none';
     _resetPickerCards();
 }
 
@@ -1916,6 +1989,8 @@ function syncKegiatanData() {
     const tempat = opt.getAttribute('data-tempat');
     const ketuplat = opt.getAttribute('data-ketuplat');
     const slug = opt.getAttribute('data-slug');
+    const pelaksana = opt.getAttribute('data-pelaksana');
+    const proker = opt.getAttribute('data-proker');
     
     if (nama) document.getElementById('input_nama_kegiatan').value = nama;
     if (tema) document.querySelector('input[name="tema_kegiatan"]').value = tema;
@@ -1928,6 +2003,49 @@ function syncKegiatanData() {
     }
     if (tempat) document.querySelector('input[name="tempat"]').value = tempat;
     if (ketuplat) document.querySelector('input[name="penanggung_jawab"]').value = ketuplat;
+    
+    if (pelaksana) {
+        selectPelaksana(pelaksana);
+        if (proker) {
+            document.getElementById('program_kerja_input').value = proker;
+        }
+    }
+    
+    // Auto-fill tujuan
+    const tujuanRaw = opt.getAttribute('data-tujuan');
+    if (tujuanRaw) {
+        try {
+            const tujuanArr = JSON.parse(tujuanRaw);
+            const container = document.getElementById('tujuan-container');
+            if (container && tujuanArr.length > 0) {
+                container.innerHTML = '';
+                tujuanArr.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = 'dynamic-list-row';
+                    div.innerHTML = `<input type="text" name="tujuan[]" value="${t.replace(/"/g, '&quot;')}" required><button type="button" class="btn-remove-row" onclick="removeRow(this)"><i class="fas fa-trash"></i></button>`;
+                    container.appendChild(div);
+                });
+            }
+        } catch(e) {}
+    }
+    
+    // Auto-fill manfaat
+    const manfaatRaw = opt.getAttribute('data-manfaat');
+    if (manfaatRaw) {
+        try {
+            const manfaatArr = JSON.parse(manfaatRaw);
+            const container = document.getElementById('manfaat-container');
+            if (container && manfaatArr.length > 0) {
+                container.innerHTML = '';
+                manfaatArr.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'dynamic-list-row';
+                    div.innerHTML = `<input type="text" name="manfaat[]" value="${m.replace(/"/g, '&quot;')}" required><button type="button" class="btn-remove-row" onclick="removeRow(this)"><i class="fas fa-trash"></i></button>`;
+                    container.appendChild(div);
+                });
+            }
+        } catch(e) {}
+    }
     
     // Auto-fill kode/slug (prioritize DB slug from arsip_surat)
     if (slug) {

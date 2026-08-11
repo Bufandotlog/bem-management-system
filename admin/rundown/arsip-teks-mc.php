@@ -43,10 +43,15 @@ $list_mc = dbFetchAll(
 
 <style>
 @media (max-width: 768px) {
+    .hide-on-mobile { display: none !important; }
+    
     .page-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
+    }
+    .page-header h1 {
+        font-size: 1.2rem !important;
     }
     
     .arsip-table, .arsip-table thead, .arsip-table tbody, .arsip-table th, .arsip-table td, .arsip-table tr { 
@@ -56,17 +61,57 @@ $list_mc = dbFetchAll(
     .arsip-table thead { display: none; }
     
     .arsip-table tr {
-        margin-bottom: 20px;
-        background: rgba(255,255,255,0.02);
-        border: 1px solid var(--border-color);
+        margin-bottom: 25px;
+        background: rgba(30, 36, 46, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         border-radius: 15px;
-        padding: 15px;
+        padding: 20px;
+        position: relative;
     }
     
     .arsip-table td {
         border: none !important;
         padding: 8px 0 !important;
         width: 100% !important;
+        text-align: left !important;
+        font-size: 0.8rem;
+    }
+
+    .arsip-table td:first-child {
+        font-size: 0.95rem;
+        font-weight: bold;
+        color: #f5576c;
+        border-bottom: 1px solid #2a3545 !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 10px;
+    }
+    
+    .arsip-table td:first-child::before {
+        content: "NO. ";
+        font-size: 0.8rem;
+        color: #555;
+    }
+
+    .arsip-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.65rem;
+        color: #555;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .arsip-table td[data-label="AKSI"] {
+        margin-top: 15px;
+        padding-top: 15px !important;
+        border-top: 1px dashed #2a3545 !important;
+    }
+    
+    .arsip-table td[data-label="AKSI"] div {
+        justify-content: flex-start !important;
+        flex-wrap: wrap;
     }
 }
 </style>
@@ -99,7 +144,7 @@ $list_mc = dbFetchAll(
                     <tr style="background: rgba(255,255,255,0.03);">
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid #2a3545;" width="50">No</th>
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid #2a3545;">Judul Naskah & Kegiatan</th>
-                        <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid #2a3545;">Format Acara</th>
+                        <th class="hide-on-mobile" style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid #2a3545;">Format Acara</th>
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid #2a3545;">Jumlah Segmen</th>
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid #2a3545;">Terakhir Diperbarui</th>
                         <th style="padding: 15px; text-align: center; color: #888; font-weight: 600; border-bottom: 1px solid #2a3545;" width="220">Aksi</th>
@@ -131,7 +176,7 @@ $list_mc = dbFetchAll(
                                     <i class="fas fa-calendar-alt" style="margin-right: 5px;"></i> <?php echo htmlspecialchars($item['nama_kegiatan'] ?? 'Kegiatan General'); ?>
                                 </div>
                             </td>
-                            <td style="padding: 15px;" data-label="Format Acara">
+                            <td class="hide-on-mobile" style="padding: 15px;" data-label="Format Acara">
                                 <span style="background: rgba(245, 87, 108, 0.1); color: #f5576c; border: 1px solid rgba(245, 87, 108, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;">
                                     <?php echo $tipe_label; ?>
                                 </span>
@@ -155,7 +200,7 @@ $list_mc = dbFetchAll(
                                         <i class="fas fa-file-pdf"></i>
                                     </a>
                                     <!-- Edit -->
-                                    <a href="<?php echo baseUrl('admin/kegiatan/workspace-teks-mc.php?kegiatan_id=<?php echo $item['); ?>"kegiatan_id']; ?>&edit_id=<?php echo $item['id']; ?>" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(79, 172, 254, 0.15); color: #4facfe; border: 1px solid rgba(79, 172, 254, 0.3); display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit Naskah">
+                                    <a href="<?php echo baseUrl('admin/kegiatan/workspace-teks-mc.php?kegiatan_id=' . $item['kegiatan_id'] . '&edit_id=' . $item['id']); ?>" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(79, 172, 254, 0.15); color: #4facfe; border: 1px solid rgba(79, 172, 254, 0.3); display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit Naskah">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <!-- Hapus -->

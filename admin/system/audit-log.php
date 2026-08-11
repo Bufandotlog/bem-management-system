@@ -154,6 +154,53 @@ function actionStyle(string $action): array {
 
 $downloadToken = csrfToken();
 ?>
+<style>
+/* Audit Log Table Mobile Styling */
+@media (max-width: 768px) {
+    .audit-table {
+        display: block;
+        width: 100%;
+    }
+    .audit-table thead {
+        display: none;
+    }
+    .audit-table tbody, .audit-table tr, .audit-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .audit-table tr {
+        margin-bottom: 15px;
+        background: #151821;
+        border: 1px solid #2a2a3e !important;
+        border-radius: 12px;
+        padding: 15px;
+    }
+    .audit-table td {
+        text-align: left;
+        padding: 8px 0 !important;
+        border: none !important;
+        font-size: 0.85rem;
+        position: relative;
+    }
+    .audit-table td::before {
+        display: block;
+        font-size: 0.65rem;
+        color: #777;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 3px;
+    }
+    .audit-table td:nth-child(1)::before { content: "Waktu"; }
+    .audit-table td:nth-child(2)::before { content: "Admin"; }
+    .audit-table td:nth-child(3)::before { content: "Aksi"; }
+    .audit-table td:nth-child(4)::before { content: "Target"; }
+    .audit-table td:nth-child(5)::before { content: "Deskripsi"; }
+    .audit-table td:nth-child(6)::before { content: "IP Address"; }
+    
+    .audit-table td:nth-child(1) { border-bottom: 1px solid #2a2a3e !important; margin-bottom: 10px; padding-bottom: 10px !important; }
+}
+</style>
 
 <div class="page-header">
     <h1><i class="fas fa-clipboard-list"></i> Audit Log</h1>
@@ -235,7 +282,7 @@ $downloadToken = csrfToken();
         </div>
     <?php else: ?>
     <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+        <table class="audit-table" style="width:100%;border-collapse:collapse;font-size:.82rem;">
             <thead>
                 <tr style="background:#111;color:#888;text-transform:uppercase;font-size:.7rem;letter-spacing:.05em;">
                     <th style="padding:.6rem 1rem;text-align:left;white-space:nowrap;">Waktu</th>

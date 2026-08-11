@@ -234,6 +234,13 @@
     background: var(--dark-200);
 }
 
+.form-ganti-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 15px;
+    align-items: end;
+}
+
 /* ===== BUTTON STYLES ===== */
 .btn {
     padding: 12px 28px;
@@ -639,6 +646,10 @@
     
     .periode-card {
         padding: 20px;
+    }
+    
+    .form-ganti-grid {
+        grid-template-columns: 1fr;
     }
     
     .periode-card .periode-tahun {

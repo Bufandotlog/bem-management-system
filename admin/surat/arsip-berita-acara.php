@@ -105,7 +105,7 @@ require_once __DIR__ . '/../core/header.php';
 $css = "
 .ba-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px; flex-wrap: wrap; }
 .ba-actions { display: flex; gap: 12px; }
-.btn-primary { background: var(--primary-gradient); color: #111; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.2); transition: all 0.2s; border: none; cursor: pointer; }
+.btn-primary { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #111; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.2); transition: all 0.2s; border: none; cursor: pointer; }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 242, 254, 0.4); }
 .btn-export { background: #27ae60; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; border: none; cursor: pointer; }
 .btn-export:hover { background: #219653; transform: translateY(-2px); }
@@ -128,6 +128,35 @@ $css = "
 .btn-act-edit:hover { background: #f1c40f; color: #111; }
 .btn-act-del { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
 .btn-act-del:hover { background: #e74c3c; color: white; }
+
+.action-menu { position: relative; display: inline-block; }
+.hamburger-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.action-dropdown {
+    display: none; position: absolute; right: 0; top: 100%;
+    background: #0f1217; border: 1px solid var(--border-color);
+    border-radius: 8px; min-width: 150px; z-index: 999;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+    flex-direction: column; padding: 5px; gap: 5px; margin-top: 5px;
+}
+.action-dropdown.show { display: flex; }
+.action-dropdown a, .action-dropdown button {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    color: #fff; text-decoration: none; font-size: 0.85rem;
+    border-radius: 6px; white-space: nowrap; border: none; background: transparent; cursor: pointer; width: 100%; text-align: left;
+}
+.action-dropdown a:hover, .action-dropdown button:hover { background: rgba(255,255,255,0.05); }
+
+.show-mobile-only { display: none; }
+.desktop-actions { display: flex; gap: 8px; justify-content: center; }
+.mobile-actions { display: none; }
+
+@media (max-width: 768px) {
+    .hide-mobile { display: none !important; }
+    .show-mobile-only { display: table-cell !important; }
+    .ba-table th, .ba-table td { padding: 12px 10px; }
+    .desktop-actions { display: none !important; }
+    .mobile-actions { display: block !important; text-align: center; }
+}
 ";
 
 echo "<style>{$css}</style>";
@@ -184,13 +213,14 @@ echo "<style>{$css}</style>";
         <table class="ba-table">
             <thead>
                 <tr>
-                    <th style="width: 50px; text-align: center;">No</th>
-                    <th>Nomor Berita Acara</th>
+                    <th style="width: 50px; text-align: center;" class="hide-mobile">No</th>
+                    <th class="show-mobile-only" style="width: 50px; text-align: center;">No</th>
+                    <th class="hide-mobile">Nomor Berita Acara</th>
                     <th>Nama Kegiatan</th>
                     <th>Tanggal Kegiatan</th>
-                    <th>Tempat</th>
-                    <th>Waktu</th>
-                    <th style="width: 150px; text-align: center;">Aksi</th>
+                    <th class="hide-mobile">Tempat</th>
+                    <th class="hide-mobile">Waktu</th>
+                    <th style="width: 100px; text-align: center;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -205,16 +235,20 @@ echo "<style>{$css}</style>";
                     <?php 
                     $no = 1;
                     foreach ($list_berita_acara as $item): 
+                        $ba_parts = explode('/', $item['nomor_berita']);
+                        $no_ba_pendek = $ba_parts[0] ?? '-';
                     ?>
                         <tr>
-                            <td style="text-align: center; font-weight: bold; color: var(--text-muted);"><?php echo $no++; ?></td>
-                            <td style="font-weight: bold; color: #8BB9F0;"><?php echo htmlspecialchars($item['nomor_berita']); ?></td>
+                            <td class="hide-mobile" style="text-align: center; font-weight: bold; color: var(--text-muted);"><?php echo $no++; ?></td>
+                            <td class="show-mobile-only" style="text-align: center; font-weight: bold; color: #4facfe; font-size: 1.1rem;"><?php echo htmlspecialchars($no_ba_pendek); ?></td>
+                            <td class="hide-mobile" style="font-weight: bold; color: #8BB9F0;"><?php echo htmlspecialchars($item['nomor_berita']); ?></td>
                             <td><?php echo htmlspecialchars($item['nama_kegiatan']); ?></td>
                             <td><?php echo htmlspecialchars($item['tanggal_kegiatan']); ?></td>
-                            <td><?php echo htmlspecialchars($item['tempat']); ?></td>
-                            <td><?php echo htmlspecialchars($item['waktu']); ?></td>
-                            <td style="text-align: center;">
-                                <div class="action-links" style="justify-content: center;">
+                            <td class="hide-mobile"><?php echo htmlspecialchars($item['tempat']); ?></td>
+                            <td class="hide-mobile"><?php echo htmlspecialchars($item['waktu']); ?></td>
+                            <td style="text-align: center; position: relative;">
+                                <!-- DESKTOP ACTIONS -->
+                                <div class="desktop-actions">
                                     <a href="cetak-berita-acara.php?id=<?php echo $item['id']; ?>" class="btn-act btn-act-view" title="Cetak / Pratinjau">
                                         <i class="fas fa-print"></i>
                                     </a>
@@ -224,6 +258,15 @@ echo "<style>{$css}</style>";
                                     <button type="button" class="btn-act btn-act-del" title="Hapus" onclick="confirmDelete(<?php echo $item['id']; ?>, '<?php echo addslashes($item['nomor_berita']); ?>')">
                                         <i class="fas fa-trash"></i>
                                     </button>
+                                </div>
+                                <!-- MOBILE ACTIONS (HAMBURGER) -->
+                                <div class="mobile-actions action-menu">
+                                    <button type="button" class="hamburger-btn" onclick="toggleDropdown(this)"><i class="fas fa-bars"></i></button>
+                                    <div class="action-dropdown" style="text-align: left;">
+                                        <a href="cetak-berita-acara.php?id=<?php echo $item['id']; ?>" style="color: #4A90E2;"><i class="fas fa-print" style="width: 20px; text-align: center;"></i> Cetak/Pratinjau</a>
+                                        <a href="buat-berita-acara.php?edit=<?php echo $item['id']; ?>" style="color: #f1c40f;"><i class="fas fa-edit" style="width: 20px; text-align: center;"></i> Edit Berita Acara</a>
+                                        <button type="button" onclick="confirmDelete(<?php echo $item['id']; ?>, '<?php echo addslashes($item['nomor_berita']); ?>')" style="color: #e74c3c;"><i class="fas fa-trash" style="width: 20px; text-align: center;"></i> Hapus Arsip</button>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -235,6 +278,20 @@ echo "<style>{$css}</style>";
 </div>
 
 <script>
+function toggleDropdown(btn) {
+    const dropdown = btn.nextElementSibling;
+    document.querySelectorAll('.action-dropdown.show').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+    });
+    dropdown.classList.toggle('show');
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.action-menu')) {
+        document.querySelectorAll('.action-dropdown.show').forEach(d => d.classList.remove('show'));
+    }
+});
+
 function confirmDelete(id, nomor) {
     if (confirm("Apakah Anda yakin ingin menghapus arsip Berita Acara \"" + nomor + "\" beserta file di dalamnya secara permanen?")) {
         window.location.href = "arsip-berita-acara.php?hapus=" + id + "&csrf_token=<?php echo $_SESSION['csrf_token']; ?>";

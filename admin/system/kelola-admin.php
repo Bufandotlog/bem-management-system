@@ -359,9 +359,14 @@ if (isset($_SESSION['flash'])) {
 ?>
 
 <!-- Page Header -->
-<div class="page-header">
-    <h1><i class="fas fa-user-shield"></i> Kelola Admin Periode</h1>
-    <p style="margin-bottom: 30px;">Atur admin untuk setiap periode kepengurusan (Superadmin Only)</p>
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px;">
+    <div>
+        <h1 style="margin:0 0 5px 0;"><i class="fas fa-user-shield"></i> Kelola Admin Periode</h1>
+        <p style="margin:0; color:#888;">Atur admin untuk setiap periode kepengurusan (Superadmin Only)</p>
+    </div>
+    <button id="mainToggleBtn" class="btn-primary" onclick="toggleForm()" style="padding:10px 20px; font-weight:600;">
+        <i class="fas fa-plus-circle"></i> Tambah Admin Baru
+    </button>
 </div>
 
 <?php flashMessage(); ?>
@@ -416,18 +421,21 @@ if (isset($_SESSION['flash'])) {
 </div>
 <?php endif; ?>
 
-<!-- Grid 2 Kolom -->
-<div class="admin-grid">
+<!-- Layout Utama -->
+<div class="admin-container">
 
-    <!-- Kolom Kiri: Form Tambah Admin -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-user-plus"></i> Tambah Admin Baru
+    <!-- Form Tambah Admin (Hidden by Default) -->
+    <div class="card" id="formTambahAdmin" style="display:none; margin-bottom: 30px; border: 1px solid var(--primary); box-shadow: 0 0 15px rgba(74, 144, 226, 0.2);">
+        <div class="card-header" style="background: rgba(74, 144, 226, 0.1); border-bottom: 1px solid rgba(74, 144, 226, 0.3);">
+            <div style="color: var(--primary);"><i class="fas fa-user-plus"></i> Form Tambah Admin Baru</div>
+            <button type="button" onclick="toggleForm()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
         </div>
         <div class="card-body">
             <form method="POST" id="formTambah">
                 <?php echo csrfField(); ?>
                 <input type="hidden" name="action" value="tambah">
+                
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
 
                 <div class="form-group">
                     <label><i class="fas fa-user"></i> Username:</label>
@@ -450,7 +458,9 @@ if (isset($_SESSION['flash'])) {
                     <input type="email" name="email" class="form-control">
                 </div>
 
-                <div class="form-group">
+                </div> <!-- end of form grid -->
+
+                <div class="form-group" style="margin-top:20px;">
                     <label><i class="fas fa-user-tag"></i> Role:</label>
                     <select name="role" class="form-control" id="roleSelect" onchange="togglePeriodeField()">
                         <option value="kominfo" selected>Kominfo (CMS & Media)</option>
@@ -499,15 +509,20 @@ if (isset($_SESSION['flash'])) {
                     <small style="display:block; margin-top:5px; color:#8BB9F0;">Jika dicentang, sistem akan men-generate Secret Key & QR Code saat akun dibuat. Lepas centang jika Admin ingin menyetel 2FA-nya sendiri nanti secara mandiri di profilnya.</small>
                 </div>
 
-                <button type="submit" class="btn-primary" style="width:100%;padding:12px;">
-                    <i class="fas fa-save"></i> Tambah Admin
-                </button>
+                <div class="form-actions" style="margin-top:25px;">
+                    <button type="submit" class="btn-primary" style="padding:12px 24px;">
+                        <i class="fas fa-save"></i> Simpan Admin
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="toggleForm()" style="padding:12px 24px;">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Kolom Kanan: Daftar Admin -->
-    <div class="card">
+    <!-- Daftar Admin -->
+    <div class="card" id="daftarAdmin">
         <div class="card-header">
             <i class="fas fa-list"></i> Daftar Admin (<?php echo count($admin_list); ?>)
         </div>
@@ -964,6 +979,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+</script>
+
+<script>
+function toggleForm() {
+    const form = document.getElementById('formTambahAdmin');
+    const daftar = document.getElementById('daftarAdmin');
+    const btn = document.getElementById('mainToggleBtn');
+    
+    if (form.style.display === 'none') {
+        // Tampilkan form, sembunyikan daftar
+        form.style.display = 'block';
+        daftar.style.display = 'none';
+        btn.innerHTML = '<i class="fas fa-list"></i> Melihat Daftar Admin';
+        btn.classList.replace('btn-primary', 'btn-secondary');
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        // Sembunyikan form, tampilkan daftar
+        form.style.display = 'none';
+        daftar.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Admin Baru';
+        btn.classList.replace('btn-secondary', 'btn-primary');
+    }
+}
 </script>
 
 <?php require_once __DIR__ . '/../core/footer.php'; ?>

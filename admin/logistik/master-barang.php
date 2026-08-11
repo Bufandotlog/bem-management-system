@@ -253,6 +253,38 @@ $items = dbFetchAll("SELECT * FROM barang_master ORDER BY nama_barang ASC");
     color: #e74c3c;
     border-color: #e74c3c;
 }
+
+@media (max-width: 768px) {
+    .card {
+        padding: 15px;
+    }
+    .card-header h2 {
+        font-size: 1.1rem;
+    }
+    .premium-table th {
+        padding: 8px 10px;
+        font-size: 0.7rem;
+    }
+    .premium-table td {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+    .premium-table td:first-child {
+        width: 40px;
+    }
+    .item-name {
+        font-size: 0.75rem;
+    }
+    .btn-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+    .btn-premium {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}
 </style>
 
 <div class="master-barang-container">

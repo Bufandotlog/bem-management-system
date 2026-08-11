@@ -889,7 +889,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mkdir($lpj_dir, 0777, true);
             }
             
-            $manager_script = escapeshellarg(__DIR__ . '/../scratch/bem_lpj_manager.py');
+            $manager_script = escapeshellarg(__DIR__ . '/../../scratch/bem_lpj_manager.py');
             $command = "python3 {$manager_script} generate " . escapeshellarg($output_filepath) . " " . escapeshellarg($tmp_json_path) . " 2>&1";
             $output = shell_exec($command);
             file_put_contents(UPLOAD_PATH . '/python_debug.log', date('Y-m-d H:i:s') . "\nCommand: $command\nOutput:\n$output\n---\n", FILE_APPEND);
@@ -1069,7 +1069,54 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     .step-progress .step.completed {
         color: #8BB9F0;
     }
+    .step-num { display: inline; }
+    .step-text { display: inline; }
 
+    @media (max-width: 768px) {
+        .step-progress {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .step-progress .step {
+            flex: initial;
+            padding: 5px;
+            border-bottom: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .step-progress .step.active {
+            flex: auto;
+            border-bottom: 2px solid #4A90E2 !important;
+            padding-bottom: 6px;
+        }
+        .step-progress .step:not(.active) .step-text {
+            display: none;
+        }
+        .step-progress .step:not(.active) .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid #2a3545;
+            background: #1a222f;
+            font-size: 0.85rem;
+        }
+        .step-progress .step.completed:not(.active) .step-num {
+            border-color: #8BB9F0;
+            color: #8BB9F0;
+        }
+        .step-progress .step.active {
+            font-size: 0.8rem;
+            white-space: normal;
+            line-height: 1.2;
+        }
+    }
     /* ===== WIZARD PANELS ===== */
     .wizard-panel {
         display: none;
@@ -1502,15 +1549,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         background: #171d26;
     }
     .anggota-row input.anggota-item-input {
-        background: transparent !important;
-        border: none !important;
-        color: #fff !important;
-        padding: 4px 8px !important;
-        box-shadow: none !important;
         flex: 1;
-    }
-    .anggota-row input.anggota-item-input:focus {
-        outline: none !important;
     }
     .btn-remove-anggota {
         background: transparent !important;
@@ -1668,11 +1707,53 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         font-size: 0.88rem;
         color: #888;
     }
+
+    /* ===== FLOATING INPUT ===== */
+    .floating-group { position: relative; margin-bottom: 20px; width: 100%; }
+    .floating-input {
+        width: 100%; padding: 18px 14px 6px 14px !important; background: #080c14;
+        border: 1px solid #2a3545; border-radius: 10px; color: #ffffff; font-size: 0.92rem;
+        box-sizing: border-box; transition: all 0.2s ease;
+    }
+    textarea.floating-input {
+        min-height: 120px;
+        resize: vertical;
+    }
+    .floating-input::placeholder { color: transparent; }
+    .floating-label {
+        position: absolute; left: 14px; top: 22px; transform: translateY(-50%);
+        font-size: 0.88rem; color: #9ea7b4; pointer-events: none; transition: all 0.2s ease;
+        background: transparent; padding: 0 4px; font-weight: 500; z-index: 10;
+    }
+    input.floating-input:focus ~ .floating-label, 
+    input.floating-input:not(:placeholder-shown) ~ .floating-label,
+    textarea.floating-input:focus ~ .floating-label, 
+    textarea.floating-input:not(:placeholder-shown) ~ .floating-label {
+        top: 0; transform: translateY(-50%) scale(0.82); transform-origin: left top;
+        background: #080c14; color: #ffffff; font-weight: 700; border-radius: 4px;
+    }
+    .floating-input:focus { outline: none; border-color: #4A90E2; box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); }
+    
+    select.floating-input { 
+        padding: 18px 35px 6px 14px !important; 
+        appearance: none; 
+        -moz-appearance: none; 
+        -webkit-appearance: none; 
+        background-color: #080c14;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ea7b4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+    }
+    select.floating-input[data-has-value="false"]:not(:focus) { color: transparent; }
+    select.floating-input:focus ~ .floating-label,
+    select.floating-input[data-has-value="true"] ~ .floating-label {
+        top: 0; transform: translateY(-50%) scale(0.82); transform-origin: left top;
+        background: #080c14; color: #ffffff; font-weight: 700; border-radius: 4px;
+    }
 </style>
 
 <div class="page-header">
     <h1><i class="fas fa-file-signature"></i> <?php echo $edit_data ? 'Edit' : 'Buat'; ?> Laporan Pertanggungjawaban (LPJ)</h1>
-    <p>Isi formulir bertahap di bawah ini untuk menghasilkan dokumen LPJ resmi secara otomatis.</p>
 </div>
 
 <?php if ($error): ?>
@@ -1681,11 +1762,11 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
 
 <!-- Step Indicator -->
 <div class="step-progress" id="stepProgress">
-    <div class="step active" data-step="1">1. Informasi Dasar</div>
-    <div class="step" data-step="2">2. Keanggotaan</div>
-    <div class="step" data-step="3">3. Proker Terealisasi</div>
-    <div class="step" data-step="4">4. Proker Belum Terealisasi</div>
-    <div class="step step-evaluasi" data-step="5" style="display: <?php echo ($selected_triwulan === 'MUBESMA') ? 'block' : 'none'; ?>;">5. Evaluasi Kinerja Menteri</div>
+    <div class="step active" data-step="1"><span class="step-num">1</span><span class="step-text">. Informasi Dasar</span></div>
+    <div class="step" data-step="2"><span class="step-num">2</span><span class="step-text">. Keanggotaan</span></div>
+    <div class="step" data-step="3"><span class="step-num">3</span><span class="step-text">. Proker Terealisasi</span></div>
+    <div class="step" data-step="4"><span class="step-num">4</span><span class="step-text">. Proker Belum Terealisasi</span></div>
+    <div class="step step-evaluasi" data-step="5" style="display: <?php echo ($selected_triwulan === 'MUBESMA') ? 'block' : 'none'; ?>;"><span class="step-num">5</span><span class="step-text">. Evaluasi Kinerja Menteri</span></div>
 </div>
 
 <form method="POST" enctype="multipart/form-data" id="lpjForm" class="admin-form">
@@ -1695,44 +1776,43 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     <!-- STEP 1: INFORMASI DASAR -->
     <div class="wizard-panel active" data-step="1">
         <div class="card">
-            <div class="card-header"><i class="fas fa-info-circle"></i> Langkah 1: Informasi Dasar & Keadaan Objektif</div>
             <div class="card-body">
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 280px;">
-                        <label>Kementerian</label>
-                        <select name="kementerian_id" id="kementerianSelect" class="form-control" required <?php echo $edit_data ? 'disabled' : ''; ?>>
-                            <option value="">-- Pilih Kementerian --</option>
+                    <div class="floating-group" style="flex: 1; min-width: 280px;">
+                        <select name="kementerian_id" id="kementerianSelect" class="floating-input" required <?php echo $edit_data ? 'disabled' : ''; ?> data-has-value="<?php echo !empty($edit_data['kementerian_id']) ? 'true' : 'false'; ?>" onchange="this.setAttribute('data-has-value', this.value !== '' ? 'true' : 'false')">
+                            <option value="" hidden>Kementerian</option>
                             <?php foreach ($kementerian_list as $k): ?>
                                 <option value="<?php echo $k['id']; ?>" <?php echo (($edit_data['kementerian_id'] ?? 0) == $k['id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($k['nama']); ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <label class="floating-label">Kementerian</label>
                         <?php if ($edit_data): ?>
                             <input type="hidden" name="kementerian_id" value="<?php echo $edit_data['kementerian_id']; ?>">
                         <?php endif; ?>
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 280px;">
-                        <label>Triwulan Periode</label>
-                        <select name="triwulan" id="triwulanSelect" class="form-control" required <?php echo $edit_data ? 'disabled' : ''; ?>>
-                            <option value="">-- Pilih Triwulan --</option>
+                    <div class="floating-group" style="flex: 1; min-width: 280px;">
+                        <select name="triwulan" id="triwulanSelect" class="floating-input" required <?php echo $edit_data ? 'disabled' : ''; ?> data-has-value="<?php echo !empty($selected_triwulan) ? 'true' : 'false'; ?>" onchange="this.setAttribute('data-has-value', this.value !== '' ? 'true' : 'false')">
+                            <option value="" hidden>Triwulan Periode</option>
                             <option value="I" <?php echo ($selected_triwulan === 'I') ? 'selected' : ''; ?>>TRIWULAN I</option>
                             <option value="II" <?php echo ($selected_triwulan === 'II') ? 'selected' : ''; ?>>TRIWULAN II</option>
                             <option value="MUBESMA" <?php echo ($selected_triwulan === 'MUBESMA') ? 'selected' : ''; ?>>MUBESMA (gabungan TRIWULAN I dan TRIWULAN II)</option>
                         </select>
+                        <label class="floating-label">Triwulan Periode</label>
                         <?php if ($edit_data): ?>
                             <input type="hidden" name="triwulan" value="<?php echo htmlspecialchars($edit_data['triwulan']); ?>">
                         <?php endif; ?>
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label>Keadaan Objektif / Deskripsi Fungsi</label>
-                    <textarea name="keadaan_objektif" id="keadaanObjektif" rows="8" class="form-control" placeholder="Deskripsikan visi, strategi, dan keadaan objektif kementerian..." required><?php echo htmlspecialchars($edit_data['keadaan_objektif'] ?? ''); ?></textarea>
+                <div class="floating-group">
+                    <textarea name="keadaan_objektif" id="keadaanObjektif" rows="8" class="floating-input" placeholder="Keadaan Objektif / Deskripsi Fungsi" required><?php echo htmlspecialchars($edit_data['keadaan_objektif'] ?? ''); ?></textarea>
+                    <label class="floating-label">Keadaan Objektif / Deskripsi Fungsi</label>
                     <small>Default akan terisi visi & fungsi dari pengaturan kementerian jika Anda memilih kementerian baru.</small>
                 </div>
                 
-                <div class="form-group" style="margin-top: 15px;">
-                    <label>Deskripsi Penutup LPJ</label>
-                    <textarea name="penutup" id="penutupText" rows="6" class="form-control" placeholder="Tuliskan kata penutup untuk laporan pertanggungjawaban..."><?php echo htmlspecialchars($edit_data['penutup'] ?? "Demikian Laporan Pertanggungjawaban ini kami susun sebagai bentuk pertanggungjawaban atas amanah yang telah diberikan selama satu periode kepengurusan. Kami menyadari masih banyak kekurangan dalam pelaksanaan program kerja maupun dalam koordinasi internal, namun hal tersebut menjadi bahan evaluasi dan pembelajaran untuk ke depannya.\n\nTerima kasih kepada seluruh pihak yang telah mendukung dan bekerja sama, baik dari internal maupun pihak eksternal. Semoga apa yang telah dijalankan dapat memberikan manfaat bagi mahasiswa dan lingkungan kampus secara luas."); ?></textarea>
+                <div class="floating-group" style="margin-top: 15px;">
+                    <textarea name="penutup" id="penutupText" rows="6" class="floating-input" placeholder="Deskripsi Penutup LPJ"><?php echo htmlspecialchars($edit_data['penutup'] ?? "Demikian Laporan Pertanggungjawaban ini kami susun sebagai bentuk pertanggungjawaban atas amanah yang telah diberikan selama satu periode kepengurusan. Kami menyadari masih banyak kekurangan dalam pelaksanaan program kerja maupun dalam koordinasi internal, namun hal tersebut menjadi bahan evaluasi dan pembelajaran untuk ke depannya.\n\nTerima kasih kepada seluruh pihak yang telah mendukung dan bekerja sama, baik dari internal maupun pihak eksternal. Semoga apa yang telah dijalankan dapat memberikan manfaat bagi mahasiswa dan lingkungan kampus secara luas."); ?></textarea>
+                    <label class="floating-label">Deskripsi Penutup LPJ</label>
                     <small>Penutup ini akan dicetak pada bagian akhir dokumen LPJ.</small>
                 </div>
             </div>
@@ -1742,30 +1822,27 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     <!-- STEP 2: KEANGGOTAAN -->
     <div class="wizard-panel" data-step="2">
         <div class="card">
-            <div class="card-header"><i class="fas fa-users"></i> Langkah 2: Data Keanggotaan BPH Kementerian</div>
             <div class="card-body">
-                <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px;">Tentukan nama penanggung jawab struktur kepemimpinan kementerian Anda.</p>
                 <div id="kepengurusanAlert" style="margin-bottom: 15px; display: none;"></div>
                 <?php
                 $keanggotaan_val = json_decode($edit_data['keanggotaan'] ?? '', true) ?: [];
                 ?>
-                <div class="form-group">
-                    <label>Ketua Menteri / Kepala Menteri</label>
-                    <input type="text" name="anggota_ketua" id="anggotaKetua" class="form-control field-keanggotaan" value="<?php echo htmlspecialchars($keanggotaan_val['ketua'] ?? ''); ?>" required placeholder="Nama Ketua Menteri...">
+                <div class="floating-group">
+                    <input type="text" name="anggota_ketua" id="anggotaKetua" class="floating-input field-keanggotaan" value="<?php echo htmlspecialchars($keanggotaan_val['ketua'] ?? ''); ?>" required placeholder="Ketua Menteri / Kepala Menteri">
+                    <label class="floating-label">Ketua Menteri / Kepala Menteri</label>
                     <div class="autofill-indicator" id="indicator_ketua"></div>
                 </div>
-                <div class="form-group">
-                    <label>Sekretaris Kementerian</label>
-                    <input type="text" name="anggota_sekretaris" id="anggotaSekretaris" class="form-control field-keanggotaan" value="<?php echo htmlspecialchars($keanggotaan_val['sekretaris'] ?? ''); ?>" required placeholder="Nama Sekretaris...">
+                <div class="floating-group">
+                    <input type="text" name="anggota_sekretaris" id="anggotaSekretaris" class="floating-input field-keanggotaan" value="<?php echo htmlspecialchars($keanggotaan_val['sekretaris'] ?? ''); ?>" required placeholder="Sekretaris Kementerian">
+                    <label class="floating-label">Sekretaris Kementerian</label>
                     <div class="autofill-indicator" id="indicator_sekretaris"></div>
                 </div>
-                <div class="form-group">
-                    <label>Bendahara Kementerian</label>
-                    <input type="text" name="anggota_bendahara" id="anggotaBendahara" class="form-control field-keanggotaan" value="<?php echo htmlspecialchars($keanggotaan_val['bendahara'] ?? ''); ?>" required placeholder="Nama Bendahara...">
+                <div class="floating-group">
+                    <input type="text" name="anggota_bendahara" id="anggotaBendahara" class="floating-input field-keanggotaan" value="<?php echo htmlspecialchars($keanggotaan_val['bendahara'] ?? ''); ?>" required placeholder="Bendahara Kementerian">
+                    <label class="floating-label">Bendahara Kementerian</label>
                     <div class="autofill-indicator" id="indicator_bendahara"></div>
                 </div>
                 <div class="form-group">
-                    <label>Anggota Kementerian</label>
                     <div id="anggotaListContainer">
                         <?php
                         $anggota_list = [];
@@ -1779,17 +1856,23 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         
                         if (empty($anggota_list)) {
                             ?>
-                            <div class="anggota-row">
-                                <input type="text" name="anggota_lain[]" class="form-control field-keanggotaan anggota-item-input" placeholder="Nama Anggota...">
-                                <button type="button" class="btn-remove-anggota" onclick="removeAnggotaRow(this)"><i class="fas fa-trash-alt"></i></button>
+                            <div class="anggota-row" style="background: transparent; border: none; padding: 0;">
+                                <div class="floating-group" style="flex: 1; margin-bottom: 0;">
+                                    <input type="text" name="anggota_lain[]" class="floating-input field-keanggotaan anggota-item-input" placeholder="Nama Anggota">
+                                    <label class="floating-label">Nama Anggota</label>
+                                </div>
+                                <button type="button" class="btn-remove-anggota" onclick="removeAnggotaRow(this)" style="margin-left: 10px; height: 50px; width: 50px; background: #12161f !important; border: 1px solid #2a3545 !important;"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <?php
                         } else {
                             foreach ($anggota_list as $agt):
                                 ?>
-                                <div class="anggota-row">
-                                    <input type="text" name="anggota_lain[]" class="form-control field-keanggotaan anggota-item-input" value="<?php echo htmlspecialchars($agt); ?>" placeholder="Nama Anggota...">
-                                    <button type="button" class="btn-remove-anggota" onclick="removeAnggotaRow(this)"><i class="fas fa-trash-alt"></i></button>
+                                <div class="anggota-row" style="background: transparent; border: none; padding: 0;">
+                                    <div class="floating-group" style="flex: 1; margin-bottom: 0;">
+                                        <input type="text" name="anggota_lain[]" class="floating-input field-keanggotaan anggota-item-input" value="<?php echo htmlspecialchars($agt); ?>" placeholder="Nama Anggota">
+                                        <label class="floating-label">Nama Anggota</label>
+                                    </div>
+                                    <button type="button" class="btn-remove-anggota" onclick="removeAnggotaRow(this)" style="margin-left: 10px; height: 50px; width: 50px; background: #12161f !important; border: 1px solid #2a3545 !important;"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                                 <?php
                             endforeach;
@@ -1806,10 +1889,8 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     <!-- STEP 3: PROGRAM KERJA TERLAKSANA -->
     <div class="wizard-panel" data-step="3">
         <div class="card">
-            <div class="card-header"><i class="fas fa-check-double"></i> Langkah 3: Program Kerja yang Terealisasi</div>
             <div class="card-body">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <p style="font-size: 0.85rem; color: #aaa; margin: 0;">Masukkan program kerja yang telah berhasil dilaksanakan pada triwulan ini. Minimal harus ada 1 proker terlaksana.</p>
+                <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
                     <button type="button" class="btn btn-primary btn-sm" onclick="openBaModal()"><i class="fas fa-file-import"></i> Ambil Data Berita Acara</button>
                 </div>
                 
@@ -1855,25 +1936,25 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                         <div class="proker-body">
                         <input type="hidden" name="pt_ba_id[]" class="pt-ba-id-hidden" value="<?php echo (int)($pt['berita_acara_id'] ?? 0); ?>">
                         <div class="form-row-grid">
-                            <div class="form-group">
-                                <label>Nama Program Kerja</label>
-                                <input type="text" name="pt_name[]" class="form-control" value="<?php echo htmlspecialchars($pt['Nama Program Kerja'] ?? ''); ?>" required placeholder="Cth: JALIN RELASI">
+                            <div class="floating-group">
+                                <input type="text" name="pt_name[]" class="floating-input" value="<?php echo htmlspecialchars($pt['Nama Program Kerja'] ?? ''); ?>" required placeholder="Nama Program Kerja">
+                                <label class="floating-label">Nama Program Kerja</label>
                             </div>
-                            <div class="form-group">
-                                <label>Nama Kegiatan</label>
-                                <input type="text" name="pt_kegiatan[]" class="form-control" value="<?php echo htmlspecialchars($pt['Nama Kegiatan'] ?? ''); ?>" required placeholder="Cth: Menghadiri Undangan Bemnus">
+                            <div class="floating-group">
+                                <input type="text" name="pt_kegiatan[]" class="floating-input" value="<?php echo htmlspecialchars($pt['Nama Kegiatan'] ?? ''); ?>" required placeholder="Nama Kegiatan">
+                                <label class="floating-label">Nama Kegiatan</label>
                             </div>
-                            <div class="form-group">
-                                <label>Tempat Kegiatan</label>
-                                <input type="text" name="pt_tempat[]" class="form-control" value="<?php echo htmlspecialchars($pt['Tempat Kegiatan'] ?? $pt['Tempat'] ?? ''); ?>" required placeholder="Cth: Aula Kampus / Zoom Meeting">
+                            <div class="floating-group">
+                                <input type="text" name="pt_tempat[]" class="floating-input" value="<?php echo htmlspecialchars($pt['Tempat Kegiatan'] ?? $pt['Tempat'] ?? ''); ?>" required placeholder="Tempat Kegiatan">
+                                <label class="floating-label">Tempat Kegiatan</label>
                             </div>
-                            <div class="form-group">
-                                <label>Sifat</label>
-                                <input type="text" name="pt_sifat[]" class="form-control" value="<?php echo htmlspecialchars($pt['Sifat'] ?? 'Internal'); ?>" placeholder="Cth: Internal / Eksternal">
+                            <div class="floating-group">
+                                <input type="text" name="pt_sifat[]" class="floating-input" value="<?php echo htmlspecialchars($pt['Sifat'] ?? 'Internal'); ?>" placeholder="Sifat (Internal / Eksternal)">
+                                <label class="floating-label">Sifat</label>
                             </div>
-                            <div class="form-group">
-                                <label>Tema Kegiatan</label>
-                                <input type="text" name="pt_tema[]" class="form-control" value="<?php echo htmlspecialchars($pt['Tema Kegiatan'] ?? ''); ?>" placeholder="Tema...">
+                            <div class="floating-group">
+                                <input type="text" name="pt_tema[]" class="floating-input" value="<?php echo htmlspecialchars($pt['Tema Kegiatan'] ?? ''); ?>" placeholder="Tema Kegiatan">
+                                <label class="floating-label">Tema Kegiatan</label>
                             </div>
                         </div>
                         <div class="form-row-grid" style="margin-top: 10px;">
@@ -1908,9 +1989,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             </div>
                         </div>
                         <div class="form-row-grid" style="margin-top: 10px;">
-                            <div class="form-group">
-                                <label>Penanggung Jawab</label>
-                                <input type="text" name="pt_pj[]" class="form-control" value="<?php echo htmlspecialchars($pt['Penanggung Jawab'] ?? ''); ?>" placeholder="Nama PJ...">
+                            <div class="floating-group">
+                                <input type="text" name="pt_pj[]" class="floating-input" value="<?php echo htmlspecialchars($pt['Penanggung Jawab'] ?? ''); ?>" placeholder="Penanggung Jawab">
+                                <label class="floating-label">Penanggung Jawab</label>
                             </div>
                         </div>
                         <div class="form-group" style="margin-top: 10px;">
@@ -2098,9 +2179,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     <!-- STEP 4: PROGRAM KERJA BELUM TEREALISASI -->
     <div class="wizard-panel" data-step="4">
         <div class="card">
-            <div class="card-header"><i class="fas fa-calendar-times"></i> Langkah 4: Program Kerja Belum Terealisasi</div>
             <div class="card-body">
-                <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px;">Masukkan program kerja yang belum terlaksana atau tertunda beserta target rencana atau alasan kendala.</p>
                 
                 <div class="proker-search-bar" id="pbtSearchBar">
                     <i class="fas fa-search"></i>
@@ -2225,7 +2304,6 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     <!-- STEP 5: EVALUASI KINERJA MENTERI (Only for MUBESMA) -->
     <div class="wizard-panel wizard-panel-evaluasi" data-step="5">
         <div class="card">
-            <div class="card-header"><i class="fas fa-user-check"></i> Langkah 5: Evaluasi Kinerja Menteri</div>
             <div class="card-body">
                 <div class="form-group">
                     <label for="evaluasiKinerjaPribadi" style="font-weight: bold;">Evaluasi Kinerja Menteri</label>
@@ -3039,25 +3117,25 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             <div class="proker-body">
             <input type="hidden" name="pt_ba_id[]" class="pt-ba-id-hidden" value="0">
             <div class="form-row-grid">
-                <div class="form-group">
-                    <label>Nama Program Kerja</label>
-                    <input type="text" name="pt_name[]" class="form-control" required placeholder="Cth: JALIN RELASI">
+                <div class="floating-group">
+                    <input type="text" name="pt_name[]" class="floating-input" required placeholder="Nama Program Kerja">
+                    <label class="floating-label">Nama Program Kerja</label>
                 </div>
-                <div class="form-group">
-                    <label>Nama Kegiatan</label>
-                    <input type="text" name="pt_kegiatan[]" class="form-control" required placeholder="Cth: Menghadiri Undangan Bemnus">
+                <div class="floating-group">
+                    <input type="text" name="pt_kegiatan[]" class="floating-input" required placeholder="Nama Kegiatan">
+                    <label class="floating-label">Nama Kegiatan</label>
                 </div>
-                <div class="form-group">
-                    <label>Tempat Kegiatan</label>
-                    <input type="text" name="pt_tempat[]" class="form-control" required placeholder="Cth: Aula Kampus / Zoom Meeting">
+                <div class="floating-group">
+                    <input type="text" name="pt_tempat[]" class="floating-input" required placeholder="Tempat Kegiatan">
+                    <label class="floating-label">Tempat Kegiatan</label>
                 </div>
-                <div class="form-group">
-                    <label>Sifat</label>
-                    <input type="text" name="pt_sifat[]" class="form-control" value="Internal" placeholder="Cth: Internal / Eksternal">
+                <div class="floating-group">
+                    <input type="text" name="pt_sifat[]" class="floating-input" value="Internal" placeholder="Sifat (Internal / Eksternal)">
+                    <label class="floating-label">Sifat</label>
                 </div>
-                <div class="form-group">
-                    <label>Tema Kegiatan</label>
-                    <input type="text" name="pt_tema[]" class="form-control" placeholder="Tema...">
+                <div class="floating-group">
+                    <input type="text" name="pt_tema[]" class="floating-input" placeholder="Tema Kegiatan">
+                    <label class="floating-label">Tema Kegiatan</label>
                 </div>
             </div>
             <div class="form-row-grid" style="margin-top: 10px;">
@@ -3092,9 +3170,9 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                 </div>
             </div>
             <div class="form-row-grid" style="margin-top: 10px;">
-                <div class="form-group">
-                    <label>Penanggung Jawab</label>
-                    <input type="text" name="pt_pj[]" class="form-control" placeholder="Nama PJ...">
+                <div class="floating-group">
+                    <input type="text" name="pt_pj[]" class="floating-input" placeholder="Penanggung Jawab">
+                    <label class="floating-label">Penanggung Jawab</label>
                 </div>
             </div>
             <div class="form-group" style="margin-top: 10px;">
@@ -4373,9 +4451,15 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         if (!container) return;
         const row = document.createElement('div');
         row.className = 'anggota-row';
+        row.style.background = 'transparent';
+        row.style.border = 'none';
+        row.style.padding = '0';
         row.innerHTML = `
-            <input type="text" name="anggota_lain[]" class="form-control field-keanggotaan anggota-item-input" value="${escapeHtml(name)}" placeholder="Nama Anggota...">
-            <button type="button" class="btn-remove-anggota" onclick="removeAnggotaRow(this)"><i class="fas fa-trash-alt"></i></button>
+            <div class="floating-group" style="flex: 1; margin-bottom: 0;">
+                <input type="text" name="anggota_lain[]" class="floating-input field-keanggotaan anggota-item-input" value="${escapeHtml(name)}" placeholder="Nama Anggota">
+                <label class="floating-label">Nama Anggota</label>
+            </div>
+            <button type="button" class="btn-remove-anggota" onclick="removeAnggotaRow(this)" style="margin-left: 10px; height: 50px; width: 50px; background: #12161f !important; border: 1px solid #2a3545 !important;"><i class="fas fa-trash-alt"></i></button>
         `;
         container.appendChild(row);
         

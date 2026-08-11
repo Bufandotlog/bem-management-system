@@ -113,8 +113,24 @@ function formatTanggalId($tanggal, $bulan_id) {
 ?>
 
 <style>
+.action-menu { display: flex; gap: 8px; justify-content: center; }
+
+/* Terikat Styles */
+.badge-terkait {
+    background: rgba(243, 156, 18, 0.1); color: #f39c12; padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(243, 156, 18, 0.3); display: inline-block;
+}
+.btn-terkait-toggle {
+    background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid rgba(243, 156, 18, 0.3); border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 4px;
+}
+.terkait-list { display: none; flex-wrap: wrap; gap: 4px; }
+.terkait-list.show { display: flex; margin-top: 8px; }
+.terkait-list.show-always { display: flex; }
+
 /* RESPONSIVE DESIGN FOR ARSIP RUNDOWN */
 @media (max-width: 768px) {
+    .hide-on-mobile { display: none !important; }
+    .action-menu { flex-wrap: wrap; justify-content: flex-start; }
+    .page-header h1 { font-size: 1.2rem; }
     .page-header {
         flex-direction: column;
         align-items: flex-start;
@@ -142,11 +158,12 @@ function formatTanggalId($tanggal, $bulan_id) {
     .arsip-table thead { display: none; }
     
     .arsip-table tr {
-        margin-bottom: 20px;
-        background: rgba(255,255,255,0.02);
-        border: 1px solid var(--border-color);
+        margin-bottom: 25px;
+        background: rgba(30, 36, 46, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         border-radius: 15px;
-        padding: 15px;
+        padding: 20px;
         position: relative;
     }
     
@@ -158,7 +175,7 @@ function formatTanggalId($tanggal, $bulan_id) {
     }
     
     .arsip-table td:first-child {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: bold;
         color: var(--accent-color);
         border-bottom: 1px solid var(--border-color) !important;
@@ -175,7 +192,7 @@ function formatTanggalId($tanggal, $bulan_id) {
     .arsip-table td::before {
         content: attr(data-label);
         display: block;
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         color: #555;
         text-transform: uppercase;
         font-weight: 700;
@@ -223,9 +240,9 @@ function formatTanggalId($tanggal, $bulan_id) {
                     <tr style="background: rgba(255,255,255,0.03);">
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="50">No</th>
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);">Nama Acara / Kegiatan</th>
-                        <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);">Tanggal Pelaksanaan</th>
+                        <th class="hide-on-mobile" style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);">Tanggal Pelaksanaan</th>
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="100">Durasi</th>
-                        <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="120">Item Acara</th>
+                        <th class="hide-on-mobile" style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="120">Item Acara</th>
                         <th style="padding: 15px; text-align: center; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="200">Aksi</th>
                     </tr>
                 </thead>
@@ -259,12 +276,23 @@ function formatTanggalId($tanggal, $bulan_id) {
                                     </span>
                                 </div>
                                 <?php if(!empty($terkait)): ?>
-                                    <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:4px;">
-                                        <?php foreach($terkait as $ns): ?>
-                                            <span style="background:rgba(243, 156, 18, 0.1); color:#f39c12; padding:3px 8px; border-radius:6px; font-size:0.7rem; font-weight:600; border:1px solid rgba(243, 156, 18, 0.3);" title="Terikat dengan surat ini">
-                                                <i class="fas fa-link"></i> <?php echo htmlspecialchars($ns); ?>
-                                            </span>
-                                        <?php endforeach; ?>
+                                    <div class="terkait-container" style="margin-top:8px;">
+                                        <?php if(count($terkait) > 1): ?>
+                                            <button type="button" class="btn-terkait-toggle" onclick="this.nextElementSibling.classList.toggle('show')">
+                                                <i class="fas fa-link"></i> Terikat (<?php echo count($terkait); ?> Surat) <i class="fas fa-chevron-down" style="font-size:0.6rem; margin-left:4px;"></i>
+                                            </button>
+                                            <div class="terkait-list">
+                                                <?php foreach($terkait as $ns): ?>
+                                                    <span class="badge-terkait"><i class="fas fa-link"></i> <?php echo htmlspecialchars($ns); ?></span>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="terkait-list show-always">
+                                                <?php foreach($terkait as $ns): ?>
+                                                    <span class="badge-terkait"><i class="fas fa-link"></i> <?php echo htmlspecialchars($ns); ?></span>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 <?php else: ?>
                                     <div style="margin-top:8px;">
@@ -274,21 +302,21 @@ function formatTanggalId($tanggal, $bulan_id) {
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td style="padding: 15px;" data-label="Tanggal Pelaksanaan">
+                            <td class="hide-on-mobile" style="padding: 15px;" data-label="Tanggal Pelaksanaan">
                                 <div style="color: #eee;"><?php echo htmlspecialchars($tanggal_display); ?></div>
                             </td>
                             <td style="padding: 15px;" data-label="Durasi">
-                                <span style="background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 1px solid rgba(155, 89, 182, 0.2); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;">
+                                <span style="background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 1px solid rgba(155, 89, 182, 0.2); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
                                     <?php echo $durasi; ?> Hari
                                 </span>
                             </td>
-                            <td style="padding: 15px;" data-label="Item Acara">
-                                <span style="background: rgba(79, 172, 254, 0.1); color: #4facfe; border: 1px solid rgba(79, 172, 254, 0.2); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;">
+                            <td class="hide-on-mobile" style="padding: 15px;" data-label="Item Acara">
+                                <span style="background: rgba(79, 172, 254, 0.1); color: #4facfe; border: 1px solid rgba(79, 172, 254, 0.2); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
                                     <?php echo $total_items; ?> Acara
                                 </span>
                             </td>
                             <td style="padding: 15px; text-align:center;" data-label="AKSI">
-                                <div style="display:flex; gap:8px; justify-content:center;">
+                                <div class="action-menu">
                                     <!-- Cetak PDF langsung dari arsip -->
                                     <form action="cetak-rundown-pdf.php" method="POST" target="_blank" style="margin:0; padding:0;">
                                         <?php echo csrfField(); ?>
@@ -311,24 +339,24 @@ function formatTanggalId($tanggal, $bulan_id) {
                                             endforeach;
                                         endforeach; 
                                         ?>
-                                        <button type="submit" style="width: 38px; height: 38px; border-radius: 10px; background: rgba(39, 174, 96, 0.1); color: #27ae60; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;" title="Cetak Rundown PDF" onmouseover="this.style.background='rgba(39, 174, 96, 0.2)'" onmouseout="this.style.background='rgba(39, 174, 96, 0.1)'">
+                                        <button type="submit" style="width: 34px; height: 34px; border-radius: 8px; background: rgba(39, 174, 96, 0.1); color: #27ae60; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;" title="Cetak Rundown PDF" onmouseover="this.style.background='rgba(39, 174, 96, 0.2)'" onmouseout="this.style.background='rgba(39, 174, 96, 0.1)'">
                                             <i class="fas fa-print"></i>
                                         </button>
                                     </form>
                                     <!-- Edit -->
-                                    <a href="cetak-rundown.php?edit_id=<?php echo $r['id']; ?>" style="width: 38px; height: 38px; border-radius: 10px; background: rgba(79, 172, 254, 0.1); color: #4facfe; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit Rundown">
+                                    <a href="cetak-rundown.php?edit_id=<?php echo $r['id']; ?>" style="width: 34px; height: 34px; border-radius: 8px; background: rgba(79, 172, 254, 0.1); color: #4facfe; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit Rundown">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <!-- Duplikat -->
                                     <a href="?duplicate=<?php echo $r['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" 
-                                       style="width: 38px; height: 38px; border-radius: 10px; background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
+                                       style="width: 34px; height: 34px; border-radius: 8px; background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
                                        onclick="return confirm('Duplikasi data rundown ini?')" 
                                        title="Duplikat">
                                         <i class="fas fa-copy"></i>
                                     </a>
                                     <!-- Hapus -->
                                     <a href="?delete=<?php echo $r['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" 
-                                       style="width: 38px; height: 38px; border-radius: 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
+                                       style="width: 34px; height: 34px; border-radius: 8px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
                                        onclick="return confirm('Hapus data rundown ini dari arsip?')" 
                                        title="Hapus">
                                         <i class="fas fa-trash"></i>

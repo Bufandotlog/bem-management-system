@@ -93,6 +93,22 @@ foreach ($surat_list_all as $s) {
 
 ?>
 
+<style>
+.waktu-col { display: table-cell; }
+.btn-hamburger { display: none; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ccc; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; }
+.action-menu { display: flex; gap: 8px; justify-content: center; }
+
+@media (max-width: 768px) {
+    .waktu-col { display: none !important; }
+    .arsip-table th, .arsip-table td { padding: 10px !important; font-size: 0.75rem; }
+    .page-header h1 { font-size: 1.2rem; }
+    
+    .btn-hamburger { display: inline-flex; align-items: center; gap: 5px; }
+    .action-menu { display: none; flex-wrap: wrap; margin-top: 10px; justify-content: center; }
+    .action-menu.show { display: flex; }
+}
+</style>
+
 <div class="arsip-surat-container">
     <div class="page-header" style="margin-bottom: 30px;">
         <div class="header-content">
@@ -122,7 +138,7 @@ foreach ($surat_list_all as $s) {
                     <tr style="background: rgba(255,255,255,0.03);">
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="50">No</th>
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);">Nama Acara / Kegiatan</th>
-                        <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);">Waktu Pelaksanaan</th>
+                        <th class="waktu-col" style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);">Waktu Pelaksanaan</th>
                         <th style="padding: 15px; text-align: left; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="120">Barang</th>
                         <th style="padding: 15px; text-align: center; color: #888; font-weight: 600; border-bottom: 1px solid var(--border-color);" width="150">Aksi</th>
                     </tr>
@@ -162,7 +178,7 @@ foreach ($surat_list_all as $s) {
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td style="padding: 15px;">
+                            <td class="waktu-col" style="padding: 15px;">
                                 <div style="color: #eee;"><?php echo htmlspecialchars($l['tanggal_kegiatan']); ?></div>
                                 <div style="font-size:0.75rem; font-weight:bold; color:#555;"><?php echo htmlspecialchars($l['tahun']); ?></div>
                             </td>
@@ -172,7 +188,8 @@ foreach ($surat_list_all as $s) {
                                 </span>
                             </td>
                             <td style="padding: 15px; text-align:center;">
-                                <div style="display:flex; gap:8px; justify-content:center;">
+                                <button class="btn-hamburger" onclick="this.nextElementSibling.classList.toggle('show')"><i class="fas fa-bars"></i> Aksi</button>
+                                <div class="action-menu">
                                     <form action="cetak-lampiran-pdf.php" method="POST" target="_blank" style="margin:0; padding:0;">
                                         <input type="hidden" name="acara" value="<?php echo htmlspecialchars($l['nama_acara']); ?>">
                                         <input type="hidden" name="tanggal" value="<?php echo htmlspecialchars($l['tanggal_kegiatan']); ?>">
@@ -181,21 +198,21 @@ foreach ($surat_list_all as $s) {
                                             <input type="hidden" name="qty[<?php echo htmlspecialchars($b['id']); ?>]" value="<?php echo (int)$b['qty']; ?>">
                                             <input type="hidden" name="item_name[<?php echo htmlspecialchars($b['id']); ?>]" value="<?php echo htmlspecialchars($b['nama']); ?>">
                                         <?php endforeach; ?>
-                                        <button type="submit" style="width: 38px; height: 38px; border-radius: 10px; background: rgba(39, 174, 96, 0.1); color: #27ae60; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;" title="Cetak Lampiran PDF" onmouseover="this.style.background='rgba(39, 174, 96, 0.2)'" onmouseout="this.style.background='rgba(39, 174, 96, 0.1)'">
+                                        <button type="submit" style="width: 34px; height: 34px; border-radius: 8px; background: rgba(39, 174, 96, 0.1); color: #27ae60; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;" title="Cetak Lampiran PDF" onmouseover="this.style.background='rgba(39, 174, 96, 0.2)'" onmouseout="this.style.background='rgba(39, 174, 96, 0.1)'">
                                             <i class="fas fa-print"></i>
                                         </button>
                                     </form>
-                                    <a href="cetak-lampiran.php?edit_id=<?php echo $l['id']; ?>" style="width: 38px; height: 38px; border-radius: 10px; background: rgba(79, 172, 254, 0.1); color: #4facfe; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit Info, Barang & Tempat">
+                                    <a href="cetak-lampiran.php?edit_id=<?php echo $l['id']; ?>" style="width: 34px; height: 34px; border-radius: 8px; background: rgba(79, 172, 254, 0.1); color: #4facfe; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit Info, Barang & Tempat">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <a href="?duplicate=<?php echo $l['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" 
-                                       style="width: 38px; height: 38px; border-radius: 10px; background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
+                                       style="width: 34px; height: 34px; border-radius: 8px; background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
                                        onclick="return confirm('Duplikasi data lampiran ini?')" 
                                        title="Duplikat">
                                         <i class="fas fa-copy"></i>
                                     </a>
                                     <a href="?delete=<?php echo $l['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" 
-                                       style="width: 38px; height: 38px; border-radius: 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
+                                       style="width: 34px; height: 34px; border-radius: 8px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none;"
                                        onclick="return confirm('Hapus data lampiran ini dari arsip?')" 
                                        title="Hapus">
                                         <i class="fas fa-trash"></i>

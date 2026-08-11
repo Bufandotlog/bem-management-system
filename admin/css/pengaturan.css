@@ -39,5 +39,24 @@
 .twofa-on{background:rgba(76,175,80,.1);border:1px solid #4caf50;color:#4caf50}
 .twofa-off{background:rgba(244,67,54,.1);border:1px solid #f44336;color:#f44336}
 .twofa-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
-@media(max-width:768px){.settings-grid{grid-template-columns:1fr}.role-badge{flex-direction:column;align-items:flex-start;gap:5px}}
-@media(max-width:480px){.settings-card{padding:18px}.info-item{flex-direction:column;align-items:flex-start;gap:3px}.info-item span{text-align:left}.twofa-actions{flex-direction:column}}
+@media(max-width:768px){
+    .settings-grid{grid-template-columns:1fr}
+    .role-badge{flex-direction:column;align-items:flex-start;gap:5px;font-size:0.85rem}
+    .settings-card{padding:20px}
+    .settings-card h2{font-size:1.05rem}
+    .settings-form label{font-size:0.8rem}
+    .settings-form input[type="text"],.settings-form input[type="email"],.settings-form input[type="password"]{font-size:0.85rem;padding:10px 12px}
+    .btn-primary,.btn-secondary,.btn-danger{font-size:0.85rem;padding:12px;width:100%;justify-content:center;margin-bottom:8px}
+    .twofa-actions{flex-direction:column;width:100%}
+    .twofa-actions a,.twofa-actions button{width:100%;justify-content:center}
+    .info-item{font-size:0.85rem}
+    .info-item label{font-size:0.8rem}
+    .info-item span{font-size:0.85rem}
+    .twofa-status{font-size:0.85rem;padding:12px}
+    .twofa-status i{font-size:1.2rem!important}
+}
+@media(max-width:480px){
+    .settings-card{padding:18px}
+    .info-item{flex-direction:column;align-items:flex-start;gap:4px}
+    .info-item span{text-align:left}
+}

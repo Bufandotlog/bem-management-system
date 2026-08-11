@@ -691,8 +691,10 @@ body {
 }
 
 /* Memperjelas icon kalender di dalam input date (karena defaultnya hitam) */
-.form-group input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(0.8);
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1) contrast(2);
     cursor: pointer;
 }
 .form-group input:focus,

@@ -272,19 +272,11 @@ if (isset($_SESSION['admin_id']) && !$is_full_sidebar_role && $current_page !== 
             'active'=> ($current_page === 'dashboard.php')
         ];
         $bottom_nav_tabs[] = [
-            'label' => 'Staging Surat',
+            'label' => 'Distribusi Surat',
             'icon'  => 'fas fa-paper-plane',
             'url'   => baseUrl('admin/surat/distribusi-surat.php'),
-            'active'=> ($current_page === 'distribusi-surat.php' && empty($_GET['kegiatan_id']))
+            'active'=> ($current_page === 'distribusi-surat.php')
         ];
-        if ($active_ws_id > 0) {
-            $bottom_nav_tabs[] = [
-                'label' => 'Distribusi Event',
-                'icon'  => 'fas fa-envelope-open-text',
-                'url'   => baseUrl('admin/surat/distribusi-surat.php?kegiatan_id=' . $active_ws_id),
-                'active'=> ($current_page === 'distribusi-surat.php' && !empty($_GET['kegiatan_id']))
-            ];
-        }
     }
 }
 
@@ -811,7 +803,7 @@ if (isset($page_css)) {
                 </a>
             <?php endif; ?>
 
-            <?php if ($admin_role === 'kominfo' && $pending_dokumentasi_cnt > 0): ?>
+            <?php if (in_array($admin_role, ['superadmin', 'admin', 'kominfo']) && $pending_dokumentasi_cnt > 0): ?>
                 <a href="<?php echo baseUrl('admin/kegiatan/staging-dokumentasi.php'); ?>" class="nav-item <?php echo $current_page === 'staging-dokumentasi.php' ? 'active' : ''; ?> mobile-nav-redundant">
                     <i class="fas fa-camera"></i> Staging Dokumentasi 
                     <span class="badge" style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto;"><?php echo $pending_dokumentasi_cnt; ?></span>

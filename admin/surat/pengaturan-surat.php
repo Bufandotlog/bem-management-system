@@ -257,6 +257,32 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
 ?>
 
 <style>
+    /* ===== FLOATING INPUT ===== */
+    .floating-group { position: relative; margin-bottom: 22px; }
+    .floating-input, .floating-textarea {
+        width: 100%; padding: 18px 14px 6px 14px; background: #080c14;
+        border: 1px solid #2a3545; border-radius: 10px; color: #ffffff; font-size: 0.92rem;
+        box-sizing: border-box; transition: all 0.2s ease;
+    }
+    .floating-textarea { padding-top: 22px; resize: vertical; }
+    .floating-input::placeholder, .floating-textarea::placeholder { color: transparent; }
+    .floating-label {
+        position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+        font-size: 0.88rem; color: #9ea7b4; pointer-events: none; transition: all 0.2s ease;
+        background: transparent; padding: 0 4px; font-weight: 500; z-index: 10;
+    }
+    .floating-textarea ~ .floating-label { top: 20px; transform: none; }
+    .floating-input:focus ~ .floating-label, .floating-input:not(:placeholder-shown) ~ .floating-label,
+    .floating-textarea:focus ~ .floating-label, .floating-textarea:not(:placeholder-shown) ~ .floating-label {
+        top: 0; transform: translateY(-50%) scale(0.82); transform-origin: left top;
+        background: #080c14; color: #ffffff; font-weight: 700; border-radius: 4px;
+    }
+    .floating-input:focus, .floating-textarea:focus { outline: none; border-color: #4A90E2; box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); }
+    
+    /* Select styling with floating label workaround */
+    select.floating-input { padding: 12px 14px !important; }
+    select.floating-input ~ .floating-label { top: -10px; transform: none; font-size: 0.72rem; background: #080c14; padding: 0 4px; color: #ffffff; font-weight: 700; border-radius: 4px; }
+
     /* ===== BASE STYLE ===== */
     .admin-table { border-collapse: separate; border-spacing: 0; width: 100%; }
     .admin-table tr td { border-bottom: 1px solid #2a3545; padding: 12px 10px; }
@@ -443,8 +469,8 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
             margin-bottom: 6px;
         }
         .btn-group-mobile { display: flex; flex-direction: column; gap: 6px; }
-        .template-layout { flex-direction: column !important; align-items: center !important; }
-        .template-layout > div { width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .template-layout { flex-direction: column !important; align-items: stretch !important; }
+        .template-layout > div { width: 100% !important; max-width: 100% !important; margin-bottom: 20px; }
         .upload-grid { grid-template-columns: 1fr; }
         .preview-img { max-width: 80px; max-height: 60px; }
         .accordion-header { padding: 12px 16px; }
@@ -495,7 +521,6 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
 
 <div class="page-header">
     <h1><i class="fas fa-cogs"></i> Pengaturan Template Surat</h1>
-    <p>Kelola kumpulan teks Perihal dan Tujuan (Kepada Yth) agar pembuatan surat otomatis lebih cepat tanpa harus selalu mengetik ulang.</p>
 </div>
 
 <?php if ($error): ?>
@@ -507,7 +532,6 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
 
 <!-- ========== 1. PENGATURAN TANDA TANGAN & STEMPEL ========== -->
 <div class="card" style="margin-bottom:30px;">
-    <div class="card-header" style="background:#1e2633;"><i class="fas fa-file-signature"></i> Pengaturan Tanda Tangan & Stempel (Cetak PDF)</div>
     <div class="card-body">
         <form method="POST" enctype="multipart/form-data" id="ttdStempelForm">
             <?php echo csrfField(); ?>
@@ -531,7 +555,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                                 <img id="preview_warek_img" class="preview-img" src="<?php echo $def_warek_img ? uploadUrl($def_warek_img) : '#'; ?>">
                                 <button type="button" class="btn-remove-img" data-target="warek" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
-                            <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
+                            <small>PNG/JPG transparan direkomendasikan.</small>
                         </div>
                     </div>
                 </div>
@@ -551,7 +575,7 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                                 <img id="preview_presma_img" class="preview-img" src="<?php echo $def_presma_img ? uploadUrl($def_presma_img) : '#'; ?>">
                                 <button type="button" class="btn-remove-img" data-target="presma" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
-                            <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
+                            <small>PNG/JPG transparan direkomendasikan.</small>
                         </div>
                     </div>
                 </div>
@@ -640,91 +664,60 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
 </div>
 
 <!-- ========== 2. DATABASE PANITIA TETAP ========== -->
-<div class="card" style="margin-bottom:30px; border: 1px solid #4A90E2;">
-    <div class="card-header" style="background: rgba(74, 144, 226, 0.1); color: #4A90E2;"><i class="fas fa-users-cog"></i> Database Tanda Tangan Kepanitiaan (Ketuplak & Sekretaris)</div>
+<div class="blue-border-card" id="form-panitia" style="margin-bottom:30px; width:100%;">
+    <div class="card-header"><i class="fas <?php echo $edit_panitia_data ? 'fa-edit' : 'fa-user-plus'; ?>"></i> <?php echo $edit_panitia_data ? 'Edit Panitia' : 'Tambah Panitia Baru'; ?></div>
     <div class="card-body">
-        <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 20px;">Simpan data Ketua dan Sekretaris Pelaksana di sini agar saat pembuatan surat nanti Anda tinggal memilih dari dropdown.</p>
-        <div style="display:flex; gap:30px; flex-wrap:wrap;">
-            <div id="form-panitia" style="flex:1; min-width:300px; background:rgba(0,0,0,0.2); padding:20px; border-radius:8px;">
-                <h4 style="margin-top:0;"><i class="fas <?php echo $edit_panitia_data ? 'fa-edit' : 'fa-user-plus'; ?>"></i> <?php echo $edit_panitia_data ? 'Edit Panitia' : 'Tambah Panitia Baru'; ?></h4>
-                <form method="POST" enctype="multipart/form-data">
-                    <?php echo csrfField(); ?>
-                    <input type="hidden" name="action" value="<?php echo $edit_panitia_data ? 'edit_panitia' : 'tambah_panitia'; ?>">
-                    <?php if ($edit_panitia_data): ?>
-                        <input type="hidden" name="panitia_id" value="<?php echo $edit_panitia_data['id']; ?>">
-                    <?php endif; ?>
-                    <div class="form-group"><label>Nama Lengkap (UPPERCASE)</label><input type="text" name="nama_panitia" class="form-control" value="<?php echo htmlspecialchars($edit_panitia_data['nama'] ?? ''); ?>" required></div>
-                    <div class="form-group">
-                        <label>Jabatan</label>
-                        <select name="jabatan_panitia" class="form-control">
-                            <option value="ketua" <?php echo ($edit_panitia_data['jabatan'] ?? '') === 'ketua' ? 'selected' : ''; ?>>Ketua Pelaksana</option>
-                            <option value="sekretaris" <?php echo ($edit_panitia_data['jabatan'] ?? '') === 'sekretaris' ? 'selected' : ''; ?>>Sekretaris Pelaksana</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Unggah Tanda Tangan (PNG)</label>
-                        <input type="file" name="file_ttd" class="form-control" accept="image/png" <?php echo $edit_panitia_data ? '' : 'required'; ?>>
-                        <?php if ($edit_panitia_data && !empty($edit_panitia_data['file_ttd'])): ?>
-                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                <span style="font-size: 0.75rem; color: #aaa;">Tanda Tangan Saat Ini:</span>
-                                <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block; vertical-align: middle;">
-                                    <img src="<?php echo uploadUrl($edit_panitia_data['file_ttd']); ?>" style="max-height:30px; mix-blend-mode:multiply;">
-                                </div>
-                                <label style="font-size: 0.75rem; color: #ff6b6b; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
-                                    <input type="checkbox" name="hapus_ttd_lama" value="1"> Hapus TTD saat ini
-                                </label>
-                            </div>
-                        <?php elseif ($edit_panitia_data): ?>
-                            <div style="margin-top: 8px;">
-                                <span style="font-size: 0.75rem; color: #888; font-style: italic;">(Belum ada tanda tangan diunggah / TTD Basah)</span>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <button type="submit" class="btn-primary" style="width:100%;"><i class="fas fa-save"></i> <?php echo $edit_panitia_data ? 'Perbarui' : 'Simpan'; ?></button>
-                    <?php if ($edit_panitia_data): ?>
-                        <a href="pengaturan-surat.php" class="btn-buat" style="width:100%; margin-top:10px; background:#444; justify-content:center; display: flex; align-items: center; text-decoration: none;"><i class="fas fa-times"></i> Batal Edit</a>
-                    <?php endif; ?>
-                </form>
+        <form method="POST" enctype="multipart/form-data">
+            <?php echo csrfField(); ?>
+            <input type="hidden" name="action" value="<?php echo $edit_panitia_data ? 'edit_panitia' : 'tambah_panitia'; ?>">
+            <?php if ($edit_panitia_data): ?>
+                <input type="hidden" name="panitia_id" value="<?php echo $edit_panitia_data['id']; ?>">
+            <?php endif; ?>
+            <div class="floating-group">
+                <input type="text" id="nama_panitia" name="nama_panitia" class="floating-input" required placeholder=" " value="<?php echo htmlspecialchars($edit_panitia_data['nama'] ?? ''); ?>">
+                <label for="nama_panitia" class="floating-label">Nama Lengkap (UPPERCASE)</label>
             </div>
-            <div style="flex:2; min-width:350px;">
-                <h4><i class="fas fa-database"></i> Daftar Panitia Tersimpan</h4>
-                <div style="max-height: 400px; overflow-y: auto;">
-                    <table class="admin-table responsive-card-table">
-                        <thead><tr><th>Nama & Jabatan</th><th style="text-align:center;">Pratinjau TTD</th><th style="text-align:center;">Aksi</th></tr></thead>
-                        <tbody>
-                            <?php $list_panitia = dbFetchAll("SELECT * FROM panitia_tetap WHERE periode_id = ? ORDER BY jabatan ASC, nama ASC", [$periode_id], "i");
-                            if (empty($list_panitia)): ?>
-                                <tr><td colspan="3" style="text-align:center;">Belum ada panitia tersimpan.</td></tr>
-                            <?php else: foreach ($list_panitia as $pt): ?>
-                                <tr>
-                                    <td data-label="Nama & Jabatan"><div style="font-weight:bold; color:#fff;"><?php echo htmlspecialchars($pt['nama']); ?></div><div style="font-size:0.75rem; color:#4A90E2;"><?php echo $pt['jabatan'] === 'ketua' ? 'Ketua Pelaksana' : 'Sekretaris'; ?></div></td>
-                                    <td data-label="Pratinjau TTD" style="text-align:center;">
-                                        <?php if (!empty($pt['file_ttd'])): ?>
-                                            <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block;">
-                                                <img src="<?php echo uploadUrl($pt['file_ttd']); ?>" style="max-height:40px; mix-blend-mode:multiply;">
-                                            </div>
-                                        <?php else: ?>
-                                            <span style="font-size: 0.75rem; color: #888; font-style: italic;">TTD Basah</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td data-label="Aksi" style="text-align:center;"><div class="btn-group-mobile"><a href="?edit_panitia=<?php echo $pt['id']; ?>#form-panitia" class="btn-edit" style="margin-right:5px;"><i class="fas fa-edit"></i> Edit</a><a href="?hapus_panitia=<?php echo $pt['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" class="btn-delete" onclick="return confirm('Hapus?')"><i class="fas fa-trash"></i> Hapus</a></div></td>
-                                </tr>
-                            <?php endforeach; endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="floating-group">
+                <select id="jabatan_panitia" name="jabatan_panitia" class="floating-input">
+                    <option value="ketua" <?php echo ($edit_panitia_data['jabatan'] ?? '') === 'ketua' ? 'selected' : ''; ?>>Ketua Pelaksana</option>
+                    <option value="sekretaris" <?php echo ($edit_panitia_data['jabatan'] ?? '') === 'sekretaris' ? 'selected' : ''; ?>>Sekretaris Pelaksana</option>
+                </select>
+                <label for="jabatan_panitia" class="floating-label">Jabatan</label>
             </div>
-        </div>
+            <div class="form-group" style="margin-bottom: 22px;">
+                <label style="color: #9ea7b4; font-size: 0.88rem; display: block; margin-bottom: 8px;">Unggah Tanda Tangan (PNG)</label>
+                <input type="file" name="file_ttd" class="form-control" accept="image/png" style="background:#080c14; border:1px solid #2a3545; color:#fff; border-radius:10px; width:100%; padding:10px; box-sizing:border-box;" <?php echo $edit_panitia_data ? '' : 'required'; ?>>
+                <?php if ($edit_panitia_data && !empty($edit_panitia_data['file_ttd'])): ?>
+                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span style="font-size: 0.75rem; color: #aaa;">Tanda Tangan Saat Ini:</span>
+                        <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block; vertical-align: middle;">
+                            <img src="<?php echo uploadUrl($edit_panitia_data['file_ttd']); ?>" style="max-height:30px; mix-blend-mode:multiply;">
+                        </div>
+                        <label style="font-size: 0.75rem; color: #ff6b6b; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
+                            <input type="checkbox" name="hapus_ttd_lama" value="1"> Hapus TTD saat ini
+                        </label>
+                    </div>
+                <?php elseif ($edit_panitia_data): ?>
+                    <div style="margin-top: 8px;">
+                        <span style="font-size: 0.75rem; color: #888; font-style: italic;">(Belum ada tanda tangan diunggah / TTD Basah)</span>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%;"><i class="fas fa-save"></i> <?php echo $edit_panitia_data ? 'Perbarui' : 'Simpan'; ?></button>
+            <?php if ($edit_panitia_data): ?>
+                <a href="pengaturan-surat.php" class="btn-buat" style="width:100%; margin-top:10px; background:#444; justify-content:center; display: flex; align-items: center; text-decoration: none;"><i class="fas fa-times"></i> Batal Edit</a>
+            <?php endif; ?>
+        </form>
     </div>
 </div>
 
 <hr style="border:1px solid #2a3545; margin:40px 0;">
 
-<!-- ========== 3. PENGATURAN TEMPLATE REDAKSI (border biru, accordion, tengah) ========== -->
-<div class="template-layout" style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+<!-- ========== 3. PENGATURAN TEMPLATE REDAKSI (border biru, accordion, vertikal) ========== -->
+<div class="template-layout" style="display:flex; flex-direction:column; gap:20px; width:100%;">
     
     <!-- Form Tambah Template -->
-    <div class="blue-border-card" style="flex:1; min-width:300px; max-width:450px;">
+    <div class="blue-border-card" style="width:100%;">
         <div class="card-header"><i class="fas <?php echo $edit_data ? 'fa-edit' : 'fa-plus-circle'; ?>"></i> <?php echo $edit_data ? 'Edit Template' : 'Tambah Template Baru'; ?></div>
         <div class="card-body">
             <form method="POST">
@@ -732,41 +725,42 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                 <input type="hidden" name="action" value="<?php echo $edit_data ? 'update' : 'tambah'; ?>">
                 <?php if ($edit_data): ?><input type="hidden" name="template_id" value="<?php echo $edit_data['id']; ?>"><?php endif; ?>
                 
-                <div class="form-group">
-                    <label style="color:#8BB9F0;">Jenis Template</label>
-                    <select name="jenis" class="form-control" required id="jenis_select">
+                <div class="floating-group">
+                    <select name="jenis" class="floating-input" required id="jenis_select">
                         <option value="perihal" <?php echo ($edit_data['jenis'] ?? '') === 'perihal' ? 'selected' : ''; ?>>Perihal (Subjek Surat)</option>
                         <option value="tujuan" <?php echo ($edit_data['jenis'] ?? '') === 'tujuan' ? 'selected' : ''; ?>>Tujuan (Kepada Yth)</option>
                         <option value="kegiatan" <?php echo ($edit_data['jenis'] ?? '') === 'kegiatan' ? 'selected' : ''; ?>>Nama & Kode Kegiatan</option>
                         <option value="tempat" <?php echo ($edit_data['jenis'] ?? '') === 'tempat' ? 'selected' : ''; ?>>Tempat Pelaksanaan</option>
                     </select>
+                    <label class="floating-label">Jenis Template</label>
                 </div>
-                <div class="form-group">
-                    <label>Nama Label (Singkat)</label>
-                    <input type="text" name="label" class="form-control" required placeholder="Cth: Undangan Rapat" value="<?php echo htmlspecialchars($edit_data['label'] ?? ''); ?>">
-                    <small>Ditampilkan sebagai opsi di dropdown form.</small>
+
+                <div class="floating-group">
+                    <input type="text" id="label_tpl" name="label" class="floating-input" required placeholder=" " value="<?php echo htmlspecialchars($edit_data['label'] ?? ''); ?>">
+                    <label for="label_tpl" class="floating-label">Nama Label (Singkat)</label>
                 </div>
-                <div class="form-group" id="wrap_kode_keg" style="<?php echo ($edit_data['jenis'] ?? '') === 'kegiatan' ? '' : 'display:none;'; ?>">
-                    <label>Kode Kegiatan (Cth: BEMCUP)</label>
-                    <input type="text" name="perihal_default" class="form-control" placeholder="BEMCUP" value="<?php echo htmlspecialchars($edit_data['perihal_default'] ?? ''); ?>" oninput="this.value = this.value.replace(/\s+/g, '').toUpperCase()" style="text-transform: uppercase;">
-                    <small>Kode ini akan muncul di nomor surat (001/L/[KODE]/...).</small>
+
+                <div class="floating-group" id="wrap_kode_keg" style="<?php echo ($edit_data['jenis'] ?? '') === 'kegiatan' ? '' : 'display:none;'; ?>">
+                    <input type="text" id="perihal_default" name="perihal_default" class="floating-input" placeholder=" " value="<?php echo htmlspecialchars($edit_data['perihal_default'] ?? ''); ?>" oninput="this.value = this.value.replace(/\s+/g, '').toUpperCase()" style="text-transform: uppercase;">
+                    <label for="perihal_default" class="floating-label">Kode Kegiatan</label>
                 </div>
-                <div class="form-group" id="wrap_isi_teks" style="<?php echo in_array(($edit_data['jenis'] ?? ''), ['kegiatan','tempat']) ? 'display:none;' : ''; ?>">
-                    <label>Isi Teks / Redaksi</label>
-                    <textarea name="isi_teks" id="isi_teks" rows="<?php echo ($edit_data['jenis'] ?? '') === 'tujuan' ? '4' : '3'; ?>" class="form-control" placeholder="Cth: Permohonan Peminjaman Ruangan"><?php echo htmlspecialchars($edit_data['isi_teks'] ?? ''); ?></textarea>
-                    <small id="hint_teks" style="display:block; margin-top:6px;">Ketik perihal surat di sini.</small>
+
+                <div class="floating-group" id="wrap_isi_teks" style="<?php echo in_array(($edit_data['jenis'] ?? ''), ['kegiatan','tempat']) ? 'display:none;' : ''; ?>">
+                    <textarea id="isi_teks" name="isi_teks" rows="<?php echo ($edit_data['jenis'] ?? '') === 'tujuan' ? '4' : '3'; ?>" class="floating-textarea" placeholder=" "><?php echo htmlspecialchars($edit_data['isi_teks'] ?? ''); ?></textarea>
+                    <label for="isi_teks" class="floating-label">Isi Teks / Redaksi</label>
                 </div>
+
                 <button type="submit" class="btn-primary" style="width:100%;"><i class="fas fa-save"></i> <?php echo $edit_data ? 'Update Template' : 'Simpan Template'; ?></button>
                 <?php if ($edit_data): ?>
-                    <a href="pengaturan-surat.php" class="btn-buat" style="width:100%; margin-top:10px; background:#444; justify-content:center;"><i class="fas fa-times"></i> Batal Edit</a>
+                    <a href="pengaturan-surat.php" class="btn-buat" style="width:100%; margin-top:10px; background:#444; justify-content:center; display: flex; align-items: center; text-decoration: none;"><i class="fas fa-times"></i> Batal Edit</a>
                 <?php endif; ?>
             </form>
         </div>
     </div>
     
     <!-- Daftar Template (Accordion) -->
-    <div class="blue-border-card" style="flex:2; min-width:350px;">
-        <div class="card-header"><i class="fas fa-list-ul"></i> Daftar Template Tersimpan</div>
+    <div class="blue-border-card" style="width:100%;">
+        <div class="card-header"><i class="fas fa-list-ul"></i> Daftar Template dan Panitia Tersimpan</div>
         <div class="card-body" style="padding:16px;">
             <!-- Tujuan -->
             <div class="accordion-item">
@@ -856,6 +850,40 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                                     <tr>
                                         <td data-label="Tempat"><strong><?php echo htmlspecialchars($tpl['label']); ?></strong></td>
                                         <td data-label="Aksi" style="text-align:center;"><div class="btn-group-mobile"><a href="?edit=<?php echo $tpl['id']; ?>#form-template" class="btn-edit">Edit</a><a href="?hapus=<?php echo $tpl['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" onclick="return confirm('Yakin hapus?')" class="btn-delete">Hapus</a></div></td>
+                                    </tr>
+                                <?php endforeach; endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Panitia -->
+            <div class="accordion-item">
+                <div class="accordion-header" data-target="accordion-panitia">
+                    <?php $list_panitia = dbFetchAll("SELECT * FROM panitia_tetap WHERE periode_id = ? ORDER BY jabatan ASC, nama ASC", [$periode_id], "i"); ?>
+                    <h3><i class="fas fa-users-cog"></i> Daftar Panitia Tersimpan <span class="badge-count"><?php echo count($list_panitia); ?></span></h3>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="accordion-body" id="accordion-panitia">
+                    <div style="overflow-x:auto;">
+                        <table class="admin-table responsive-card-table">
+                            <thead><tr><th>Nama & Jabatan</th><th style="text-align:center;">Pratinjau TTD</th><th style="text-align:center;">Aksi</th></tr></thead>
+                            <tbody>
+                                <?php if (empty($list_panitia)): ?>
+                                    <tr><td colspan="3" style="text-align:center;">Belum ada panitia tersimpan.</td></tr>
+                                <?php else: foreach ($list_panitia as $pt): ?>
+                                    <tr>
+                                        <td data-label="Nama & Jabatan"><div><div style="font-weight:bold; color:#fff;"><?php echo htmlspecialchars($pt['nama']); ?></div><div style="font-size:0.75rem; color:#4A90E2;"><?php echo $pt['jabatan'] === 'ketua' ? 'Ketua Pelaksana' : 'Sekretaris'; ?></div></div></td>
+                                        <td data-label="Pratinjau TTD" style="text-align:center;">
+                                            <?php if (!empty($pt['file_ttd'])): ?>
+                                                <div style="background:#fff; padding:5px; border-radius:4px; display:inline-block;">
+                                                    <img src="<?php echo uploadUrl($pt['file_ttd']); ?>" style="max-height:40px; mix-blend-mode:multiply;">
+                                                </div>
+                                            <?php else: ?>
+                                                <span style="font-size: 0.75rem; color: #888; font-style: italic;">TTD Basah</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td data-label="Aksi" style="text-align:center;"><div class="btn-group-mobile"><a href="?edit_panitia=<?php echo $pt['id']; ?>#form-panitia" class="btn-edit" style="margin-right:5px;"><i class="fas fa-edit"></i> Edit</a><a href="?hapus_panitia=<?php echo $pt['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" class="btn-delete" onclick="return confirm('Hapus?')"><i class="fas fa-trash"></i> Hapus</a></div></td>
                                     </tr>
                                 <?php endforeach; endif; ?>
                             </tbody>
@@ -960,16 +988,6 @@ document.querySelectorAll('.accordion-header').forEach(header => {
             header.classList.remove('open');
         }
     });
-});
-
-// Buka accordion pertama secara default
-document.addEventListener('DOMContentLoaded', () => {
-    const firstHeader = document.querySelector('.accordion-header');
-    if (firstHeader) {
-        const targetId = firstHeader.getAttribute('data-target');
-        const body = document.getElementById(targetId);
-        if (body) { body.classList.add('open'); firstHeader.classList.add('open'); }
-    }
 });
 
 // ========== DINAMIS JENIS TEMPLATE ==========

@@ -102,7 +102,7 @@ $selected_periode_data = dbFetchOne(
     <div class="card-body">
         <form method="POST" id="gantiPeriodeForm">
             <?php echo csrfField(); ?>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:15px;align-items:end;">
+            <div class="form-ganti-grid">
                 <div class="form-group" style="margin:0;">
                     <label for="periode_id"><i class="fas fa-calendar-check"></i> Periode:</label>
                     <select name="periode_id" id="periode_id" class="form-control"

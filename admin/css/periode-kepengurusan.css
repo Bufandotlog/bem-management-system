@@ -629,20 +629,71 @@
         width: 100%;
     }
     
-    /* Responsive untuk tabel */
+    /* Responsive untuk tabel (Kartu) */
     .periode-table {
-        min-width: 700px;
+        min-width: unset;
+        display: block;
     }
+    .periode-table thead { display: none; }
+    .periode-table tbody, .periode-table tr, .periode-table td { display: block; width: 100%; }
+    .periode-table tr {
+        margin-bottom: 20px;
+        background: rgba(15, 18, 23, 0.95);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 16px;
+        position: relative;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    .periode-table td {
+        text-align: left !important;
+        padding: 8px 0 !important;
+        border: none !important;
+        font-size: 0.85rem;
+    }
+    .periode-table td::before {
+        display: block;
+        font-size: 0.65rem;
+        color: #777;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 3px;
+    }
+    .periode-table td:nth-child(1)::before { content: "ID"; }
+    .periode-table td:nth-child(2)::before { content: "Nama Kabinet"; }
+    .periode-table td:nth-child(3)::before { content: "Tahun"; }
+    .periode-table td:nth-child(4)::before { content: "Status"; }
+    
+    .periode-table td:nth-child(1) { font-weight: bold; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.05) !important; padding-bottom: 12px !important; margin-bottom: 10px; }
+    .periode-table td:nth-child(2) { font-size: 1rem; color: var(--primary); }
+    
+    /* Hide Deskripsi */
+    .periode-table td:nth-child(5) { display: none !important; }
+    
+    .periode-table td:nth-child(6) {
+        margin-top: 15px;
+        padding-top: 15px !important;
+        border-top: 1px dashed rgba(255,255,255,0.1) !important;
+    }
+    .periode-table td:nth-child(6)::before { content: "AKSI"; }
     
     .action-group {
-        flex-direction: column;
-        gap: 4px;
+        flex-direction: row;
+        gap: 8px;
+        justify-content: flex-start;
+        flex-wrap: wrap;
     }
     
     .btn-action {
-        width: 100%;
-        height: 36px;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
     }
+    
+    .form-control, .btn { font-size: 0.85rem; }
+    .card-header h3 { font-size: 1rem; }
+    .info-title { font-size: 1.1rem; }
+    .info-text { font-size: 1.1rem; }
 }
 
 @media (max-width: 480px) {

@@ -629,12 +629,57 @@ select.form-control option {
     }
     
     .admin-table {
-        font-size: 0.9rem;
+        min-width: unset;
+        display: block;
     }
-    
-    .admin-table th,
+    .admin-table thead { display: none; }
+    .admin-table tbody, .admin-table tr, .admin-table td { display: block; width: 100%; box-sizing: border-box; }
+    .admin-table tr {
+        margin-bottom: 20px;
+        background: rgba(15, 18, 23, 0.95);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 16px;
+        position: relative;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
     .admin-table td {
-        padding: 12px;
+        text-align: left !important;
+        padding: 8px 0 !important;
+        border: none !important;
+        font-size: 0.85rem;
+    }
+    .admin-table td::before {
+        display: block;
+        font-size: 0.65rem;
+        color: #777;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 3px;
+    }
+    .admin-table td:nth-child(1)::before { content: "Username"; }
+    .admin-table td:nth-child(2)::before { content: "Nama"; }
+    .admin-table td:nth-child(3)::before { content: "Role"; }
+    .admin-table td:nth-child(4)::before { content: "Periode"; }
+    .admin-table td:nth-child(5)::before { content: "2FA"; }
+    .admin-table td:nth-child(6)::before { content: "Status"; }
+    
+    .admin-table td:nth-child(1) { font-weight: bold; font-size: 1rem; color: var(--primary); border-bottom: 1px solid rgba(255,255,255,0.05) !important; padding-bottom: 12px !important; margin-bottom: 10px; }
+    .admin-table td:nth-child(2) { font-weight: 600; color: #fff; }
+    
+    .admin-table td:nth-child(7) {
+        margin-top: 15px;
+        padding-top: 15px !important;
+        border-top: 1px dashed rgba(255,255,255,0.1) !important;
+    }
+    .admin-table td:nth-child(7)::before { content: "AKSI"; }
+    
+    .admin-table td:nth-child(7) > div {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        justify-content: flex-start !important;
+        flex-wrap: wrap;
     }
     
     .badge {

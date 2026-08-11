@@ -427,10 +427,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     gap: 30px;
 }
 
-@media (min-width: 1024px) {
-    .panitia-grid-layout {
-        grid-template-columns: 1.2fr 1fr;
-    }
+/* Floating Label Styles */
+.floating-group { position: relative; width: 100%; margin-bottom: 5px; }
+.floating-input { 
+    width: 100%; 
+    padding: 22px 15px 10px 15px !important; 
+    background: transparent; 
+    border: 1px solid var(--border-color); 
+    border-radius: 12px; 
+    color: #fff; 
+    font-size: 0.95rem; 
+    transition: 0.3s; 
+}
+.floating-input:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2); }
+.floating-label { 
+    position: absolute; left: 15px; top: 16px; font-size: 0.9rem; color: #888; pointer-events: none; transition: 0.3s; 
+}
+.floating-input:focus ~ .floating-label,
+.floating-input:not(:placeholder-shown) ~ .floating-label {
+    top: 6px; left: 15px; font-size: 0.65rem; color: var(--accent-color); font-weight: 700; padding: 0; letter-spacing: 0.5px;
 }
 
 .card {
@@ -540,15 +555,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     background: rgba(231, 76, 60, 0.1);
     color: #e74c3c;
     border: none;
-    border-radius: 8px;
-    width: 38px;
-    height: 38px;
+    border-radius: 12px;
+    width: 44px;
+    height: 44px;
     cursor: pointer;
     font-size: 1.1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: 0.3s;
+    flex-shrink: 0;
 }
 
 .btn-remove-anggota-seksi:hover {
@@ -758,6 +774,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     transform: translateY(-2px);
     box-shadow: 0 15px 25px rgba(79, 172, 254, 0.4);
 }
+
+/* RESPONSIVE FONT SCALING FOR MOBILE */
+@media (max-width: 768px) {
+    .preview-sheet {
+        font-size: 9pt;
+        padding: 10mm 5mm;
+        min-height: auto;
+    }
+    .preview-header h1, .preview-header h2, .preview-header h3 {
+        font-size: 11pt !important;
+    }
+    .table-panitia td {
+        padding: 4px 6px;
+    }
+    .card-header-title h2 { font-size: 1.1rem; }
+    .form-group label { font-size: 0.7rem; }
+    .form-group input, .form-group select { font-size: 0.85rem; padding: 10px 12px; }
+    .card { padding: 15px; }
+    .btn-gradient { font-size: 0.9rem; padding: 10px 20px; width: 100%; justify-content: center; }
+    .actions-sticky-bar { padding: 15px; bottom: 10px; }
+    .actions-sticky-bar > div { flex-direction: column-reverse; width: 100%; }
+    .actions-sticky-bar a { width: 100%; text-align: center; display: block; box-sizing: border-box; }
+}
 </style>
 
 <div class="panitia-creator-container">
@@ -796,7 +835,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card">
                     <div class="card-header-title">
                         <i class="fas fa-info-circle fa-lg"></i>
-                        <h2>Informasi Kegiatan & Pelindung</h2>
+                        <h2>Informasi Kegiatan</h2>
                     </div>
                     
                     <div class="form-group">
@@ -819,22 +858,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" value="<?php echo $tahun_periode_str; ?>" disabled style="opacity: 0.7; background: #111;">
                     </div>
 
-                    <div class="form-group">
-                        <label>Penanggung Jawab (Warek III)</label>
-                        <input type="text" name="penanggung_jawab" id="penanggung_jawab" required value="<?php echo $edit_id > 0 ? htmlspecialchars($panitia_json['penanggung_jawab'] ?? $default_warek) : $default_warek; ?>" oninput="updateLivePreview()">
-                        <small style="color: #666; margin-top: 5px; display: block;">Default diambil dari Pengaturan TTD Warek III.</small>
-                    </div>
-
-                    <div class="form-row-three">
-                        <div class="form-group">
-                            <label>Steering Committee 1 (Ketua BEM)</label>
-                            <input type="text" name="sc_1" id="sc_1" readonly value="<?php echo $presma_name; ?>" style="opacity: 0.8; background: #111;">
-                        </div>
-                        <div class="form-group">
-                            <label>Steering Committee 2 (Wakil Ketua BEM)</label>
-                            <input type="text" name="sc_2" id="sc_2" readonly value="<?php echo $wapresma_name; ?>" style="opacity: 0.8; background: #111;">
-                        </div>
-                    </div>
+                    <input type="hidden" name="penanggung_jawab" id="penanggung_jawab" value="<?php echo $edit_id > 0 ? htmlspecialchars($panitia_json['penanggung_jawab'] ?? $default_warek) : $default_warek; ?>">
+                    <input type="hidden" name="sc_1" id="sc_1" value="<?php echo $presma_name; ?>">
+                    <input type="hidden" name="sc_2" id="sc_2" value="<?php echo $wapresma_name; ?>">
                 </div>
 
                 <!-- CARD 2: PENGURUS INTI PANITIA -->
@@ -1086,7 +1112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- BOTTOM STICKY BAR ACTIONS -->
         <div class="actions-sticky-bar">
-            <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
                 <a href="arsip-panitia.php" style="color: #ccc; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; border: 1px solid var(--border-color); transition: 0.3s;">
                     <i class="fas fa-arrow-left"></i> Kembali ke Arsip
                 </a>
@@ -1146,7 +1172,6 @@ function addSeksiBlock(seksiName = '', anggotaList = []) {
         </div>
         
         <div class="form-group" style="margin-bottom: 5px;">
-            <label>Anggota Seksi</label>
             <div class="seksi-members-container" id="seksi-members-${seksiCounter}">
             </div>
         </div>
@@ -1249,9 +1274,9 @@ function addAnggotaToSeksi(seksiIndex, selectedName = '') {
     }
     
     row.innerHTML = `
-        <div class="tpl-picker" style="flex: 1;">
-            <i class="fas fa-search tpl-search-icon"></i>
-            <input type="text" class="tpl-search-input form-control tpl-display-input" placeholder="Cari atau pilih anggota..." value="${escapeHtml(selectedName)}" autocomplete="off" onfocus="showTplPanitiaAnggota(this)" onkeyup="filterTplPanitiaAnggota(this)" style="background:#080808; color:#fff; border-radius:12px; padding:12px 15px 12px 44px; border:1px solid var(--border-color);">
+        <div class="tpl-picker floating-group" style="flex: 1;">
+            <input type="text" class="tpl-search-input form-control tpl-display-input floating-input" placeholder=" " value="${escapeHtml(selectedName)}" autocomplete="off" onfocus="showTplPanitiaAnggota(this)" onkeyup="filterTplPanitiaAnggota(this)" style="background:#080808; color:#fff; border-radius:12px; border:1px solid var(--border-color);">
+            <label class="floating-label">Anggota Seksi</label>
             <input type="hidden" name="seksi_anggota[${seksiIndex}][]" class="tpl-hidden-input seksi-member-select" value="${escapeHtml(selectedName)}">
             <div class="tpl-results">
                 ${tplOptionsHtml}
@@ -1603,7 +1628,7 @@ document.addEventListener('click', function(e) {
 <style>
 /* CSS Tambahan untuk tpl-picker */
 .tpl-picker { position: relative; }
-.tpl-search-input { padding-left: 44px !important; }
+.tpl-search-input { padding-left: 15px !important; }
 .tpl-search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--accent-color); font-size: 1rem; pointer-events: none; z-index: 5; }
 .tpl-results { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #121822; border: 1px solid var(--border-color); border-radius: 16px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; padding: 8px; }
 .tpl-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }

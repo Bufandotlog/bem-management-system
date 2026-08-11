@@ -199,8 +199,15 @@ $staging_list = dbFetchAll("
                     ?>
                         <tr>
                             <td data-label="Kegiatan"><span style="color: #8BB9F0; font-weight: bold;"><?php echo htmlspecialchars($s['nama_kegiatan']); ?></span></td>
-                            <td data-label="Perihal"><strong><?php echo htmlspecialchars($perihal); ?></strong><br><small style="color: #aaa;"><?php echo htmlspecialchars($s['nomor_surat']); ?></small></td>
-                            <td data-label="Tujuan"><?php echo htmlspecialchars(substr($tujuan, 0, 50)) . (strlen($tujuan) > 50 ? '...' : ''); ?></td>
+                            <td data-label="Perihal">
+                                <div>
+                                    <strong><?php echo htmlspecialchars($perihal); ?></strong><br>
+                                    <small style="color: #aaa;"><?php echo htmlspecialchars($s['nomor_surat']); ?></small>
+                                </div>
+                            </td>
+                            <td data-label="Tujuan">
+                                <span><?php echo htmlspecialchars(substr($tujuan, 0, 50)) . (strlen($tujuan) > 50 ? '...' : ''); ?></span>
+                            </td>
                             <td data-label="Status">
                                 <?php 
                                 $status_h = $s['status_humas'] ?? 'draft';

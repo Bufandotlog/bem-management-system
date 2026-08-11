@@ -2,8 +2,8 @@
 // admin/staging-dokumentasi.php
 require_once __DIR__ . '/../core/header.php';
 
-if ($admin_role !== 'kominfo') {
-    redirect('admin/core/dashboard.php', 'Anda tidak memiliki akses. Halaman ini khusus Kominfo.', 'error');
+if (!in_array($admin_role, ['kominfo', 'superadmin', 'admin'])) {
+    redirect('admin/core/dashboard.php', 'Anda tidak memiliki akses. Halaman ini khusus Kominfo atau Superadmin.', 'error');
 }
 
 $periode_id = getUserPeriode();
@@ -218,6 +218,52 @@ $pending_events = dbFetchAll("
 }
 .empty-state p {
     color: #888;
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: 15px;
+        border-radius: 16px;
+    }
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .card-header h2 {
+        font-size: 1.2rem;
+    }
+    .form-group input, .form-group select {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+    .photo-card {
+        padding: 12px;
+    }
+    .photo-preview-wrap {
+        height: 140px;
+    }
+    .actions-bar {
+        padding: 15px;
+        bottom: 70px; /* Di atas bottom nav jika ada */
+        justify-content: center;
+    }
+    .btn-print {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+        width: 100%;
+        justify-content: center;
+    }
+    .empty-state {
+        padding: 40px 15px;
+    }
+    .empty-state i {
+        font-size: 3rem;
+    }
+    .empty-state h3 {
+        font-size: 1.1rem;
+    }
 }
 </style>
 

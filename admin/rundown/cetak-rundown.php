@@ -283,8 +283,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     color: #2ecc71;
     border: none;
     border-radius: 8px;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -298,8 +298,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     color: #9b59b6;
     border: none;
     border-radius: 8px;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     cursor: pointer;
     transition: all 0.3s;
     font-size: 0.75rem;
@@ -510,14 +510,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         text-transform: uppercase;
         font-weight: 700;
         margin-bottom: 5px;
-    }
-    
-    .btn-remove-row {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 32px;
-        height: 32px;
     }
 }
 .barang-qty:focus {
@@ -953,26 +945,22 @@ function addRow(dayId, afterRow = null) {
             </div>
         </td>
         <td data-label="AKSI" style="text-align: center; white-space: nowrap;">
-            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
-                <div style="display: flex; gap: 3px; justify-content: center;">
-                    <button type="button" class="btn-move-row" onclick="moveRow(this, ${dayId}, 'up')" title="Pindah ke Atas">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
-                    <button type="button" class="btn-move-row" onclick="moveRow(this, ${dayId}, 'down')" title="Pindah ke Bawah">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                </div>
-                <div style="display: flex; gap: 3px; justify-content: center;">
-                    <button type="button" class="btn-insert-row" onclick="insertRowAfter(this, ${dayId})" title="Sisipkan Baris Baru di Bawah">
-                        <i class="fas fa-plus-circle"></i>
-                    </button>
-                    <button type="button" class="btn-add-parallel" onclick="addParallelRow(this, ${dayId})" title="Tambah Baris Paralel (Kegiatan Bersamaan)" style="background: rgba(74, 144, 226, 0.1); color: var(--accent-color); border: none; border-radius: 8px; width: 36px; height: 36px; cursor: pointer; transition: 0.3s;">
-                        <i class="fas fa-layer-group"></i>
-                    </button>
-                    <button type="button" class="btn-remove-row" onclick="removeRow(this, ${dayId})" title="Hapus Baris Ini">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+            <div style="display: flex; gap: 6px; justify-content: flex-start; flex-wrap: wrap;">
+                <button type="button" class="btn-move-row" onclick="moveRow(this, ${dayId}, 'up')" title="Pindah ke Atas">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+                <button type="button" class="btn-move-row" onclick="moveRow(this, ${dayId}, 'down')" title="Pindah ke Bawah">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <button type="button" class="btn-insert-row" onclick="insertRowAfter(this, ${dayId})" title="Sisipkan Baris Baru di Bawah">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+                <button type="button" class="btn-add-parallel" onclick="addParallelRow(this, ${dayId})" title="Tambah Baris Paralel (Kegiatan Bersamaan)" style="background: rgba(74, 144, 226, 0.1); color: var(--accent-color); border: none; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-layer-group"></i>
+                </button>
+                <button type="button" class="btn-remove-row" onclick="removeRow(this, ${dayId})" title="Hapus Baris Ini" style="width: 32px; height: 32px;">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
         </td>
     `;

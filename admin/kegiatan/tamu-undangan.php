@@ -277,10 +277,11 @@ if (is_array($decoded)) {
     padding: 18px 20px;
     margin-bottom: 16px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 15px;
     transition: all 0.3s;
     position: relative;
+    flex-wrap: wrap;
 }
 
 .guest-card-row:focus-within {
@@ -318,8 +319,53 @@ if (is_array($decoded)) {
     min-width: 150px;
 }
 
+@media (max-width: 768px) {
+    .guest-card-row {
+        flex-direction: column;
+        padding: 30px 15px 15px 15px;
+        margin-top: 15px;
+    }
+    
+    .guest-card-row .guest-number-badge {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-radius: 16px 0 16px 0 !important;
+        z-index: 10;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .guest-inputs-wrapper {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .guest-field-group.nama-group,
+    .guest-field-group.perihal-group,
+    .guest-field-group.kategori-group {
+        min-width: 100%;
+        width: 100%;
+    }
+    
+    .guest-card-row > button {
+        align-self: flex-end;
+        width: 100%;
+        margin-top: 5px;
+    }
+    
+    .tamu-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .btn-submit-tamu {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .guest-field-label {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -594,9 +640,8 @@ if (is_array($decoded)) {
             <?php endif; ?>
 
             <div class="form-group">
-                <label style="font-weight: 700; color: #ccc; font-size: 0.95rem; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+                <label style="font-weight: 700; color: #ccc; font-size: 0.95rem; margin-bottom: 14px; display: flex; align-items: flex-start; justify-content: space-between; flex-direction: column; gap: 8px;">
                     <span><i class="fas fa-list-ol" style="color: #f1c40f; margin-right: 8px;"></i> Susunan Daftar Tamu Undangan (Satu Card Per Nama & Sebagai)</span>
-                    <small style="color: #888; font-weight: normal;">Setiap card mewakili 1 tamu undangan beserta perannya (Sebagai)</small>
                 </label>
 
                 <!-- CONTAINER FOR GUEST CARDS -->
@@ -625,7 +670,7 @@ if (is_array($decoded)) {
                             }
                         ?>
                             <div class="guest-card-row">
-                                <div class="guest-number-badge" style="background: rgba(241, 196, 15, 0.15); color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.3); font-weight: 700; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
+                                <div class="guest-number-badge" style="background: #4A90E2; color: #fff; border: none; font-weight: 700; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
                                     #<?php echo ($idx + 1); ?>
                                 </div>
                                 <div class="guest-inputs-wrapper">
@@ -904,7 +949,7 @@ function addGuestCard(nama = '', perihal = '', kategori = 'D') {
     const katColor = (kategori === 'L') ? '#ff7675' : '#2ecc71';
 
     card.innerHTML = `
-        <div class="guest-number-badge" style="background: rgba(241, 196, 15, 0.15); color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.3); font-weight: 700; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
+        <div class="guest-number-badge" style="background: #4A90E2; color: #fff; border: none; font-weight: 700; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
             #1
         </div>
         <div class="guest-inputs-wrapper">

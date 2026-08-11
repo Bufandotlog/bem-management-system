@@ -140,11 +140,12 @@ function formatTanggalId($tanggal, $bulan_id) {
     
     .arsip-table tr {
         margin-bottom: 20px;
-        background: rgba(255,255,255,0.02);
-        border: 1px solid var(--border-color);
-        border-radius: 15px;
-        padding: 15px;
+        background: rgba(15, 18, 23, 0.95);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 16px;
         position: relative;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
     }
     
     .arsip-table td {
@@ -152,6 +153,12 @@ function formatTanggalId($tanggal, $bulan_id) {
         padding: 8px 0 !important;
         width: 100% !important;
         text-align: left !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .arsip-table td[data-label="Penanggung Jawab"],
+    .arsip-table td[data-label="Tanggal Dibuat"] {
+        display: none !important;
     }
     
     .arsip-table td:first-child {
@@ -172,17 +179,17 @@ function formatTanggalId($tanggal, $bulan_id) {
     .arsip-table td::before {
         content: attr(data-label);
         display: block;
-        font-size: 0.7rem;
-        color: #555;
+        font-size: 0.65rem;
+        color: #777;
         text-transform: uppercase;
         font-weight: 700;
-        margin-bottom: 5px;
+        margin-bottom: 3px;
     }
 
     .arsip-table td[data-label="AKSI"] {
         margin-top: 15px;
         padding-top: 15px !important;
-        border-top: 1px dashed var(--border-color) !important;
+        border-top: 1px dashed rgba(255,255,255,0.1) !important;
     }
     
     .arsip-table td[data-label="AKSI"] div {

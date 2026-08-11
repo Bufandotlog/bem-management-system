@@ -219,7 +219,6 @@ $periode_aktif = dbFetchOne("SELECT * FROM periode_kepengurusan WHERE is_active 
 <!-- Page Header -->
 <div class="page-header">
     <h1><i class="fas fa-calendar-alt"></i> Periode Kepengurusan</h1>
-    <p>Kelola periode kepengurusan BEM dari tahun ke tahun</p>
 </div>
 
 <?php flashMessage(); ?>

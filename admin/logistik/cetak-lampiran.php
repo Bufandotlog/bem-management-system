@@ -345,6 +345,32 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
     transform: translateY(-4px) scale(1.02);
     box-shadow: 0 15px 30px rgba(79, 172, 254, 0.4);
 }
+
+/* Fix Date Icon Color to White */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .card { padding: 15px; border-radius: 16px; margin-bottom: 15px; }
+    .card-header { margin-bottom: 20px; }
+    .card-header h2 { font-size: 1.1rem; }
+    .form-group input, .form-group select { padding: 10px 14px; font-size: 0.85rem; }
+    .date-range-wrap { flex-wrap: wrap; gap: 8px; }
+    .date-range-wrap input[type="date"] { flex: 1 1 100%; }
+    .qty-wrapper { height: 32px; }
+    .qty-btn { width: 28px; font-size: 1rem; }
+    .barang-qty { width: 36px !important; font-size: 0.9rem; }
+    .items-table th { padding: 8px 10px; font-size: 0.7rem; }
+    .items-table td { padding: 10px; font-size: 0.8rem; }
+    .items-table td:first-child { width: auto; font-size: 0.75rem; }
+    .actions-bar { flex-direction: column; gap: 15px; padding: 15px; }
+    .btn-print, .btn-reset { width: 100%; justify-content: center; font-size: 0.95rem; padding: 10px 20px; }
+    .actions-bar > div { flex-direction: column; width: 100%; }
+    .notice-bar { padding: 10px 15px; font-size: 0.75rem; }
+    .preview-bar { font-size: 0.75rem; padding: 10px 14px; }
+}
 </style>
 
 <div class="cetak-lampiran-container">

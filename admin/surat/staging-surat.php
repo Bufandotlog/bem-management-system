@@ -224,10 +224,30 @@ foreach ($staging_list_raw as $s) {
     }
 }
 
-// Grouping regular staging by nomor_surat
+// Grouping regular staging by nomor_surat (untuk Desktop)
 $grouped_staging = [];
 foreach ($regular_staging as $s) {
     $grouped_staging[$s['nomor_surat']][] = $s;
+}
+
+// Grouping by perihal (untuk Mobile)
+$grouped_mobile = [];
+foreach ($grouped_staging as $nomor_surat => $items) {
+    $parent = $items[0];
+    $perihal = trim($parent['perihal']);
+    $ns_parts = explode('/', $parent['nomor_surat']);
+    $dl = $ns_parts[1] ?? 'D';
+    $label_dl = ($dl === 'D') ? 'Dalam' : 'Luar';
+    
+    $group_key = $perihal . '|' . $label_dl;
+    if (!isset($grouped_mobile[$group_key])) {
+        $grouped_mobile[$group_key] = [
+            'perihal' => $perihal,
+            'label_dl' => $label_dl,
+            'items' => []
+        ];
+    }
+    $grouped_mobile[$group_key]['items'][] = $items;
 }
 
 // Hitung total staging keseluruhan periode dan breakdown per status
@@ -374,6 +394,171 @@ $cnt_terkirim = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE peri
 .staging-table tr:last-child td {
     border-bottom: none;
 }
+
+/* Mobile Adjustments */
+.show-mobile-only {
+    display: none;
+}
+.action-menu {
+    position: relative;
+    display: inline-block;
+}
+.hamburger-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.action-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #0f1217;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-width: 170px;
+    z-index: 999;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+    flex-direction: column;
+    padding: 5px;
+    gap: 5px;
+    margin-top: 5px;
+}
+.action-dropdown.show {
+    display: flex;
+}
+.action-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+.action-dropdown a:hover {
+    background: rgba(255,255,255,0.05);
+}
+.desktop-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+}
+.mobile-actions {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+    .show-mobile-only {
+        display: table-cell !important;
+    }
+    .staging-table th, .staging-table td {
+        padding: 12px 10px;
+    }
+    .desktop-actions {
+        display: none !important;
+    }
+    .mobile-actions {
+        display: flex !important;
+        justify-content: center;
+    }
+    
+    .rapat-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+    .rapat-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    .rapat-item > div:first-child {
+        min-width: 0 !important;
+        width: 100%;
+    }
+    .rapat-item-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .mobile-cards-container {
+        display: flex !important;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .mobile-group-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .mgc-header {
+        background: rgba(255,255,255,0.03);
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+    .mgc-header h4 {
+        margin: 0;
+        color: #fff;
+        font-size: 1rem;
+        word-break: break-word;
+    }
+    .badge-dl {
+        background: rgba(74, 144, 226, 0.15); 
+        color: #4A90E2; 
+        border: 1px solid rgba(74, 144, 226, 0.3);
+        font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;
+    }
+    .mgc-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        gap: 10px;
+        transition: background 0.2s;
+        position: relative;
+    }
+    .mgc-item:last-child {
+        border-bottom: none;
+    }
+    .mgc-item-no {
+        font-weight: bold;
+        color: #4facfe;
+        font-size: 1.1rem;
+        min-width: 35px;
+    }
+    .mgc-item-tujuan {
+        flex: 1;
+        color: #ccc;
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+    
+    .mobile-checkbox-col {
+        display: none;
+        margin-right: 5px;
+    }
+    body.selection-mode-active .mobile-checkbox-col {
+        display: block;
+    }
+    body.selection-mode-active .mgc-item {
+        cursor: pointer;
+    }
+}
 </style>
 
 <div class="staging-container">
@@ -460,16 +645,16 @@ $cnt_terkirim = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE peri
     <!-- CARD SURAT RAPAT INTERNAL BPM -->
     <?php if (!empty($rapat_letters) || $selected_kegiatan_id > 0): ?>
     <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 25px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+        <div class="rapat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
             <div>
-                <h3 style="margin: 0; font-size: 1.1rem; color: #fff; display: flex; align-items: center; gap: 10px; font-weight: 700;">
-                    <i class="fas fa-users-cog" style="color: #4A90E2;"></i> Surat Rapat Internal & Pemantapan BPM
+                <h3 style="margin: 0; font-size: 1.1rem; color: #fff; display: flex; align-items: center; gap: 10px; font-weight: 700; word-break: break-word; line-height: 1.3;">
+                    <i class="fas fa-users-cog" style="color: #4A90E2; flex-shrink: 0;"></i> Surat Rapat Internal & Pemantapan BPM
                 </h3>
-                <p style="color: #8A99AD; font-size: 0.85rem; margin: 4px 0 0 0;">
+                <p style="color: #8A99AD; font-size: 0.85rem; margin: 6px 0 0 0; line-height: 1.4;">
                     Surat rapat memiliki nomor surat paling awal. Tanggal, waktu, dan tempat belum fiks. Hapus jika kegiatan tidak memerlukan rapat.
                 </p>
             </div>
-            <span class="badge" style="background: rgba(74, 144, 226, 0.15); color: #4A90E2; border: 1px solid rgba(74, 144, 226, 0.3); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+            <span class="badge" style="background: rgba(74, 144, 226, 0.15); color: #4A90E2; border: 1px solid rgba(74, 144, 226, 0.3); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">
                 <?php echo count($rapat_letters); ?> Surat Rapat
             </span>
         </div>
@@ -486,8 +671,8 @@ $cnt_terkirim = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE peri
                     $r_status_h = $r_item['status_humas'] ?? 'draft';
                     $r_is_sent = (!empty($r_item['tanggal_dikirim']) && $r_item['tanggal_dikirim'] !== '0000-00-00') || $r_status_h === 'terkirim';
                 ?>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; gap: 10px;">
-                        <div style="flex: 1; display: flex; align-items: center; gap: 15px; min-width: 280px;">
+                    <div class="rapat-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; gap: 10px;">
+                        <div style="flex: 1; display: flex; align-items: center; gap: 15px; min-width: 280px; word-break: break-word;">
                             <?php if ($r_is_edited): ?>
                                 <input type="checkbox" name="ids[]" value="<?php echo $r_item['id']; ?>" class="item-checkbox" style="width: 18px; height: 18px; cursor: pointer;">
                             <?php else: ?>
@@ -504,7 +689,7 @@ $cnt_terkirim = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE peri
                                 </span>
                             </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <div class="rapat-item-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                             <?php if ($r_is_edited): ?>
                                 <a href="cetak-surat.php?id=<?php echo $r_item['id']; ?>" target="_blank" class="btn-buat" style="background: rgba(74, 144, 226, 0.15); color: #4A90E2; border: 1px solid rgba(74, 144, 226, 0.3); padding: 7px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none;" title="Preview / Cetak Surat">
                                     <i class="fas fa-eye"></i> Preview
@@ -547,7 +732,68 @@ $cnt_terkirim = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE peri
     </div>
     <?php endif; ?>
 
-        <div class="table-responsive">
+        <!-- MOBILE VIEW CARDS -->
+        <div class="mobile-cards-container show-mobile-only">
+            <?php if (empty($grouped_mobile)): ?>
+                <div style="padding: 40px; text-align: center; color: #777;">
+                    <i class="fas fa-inbox" style="font-size: 2.5rem; color: #444; display: block; margin-bottom: 10px;"></i>
+                    Tidak ada surat di area staging untuk kegiatan ini.
+                </div>
+            <?php else: ?>
+                <?php foreach ($grouped_mobile as $g): ?>
+                    <div class="mobile-group-card">
+                        <div class="mgc-header">
+                            <h4><?php echo htmlspecialchars($g['perihal']); ?></h4>
+                            <span class="badge badge-dl"><?php echo $g['label_dl']; ?></span>
+                        </div>
+                        <div class="mgc-body">
+                            <?php foreach ($g['items'] as $items): 
+                                $parent = $items[0];
+                                $ns_parts = explode('/', $parent['nomor_surat']);
+                                $no_surat_pendek = $ns_parts[0] ?? '-';
+                                $status_h = $parent['status_humas'] ?? 'draft';
+                                $is_sent = (!empty($parent['tanggal_dikirim']) && $parent['tanggal_dikirim'] !== '0000-00-00') || $status_h === 'terkirim';
+                            ?>
+                                <div class="mgc-item" ontouchstart="handleTouchStart(event, this)" ontouchend="handleTouchEnd(event, this)" ontouchmove="handleTouchMove(event, this)" oncontextmenu="return false;" onclick="handleItemClick(event, this)">
+                                    <div class="mobile-checkbox-col">
+                                        <input type="checkbox" name="ids[]" value="<?php echo $parent['id']; ?>" class="item-checkbox mobile-checkbox" onclick="event.stopPropagation();">
+                                    </div>
+                                    <div class="mgc-item-no"><?php echo htmlspecialchars($no_surat_pendek); ?></div>
+                                    <div class="mgc-item-tujuan"><?php echo nl2br(htmlspecialchars($parent['tujuan'])); ?></div>
+                                    <div class="mgc-item-status" style="margin-right: 5px;">
+                                        <?php if ($is_sent): ?>
+                                            <i class="fas fa-check-circle" style="color: #2ecc71; font-size: 1.2rem;" title="Terkirim"></i>
+                                        <?php elseif ($status_h === 'siap_disebar'): ?>
+                                            <i class="fas fa-spinner" style="color: #3498db; font-size: 1.2rem;" title="Diproses"></i>
+                                        <?php else: ?>
+                                            <i class="fas fa-clock" style="color: #f39c12; font-size: 1.2rem;" title="Draft"></i>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="action-menu" onclick="event.stopPropagation();">
+                                        <button type="button" class="hamburger-btn" onclick="toggleDropdown(this)" style="padding: 4px 8px;"><i class="fas fa-ellipsis-v"></i></button>
+                                        <div class="action-dropdown" style="text-align: left;">
+                                            <a href="cetak-surat.php?id=<?php echo $parent['id']; ?>" target="_blank" style="color: #4A90E2;"><i class="fas fa-eye" style="width: 20px; text-align: center;"></i> Preview/Cetak</a>
+                                            <a href="buat-surat.php?edit=<?php echo $parent['id']; ?>" style="color: #f1c40f;"><i class="fas fa-edit" style="width: 20px; text-align: center;"></i> Edit Surat</a>
+                                            <?php if (!$is_sent): ?>
+                                                <?php if ($status_h !== 'siap_disebar'): ?>
+                                                    <a href="staging-surat.php?kegiatan_id=<?php echo $selected_kegiatan_id; ?>&kirim_humas=<?php echo $parent['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" onclick="return confirm('Kirim surat ini ke Humas untuk disebar?')" style="color: #2ecc71;"><i class="fas fa-paper-plane" style="width: 20px; text-align: center;"></i> Kirim ke Humas</a>
+                                                <?php else: ?>
+                                                    <a href="staging-surat.php?kegiatan_id=<?php echo $selected_kegiatan_id; ?>&batal_humas=<?php echo $parent['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" onclick="return confirm('Kembalikan status surat ke Sekretaris (Draft)?')" style="color: #95a5a6;"><i class="fas fa-undo" style="width: 20px; text-align: center;"></i> Batal Kirim</a>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                            <a href="staging-surat.php?kegiatan_id=<?php echo $selected_kegiatan_id; ?>&hapus=<?php echo $parent['id']; ?>&csrf_token=<?php echo csrfToken(); ?>" onclick="return confirm('Hapus surat staging ini?')" style="color: #e74c3c;"><i class="fas fa-trash" style="width: 20px; text-align: center;"></i> Hapus Staging</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <!-- DESKTOP VIEW TABLE -->
+        <div class="table-responsive hide-mobile">
             <table class="staging-table">
                 <thead>
                     <tr>
@@ -647,6 +893,58 @@ $cnt_terkirim = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE peri
 </div>
 
 <script>
+let touchTimer;
+let isSelectionMode = false;
+
+function handleTouchStart(e, elem) {
+    if (isSelectionMode) return;
+    touchTimer = setTimeout(() => {
+        activateSelectionMode();
+        const cb = elem.querySelector('.mobile-checkbox');
+        if (cb) cb.checked = true;
+    }, 600); // 600ms long press
+}
+
+function handleTouchEnd(e, elem) {
+    if (touchTimer) clearTimeout(touchTimer);
+}
+
+function handleTouchMove(e, elem) {
+    if (touchTimer) clearTimeout(touchTimer);
+}
+
+function handleItemClick(e, elem) {
+    if (isSelectionMode) {
+        // Toggle checkbox on tap
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('.action-menu')) {
+            const cb = elem.querySelector('.mobile-checkbox');
+            if (cb) {
+                cb.checked = !cb.checked;
+            }
+        }
+    }
+}
+
+function activateSelectionMode() {
+    isSelectionMode = true;
+    document.body.classList.add('selection-mode-active');
+    if ('vibrate' in navigator) navigator.vibrate(50);
+}
+
+function toggleDropdown(btn) {
+    const dropdown = btn.nextElementSibling;
+    document.querySelectorAll('.action-dropdown.show').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+    });
+    dropdown.classList.toggle('show');
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.action-menu')) {
+        document.querySelectorAll('.action-dropdown.show').forEach(d => d.classList.remove('show'));
+    }
+});
+
 function toggleSelectAll(master) {
     const checkboxes = document.querySelectorAll('.item-checkbox');
     checkboxes.forEach(cb => cb.checked = master.checked);

@@ -238,12 +238,94 @@ $periode_list = dbFetchAll("SELECT id, nama, tahun_mulai, tahun_selesai, is_acti
 .btn-tutup:hover { background: rgba(231, 76, 60, 0.2); transform: translateY(-2px); }
 .btn-buka { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
 .btn-buka:hover { background: rgba(46, 204, 113, 0.2); transform: translateY(-2px); }
+
+/* Floating Labels */
+.form-floating {
+    position: relative;
+    width: 100%;
+}
+.form-floating input, .form-floating select {
+    width: 100%;
+    padding: 22px 12px 8px 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    height: 52px;
+}
+.form-floating input:focus, .form-floating select:focus {
+    border-color: var(--accent-color);
+}
+.form-floating label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 0.9rem;
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+.form-floating input:focus ~ label,
+.form-floating input:not(:placeholder-shown) ~ label,
+.form-floating select ~ label {
+    top: 14px;
+    font-size: 0.7rem;
+    color: var(--accent-color);
+}
+.input-group-floating {
+    display: flex;
+    align-items: center;
+    position: relative;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+.input-group-floating:focus-within {
+    border-color: var(--accent-color);
+}
+.input-group-floating input {
+    border: none;
+    background: transparent;
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .page-header form { width: 100%; }
+    .header-btn { width: 100%; justify-content: center; }
+    
+    #formGrid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    #formGrid > div {
+        width: 100%;
+    }
+    
+    .table-premium thead { display: none; }
+    .table-premium tr { display: flex; flex-direction: column; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 15px; background: var(--card-bg); padding: 10px; }
+    .table-premium td { display: flex; justify-content: space-between; align-items: center; border: none !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; padding: 12px 5px; text-align: right; }
+    .table-premium td::before { content: attr(data-label); font-size: 0.8rem; color: #888; font-weight: 600; text-align: left; }
+    .table-premium td:last-child { border-bottom: none !important; justify-content: center; margin-top: 10px; }
+    .table-premium td:last-child::before { display: none; }
+    
+    .td-aksi { flex-direction: column; gap: 10px; }
+    .td-aksi > div { width: 100%; display: flex; flex-direction: row; gap: 8px; }
+    .btn-action { justify-content: center; flex: 1; }
+}
 </style>
 
 <div class="page-header">
     <div>
         <h1><i class="fas fa-user-plus"></i> Kelola Pendaftaran Anggota</h1>
-        <p>Setujui atau tolak pendaftaran dari jalur publik.</p>
     </div>
     <form method="POST" style="margin: 0;">
         <?php echo csrfField(); ?>
@@ -260,57 +342,54 @@ $periode_list = dbFetchAll("SELECT id, nama, tahun_mulai, tahun_selesai, is_acti
 <div class="card" style="padding: 24px; margin-bottom: 25px; border-left: 4px solid var(--accent-color);">
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
         <div>
-            <h3 style="margin: 0 0 5px 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-key text-biru"></i> Pengaturan Password Default Pendaftaran
+            <h3 style="margin: 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-key text-biru"></i> Pengaturan Password Default
             </h3>
-            <p style="margin: 0; color: #888; font-size: 0.85rem;">
-                Password awal yang diberikan otomatis saat pendaftaran akun disetujui. 
-            </p>
         </div>
         <div style="background: rgba(74, 144, 226, 0.1); border: 1px solid rgba(74, 144, 226, 0.2); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; color: var(--accent-color);">
             <i class="fas fa-shield-alt"></i> Password Default Saat Ini: <strong id="defPwText" style="font-family: monospace; letter-spacing: 1px; color: #fff; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;"><?php echo htmlspecialchars($active_def_pw); ?></strong>
         </div>
     </div>
 
-    <form method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) 140px; gap: 15px; align-items: end;">
+    <form method="POST" id="formGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) 140px; gap: 15px; align-items: end;">
         <?php echo csrfField(); ?>
         <input type="hidden" name="action" value="update_default_password">
         
         <?php if ($admin_role === 'superadmin'): ?>
-        <div>
-            <label style="display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 6px; font-weight: 600;">Target Periode Kepengurusan</label>
-            <select name="target_periode_id" required style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+        <div class="form-floating">
+            <select name="target_periode_id" required>
                 <?php foreach ($periode_list as $p): ?>
                     <option value="<?php echo $p['id']; ?>" <?php echo $p['id'] == $current_periode_id ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($p['nama'] . ' (' . $p['tahun_mulai'] . '/' . $p['tahun_selesai'] . ')' . ($p['is_active'] ? ' - AKTIF' : '')); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
+            <label>Periode Kepengurusan</label>
         </div>
         <?php else: ?>
         <input type="hidden" name="target_periode_id" value="<?php echo $current_periode_id; ?>">
         <?php endif; ?>
 
-        <div>
-            <label style="display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 6px; font-weight: 600;">Password Default Baru</label>
-            <div style="position: relative; display: flex; align-items: center;">
-                <input type="password" name="new_default_password" id="newDefaultPwInput" required minlength="8" placeholder="Min. 8 karakter, huruf + angka" style="width: 100%; padding: 10px 40px 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 0.9rem;">
-                <button type="button" onclick="toggleDefaultPwVisibility()" style="position: absolute; right: 10px; background: none; border: none; color: #888; cursor: pointer; padding: 4px;" title="Tampilkan/Sembunyikan">
-                    <i class="fas fa-eye" id="toggleDefaultPwIcon"></i>
-                </button>
-            </div>
+        <div class="form-floating input-group-floating">
+            <input type="password" name="new_default_password" id="newDefaultPwInput" required minlength="8" placeholder=" ">
+            <label>Password Default Baru (Min. 8 Karakter)</label>
+            <button type="button" onclick="toggleDefaultPwVisibility()" style="background: none; border: none; color: #888; cursor: pointer; padding: 0 15px; outline: none;" title="Tampilkan/Sembunyikan">
+                <i class="fas fa-eye" id="toggleDefaultPwIcon"></i>
+            </button>
         </div>
 
         <div>
-            <button type="submit" class="header-btn" style="background: var(--accent-color); color: #fff; width: 100%; justify-content: center; height: 42px;">
+            <button type="submit" class="header-btn" style="background: var(--accent-color); color: #fff; width: 100%; justify-content: center; height: 52px; margin: 0;">
                 <i class="fas fa-save"></i> Simpan
             </button>
         </div>
     </form>
 
-    <div style="margin-top: 15px; padding: 10px 14px; background: rgba(241, 196, 15, 0.08); border-left: 3px solid #f1c40f; border-radius: 6px; font-size: 0.8rem; color: #ccc; line-height: 1.4;">
-        <i class="fas fa-info-circle" style="color: #f1c40f; margin-right: 5px;"></i>
-        <strong>Informasi Penting:</strong> Perubahan password default ini hanya berlaku untuk pendaftaran anggota baru yang disetujui di masa mendatang. Password milik anggota aktif yang sudah mengubah password-nya tidak akan ikut berubah.
+    <div style="margin-top: 15px; padding: 10px 14px; background: rgba(241, 196, 15, 0.08); border-left: 3px solid #f1c40f; border-radius: 6px; font-size: 0.8rem; color: #ccc; line-height: 1.4; display: flex; align-items: flex-start; gap: 8px;">
+        <i class="fas fa-info-circle" style="color: #f1c40f; font-size: 1.1rem; margin-top: 2px;"></i>
+        <div>
+            <strong>Info:</strong> Perubahan hanya berlaku untuk pendaftaran baru di masa mendatang.
+        </div>
     </div>
 </div>
 

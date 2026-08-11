@@ -315,6 +315,41 @@ $items_peminjaman = dbFetchAll("SELECT * FROM tempat_master ORDER BY nama_tempat
 
 .preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-bottom: 20px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
 
+@media (max-width: 768px) {
+    .card {
+        padding: 15px;
+    }
+    .card-header h2 {
+        font-size: 1.1rem;
+    }
+    .premium-table th {
+        padding: 8px 10px;
+        font-size: 0.7rem;
+    }
+    .premium-table td {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+    .premium-table td:first-child {
+        width: 40px;
+    }
+    .item-name {
+        font-size: 0.75rem;
+    }
+    .btn-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+    .btn-premium {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+    .btn-outline {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}
 </style>
 
 <div class="master-barang-container">
