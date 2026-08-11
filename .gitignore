@@ -95,3 +95,4 @@ __pycache__/
 # ============================================
 identitas/
 
+config/firebase-service-account.json
