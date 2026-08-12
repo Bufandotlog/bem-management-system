@@ -377,6 +377,51 @@ try {
     }
 }
 
+// Auto-migration: Pastikan tabel notifikasi ada dan memiliki kolom judul
+try {
+    dbQuery("SELECT 1 FROM notifikasi LIMIT 1");
+    try {
+        dbQuery("SELECT judul FROM notifikasi LIMIT 1");
+    } catch (Exception $eCol) {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery('ALTER TABLE "notifikasi" ADD COLUMN "judul" VARCHAR(255) DEFAULT NULL');
+        } else {
+            dbQuery("ALTER TABLE `notifikasi` ADD COLUMN `judul` varchar(255) DEFAULT NULL AFTER `user_id`");
+        }
+    }
+} catch (Exception $e) {
+    try {
+        $db_type = DB_CONNECTION;
+        if ($db_type === 'pgsql') {
+            dbQuery('CREATE TABLE "notifikasi" (
+              "id" SERIAL PRIMARY KEY,
+              "user_id" INTEGER NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+              "judul" VARCHAR(255) DEFAULT NULL,
+              "tipe" VARCHAR(50) DEFAULT \'info\',
+              "pesan" TEXT NOT NULL,
+              "link" VARCHAR(255) DEFAULT NULL,
+              "is_read" SMALLINT DEFAULT 0,
+              "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )');
+        } else {
+            dbQuery("CREATE TABLE IF NOT EXISTS `notifikasi` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `user_id` int(11) NOT NULL,
+              `judul` varchar(255) DEFAULT NULL,
+              `tipe` varchar(50) DEFAULT 'info',
+              `pesan` text NOT NULL,
+              `link` varchar(255) DEFAULT NULL,
+              `is_read` tinyint(1) DEFAULT 0,
+              `created_at` timestamp NULL DEFAULT current_timestamp(),
+              PRIMARY KEY (`id`),
+              KEY `idx_notif_user` (`user_id`),
+              KEY `idx_notif_created` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+    } catch (Exception $ex) {}
+}
+
 // Auto-migration: Update role enum in users table
 try {
     $db_type = DB_CONNECTION;
@@ -2203,6 +2248,61 @@ function getFcmOAuthAccessToken(string $jsonKeyPath): ?string {
 }
 
 /**
+ * Pembersihan Otomatis: Hapus arsip notifikasi yang umurnya lebih dari X hari (Default: 7 hari).
+ */
+function cleanupOldNotifications(int $days = 7): void {
+    try {
+        $isMysql = (defined('DB_DRIVER') && DB_DRIVER === 'mysql') || (isset($GLOBALS['db_driver']) && $GLOBALS['db_driver'] === 'mysql');
+        if (function_exists('dbGetDriver')) { $isMysql = (dbGetDriver() === 'mysql'); }
+        
+        $cleanupSql = $isMysql ? "NOW() - INTERVAL $days DAY" : "now() - INTERVAL '$days days'";
+        dbQuery("DELETE FROM notifikasi WHERE created_at < $cleanupSql");
+    } catch (Throwable $e) {
+        error_log("cleanupOldNotifications Error: " . $e->getMessage());
+    }
+}
+
+/**
+ * Unified Dispatch: Simpan ke DB Notifikasi Web/Desktop & Mobile + Kirim Push Notification FCM
+ */
+function createNotificationAndPush($targetUserIds, string $title, string $body, ?string $link = null, string $type = 'info'): bool {
+    try {
+        $userIds = is_array($targetUserIds) ? $targetUserIds : [$targetUserIds];
+        $userIds = array_filter(array_map('intval', $userIds));
+        if (empty($userIds)) return false;
+
+        // 1. Simpan ke Database Notifikasi (In-App Web & Mobile Archive)
+        foreach ($userIds as $uid) {
+            try {
+                dbQuery(
+                    "INSERT INTO notifikasi (user_id, judul, pesan, link, tipe) VALUES (?, ?, ?, ?, ?)",
+                    [$uid, $title, $body, $link, $type]
+                );
+            } catch (Throwable $dbErr) {
+                error_log("Notification DB Save Error: " . $dbErr->getMessage());
+            }
+        }
+
+        // 2. Pembersihan otomatis untuk notifikasi > 7 hari (Probabilistik 1 dari 10 request)
+        if (rand(1, 10) === 1) {
+            cleanupOldNotifications(7);
+        }
+
+        // 3. Kirim FCM Push ke Perangkat Mobile
+        $dataPayload = [];
+        if ($link) {
+            $dataPayload['click_action'] = $link;
+        }
+        sendFcmNotification($userIds, $title, $body, $dataPayload);
+
+        return true;
+    } catch (Throwable $e) {
+        error_log("createNotificationAndPush Error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Sends Push Notification via Firebase Cloud Messaging HTTP v1 API
  */
 function sendFcmNotification($targetUserIds, string $title, string $body, array $dataPayload = []): bool {
@@ -2210,6 +2310,29 @@ function sendFcmNotification($targetUserIds, string $title, string $body, array 
         $userIds = is_array($targetUserIds) ? $targetUserIds : [$targetUserIds];
         $userIds = array_filter(array_map('intval', $userIds));
         if (empty($userIds)) return false;
+
+        // Pastikan tersimpan di DB notifikasi juga untuk dipantau di web
+        $link = $dataPayload['click_action'] ?? null;
+        foreach ($userIds as $uid) {
+            try {
+                // Cek apakah sudah pernah diinsert dalam 5 detik terakhir agar tidak duplikat dengan createNotificationAndPush
+                $existing = dbFetchOne(
+                    "SELECT id FROM notifikasi WHERE user_id = ? AND pesan = ? AND created_at >= (NOW() - INTERVAL 5 SECOND) LIMIT 1",
+                    [$uid, $body]
+                );
+                if (!$existing) {
+                    dbQuery(
+                        "INSERT INTO notifikasi (user_id, judul, pesan, link, tipe) VALUES (?, ?, ?, ?, 'info')",
+                        [$uid, $title, $body, $link]
+                    );
+                }
+            } catch (Throwable $eDb) {}
+        }
+
+        // Probabilistik Auto Clean Up Notifikasi > 7 hari
+        if (rand(1, 10) === 1) {
+            cleanupOldNotifications(7);
+        }
 
         $inClause = implode(',', array_fill(0, count($userIds), '?'));
         $tokens = dbFetchAll(

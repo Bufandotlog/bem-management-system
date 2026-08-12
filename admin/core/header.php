@@ -624,7 +624,11 @@ if (isset($page_css)) {
             <small><?php echo htmlspecialchars($periode_data['nama'] ?? 'Astawidya', ENT_QUOTES, 'UTF-8'); ?></small>
             <?php endif; ?>
         </div>
-        <div class="mobile-user">
+        <div class="mobile-user" style="display: flex; align-items: center; gap: 10px;">
+            <button type="button" class="notif-bell-btn" onclick="toggleNotifDropdown(event)" title="Arsip Notifikasi">
+                <i class="fas fa-bell"></i>
+                <span class="notif-badge" id="notifBadgeMobile" style="display:none;">0</span>
+            </button>
             <i class="fas fa-user-circle"></i>
         </div>
     </div>
@@ -1067,6 +1071,13 @@ if (isset($page_css)) {
                 (<?php echo $tahunMulai . '/' . $tahunSelesai; ?>)
             </span>
             <?php endif; ?>
+
+            <div style="margin-left: auto; display: flex; align-items: center;">
+                <button type="button" class="notif-bell-btn" onclick="toggleNotifDropdown(event)" title="Arsip Notifikasi">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge" id="notifBadgeDesktop" style="display:none;">0</span>
+                </button>
+            </div>
         </div>
         <?php endif; ?>
 
@@ -1135,4 +1146,174 @@ window.onclick = function(event) {
     const modal = document.getElementById('logoutModal');
     if (event.target == modal) closeLogoutModal();
 }
+</script>
+
+<!-- Notification Dropdown Panel -->
+<div id="notifDropdown" class="notif-dropdown">
+    <div class="notif-header">
+        <div class="notif-header-title">
+            <i class="fas fa-bell"></i>
+            <span>Arsip Notifikasi</span>
+            <span class="notif-count-pill" id="notifUnreadPill">0 Baru</span>
+        </div>
+        <div class="notif-header-actions">
+            <button type="button" onclick="markAllNotifRead()" title="Tandai semua dibaca"><i class="fas fa-check-double"></i></button>
+            <button type="button" onclick="clearAllNotif()" title="Hapus semua arsip"><i class="fas fa-trash-alt"></i></button>
+            <button type="button" onclick="closeNotifDropdown()" title="Tutup"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+    <div class="notif-body" id="notifList">
+        <div class="notif-empty"><i class="fas fa-spinner fa-spin"></i> Memuat notifikasi...</div>
+    </div>
+    <div class="notif-footer">
+        <i class="fas fa-shield-alt"></i> Auto clean up aktif (> 7 hari)
+    </div>
+</div>
+
+<script>
+(function() {
+    const notifApiUrl = '<?php echo baseUrl("api/notifications.php"); ?>';
+    
+    function fetchNotifications() {
+        fetch(notifApiUrl + '?action=fetch')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) return;
+                
+                // Update Badge Counts
+                const unread = data.unread_count || 0;
+                const bMobile = document.getElementById('notifBadgeMobile');
+                const bDesktop = document.getElementById('notifBadgeDesktop');
+                const pUnread = document.getElementById('notifUnreadPill');
+                
+                if (bMobile) {
+                    bMobile.textContent = unread > 99 ? '99+' : unread;
+                    bMobile.style.display = unread > 0 ? 'inline-block' : 'none';
+                }
+                if (bDesktop) {
+                    bDesktop.textContent = unread > 99 ? '99+' : unread;
+                    bDesktop.style.display = unread > 0 ? 'inline-block' : 'none';
+                }
+                if (pUnread) {
+                    pUnread.textContent = unread + ' Baru';
+                }
+
+                // Render Notif List
+                const notifList = document.getElementById('notifList');
+                if (!notifList) return;
+
+                if (!data.notifications || data.notifications.length === 0) {
+                    notifList.innerHTML = '<div class="notif-empty"><i class="far fa-bell-slash" style="font-size:1.8rem; margin-bottom:8px; display:block;"></i>Belum ada notifikasi</div>';
+                    return;
+                }
+
+                let html = '';
+                data.notifications.forEach(item => {
+                    const isUnread = (!item.is_read || item.is_read == 0) ? 'unread' : '';
+                    let iconClass = 'fas fa-info-circle';
+                    if (item.tipe === 'success') iconClass = 'fas fa-check-circle';
+                    if (item.tipe === 'warning') iconClass = 'fas fa-exclamation-triangle';
+                    if (item.tipe === 'danger') iconClass = 'fas fa-exclamation-circle';
+
+                    html += `
+                        <div class="notif-item ${isUnread}" onclick="clickNotifItem(event, ${item.id}, '${item.link || ''}')">
+                            <div class="notif-item-icon"><i class="${iconClass}"></i></div>
+                            <div class="notif-item-content">
+                                <div class="notif-item-title">${escapeHtml(item.judul)}</div>
+                                <div class="notif-item-msg">${escapeHtml(item.pesan)}</div>
+                                <div class="notif-item-time"><i class="far fa-clock"></i> ${item.time_ago}</div>
+                            </div>
+                            <button class="notif-item-del" onclick="deleteSingleNotif(event, ${item.id})" title="Hapus"><i class="fas fa-times"></i></button>
+                        </div>
+                    `;
+                });
+                notifList.innerHTML = html;
+            })
+            .catch(err => console.error("Notif fetch error:", err));
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    window.toggleNotifDropdown = function(e) {
+        if (e) e.stopPropagation();
+        const dd = document.getElementById('notifDropdown');
+        if (!dd) return;
+        
+        const isShow = dd.classList.contains('show');
+        if (isShow) {
+            dd.classList.remove('show');
+        } else {
+            dd.classList.add('show');
+            fetchNotifications();
+        }
+    };
+
+    window.closeNotifDropdown = function() {
+        const dd = document.getElementById('notifDropdown');
+        if (dd) dd.classList.remove('show');
+    };
+
+    window.clickNotifItem = function(e, id, link) {
+        if (e.target.closest('.notif-item-del')) return;
+        
+        const formData = new FormData();
+        formData.append('action', 'mark_read');
+        formData.append('id', id);
+
+        fetch(notifApiUrl, { method: 'POST', body: formData })
+            .then(() => {
+                fetchNotifications();
+                if (link && link.trim() !== '') {
+                    window.location.href = link;
+                }
+            });
+    };
+
+    window.markAllNotifRead = function() {
+        const formData = new FormData();
+        formData.append('action', 'mark_read');
+        formData.append('all', '1');
+
+        fetch(notifApiUrl, { method: 'POST', body: formData })
+            .then(() => fetchNotifications());
+    };
+
+    window.deleteSingleNotif = function(e, id) {
+        if (e) e.stopPropagation();
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('id', id);
+
+        fetch(notifApiUrl, { method: 'POST', body: formData })
+            .then(() => fetchNotifications());
+    };
+
+    window.clearAllNotif = function() {
+        if (!confirm('Apakah Anda yakin ingin menghapus seluruh arsip notifikasi?')) return;
+        const formData = new FormData();
+        formData.append('action', 'clear_all');
+
+        fetch(notifApiUrl, { method: 'POST', body: formData })
+            .then(() => fetchNotifications());
+    };
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+        const dd = document.getElementById('notifDropdown');
+        if (dd && dd.classList.contains('show')) {
+            if (!dd.contains(e.target) && !e.target.closest('.notif-bell-btn')) {
+                dd.classList.remove('show');
+            }
+        }
+    });
+
+    // Auto fetch on load & polling 30 sec
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchNotifications();
+        setInterval(fetchNotifications, 30000);
+    });
+})();
 </script>
