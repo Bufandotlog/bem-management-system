@@ -260,6 +260,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 if ($auto_create) {
                     $success_msg .= " 📩 Draft Surat Peminjaman Sarpras otomatis diperbarui/dibuat & masuk ke Staging Index Surat!";
                 }
+
+                // NOTIF-10: Trigger Push Notification & In-App Notification untuk Sie Logistik & Pengurus
+                $u_ids = getTargetUserIdsByRole(
+                    ['superadmin', 'admin', 'sekretaris'],
+                    $kegiatan_id,
+                    ['ketuplat', 'sie_logistik']
+                );
+                if (!empty($u_ids)) {
+                    createNotificationAndPush(
+                        $u_ids,
+                        "📦 Update Logistik Event",
+                        "Kebutuhan logistik untuk \"{$acara}\" telah diperbarui.",
+                        baseUrl("admin/kegiatan/workspace-logistik.php?kegiatan_id={$kegiatan_id}"),
+                        "info"
+                    );
+                }
+
                 if ($target_edit_id > 0) {
                     $edit_id = $target_edit_id;
                     $edit_data = dbFetchOne("SELECT * FROM lampiran_pinjam WHERE id = ? AND periode_id = ?", [$edit_id, $periode_id], "ii");
@@ -594,6 +611,150 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
     outline: none;
     font-size: 1rem;
 }
+
+/* Responsive Mobile Layout Fixes */
+@media (max-width: 768px) {
+    .cetak-lampiran-container {
+        padding: 0 2px;
+    }
+    
+    .card {
+        padding: 16px 12px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    
+    .card-header {
+        margin-bottom: 16px;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .card-header i.fa-2x {
+        font-size: 1.3rem;
+        margin-top: 2px;
+    }
+
+    .card-header h2 {
+        font-size: 1.1rem;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+
+    .tab-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .btn-tab {
+        padding: 10px 8px;
+        font-size: 0.78rem;
+        border-radius: 10px;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .date-range-wrap {
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .date-range-wrap input[type="date"] {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .date-range-wrap .qty-wrapper {
+        margin-top: 2px;
+    }
+
+    .info-grid {
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .notice-bar {
+        padding: 10px 12px;
+        font-size: 0.78rem;
+        border-radius: 10px;
+        margin-bottom: 14px;
+    }
+
+    .actions-bar {
+        padding: 14px 14px;
+        border-radius: 16px;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        position: sticky;
+        bottom: 10px;
+        margin-top: 24px;
+    }
+
+    .actions-bar > div {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-reset, .btn-print {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 14px;
+        font-size: 0.92rem;
+    }
+
+    .items-table {
+        border-spacing: 0 6px;
+    }
+
+    .items-table th {
+        padding: 8px 6px;
+        font-size: 0.72rem;
+    }
+
+    .items-table td {
+        padding: 10px 8px;
+    }
+
+    .items-table td:first-child {
+        font-size: 0.85rem;
+        word-break: break-word;
+    }
+
+    .items-table td:last-child {
+        width: auto;
+        padding-left: 0;
+    }
+
+    .switch-container {
+        padding: 10px 12px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+
+    .switch-label {
+        font-size: 0.82rem;
+        word-break: break-word;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .preview-bar {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+        word-break: break-word;
+    }
+
+    .table-beli th, .table-beli td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+    }
+}
 </style>
 
 <div class="cetak-lampiran-container">
@@ -803,31 +964,20 @@ $tempat = dbFetchAll("SELECT id, nama_tempat as nama, '' as satuan, 'tempat' as 
         </div>
 
         <div class="actions-bar" style="flex-wrap: wrap; gap: 15px;">
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <?php if ($edit_data): ?>
-                    <a href="workspace-logistik.php?kegiatan_id=<?php echo $kegiatan_id; ?>" class="btn-reset" style="text-decoration:none; display:flex; align-items:center; gap:8px;">
-                        <i class="fas fa-plus"></i> Buat Baru
-                    </a>
-                <?php endif; ?>
-                <button type="button" class="btn-reset" onclick="resetAll()">
-                    <i class="fas fa-undo"></i> Reset Semua Jumlah
-                </button>
-                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #8BB9F0; font-size: 0.88rem; font-weight: 600; background: rgba(74, 144, 226, 0.1); padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(74, 144, 226, 0.3); margin: 0;">
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%;">
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #8BB9F0; font-size: 0.88rem; font-weight: 600; background: rgba(74, 144, 226, 0.1); padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(74, 144, 226, 0.3); margin: 0; width: 100%;">
                     <input type="checkbox" name="auto_create_surat" value="1" checked style="width: 16px; height: 16px; accent-color: #4A90E2; cursor: pointer;">
                     <span><i class="fas fa-paper-plane" style="color: #4A90E2;"></i> Auto-Draft Surat ke Staging Index</span>
                 </label>
             </div>
-            <div style="display: flex; gap: 12px;">
-                <button type="button" class="btn-print" style="background: var(--card-bg); border: 1px solid var(--border-color); color: #eee; box-shadow: none;" onclick="submitAction('save')">
-                    <i class="fas fa-save"></i> <?php echo $edit_data ? 'Update Arsip' : 'Simpan ke Arsip'; ?>
-                </button>
-                <button type="button" class="btn-print" onclick="submitAction('print')">
-                    <i class="fas fa-file-pdf"></i> Cetak Lampiran PDF
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <button type="button" class="btn-print" style="width: 100%; justify-content: center;" onclick="submitAction('save')">
+                    <i class="fas fa-save"></i> <?php echo $edit_data ? 'Update Arsip Logistik' : 'Simpan Kebutuhan Logistik'; ?>
                 </button>
             </div>
         </div>
         
-        <input type="hidden" name="action" id="form-action" value="print">
+        <input type="hidden" name="action" id="form-action" value="save">
         <?php if ($edit_data): ?>
             <input type="hidden" name="edit_id" value="<?php echo $edit_id; ?>">
         <?php endif; ?>

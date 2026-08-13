@@ -394,8 +394,9 @@ body {
 .breadcrumb {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
     margin-bottom: 20px;
     padding: 12px 18px;
     background: var(--sidebar-bg);
@@ -404,15 +405,29 @@ body {
     font-size: 0.875rem;
     color: var(--text-dim);
 }
-.breadcrumb i       { color: var(--text-white); } /* Ubah dari biru ke putih */
+.breadcrumb-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.breadcrumb-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.breadcrumb i       { color: var(--text-white); }
 .breadcrumb a       { color: var(--text-light); text-decoration: none; }
 .breadcrumb a:hover { color: var(--text-white); }
 .breadcrumb .separator      { color: #444; }
-.breadcrumb span:last-child { color: var(--text-white); } /* Ubah dari biru ke putih */
+.breadcrumb span:last-child { color: var(--text-white); }
 .breadcrumb-periode {
-    color: var(--text-dim); /* Ubah dari biru ke abu */
-    margin-left: auto;
+    color: var(--text-dim);
     font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* =====================================================
@@ -801,6 +816,16 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     /* Tampilkan topbar mobile */
     .mobile-topbar  { display: flex; }
     .sidebar-close  { display: flex; }
+
+    /* Sembunyikan ikon notifikasi breadcrumb di mobile (hanya tampil di topbar mobile) */
+    .breadcrumb-right .notif-bell-btn {
+        display: none !important;
+    }
+
+    .notif-dropdown {
+        top: 58px;
+        right: 12px;
+    }
 
     /* Sidebar tersembunyi di kiri, muncul saat .open */
     .sidebar {

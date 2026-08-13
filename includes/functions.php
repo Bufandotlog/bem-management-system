@@ -1698,6 +1698,70 @@ function auditLog(string $action, ?string $targetTable = null, ?int $targetId = 
              $deskripsi ? mb_substr($deskripsi, 0, 500) : null, $ip],
             "isssiss"
         );
+
+        // Otomatis sinkronkan ke tabel `notifikasi` untuk aktivitas non-login/logout agar tidak membanjiri notifikasi pengurus
+        $actionUpper = strtoupper($action);
+        $isRoutineAuth = in_array($actionUpper, ['LOGIN_SUCCESS', 'LOGOUT', 'LOGIN_FAILED', '2FA_BYPASSED', '2FA_VERIFIED']);
+        
+        if (!empty($deskripsi) && !$isRoutineAuth) {
+            $titleMap = [
+                'users' => 'Manajemen User & Keamanan',
+                'arsip_surat' => 'Arsip Surat & Dokumen',
+                'lpj_dokumen' => 'Dokumen LPJ',
+                'berita' => 'Publikasi Berita',
+                'kegiatan' => 'Kegiatan & Proker',
+                'periode_kepengurusan' => 'Periode Kepengurusan',
+                'app_release' => 'Unduhan Mobile APK',
+                'audit_log' => 'Audit System'
+            ];
+            $notifTitle = $titleMap[$targetTable ?? ''] ?? ('Aktivitas: ' . ucfirst(strtolower($action)));
+
+            $notifType = 'info';
+            if (strpos($actionUpper, 'DELETE') !== false || strpos($actionUpper, 'FAIL') !== false) {
+                $notifType = 'danger';
+            } elseif (strpos($actionUpper, 'CREATE') !== false || strpos($actionUpper, 'INSERT') !== false || strpos($actionUpper, 'DOWNLOAD') !== false) {
+                $notifType = 'success';
+            } elseif (strpos($actionUpper, 'UPDATE') !== false) {
+                $notifType = 'warning';
+            }
+
+            $linkMap = [
+                'users' => function_exists('baseUrl') ? baseUrl('admin/system/kelola-admin.php') : '/admin/system/kelola-admin.php',
+                'arsip_surat' => function_exists('baseUrl') ? baseUrl('admin/surat/arsip.php') : '/admin/surat/arsip.php',
+                'lpj_dokumen' => function_exists('baseUrl') ? baseUrl('admin/lpj/lpj.php') : '/admin/lpj/lpj.php',
+                'berita' => function_exists('baseUrl') ? baseUrl('admin/konten/berita.php') : '/admin/konten/berita.php',
+                'kegiatan' => function_exists('baseUrl') ? baseUrl('admin/kegiatan/kegiatan.php') : '/admin/kegiatan/kegiatan.php',
+                'periode_kepengurusan' => function_exists('baseUrl') ? baseUrl('admin/system/periode-kepengurusan.php') : '/admin/system/periode-kepengurusan.php',
+                'app_release' => function_exists('baseUrl') ? baseUrl('admin/download_app.php') : '/admin/download_app.php'
+            ];
+            $notifLink = $linkMap[$targetTable ?? ''] ?? (function_exists('baseUrl') ? baseUrl('admin/system/audit-log.php') : '/admin/system/audit-log.php');
+
+            $targetRolesMap = [
+                'users'                 => ['superadmin'],
+                'user_sessions'         => ['superadmin'],
+                'audit_log'             => ['superadmin'],
+                'database'              => ['superadmin'],
+                'periode_kepengurusan'  => ['superadmin', 'admin'],
+                'arsip_surat'           => ['superadmin', 'admin', 'sekretaris'],
+                'arsip_berita_acara'    => ['superadmin', 'admin', 'sekretaris'],
+                'lpj_dokumen'           => ['superadmin', 'admin', 'sekretaris'],
+                'berita'                => ['superadmin', 'admin', 'kominfo'],
+                'struktur_organisasi'   => ['superadmin', 'admin', 'kominfo'],
+                'kegiatan'              => ['superadmin', 'admin', 'sekretaris'],
+                'barang_master'         => ['superadmin', 'admin', 'sekretaris'],
+                'tempat_master'         => ['superadmin', 'admin', 'sekretaris']
+            ];
+
+            $targetSystemRoles = $targetRolesMap[$targetTable ?? ''] ?? ['superadmin'];
+            $targetUserIds = getTargetUserIdsByRole($targetSystemRoles);
+
+            foreach ($targetUserIds as $targetId) {
+                dbQuery(
+                    "INSERT INTO notifikasi (user_id, judul, pesan, link, tipe) VALUES (?, ?, ?, ?, ?)",
+                    [$targetId, $notifTitle, $deskripsi, $notifLink, $notifType]
+                );
+            }
+        }
     } catch (Exception $e) {
         error_log("auditLog INSERT gagal: " . $e->getMessage());
     }
@@ -2245,6 +2309,40 @@ function getFcmOAuthAccessToken(string $jsonKeyPath): ?string {
     }
 
     return null;
+}
+
+/**
+ * Mendapatkan daftar ID user yang berhak menerima notifikasi berdasarkan System Role dan Event Role.
+ */
+function getTargetUserIdsByRole(array $systemRoles = [], ?int $kegiatanId = null, array $eventRoles = []): array {
+    $userIds = [];
+
+    // 1. Filter berdasarkan System Role (users.role)
+    if (!empty($systemRoles)) {
+        $inRoles = implode(',', array_fill(0, count($systemRoles), '?'));
+        $rows = dbFetchAll(
+            "SELECT id FROM users WHERE role IN ($inRoles) AND is_active = 1",
+            $systemRoles
+        );
+        foreach ($rows as $r) {
+            $userIds[] = (int)$r['id'];
+        }
+    }
+
+    // 2. Filter berdasarkan Event-Level Role (kegiatan_panitia.event_role)
+    if ($kegiatanId > 0 && !empty($eventRoles)) {
+        $inEvRoles = implode(',', array_fill(0, count($eventRoles), '?'));
+        $params = array_merge([$kegiatanId], $eventRoles);
+        $rows = dbFetchAll(
+            "SELECT user_id FROM kegiatan_panitia WHERE kegiatan_id = ? AND event_role IN ($inEvRoles)",
+            $params
+        );
+        foreach ($rows as $r) {
+            $userIds[] = (int)$r['user_id'];
+        }
+    }
+
+    return array_values(array_unique(array_filter($userIds)));
 }
 
 /**

@@ -1054,25 +1054,26 @@ if (isset($page_css)) {
 
         <?php if ($current_page !== 'login.php'): ?>
         <div class="breadcrumb">
-            <i class="fas fa-home"></i>
-            <a href="<?php echo baseUrl('admin/core/dashboard.php'); ?>">Dashboard</a>
-            <?php if ($current_page !== 'dashboard.php'):
-                $page_label = ucwords(str_replace(['.php', '-'], ['', ' '], $current_page));
-            ?>
-                <span class="separator">/</span>
-                <span><?php echo htmlspecialchars($page_label, ENT_QUOTES, 'UTF-8'); ?></span>
-            <?php endif; ?>
+            <div class="breadcrumb-left">
+                <i class="fas fa-home"></i>
+                <a href="<?php echo baseUrl('admin/core/dashboard.php'); ?>">Dashboard</a>
+                <?php if ($current_page !== 'dashboard.php'):
+                    $page_label = ucwords(str_replace(['.php', '-'], ['', ' '], $current_page));
+                ?>
+                    <span class="separator">/</span>
+                    <span><?php echo htmlspecialchars($page_label, ENT_QUOTES, 'UTF-8'); ?></span>
+                <?php endif; ?>
+            </div>
 
-            <?php if (isset($periode_data)): ?>
-            <span class="separator">|</span>
-            <span class="breadcrumb-periode">
-                <i class="fas fa-calendar-alt"></i>
-                <?php echo htmlspecialchars($periode_data['nama'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                (<?php echo $tahunMulai . '/' . $tahunSelesai; ?>)
-            </span>
-            <?php endif; ?>
+            <div class="breadcrumb-right">
+                <?php if (isset($periode_data)): ?>
+                <span class="breadcrumb-periode">
+                    <i class="fas fa-calendar-alt"></i>
+                    <?php echo htmlspecialchars($periode_data['nama'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                    (<?php echo $tahunMulai . '/' . $tahunSelesai; ?>)
+                </span>
+                <?php endif; ?>
 
-            <div style="margin-left: auto; display: flex; align-items: center;">
                 <button type="button" class="notif-bell-btn" onclick="toggleNotifDropdown(event)" title="Arsip Notifikasi">
                     <i class="fas fa-bell"></i>
                     <span class="notif-badge" id="notifBadgeDesktop" style="display:none;">0</span>

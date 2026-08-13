@@ -97,15 +97,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     dbQuery("UPDATE pendaftaran_anggota SET status = 'approved' WHERE id = ?", [$id]);
                     dbCommit();
 
-                    // FCM Notification ke pendaftar yang disetujui
-                    sendFcmNotification(
+                    // FCM & Web Notification ke pendaftar yang disetujui
+                    createNotificationAndPush(
                         $user_id,
                         "🎉 Selamat! Akun BEM Anda Aktif",
                         "Selamat " . $row['nama_lengkap'] . ", pendaftaran Anda disetujui. Akun Anda (" . $row['username'] . ") kini telah aktif.",
-                        [
-                            'click_action' => '/admin/auth/login.php',
-                            'type' => 'account_approved'
-                        ]
+                        baseUrl('admin/auth/login.php'),
+                        "success"
                     );
 
                     redirect('admin/konten/pendaftaran.php', 'Pendaftaran disetujui! Akun berhasil dibuat dengan password default.', 'success');

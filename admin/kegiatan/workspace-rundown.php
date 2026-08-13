@@ -140,6 +140,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $edit_data = dbFetchOne("SELECT * FROM arsip_rundown WHERE id = ? AND periode_id = ?", [$edit_id, $periode_id], "ii");
                 }
                 
+                // NOTIF-09: Trigger Push Notification & In-App Notification untuk Rundown Acara
+                $u_ids = getTargetUserIdsByRole(
+                    ['superadmin', 'admin', 'sekretaris'],
+                    $kegiatan_id,
+                    ['ketuplat', 'sie_acara']
+                );
+                if (!empty($u_ids)) {
+                    createNotificationAndPush(
+                        $u_ids,
+                        "📅 Update Rundown Event",
+                        "Rundown kegiatan \"" . $nama_acara . "\" telah diperbarui oleh Divisi Acara.",
+                        baseUrl("admin/kegiatan/workspace-rundown.php?kegiatan_id=" . $kegiatan_id),
+                        "info"
+                    );
+                }
+
                 // Sync letters
                 if (function_exists('syncTamuUndanganLetters')) {
                     syncTamuUndanganLetters($kegiatan_id, $periode_id);

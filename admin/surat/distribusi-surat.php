@@ -38,26 +38,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $tujuanClean = substr($tujuanClean, 0, 30) . '...';
             }
 
-            // Ambil ID Sekum, Ketum, Ketuplat, & Pembuat Surat
-            $notifRecipients = dbFetchAll("
-                SELECT id FROM users WHERE role IN ('ketua_bem', 'sekretaris_umum', 'superadmin') AND is_active = 1
-                UNION
-                SELECT user_id AS id FROM kegiatan_panitia WHERE kegiatan_id = ? AND event_role = 'ketuplat'
-                UNION
-                SELECT ? AS id
-            ", [$suratData['kegiatan_id'] ?? 0, $suratData['created_by'] ?? 0], "ii");
-
-            $recipIds = array_column($notifRecipients, 'id');
+            // Ambil ID Superadmin, Admin, Sekretaris, Ketuplat, & Pembuat Surat
+            $recipIds = getTargetUserIdsByRole(
+                ['superadmin', 'admin', 'sekretaris'],
+                $suratData['kegiatan_id'] ?? 0,
+                ['ketuplat']
+            );
+            if (!empty($suratData['created_by'])) {
+                $recipIds[] = (int)$suratData['created_by'];
+                $recipIds = array_values(array_unique($recipIds));
+            }
             if (!empty($recipIds)) {
-                sendFcmNotification(
+                createNotificationAndPush(
                     $recipIds,
                     "🚀 Surat Resmi Dikirim oleh Humas",
                     "Surat " . $suratData['nomor_surat'] . " (" . $suratData['perihal'] . ") telah resmi disebar ke " . $tujuanClean . ".",
-                    [
-                        'click_action' => '/admin/surat/distribusi-surat.php',
-                        'type' => 'humas_sent_confirmation',
-                        'surat_id' => (string)$surat_id
-                    ]
+                    baseUrl('admin/surat/distribusi-surat.php'),
+                    "info"
                 );
             }
         }

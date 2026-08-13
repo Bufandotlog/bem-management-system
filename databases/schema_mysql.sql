@@ -578,5 +578,71 @@ JOIN JSON_TABLE(
     )
 ) jt;
 
+-- ----------------------------------------
+-- 18. Tabel `pengaturan`
+-- ----------------------------------------
+DROP TABLE IF EXISTS `pengaturan`;
+CREATE TABLE `pengaturan` (
+  `kunci` varchar(100) NOT NULL,
+  `nilai` text DEFAULT NULL,
+  PRIMARY KEY (`kunci`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------------------
+-- 19. Tabel `fcm_tokens`
+-- ----------------------------------------
+DROP TABLE IF EXISTS `fcm_tokens`;
+CREATE TABLE `fcm_tokens` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `fcm_token` varchar(255) NOT NULL,
+  `device_type` varchar(50) DEFAULT 'android',
+  `app_version` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_fcm_token` (`fcm_token`),
+  KEY `idx_fcm_user` (`user_id`),
+  CONSTRAINT `fk_fcm_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------------------
+-- 20. Tabel `pendaftaran_anggota`
+-- ----------------------------------------
+DROP TABLE IF EXISTS `pendaftaran_anggota`;
+CREATE TABLE `pendaftaran_anggota` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nama_lengkap` varchar(255) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `penempatan` varchar(50) NOT NULL,
+  `kementerian_id` int(11) DEFAULT NULL,
+  `jabatan` varchar(100) NOT NULL,
+  `file_ttd` varchar(255) DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------------------
+-- 21. Tabel `arsip_dokumentasi`
+-- ----------------------------------------
+DROP TABLE IF EXISTS `arsip_dokumentasi`;
+CREATE TABLE `arsip_dokumentasi` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `kegiatan_id` int(11) NOT NULL,
+  `periode_id` int(11) NOT NULL,
+  `foto_1` varchar(255) DEFAULT NULL,
+  `caption_1` varchar(255) DEFAULT NULL,
+  `foto_2` varchar(255) DEFAULT NULL,
+  `caption_2` varchar(255) DEFAULT NULL,
+  `foto_3` varchar(255) DEFAULT NULL,
+  `caption_3` varchar(255) DEFAULT NULL,
+  `foto_4` varchar(255) DEFAULT NULL,
+  `caption_4` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
+
 

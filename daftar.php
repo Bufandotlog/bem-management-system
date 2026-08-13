@@ -66,18 +66,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $status_pendaftaran === 'buka') {
                     
                     $success_msg = "Pendaftaran berhasil dikirim. Silakan tunggu persetujuan dari Admin.";
 
-                    // FCM Notification ke Superadmin & Admin Keanggotaan
-                    $adminUsers = dbFetchAll("SELECT id FROM users WHERE role IN ('superadmin', 'admin_keanggotaan', 'ketua_bem') AND is_active = 1");
-                    $adminIds = array_column($adminUsers, 'id');
+                    // FCM Notification ke Superadmin, Admin, dan Sekretaris
+                    $adminIds = getTargetUserIdsByRole(['superadmin', 'admin', 'sekretaris']);
                     if (!empty($adminIds)) {
-                        sendFcmNotification(
+                        createNotificationAndPush(
                             $adminIds,
                             "👤 Pendaftar BEM Baru",
                             "{$nama_lengkap} ({$username}) mendaftar sebagai pengurus di {$penempatan}.",
-                            [
-                                'click_action' => '/admin/konten/pendaftaran.php?tab=pending',
-                                'type' => 'new_registration'
-                            ]
+                            baseUrl('admin/konten/pendaftaran.php?tab=pending'),
+                            "info"
                         );
                     }
                 } catch (Exception $e) {

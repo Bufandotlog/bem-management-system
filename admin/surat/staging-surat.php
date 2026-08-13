@@ -94,23 +94,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_
                 }
             }
             if ($count_sent > 0) {
-                // FCM Notification ke Humas & Ketuplat
-                $humasUsers = dbFetchAll("
-                    SELECT id FROM users WHERE role IN ('humas', 'admin_humas') AND is_active = 1
-                    UNION
-                    SELECT user_id AS id FROM kegiatan_panitia WHERE event_role IN ('ketuplat', 'sie_humas')
-                ");
-                $targetUserIds = array_column($humasUsers, 'id');
+                // FCM Notification ke Superadmin, Admin, Sekretaris, Ketuplat, dan Sie Humas
+                $targetUserIds = getTargetUserIdsByRole(
+                    ['superadmin', 'admin', 'sekretaris'],
+                    $selected_kegiatan_id,
+                    ['ketuplat', 'sie_humas']
+                );
                 if (!empty($targetUserIds)) {
                     $kegNama = dbFetchOne("SELECT nama_kegiatan FROM kegiatan WHERE id = ?", [$selected_kegiatan_id])['nama_kegiatan'] ?? 'Kegiatan BEM';
-                    sendFcmNotification(
+                    createNotificationAndPush(
                         $targetUserIds,
                         "📨 Surat Baru Siap Disebar!",
                         "{$count_sent} surat untuk kegiatan \"{$kegNama}\" telah diverifikasi Sekretaris dan siap Anda sebar.",
-                        [
-                            'click_action' => "/admin/surat/distribusi-surat.php?kegiatan_id={$selected_kegiatan_id}",
-                            'type' => 'humas_dispatch'
-                        ]
+                        baseUrl("admin/surat/distribusi-surat.php?kegiatan_id={$selected_kegiatan_id}"),
+                        "info"
                     );
                 }
 
@@ -131,22 +128,19 @@ if (isset($_GET['kirim_humas']) && is_numeric($_GET['kirim_humas'])) {
             dbQuery("UPDATE arsip_surat SET status_humas = 'siap_disebar' WHERE nomor_surat = ? AND periode_id = ?", [$surat_target['nomor_surat'], $periode_id]);
             auditLog('UPDATE', 'arsip_surat', $id_target, 'Verifikasi & kirim surat ke Humas: ' . $surat_target['nomor_surat']);
             
-            // FCM Notification ke Humas & Ketuplat
-            $humasUsers = dbFetchAll("
-                SELECT id FROM users WHERE role IN ('humas', 'admin_humas') AND is_active = 1
-                UNION
-                SELECT user_id AS id FROM kegiatan_panitia WHERE event_role IN ('ketuplat', 'sie_humas')
-            ");
-            $targetUserIds = array_column($humasUsers, 'id');
+            // FCM & Web Notification ke Superadmin, Admin, Sekretaris, Ketuplat, dan Sie Humas
+            $targetUserIds = getTargetUserIdsByRole(
+                ['superadmin', 'admin', 'sekretaris'],
+                $surat_target['kegiatan_id'] ?? 0,
+                ['ketuplat', 'sie_humas']
+            );
             if (!empty($targetUserIds)) {
-                sendFcmNotification(
+                createNotificationAndPush(
                     $targetUserIds,
                     "📨 Surat Baru Siap Disebar!",
                     "Surat " . $surat_target['nomor_surat'] . " (" . $surat_target['perihal'] . ") telah diverifikasi Sekretaris.",
-                    [
-                        'click_action' => "/admin/surat/distribusi-surat.php?kegiatan_id=" . ($surat_target['kegiatan_id'] ?? 0),
-                        'type' => 'humas_dispatch'
-                    ]
+                    baseUrl("admin/surat/distribusi-surat.php?kegiatan_id=" . ($surat_target['kegiatan_id'] ?? 0)),
+                    "info"
                 );
             }
 

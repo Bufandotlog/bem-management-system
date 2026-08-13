@@ -90,9 +90,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
         $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
         $turnstileSecret = $_ENV['TURNSTILE_SECRET_KEY'] ?? getenv('TURNSTILE_SECRET_KEY') ?: '';
+        $turnstileEnabledVal = $_ENV['TURNSTILE_ENABLED'] ?? getenv('TURNSTILE_ENABLED');
+        $turnstileEnabled = ($turnstileEnabledVal !== null && $turnstileEnabledVal !== '')
+            ? filter_var($turnstileEnabledVal, FILTER_VALIDATE_BOOLEAN)
+            : ($appEnv !== 'development');
 
         $turnstileSuccess = true;
-        if ($appEnv !== 'development' && !empty($turnstileSiteKey) && !empty($turnstileSecret)) {
+        if ($turnstileEnabled && !empty($turnstileSiteKey) && !empty($turnstileSecret)) {
             $turnstileSuccess = false;
             $postData = http_build_query([
                 'secret'   => $turnstileSecret,
@@ -225,7 +229,11 @@ $cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ .
     <?php
     $appEnvFront = defined('APP_ENV') ? APP_ENV : ($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
     $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
-    $hasTurnstile = ($appEnvFront !== 'development') && !empty($turnstileSiteKey) && !$isLocked;
+    $turnstileEnabledValFront = $_ENV['TURNSTILE_ENABLED'] ?? getenv('TURNSTILE_ENABLED');
+    $turnstileEnabledFront = ($turnstileEnabledValFront !== null && $turnstileEnabledValFront !== '')
+        ? filter_var($turnstileEnabledValFront, FILTER_VALIDATE_BOOLEAN)
+        : ($appEnvFront !== 'development');
+    $hasTurnstile = $turnstileEnabledFront && !empty($turnstileSiteKey) && !$isLocked;
     if ($hasTurnstile):
     ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

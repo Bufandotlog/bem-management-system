@@ -98,6 +98,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
         );
         $newId = dbLastInsertId();
         auditLog('CREATE', 'berita', $newId, 'Tambah berita: ' . $judul);
+        
+        // NOTIF-11: Target notification to Superadmin, Admin, and Kominfo
+        $u_ids = getTargetUserIdsByRole(['superadmin', 'admin', 'kominfo']);
+        if (!empty($u_ids)) {
+            createNotificationAndPush(
+                $u_ids,
+                "📢 Berita Baru Dipublikasikan",
+                "\"" . $judul . "\"",
+                baseUrl("berita-detail.php?slug=" . $slug),
+                "info"
+            );
+        }
+        
         redirect('admin/konten/berita.php', 'Berita berhasil ditambahkan!', 'success');
     }
 }

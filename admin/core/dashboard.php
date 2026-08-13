@@ -1,31 +1,38 @@
 <?php
-// admin/dashboard.php
+// admin/core/dashboard.php
+// Main Controller & View Router for BEM Administrative Dashboard
+
 require_once __DIR__ . '/header.php';
 
-// Ambil data statistik kabinet
-$totalBerita = dbFetchOne("SELECT COUNT(*) as total FROM berita")['total'];
-$totalKementerian = dbFetchOne("SELECT COUNT(*) as total FROM kementerian")['total'];
-$totalAnggota = dbFetchOne("SELECT COUNT(*) as total FROM anggota_kementerian")['total'];
-$totalBPH = dbFetchOne("SELECT COUNT(*) as total FROM struktur_bph")['total'];
-
-// Ambil data statistik persuratan (sesuai periode aktif)
+// 1. Context & User Credentials
+$admin_role = $_SESSION['admin_role'] ?? 'anggota';
 $periode_id = getUserPeriode();
-$totalSuratL = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE periode_id = ? AND jenis_surat = 'L'", [$periode_id], "i")['total'];
-$totalSuratD = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE periode_id = ? AND jenis_surat = 'D'", [$periode_id], "i")['total'];
-$totalSuratM = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE periode_id = ? AND jenis_surat = 'M'", [$periode_id], "i")['total'];
+$user_id    = $_SESSION['admin_id'] ?? 0;
 
-// Ambil data terbaru
-$beritaTerbaru = dbFetchAll("SELECT judul, tanggal FROM berita ORDER BY tanggal DESC LIMIT 5");
-$suratTerbaru = dbFetchAll("SELECT nomor_surat, perihal, jenis_surat FROM arsip_surat WHERE periode_id = ? ORDER BY id DESC LIMIT 5", [$periode_id], "i");
+// 2. Check Event Role (Panitia Context) di Kegiatan Aktif
+$active_panitia = dbFetchOne(
+    "SELECT kp.event_role, k.id as kegiatan_id, k.nama_kegiatan, k.tanggal_mulai, k.status 
+     FROM kegiatan_panitia kp
+     JOIN kegiatan k ON kp.kegiatan_id = k.id
+     WHERE kp.user_id = ? AND k.periode_id = ? AND k.status != 'selesai'
+     ORDER BY k.id DESC LIMIT 1",
+    [$user_id, $periode_id],
+    "ii"
+);
 
-// Logika tampilan (Hybrid)
-$showGeneralStats = ($isSuperadmin || $admin_role === 'kominfo' || $admin_role === 'admin');
-$showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_role === 'admin');
+$role_labels = [
+    'superadmin' => 'Superadmin',
+    'admin'      => 'Admin General',
+    'sekretaris' => 'Sekretariat BEM',
+    'kominfo'    => 'Kominfo & Media',
+    'anggota'    => 'Pengurus BEM'
+];
+$display_role = $role_labels[$admin_role] ?? 'User';
 ?>
 
 <div class="page-header">
     <div>
-        <h1>Dashboard <?php echo $isSuperadmin ? 'Superadmin' : ($admin_role === 'sekretaris' ? 'Sekretariat' : ($admin_role === 'kominfo' ? 'Kominfo' : ($admin_role === 'admin' ? 'Admin' : ($admin_role === 'anggota' ? 'Anggota' : '')))); ?></h1>
+        <h1><i class="fas fa-tachometer-alt"></i> Dashboard <?php echo htmlspecialchars($display_role, ENT_QUOTES, 'UTF-8'); ?></h1>
         <p>Selamat datang di panel kendali BEM Kabinet Astawidya</p>
     </div>
     <div class="date-display">
@@ -34,164 +41,117 @@ $showLetterStats  = ($isSuperadmin || $admin_role === 'sekretaris' || $admin_rol
     </div>
 </div>
 
-<!-- STATS SECTION -->
-<div class="dashboard-sections" style="display: flex; flex-direction: column; gap: 30px;">
-    
-    <!-- STATISTIK KABINET (Admin/Superadmin) -->
-    <?php if ($showGeneralStats): ?>
-    <div class="stats-group">
-        <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #8BB9F0; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-university"></i> Statistik Kabinet
-        </h2>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-newspaper"></i></div>
-                <div class="stat-value"><?php echo $totalBerita; ?></div>
-                <div class="stat-label">Berita</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-users"></i></div>
-                <div class="stat-value"><?php echo $totalKementerian; ?></div>
-                <div class="stat-label">Kementerian</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
-                <div class="stat-value"><?php echo $totalAnggota; ?></div>
-                <div class="stat-label">Anggota</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
-                <div class="stat-value"><?php echo $totalBPH; ?></div>
-                <div class="stat-label">BPH</div>
-            </div>
+<div class="dashboard-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
+
+<?php
+// 3. Render Event Panitia Command Center jika User Terdaftar Sebagai Panitia Event Aktif
+if ($active_panitia) {
+    include __DIR__ . '/views/dashboard-panitia.php';
+}
+
+// 4. Render Core Role-Based Dashboard View
+switch ($admin_role) {
+    case 'superadmin':
+        include __DIR__ . '/views/dashboard-superadmin.php';
+        break;
+    case 'admin':
+        include __DIR__ . '/views/dashboard-admin.php';
+        break;
+    case 'sekretaris':
+        include __DIR__ . '/views/dashboard-sekretaris.php';
+        break;
+    case 'kominfo':
+        include __DIR__ . '/views/dashboard-kominfo.php';
+        break;
+    case 'anggota':
+    default:
+        // Role Anggota biasa sementara di-hold
+        if (!$active_panitia) {
+            echo '<div class="empty-state" style="text-align: center; padding: 50px 20px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-top: 10px; border: 1px dashed rgba(255,255,255,0.1);">
+                <i class="fas fa-user-clock" style="font-size: 4rem; color: #666; margin-bottom: 20px;"></i>
+                <h2 style="color: #ddd; margin-bottom: 10px;">Belum Ada Akses Kepanitiaan</h2>
+                <p style="color: #888; max-width: 500px; margin: 0 auto; line-height: 1.6;">
+                    Akun Anda saat ini berada pada role standar <strong>Anggota</strong>. Tampilan dashboard khusus anggota sedang dalam tahap pengonsepan ulang.<br><br>Jika Anda ditunjuk dalam kepanitiaan event aktif, widget <strong>Event Command Center</strong> akan otomatis tampil di sini.
+                </p>
+            </div>';
+        }
+        break;
+}
+?>
+
+<!-- BEM MOBILE APP INSTALLER BANNER (BLACK, WHITE & SOFT MUTED BLUE PALETTE) -->
+<style>
+.apk-download-banner {
+    margin-top: 20px;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 18, 23, 0.95) 100%);
+    border: 1px solid rgba(74, 144, 226, 0.18);
+    border-radius: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .apk-download-banner {
+        padding: 14px 16px !important;
+        gap: 12px !important;
+    }
+    .apk-banner-content {
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+    .apk-banner-title {
+        font-size: 0.95rem !important;
+        flex-wrap: wrap !important;
+    }
+    .apk-banner-desc {
+        font-size: 0.76rem !important;
+    }
+    .apk-banner-btn-wrap {
+        width: 100% !important;
+    }
+    .apk-banner-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 9px 16px !important;
+        font-size: 0.8rem !important;
+    }
+}
+</style>
+
+<div class="apk-download-banner">
+    <div class="apk-banner-content" style="display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 240px; box-sizing: border-box; overflow: hidden;">
+        <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(74, 144, 226, 0.12); border: 1px solid rgba(74, 144, 226, 0.25); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #70a1ff; flex-shrink: 0;">
+            <i class="fab fa-android"></i>
+        </div>
+        <div style="flex: 1; min-width: 0; overflow: hidden;">
+            <h3 class="apk-banner-title" style="margin: 0 0 4px 0; font-size: 1rem; color: #ffffff; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700;">
+                Aplikasi Mobile Pengurus BEM
+                <span class="badge" style="background: rgba(74, 144, 226, 0.15); color: #70a1ff; border: 1px solid rgba(74, 144, 226, 0.3); font-weight: 700; font-size: 0.65rem; padding: 3px 8px; border-radius: 20px;">v1.0 Release</span>
+            </h3>
+            <p class="apk-banner-desc" style="margin: 0 0 4px 0; font-size: 0.78rem; color: #888888; line-height: 1.4;">
+                Installer APK Android resmi terproteksi. Dilengkapi Push Notification & verifikasi surat.
+            </p>
+            <small style="font-family: monospace; font-size: 0.65rem; color: #777777; display: block; word-break: break-all; overflow-wrap: anywhere; max-width: 100%;">
+                SHA-256: d5aa38de289f7f9d3fe55fe91ef3a1af4046f3fc5079974d53817222d659454f
+            </small>
         </div>
     </div>
-    <?php endif; ?>
-
-    <!-- STATISTIK PERSURATAN (Sekretaris/Superadmin) -->
-    <?php if ($showLetterStats): ?>
-    <div class="stats-group">
-        <h2 style="margin-bottom: 15px; font-size: 1.1rem; color: #4A90E2; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-envelope-open-text"></i> Statistik Persuratan (Sekretariat)
-        </h2>
-        <div class="stats-grid">
-            <div class="stat-card" style="border-left: 4px solid #4A90E2;">
-                <div class="stat-icon" style="background: rgba(74, 144, 226, 0.1); color: #4A90E2;"><i class="fas fa-paper-plane"></i></div>
-                <div class="stat-value"><?php echo $totalSuratL; ?></div>
-                <div class="stat-label">Surat Keluar</div>
-            </div>
-            <div class="stat-card" style="border-left: 4px solid #673AB7;">
-                <div class="stat-icon" style="background: rgba(103, 58, 183, 0.1); color: #673AB7;"><i class="fas fa-file-export"></i></div>
-                <div class="stat-value"><?php echo $totalSuratD; ?></div>
-                <div class="stat-label">Surat Dalam</div>
-            </div>
-            <div class="stat-card" style="border-left: 4px solid #f39c12;">
-                <div class="stat-icon" style="background: rgba(243, 156, 18, 0.1); color: #f39c12;"><i class="fas fa-file-import"></i></div>
-                <div class="stat-value"><?php echo $totalSuratM; ?></div>
-                <div class="stat-label">Surat Masuk</div>
-            </div>
-            <div class="stat-card" style="border-left: 4px solid #2ecc71;">
-                <div class="stat-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;"><i class="fas fa-check-double"></i></div>
-                <div class="stat-value"><?php echo $totalSuratL + $totalSuratD + $totalSuratM; ?></div>
-                <div class="stat-label">Total Arsip</div>
-            </div>
-        </div>
+    <div class="apk-banner-btn-wrap" style="align-self: center;">
+        <a href="<?php echo baseUrl('admin/download_app.php'); ?>" class="btn-primary apk-banner-btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 24px; font-weight: 600; text-decoration: none; background: rgba(74, 144, 226, 0.15); color: #70a1ff; border: 1px solid rgba(74, 144, 226, 0.35); font-size: 0.82rem; white-space: nowrap; transition: all 0.2s ease;">
+            <i class="fas fa-download"></i> Unduh APK Resmi
+        </a>
     </div>
-    <?php endif; ?>
-
 </div>
 
-<div class="dashboard-content-grid" style="display: grid; grid-template-columns: <?php echo ($showGeneralStats && $showLetterStats) ? '1fr 1fr' : '2fr 1fr'; ?>; gap: 25px; margin-top: 30px;">
-    
-    <!-- Berita Terbaru -->
-    <?php if ($showGeneralStats): ?>
-    <div class="recent-news">
-        <div class="section-header">
-            <h2><i class="fas fa-newspaper"></i> Berita Terbaru</h2>
-            <a href="<?php echo baseUrl('admin/konten/berita.php'); ?>" style="font-size: 0.8rem;">Lihat Semua <i class="fas fa-arrow-right"></i></a>
-        </div>
-        <div class="news-list">
-            <?php if (empty($beritaTerbaru)): ?>
-                <div class="news-item"><div class="news-info"><p style="color: #666; text-align: center; width: 100%;">Belum ada berita.</p></div></div>
-            <?php else: ?>
-                <?php foreach ($beritaTerbaru as $berita): ?>
-                <div class="news-item">
-                    <div class="news-info">
-                        <h3><?php echo htmlspecialchars($berita['judul'], ENT_QUOTES, 'UTF-8'); ?></h3>
-                        <p><i class="far fa-calendar-alt"></i> <?php echo date('d/m/Y', strtotime($berita['tanggal'])); ?></p>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <!-- Arsip Surat Terbaru -->
-    <?php if ($showLetterStats): ?>
-    <div class="card">
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span><i class="fas fa-folder-open"></i> Arsip Surat Terbaru</span>
-            <a href="<?php echo baseUrl('admin/surat/arsip-surat.php'); ?>" style="font-size: 0.8rem; color: #4A90E2; text-decoration: none;">Lihat Semua <i class="fas fa-arrow-right"></i></a>
-        </div>
-        <div class="card-body" style="padding: 0;">
-            <table class="admin-table" style="margin: 0; border: none;">
-                <tbody>
-                    <?php if (empty($suratTerbaru)): ?>
-                        <tr><td style="text-align:center; padding:30px; color:#666;">Belum ada arsip surat.</td></tr>
-                    <?php else: ?>
-                        <?php foreach ($suratTerbaru as $surat): ?>
-                        <tr>
-                            <td style="padding: 10px 15px;">
-                                <div style="font-weight:bold; font-size:0.85rem;"><?php echo htmlspecialchars($surat['nomor_surat']); ?></div>
-                                <div style="font-size:0.75rem; color:#888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
-                                    <?php echo htmlspecialchars($surat['perihal']); ?>
-                                </div>
-                            </td>
-                            <td style="text-align:right; padding: 10px 15px;">
-                                <span class="badge" style="background: <?php echo $surat['jenis_surat']==='L' ? '#4A90E2' : ($surat['jenis_surat']==='D' ? '#673AB7' : '#f39c12'); ?>; font-size:0.6rem;">
-                                    <?php echo $surat['jenis_surat']; ?>
-                                </span>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <?php endif; ?>
-
 </div>
-
-<?php if ($showGeneralStats || $showLetterStats): ?>
-<!-- Quick Actions -->
-<h2 style="margin-bottom: 20px; margin-top: 30px;"><i class="fas fa-bolt"></i> Aksi Cepat</h2>
-<div class="quick-actions" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;">
-    <?php if ($isSuperadmin || $admin_role === 'admin' || $admin_role === 'kominfo'): ?>
-        <a href="<?php echo baseUrl('admin/konten/berita-edit.php'); ?>" class="action-card"><i class="fas fa-plus-circle"></i><span>Tambah Berita</span></a>
-        <a href="<?php echo baseUrl('admin/konten/kepengurusan.php?action=new'); ?>" class="action-card"><i class="fas fa-user-plus"></i><span>Tambah Anggota</span></a>
-    <?php endif; ?>
-    
-    <?php if ($isSuperadmin || $admin_role === 'sekretaris' || $admin_role === 'admin'): ?>
-        <a href="<?php echo baseUrl('admin/surat/buat-surat.php'); ?>" class="action-card" style="background: rgba(74, 144, 226, 0.1); border-color: rgba(74, 144, 226, 0.3);"><i class="fas fa-file-signature"></i><span>Buat Surat</span></a>
-        <a href="<?php echo baseUrl('admin/surat/arsip-surat.php'); ?>" class="action-card" style="background: rgba(103, 58, 183, 0.1); border-color: rgba(103, 58, 183, 0.3);"><i class="fas fa-search"></i><span>Cari Arsip</span></a>
-    <?php endif; ?>
-
-    <?php if ($isSuperadmin || $admin_role === 'admin'): ?>
-        <a href="<?php echo baseUrl('admin/system/kelola-admin.php'); ?>" class="action-card" style="background: rgba(255,255,255,0.05);"><i class="fas fa-user-shield"></i><span>Kelola Admin</span></a>
-    <?php endif; ?>
-</div>
-<?php endif; ?>
-
-<?php if ($admin_role === 'anggota'): ?>
-<div class="empty-state" style="text-align: center; padding: 50px 20px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-top: 20px; border: 1px dashed rgba(255,255,255,0.1);">
-    <i class="fas fa-user-clock" style="font-size: 4rem; color: #666; margin-bottom: 20px;"></i>
-    <h2 style="color: #ddd; margin-bottom: 10px;">Belum Ada Akses Kepanitiaan</h2>
-    <p style="color: #888; max-width: 500px; margin: 0 auto; line-height: 1.6;">
-        Akun Anda saat ini berada pada role standar <strong>Anggota</strong>. Anda belum di-assign atau ditunjuk ke dalam kepanitiaan/kegiatan apa pun oleh Administrator atau Ketua Pelaksana. <br><br>Jika Anda merasa ini adalah kesalahan, silakan hubungi pengurus terkait.
-    </p>
-</div>
-<?php endif; ?>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
