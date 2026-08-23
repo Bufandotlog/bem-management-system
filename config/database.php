@@ -118,7 +118,24 @@ function getConnection(): PDO {
         try {
             $driver = strtolower(DB_CONNECTION);
             
-            if ($driver === 'pgsql') {
+            if ($driver === 'sqlite') {
+                // SQLite (file-based) support
+                $dbFile = $_ENV['DB_DATABASE'] ?? dirname(__DIR__) . '/../database/database.sqlite';
+                // Resolve relative paths to project root
+                if (!preg_match('#^(?:/|[A-Za-z]:\\\\)#', $dbFile)) {
+                    $dbFile = dirname(__DIR__, 1) . '/' . ltrim($dbFile, '/');
+                }
+                if (!file_exists($dbFile)) {
+                    @mkdir(dirname($dbFile), 0777, true);
+                    @touch($dbFile);
+                }
+                $dsn = 'sqlite:' . $dbFile;
+                $options = [
+                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES   => false,
+                ];
+            } elseif ($driver === 'pgsql') {
                 // Konfigurasi untuk PostgreSQL (Supabase)
                 $sslMode = $_ENV['DB_SSLMODE'] ?? null;
                 $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", DB_HOST, DB_PORT, DB_NAME);
