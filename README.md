@@ -1,7 +1,8 @@
 # 🏛️ Sistem Manajemen BEM (Astawidya)
 
-[![PHP Version](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://www.php.net/)
-[![Database](https://img.shields.io/badge/Database-MySQL%20%7C%20PostgreSQL-orange.svg)](#)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
+[![Database](https://img.shields.io/badge/Database-MariaDB%20%2F%20MySQL-orange.svg)](#)
+[![Secondary DB](https://img.shields.io/badge/Secondary-PostgreSQL%2012%2B-blue.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Sistem informasi manajemen organisasi Badan Eksekutif Mahasiswa (BEM) yang dirancang untuk mengotomatisasi administrasi surat-menyurat, pengarsipan rundown acara, serta sinkronisasi logistik inventaris secara cerdas dan responsif.
@@ -23,9 +24,9 @@ Sistem informasi manajemen organisasi Badan Eksekutif Mahasiswa (BEM) yang diran
 ## 🛠️ Persyaratan Sistem
 
 - **Server**: Apache / Nginx
-- **Bahasa**: PHP 7.4 / 8.x, Python 3.8+ (untuk generator dokumen LPJ Word)
-- **Database**: MySQL 5.7+ atau PostgreSQL 12+
-- **Ekstensi PHP**: `pdo`, `gd`, `mbstring`, `openssl`
+- **Bahasa**: PHP >= 8.1 (wajib, sesuai composer.json), Python 3.8+ (untuk generator dokumen LPJ Word)
+- **Database**: MariaDB 10.11+ / MySQL 5.7+ (utama), PostgreSQL 12+ (sekunder/opsional)
+- **Ekstensi PHP**: `pdo`, `pdo_mysql` (utama) / `pdo_pgsql` (sekunder), `gd`, `mbstring`, `openssl`
 - **Pustaka Python**: `python-docx` (digunakan oleh engine compiler LPJ)
 
 ---

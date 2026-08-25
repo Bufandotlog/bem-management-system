@@ -1,317 +1,586 @@
 <?php
-// config/database.php - Koneksi database dengan PDO (PostgreSQL/Supabase)
-// VERSI: 4.0 - Migrasi ke Supabase (PostgreSQL) menggunakan PDO
+declare(strict_types=1);
 
-// ============================================
-// 1. LOAD KREDENSIAL DARI .env
-// ============================================
-(function () {
+/**
+ * config/database.php
+ *
+ * PDO database connection.
+ *
+ * Supported:
+ * - MySQL / MariaDB
+ * - PostgreSQL
+ *
+ * Konfigurasi database sepenuhnya berasal dari .env.
+ * Tidak ada lagi deteksi localhost/production untuk menentukan database.
+ */
+
+// ============================================================
+// 1. LOAD .ENV
+// ============================================================
+
+(function (): void {
     $candidates = [
-        dirname(__DIR__, 1) . '/.env',
+        dirname(__DIR__) . '/.env',
         dirname(__DIR__, 2) . '/.env',
         dirname(__DIR__, 3) . '/.env',
     ];
 
     foreach ($candidates as $envFile) {
-        if (!file_exists($envFile)) continue;
+        if (!is_file($envFile)) {
+            continue;
+        }
 
-        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = file(
+            $envFile,
+            FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+        );
+
+        if ($lines === false) {
+            continue;
+        }
+
         foreach ($lines as $line) {
             $line = trim($line);
-            if ($line === '' || substr($line, 0, 1) === '#') continue;
-            if (strpos($line, '=') === false) continue;
-            [$key, $val] = explode('=', $line, 2);
+
+            // Abaikan baris kosong dan komentar
+            if ($line === '' || str_starts_with($line, '#')) {
+                continue;
+            }
+
+            // Hanya proses KEY=VALUE
+            if (!str_contains($line, '=')) {
+                continue;
+            }
+
+            [$key, $value] = explode('=', $line, 2);
+
             $key = trim($key);
-            $val = trim($val);
-            
-            // Hapus tanda kutip jika ada (misal: "password" -> password)
-            $val = trim($val, "\"'");
-            
-            // Jangan override jika sudah ada di $_ENV atau $_SERVER (prioritas eksternal)
+            $value = trim($value);
+
+            if ($key === '') {
+                continue;
+            }
+
+            // Hapus quote pembungkus
+            if (
+                strlen($value) >= 2 &&
+                (
+                    ($value[0] === '"' && $value[strlen($value) - 1] === '"') ||
+                    ($value[0] === "'" && $value[strlen($value) - 1] === "'")
+                )
+            ) {
+                $value = substr($value, 1, -1);
+            }
+
+            /*
+             * Environment eksternal memiliki prioritas.
+             * Jangan menimpa $_ENV jika sudah disediakan oleh server.
+             */
             if (!isset($_ENV[$key])) {
-                $_ENV[$key] = $val;
+                $_ENV[$key] = $value;
             }
         }
+
+        // Gunakan file .env pertama yang ditemukan.
         break;
     }
 })();
 
-// ============================================
-// 2. DETEKSI LINGKUNGAN & KONSTANTA DATABASE
-// ============================================
 
-// Deteksi apakah berjalan di localhost atau server produksi
-$is_local = (
-    ($_SERVER['REMOTE_ADDR'] ?? '') === '127.0.0.1' || 
-    ($_SERVER['REMOTE_ADDR'] ?? '') === '::1' || 
-    ($_SERVER['HTTP_HOST'] ?? '') === 'localhost' ||
-    (isset($_SERVER['HTTP_HOST']) && substr($_SERVER['HTTP_HOST'], -6) === '.local') ||
-    (isset($_SERVER['HTTP_HOST']) && substr($_SERVER['HTTP_HOST'], -5) === '.test') ||
-    (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], '192.168') !== false)
+// ============================================================
+// 2. HELPER ENV
+// ============================================================
+
+/**
+ * Ambil environment variable.
+ *
+ * Prioritas:
+ * 1. $_ENV
+ * 2. $_SERVER
+ * 3. getenv()
+ * 4. default
+ */
+$getEnv = static function (
+    string $key,
+    ?string $default = null
+): ?string {
+    if (array_key_exists($key, $_ENV)) {
+        return $_ENV[$key];
+    }
+
+    if (array_key_exists($key, $_SERVER)) {
+        return $_SERVER[$key];
+    }
+
+    $value = getenv($key);
+
+    if ($value !== false) {
+        return $value;
+    }
+
+    return $default;
+};
+
+
+// ============================================================
+// 3. KONFIGURASI DATABASE
+// ============================================================
+
+/*
+ * Gunakan nama variable standar dari .env:
+ *
+ * DB_CONNECTION
+ * DB_HOST
+ * DB_PORT
+ * DB_DATABASE
+ * DB_USERNAME
+ * DB_PASSWORD
+ *
+ * DB_USER / DB_PASS / DB_NAME tetap didukung sebagai fallback
+ * untuk kompatibilitas dengan konfigurasi lama.
+ */
+
+$dbConnection = strtolower(
+    trim(
+        (string) $getEnv('DB_CONNECTION', 'mysql')
+    )
 );
 
-// Gunakan APP_ENV dari .env jika ada
-if (isset($_ENV['APP_ENV'])) {
-    $is_local = ($_ENV['APP_ENV'] === 'development');
+$dbHost = (string) $getEnv(
+    'DB_HOST',
+    '127.0.0.1'
+);
+
+$dbPort = (string) $getEnv(
+    'DB_PORT',
+    $dbConnection === 'pgsql' ? '5432' : '3306'
+);
+
+// Nama database modern
+$dbName = $getEnv('DB_DATABASE');
+
+// Fallback konfigurasi lama
+if ($dbName === null || $dbName === '') {
+    $dbName = $getEnv('DB_NAME', 'bem_astawidya');
 }
 
-if ($is_local) {
-    // --- KONFIGURASI LOKAL (POSTGRESQL) ---
-    // Prioritaskan dari .env, jika tidak ada baru gunakan default (Supabase)
-    defined('DB_CONNECTION') || define('DB_CONNECTION', $_ENV['DB_CONNECTION'] ?? 'pgsql');
-    defined('DB_HOST')       || define('DB_HOST',       $_ENV['DB_HOST']       ?? 'aws-1-ap-northeast-2.pooler.supabase.com');
-    defined('DB_PORT')       || define('DB_PORT',       $_ENV['DB_PORT']       ?? '6543');
-    defined('DB_USER')       || define('DB_USER',       $_ENV['DB_USER']       ?? 'postgres.prskplzwcdnzdrdszkzy');
-    defined('DB_PASS')       || define('DB_PASS',       $_ENV['DB_PASS']       ?? 'Bem Budi Utomo Nasional');
-    defined('DB_NAME')       || define('DB_NAME',       $_ENV['DB_NAME']       ?? 'postgres');
-    
-    // BASE_URL akan di-handle oleh path-detection.php via resolveBaseUrl()
-    // Namun kita beri fallback jika dipanggil sebelum path-detection
-    defined('BASE_URL')      || define('BASE_URL',      $_ENV['BASE_URL']      ?? 'http://localhost/bem/');
-} else {
-    // Helper function to aggressively find env vars
-    $getEnvVal = function($key, $default) {
-        $val = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
-        return ($val !== false && $val !== null) ? $val : $default; // Allow empty string for DB_PASS
-    };
+// Username modern
+$dbUser = $getEnv('DB_USERNAME');
 
-    // --- KONFIGURASI PRODUKSI (MYSQL) ---
-    defined('DB_CONNECTION') || define('DB_CONNECTION', $getEnvVal('DB_CONNECTION', 'mysql'));
-    defined('DB_HOST')       || define('DB_HOST',       $getEnvVal('DB_HOST',       'db'));
-    defined('DB_PORT')       || define('DB_PORT',       $getEnvVal('DB_PORT',       '3306'));
-    defined('DB_USER')       || define('DB_USER',       $getEnvVal('DB_USER',       'bem_user'));
-    defined('DB_PASS')       || define('DB_PASS',       $getEnvVal('DB_PASS',       ''));
-    defined('DB_NAME')       || define('DB_NAME',       $getEnvVal('DB_NAME',       'bem_astawidya'));
-    
-    // Otomatis deteksi domain di server jika tidak ada di .env
-    if (!defined('BASE_URL')) {
-        if (isset($_ENV['BASE_URL'])) {
-            define('BASE_URL', $_ENV['BASE_URL']);
-        } else {
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-            $domain = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            define('BASE_URL', $protocol . $domain . '/');
-        }
+// Fallback konfigurasi lama
+if ($dbUser === null) {
+    $dbUser = $getEnv('DB_USER', '');
+}
+
+// Password modern
+$dbPass = $getEnv('DB_PASSWORD');
+
+// Fallback konfigurasi lama
+if ($dbPass === null) {
+    $dbPass = $getEnv('DB_PASS', '');
+}
+
+$dbSslMode = $getEnv('DB_SSLMODE');
+
+// getConnection() membaca dari $GLOBALS agar sslmode pgsql benar-benar diterapkan
+if ($dbSslMode !== null && $dbSslMode !== '') {
+    $GLOBALS['dbSslMode'] = $dbSslMode;
+}
+
+
+// ============================================================
+// 4. VALIDASI DRIVER
+// ============================================================
+
+$allowedDrivers = [
+    'mysql',
+    'pgsql',
+];
+
+if (!in_array($dbConnection, $allowedDrivers, true)) {
+    throw new RuntimeException(
+        "DB_CONNECTION tidak valid: {$dbConnection}. " .
+        "Driver yang didukung: mysql, pgsql."
+    );
+}
+
+
+// ============================================================
+// 5. DEFINISIKAN KONSTANTA UNTUK KOMPATIBILITAS
+// ============================================================
+
+defined('DB_CONNECTION') || define(
+    'DB_CONNECTION',
+    $dbConnection
+);
+
+defined('DB_HOST') || define(
+    'DB_HOST',
+    $dbHost
+);
+
+defined('DB_PORT') || define(
+    'DB_PORT',
+    $dbPort
+);
+
+defined('DB_USER') || define(
+    'DB_USER',
+    $dbUser
+);
+
+defined('DB_PASS') || define(
+    'DB_PASS',
+    $dbPass
+);
+
+defined('DB_NAME') || define(
+    'DB_NAME',
+    $dbName
+);
+
+defined('DB_DEBUG') || define(
+    'DB_DEBUG',
+    filter_var(
+        $getEnv('DB_DEBUG', 'false'),
+        FILTER_VALIDATE_BOOLEAN
+    )
+);
+
+
+// ============================================================
+// 6. BASE URL
+// ============================================================
+
+if (!defined('BASE_URL')) {
+    $baseUrl = $getEnv('BASE_URL');
+
+    if ($baseUrl !== null && $baseUrl !== '') {
+        define('BASE_URL', $baseUrl);
+    } else {
+        $https = !empty($_SERVER['HTTPS'])
+            && $_SERVER['HTTPS'] !== 'off';
+
+        $protocol = $https ? 'https://' : 'http://';
+
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        define(
+            'BASE_URL',
+            $protocol . $host . '/'
+        );
     }
 }
 
-// ============================================
-// 3. MODE DEBUG
-// ============================================
-defined('DB_DEBUG') || define('DB_DEBUG', false);
 
-// ============================================
-// 4. KONEKSI DATABASE (Hybrid MySQL/PostgreSQL)
-// ============================================
+// ============================================================
+// 7. DATABASE CONNECTION
+// ============================================================
 
 /**
- * Mendapatkan koneksi database (singleton per request).
- * Mendukung driver mysql dan pgsql secara dinamis.
+ * Mendapatkan koneksi PDO.
  *
  * @return PDO
- * @throws RuntimeException jika koneksi gagal
- */
-function getConnection(): PDO {
-    static $pdo = null;
-
-    if ($pdo === null) {
-        try {
-            $driver = strtolower(DB_CONNECTION);
-            
-            if ($driver === 'sqlite') {
-                // SQLite (file-based) support
-                $dbFile = $_ENV['DB_DATABASE'] ?? dirname(__DIR__) . '/../database/database.sqlite';
-                // Resolve relative paths to project root
-                if (!preg_match('#^(?:/|[A-Za-z]:\\\\)#', $dbFile)) {
-                    $dbFile = dirname(__DIR__, 1) . '/' . ltrim($dbFile, '/');
-                }
-                if (!file_exists($dbFile)) {
-                    @mkdir(dirname($dbFile), 0777, true);
-                    @touch($dbFile);
-                }
-                $dsn = 'sqlite:' . $dbFile;
-                $options = [
-                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES   => false,
-                ];
-            } elseif ($driver === 'pgsql') {
-                // Konfigurasi untuk PostgreSQL (Supabase)
-                $sslMode = $_ENV['DB_SSLMODE'] ?? null;
-                $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", DB_HOST, DB_PORT, DB_NAME);
-                if ($sslMode) {
-                    $dsn .= ";sslmode=" . $sslMode;
-                }
-                $options = [
-                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES   => true,
-                ];
-            } else {
-                // Konfigurasi untuk MySQL (InfinityFree)
-                $dsn = sprintf("mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4", DB_HOST, DB_PORT, DB_NAME);
-                $options = [
-                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES   => false,
-                ];
-            }
-
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        } catch (PDOException $e) {
-            error_log("[DB CONNECT ERROR] " . $e->getMessage());
-
-            // Tampilkan pesan error asli untuk mempermudah debugging di InfinityFree
-            throw new RuntimeException("Koneksi DB gagal (" . DB_CONNECTION . "): " . $e->getMessage());
-        }
-    }
-
-    return $pdo;
-}
-
-// ============================================
-// 5. QUERY HELPER
-// ============================================
-
-/**
- * Jalankan query dengan prepared statement.
- *
- * @param  string $sql
- * @param  array  $params
- * @param  string $types (Deprecated, kept for compatibility)
- * @return PDOStatement|bool
  * @throws RuntimeException
  */
-function dbQuery(string $sql, array $params = [], string $types = "") {
-    $pdo = getConnection();
-    
-    if (DB_DEBUG) {
-        error_log("[DB QUERY] " . $sql);
-        if (!empty($params)) {
-            error_log("[DB PARAMS] " . json_encode($params));
-        }
+function getConnection(): PDO
+{
+    static $pdo = null;
+
+    if ($pdo instanceof PDO) {
+        return $pdo;
     }
-    
+
     try {
+        $driver = DB_CONNECTION;
+
+        if ($driver === 'mysql') {
+            $dsn = sprintf(
+                'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+                DB_HOST,
+                DB_PORT,
+                DB_NAME
+            );
+
+            $options = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+                PDO::ATTR_STRINGIFY_FETCHES  => false,
+            ];
+        } elseif ($driver === 'pgsql') {
+            $dsn = sprintf(
+                'pgsql:host=%s;port=%s;dbname=%s',
+                DB_HOST,
+                DB_PORT,
+                DB_NAME
+            );
+
+            if (
+                isset($GLOBALS['dbSslMode']) &&
+                $GLOBALS['dbSslMode'] !== null &&
+                $GLOBALS['dbSslMode'] !== ''
+            ) {
+                $dsn .= ';sslmode=' . $GLOBALS['dbSslMode'];
+            }
+
+            $options = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => true,
+            ];
+        } else {
+            throw new RuntimeException(
+                "Unsupported database driver: {$driver}"
+            );
+        }
+
+        $pdo = new PDO(
+            $dsn,
+            DB_USER,
+            DB_PASS,
+            $options
+        );
+
+        return $pdo;
+
+    } catch (PDOException $e) {
+        error_log(
+            '[DB CONNECT ERROR] ' . $e->getMessage()
+        );
+
+        throw new RuntimeException(
+            'Koneksi DB gagal (' .
+            DB_CONNECTION .
+            '): ' .
+            $e->getMessage(),
+            0,
+            $e
+        );
+    }
+}
+
+
+// ============================================================
+// 8. QUERY HELPER
+// ============================================================
+
+/**
+ * Jalankan prepared statement.
+ *
+ * @return PDOStatement
+ */
+function dbQuery(
+    string $sql,
+    array $params = [],
+    string $types = ''
+): PDOStatement {
+    try {
+        $pdo = getConnection();
+
+        if (DB_DEBUG) {
+            error_log('[DB QUERY] ' . $sql);
+
+            if (!empty($params)) {
+                error_log(
+                    '[DB PARAMS] ' .
+                    json_encode(
+                        $params,
+                        JSON_UNESCAPED_UNICODE
+                    )
+                );
+            }
+        }
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        
+
         if (DB_DEBUG) {
-            error_log("[DB SUCCESS] Query executed | row_count: " . $stmt->rowCount());
+            error_log(
+                '[DB SUCCESS] Query executed | row_count: ' .
+                $stmt->rowCount()
+            );
         }
-        
+
         return $stmt;
+
     } catch (PDOException $e) {
-        error_log("[DB ERROR] " . $e->getMessage() . " | Query: " . $sql);
-        throw new RuntimeException("DB Error: " . $e->getMessage());
+        error_log(
+            '[DB ERROR] ' .
+            $e->getMessage() .
+            ' | Query: ' .
+            $sql
+        );
+
+        throw new RuntimeException(
+            'DB Error: ' . $e->getMessage(),
+            0,
+            $e
+        );
     }
 }
 
-/**
- * Ambil satu baris dari hasil query.
- *
- * @param  string     $sql
- * @param  array      $params
- * @param  string     $types
- * @return array|null
- */
-function dbFetchOne(string $sql, array $params = [], string $types = ""): ?array {
-    $stmt = dbQuery($sql, $params, $types);
-    if (!$stmt) return null;
-    
-    $result = $stmt->fetch();
-    return $result ?: null;
-}
+
+// ============================================================
+// 9. FETCH HELPERS
+// ============================================================
 
 /**
- * Ambil semua baris dari hasil query.
- *
- * @param  string $sql
- * @param  array  $params
- * @param  string $types
- * @return array
+ * Ambil satu baris.
  */
-function dbFetchAll(string $sql, array $params = [], string $types = ""): array {
+function dbFetchOne(
+    string $sql,
+    array $params = [],
+    string $types = ''
+): ?array {
     $stmt = dbQuery($sql, $params, $types);
-    if (!$stmt) return [];
-    
+
+    $result = $stmt->fetch();
+
+    return $result !== false ? $result : null;
+}
+
+
+/**
+ * Ambil semua baris.
+ */
+function dbFetchAll(
+    string $sql,
+    array $params = [],
+    string $types = ''
+): array {
+    $stmt = dbQuery($sql, $params, $types);
+
     return $stmt->fetchAll();
 }
 
+
+// ============================================================
+// 10. INSERT / UPDATE / DELETE
+// ============================================================
+
 /**
- * Insert dan kembalikan ID baru.
- *
- * @return int
+ * Insert dan kembalikan ID.
  */
-function dbInsert(string $sql, array $params = [], string $types = ""): int {
+function dbInsert(
+    string $sql,
+    array $params = [],
+    string $types = ''
+): int {
     dbQuery($sql, $params, $types);
-    $id = getConnection()->lastInsertId();
-    
-    if (DB_DEBUG) error_log("[DB INSERT] ID: " . $id);
-    return (int) $id;
-}
 
-/**
- * Update/Delete dan kembalikan jumlah baris terpengaruh.
- *
- * @return int
- */
-function dbUpdate(string $sql, array $params = [], string $types = ""): int {
-    $stmt = dbQuery($sql, $params, $types);
-    if ($stmt) {
-        $affected = $stmt->rowCount();
-        if (DB_DEBUG) error_log("[DB UPDATE] Affected rows: " . $affected);
-        return (int) $affected;
-    }
-    return 0;
-}
-
-/**
- * Upsert khusus untuk tabel pengaturan (Key-Value).
- * Mendukung MySQL (InfinityFree) dan PostgreSQL (Local/Supabase).
- */
-function dbUpsertPengaturan(string $kunci, string $nilai) {
-    if (DB_CONNECTION === 'pgsql') {
-        return dbQuery("INSERT INTO pengaturan (kunci, nilai) VALUES (?, ?) ON CONFLICT (kunci) DO UPDATE SET nilai = EXCLUDED.nilai", [$kunci, $nilai], "ss");
-    } else {
-        // MySQL / MariaDB
-        return dbQuery("REPLACE INTO pengaturan (kunci, nilai) VALUES (?, ?)", [$kunci, $nilai], "ss");
-    }
-}
-
-// ============================================
-// 6. FUNGSI HELPER
-// ============================================
-
-/** Kembalikan pesan error terakhir (dummy for PDO as it uses exceptions) */
-function dbError(): string {
-    return "";
-}
-
-/** Kembalikan ID terakhir yang di-insert */
-function dbLastId(): int {
     return (int) getConnection()->lastInsertId();
 }
 
+
 /**
- * Escape string untuk query.
- * Untuk PDO, gunakan quote().
+ * Update / Delete.
  */
-function dbEscape(string $string): string {
+function dbUpdate(
+    string $sql,
+    array $params = [],
+    string $types = ''
+): int {
+    $stmt = dbQuery($sql, $params, $types);
+
+    return $stmt->rowCount();
+}
+
+
+// ============================================================
+// 11. UPSERT PENGATURAN
+// ============================================================
+
+/**
+ * Upsert tabel pengaturan.
+ *
+ * MySQL:
+ *   REPLACE INTO
+ *
+ * PostgreSQL:
+ *   ON CONFLICT
+ */
+function dbUpsertPengaturan(
+    string $kunci,
+    string $nilai
+) {
+    if (DB_CONNECTION === 'pgsql') {
+        return dbQuery(
+            '
+            INSERT INTO pengaturan (kunci, nilai)
+            VALUES (?, ?)
+            ON CONFLICT (kunci)
+            DO UPDATE SET nilai = EXCLUDED.nilai
+            ',
+            [$kunci, $nilai]
+        );
+    }
+
+    return dbQuery(
+        '
+        INSERT INTO pengaturan (kunci, nilai)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE
+            nilai = VALUES(nilai)
+        ',
+        [$kunci, $nilai]
+    );
+}
+
+
+// ============================================================
+// 12. HELPER LAINNYA
+// ============================================================
+
+/**
+ * Kompatibilitas dengan kode lama.
+ */
+function dbError(): string
+{
+    return '';
+}
+
+
+/**
+ * ID terakhir.
+ */
+function dbLastId(): int
+{
+    return (int) getConnection()->lastInsertId();
+}
+
+
+/**
+ * Escape string.
+ */
+function dbEscape(string $string): string
+{
     return getConnection()->quote($string);
 }
 
-/** Mulai transaksi */
-function dbBeginTransaction(): void {
+
+/**
+ * Mulai transaksi.
+ */
+function dbBeginTransaction(): void
+{
     getConnection()->beginTransaction();
 }
 
-/** Commit transaksi */
-function dbCommit(): void {
+
+/**
+ * Commit transaksi.
+ */
+function dbCommit(): void
+{
     getConnection()->commit();
 }
 
-/** Rollback transaksi */
-function dbRollback(): void {
-    getConnection()->rollback();
+
+/**
+ * Rollback transaksi.
+ */
+function dbRollback(): void
+{
+    getConnection()->rollBack();
 }

@@ -41,13 +41,12 @@ Sistem ini dirancang secara *hybrid* dan dapat berjalan di atas MySQL maupun Pos
   2. Jalankan kueri SQL dari berkas skema PostgreSQL: `databases/schema_pgsql.sql`.
 
 ##### Langkah 3: Konfigurasi Environment File (`.env`)
-Salin berkas template `.env` sesuai dengan database pilihan Anda. Di root direktori proyek Anda:
-* **Untuk PostgreSQL (Rekomendasi Lokal):**
-  Salin berkas `.env.example.pgsql` menjadi `.env`
-* **Untuk MySQL:**
-  Salin berkas `.env.example.mysql` menjadi `.env`
+Salin berkas template `.env` yang tersedia di root proyek:
+```bash
+cp .env.example .env
+```
 
-Buka berkas `.env` tersebut dan sesuaikan konfigurasinya:
+Buka berkas `.env` tersebut dan sesuaikan konfigurasinya (contoh untuk PostgreSQL lokal):
 ```ini
 DB_CONNECTION=pgsql # Ubah menjadi 'mysql' jika menggunakan XAMPP/Laragon
 DB_HOST=127.0.0.1
@@ -55,7 +54,7 @@ DB_PORT=5432 # Gunakan 3306 untuk MySQL
 DB_DATABASE=bem_astawidya
 DB_USERNAME=postgres # Sesuaikan dengan username database Anda
 DB_PASSWORD=password_anda # Sesuaikan dengan password database Anda
-DB_SSL_MODE=disable
+DB_SSLMODE=disable # 'require' jika menggunakan SSL
 
 # BASE_URL adalah alamat URL akses proyek Anda di browser
 # SANGAT PENTING: Wajib diakhiri dengan tanda garis miring (/)
@@ -74,9 +73,9 @@ Cara tercepat tanpa konfigurasi *Virtual Host* yang rumit adalah menggunakan bui
 
 ##### Langkah 5: Login Pertama Kali ke Admin Panel
 * **URL Panel Admin:** `http://localhost:8000/admin/login.php`
-* **Username Default:** `superadmin`
-* **Password Default:** `admin1234`
-* *Segera masuk ke menu **Kelola Admin** setelah login pertama kali untuk mengubah password default demi keamanan akun Anda.*
+
+> [!WARNING]
+> Skema SQL (`databases/schema_mysql.sql`) hanya memuat struktur tabel — **tidak ada akun bawaan**. Buat akun superadmin pertama via SQL setelah impor skema (panduan lengkap: [`docs/setup/INSTALL.md`](../setup/INSTALL.md)), lalu SEGERA ganti password di menu **Kelola Admin**.
 
 ---
 
@@ -214,3 +213,24 @@ Berisi seluruh sistem manajemen administrasi surat menyurat, rundown, inventaris
 3. **Database Error: Connection Refused**
    * Periksa apakah status MySQL/PostgreSQL Anda sudah menyala.
    * Di Windows, kadangkala terjadi hambatan resolusi nama host. Jika koneksi gagal menggunakan `DB_HOST=localhost`, gantilah menjadi IP loopback eksplisit `DB_HOST=127.0.0.1` pada berkas `.env` Anda.
+
+### Bagian 5: Catatan Automasi & Efisiensi Event Organizer (EO)
+
+Sistem telah dioptimalkan secara mendalam untuk alur kerja Event Organizer (Ketuplak & Sie Acara). Tingkat efisiensi yang dicapai saat ini **sangat tinggi**, terbukti dari berkurangnya *human error* dan repetisi data berkat beberapa integrasi otomasi berikut:
+
+1. **Otomatisasi Surat dari Rundown (Single Source of Truth)**
+   Surat permohonan pemateri tidak perlu dibuat manual satu per satu. Saat Sie Acara merancang Rundown, sistem otomatis:
+   * Membaca daftar tamu undangan khusus untuk pemateri.
+   * Menganalisis *slot* waktu spesifik pemateri tersebut langsung dari struktur JSON rundown.
+   * Membuat draf surat permohonan yang **Waktu Pelaksanaannya secara dinamis menimpa waktu umum** menjadi jam tampil spesifik pemateri tersebut.
+   * Melampirkan tabel rundown secara terintegrasi di akhir dokumen PDF surat.
+2. **Dynamic Highlighting PDF**
+   Dalam cetakan PDF, baris tabel rundown yang menjadi bagian/sesi dari pemateri penerima surat akan secara otomatis di- *highlight* dengan warna biru yang serasi dengan *header* tabel. Hal ini menunjukkan presisi visual tingkat tinggi untuk melayani pemateri tamu.
+3. **Smart Input & Form Autofill**
+   * **Smart Recommendation Filter**: Rekomendasi nama pemateri yang sudah dialokasikan ke suatu acara akan otomatis menghilang dari daftar dropdown (mencegah *double booking* jadwal).
+   * **Waktu Mulai Otomatis**: Form edit dan pembuatan hari Rundown tidak lagi memaksa admin menginput jam awal 24-jam manual. Nilai ini ditarik secara otomatis di latar belakang berdasarkan `waktu_pelaksanaan` dari Master Kegiatan.
+
+**Catatan Penting Untuk Developer Selanjutnya (Next Dev Notes):**
+* **Pencocokan Nama Pemateri:** Fitur deteksi otomatis baris pemateri (baik untuk mengubah jam surat maupun memberi *highlight* biru pada PDF) bertumpu pada **nama pendek** pemateri yang diekstrak sebelum tanda koma pertama. (Lihat `syncTamuUndanganLetters()` pada `functions.php`). Jika institusi di kemudian hari memodifikasi form input agar nama asli dan gelar dipisah ke tabel relasional baru, pastikan logika pencocokan *substring* ini diperbarui.
+* **Kinerja Sinkronisasi (Staging Sync):** Fungsi sinkronisasi dieksekusi secara intensif setiap kali tombol "Simpan Arsip" ditekan di Workspace Rundown. Jika dalam satu acara besar terdapat lebih dari 50 pemateri, disarankan menambahkan mekanisme `queue` (antrean asinkronus) atau flag `is_dirty` agar surat hanya digenerate ulang ketika baris khusus pemateri tersebut benar-benar mengalami mutasi waktu, guna menekan *overhead* query MySQL.
+* **Hardcode Warna UI Surat:** Parameter warna *highlight* pada cetakan rundown pemateri saat ini direkatkan (`hard-code`) sebagai `#d9e2f3` di dalam file `cetak-surat.php` demi konsistensi. Jika institusi di masa depan memutuskan untuk merancang *Theme Engine* dinamis (ganti tema), pastikan parameter warna ini diekstraksi ke variabel global atau pengaturan database.

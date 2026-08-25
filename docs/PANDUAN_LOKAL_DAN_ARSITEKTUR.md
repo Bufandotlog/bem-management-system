@@ -7,7 +7,7 @@ Dokumen ini menyajikan panduan lengkap mengenai cara kerja sistem, cara menjalan
 
 ### Bagian 1: Panduan Setup Proyek di Lokal
 
-#### Kebutuhan Perangkat & Perangkat Lunak
+#### 📋 Kebutuhan Perangkat & Perangkat Lunak
 Untuk menjalankan aplikasi ini secara lokal, pastikan perangkat Anda telah memenuhi prasyarat berikut:
 1. **PHP (versi 8.0 ke atas sangat direkomendasikan)**
    * Ekstensi wajib yang harus diaktifkan di `php.ini` Anda:
@@ -25,7 +25,7 @@ Untuk menjalankan aplikasi ini secara lokal, pastikan perangkat Anda telah memen
 
 ---
 
-#### Langkah-Langkah Menjalankan di Lokal
+#### 🚀 Langkah-Langkah Menjalankan di Lokal
 
 ##### Langkah 1: Mempersiapkan Folder Proyek
 1. Salin seluruh direktori proyek ini ke dalam folder root web server Anda (misal `C:/xampp/htdocs/bem/` di XAMPP, atau `/var/www/html/bem/` di Linux).
@@ -41,13 +41,12 @@ Sistem ini dirancang secara *hybrid* dan dapat berjalan di atas MySQL maupun Pos
   2. Jalankan kueri SQL dari berkas skema PostgreSQL: `databases/schema_pgsql.sql`.
 
 ##### Langkah 3: Konfigurasi Environment File (`.env`)
-Salin berkas template `.env` sesuai dengan database pilihan Anda. Di root direktori proyek Anda:
-* **Untuk PostgreSQL (Rekomendasi Lokal):**
-  Salin berkas `.env.example.pgsql` menjadi `.env`
-* **Untuk MySQL:**
-  Salin berkas `.env.example.mysql` menjadi `.env`
+Salin berkas template `.env` yang tersedia di root proyek:
+```bash
+cp .env.example .env
+```
 
-Buka berkas `.env` tersebut dan sesuaikan konfigurasinya:
+Buka berkas `.env` tersebut dan sesuaikan konfigurasinya (contoh untuk PostgreSQL lokal):
 ```ini
 DB_CONNECTION=pgsql # Ubah menjadi 'mysql' jika menggunakan XAMPP/Laragon
 DB_HOST=127.0.0.1
@@ -55,7 +54,7 @@ DB_PORT=5432 # Gunakan 3306 untuk MySQL
 DB_DATABASE=bem_astawidya
 DB_USERNAME=postgres # Sesuaikan dengan username database Anda
 DB_PASSWORD=password_anda # Sesuaikan dengan password database Anda
-DB_SSL_MODE=disable
+DB_SSLMODE=disable # 'require' jika menggunakan SSL
 
 # BASE_URL adalah alamat URL akses proyek Anda di browser
 # SANGAT PENTING: Wajib diakhiri dengan tanda garis miring (/)
@@ -74,9 +73,9 @@ Cara tercepat tanpa konfigurasi *Virtual Host* yang rumit adalah menggunakan bui
 
 ##### Langkah 5: Login Pertama Kali ke Admin Panel
 * **URL Panel Admin:** `http://localhost:8000/admin/login.php`
-* **Username Default:** `superadmin`
-* **Password Default:** `admin1234`
-* *Segera masuk ke menu **Kelola Admin** setelah login pertama kali untuk mengubah password default demi keamanan akun Anda.*
+
+> [!WARNING]
+> Skema SQL (`databases/schema_mysql.sql`) hanya memuat struktur tabel — **tidak ada akun bawaan**. Buat akun superadmin pertama via SQL setelah impor skema (panduan lengkap: [`docs/setup/INSTALL.md`](../setup/INSTALL.md)), lalu SEGERA ganti password di menu **Kelola Admin**.
 
 ---
 
