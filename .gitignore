@@ -3,6 +3,11 @@
 # ============================================
 .env
 .env.local
+# Backup .env & archive jangan masuk repo / webroot (bocor kredensial & data privat)
+*.env.bak*
+*.env.bak-*
+default.tar.gz
+*.tar.gz
 # .env.production sengaja TIDAK diabaikan (berisi template, bukan kredensial)
 config/config.php
 
