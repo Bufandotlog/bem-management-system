@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus_foto'])
             [$judul, $slug, $tanggal, $penulis, $gambar, $konten, $periode_id],
             "ssssssi"
         );
-        $newId = dbLastInsertId();
+        $newId = dbLastId();
         auditLog('CREATE', 'berita', $newId, 'Tambah berita: ' . $judul);
         
         // NOTIF-11: Target notification to Superadmin, Admin, and Kominfo

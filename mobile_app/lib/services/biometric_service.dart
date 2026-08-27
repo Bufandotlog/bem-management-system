@@ -1,4 +1,5 @@
 // lib/services/biometric_service.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -27,7 +28,7 @@ class BiometricService {
         ),
       );
     } on PlatformException catch (e) {
-      print("Biometric Error: $e");
+      debugPrint("Biometric Error: $e");
       return false;
     }
   }

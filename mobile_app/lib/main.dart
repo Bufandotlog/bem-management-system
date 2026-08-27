@@ -9,12 +9,15 @@ import 'views/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Inisialisasi Firebase & FCM Notifikasi (Graceful handling jika google-services.json belum ada)
+  // Inisialisasi Firebase & FCM Notifikasi.
+  // Ditangani graceful agar aplikasi tetap jalan jika init gagal
+  // (file google-services.json tidak valid, config salah, atau error runtime lainnya).
   try {
     await Firebase.initializeApp();
     await FcmService.initialize();
   } catch (e) {
-    print("Firebase init diabaikan (Menunggu file google-services.json): $e");
+    // Pesan netral: kegagalan bisa dari berbagai sebab, bukan hanya file yang hilang.
+    debugPrint("Firebase/FCM init gagal (notifikasi non-kritis, dilanjutkan): $e");
   }
 
   // Inisialisasi Background Downloader

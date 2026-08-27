@@ -1,5 +1,6 @@
 // lib/services/fcm_service.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
@@ -16,18 +17,15 @@ class FcmService {
       );
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        String? token = await _firebaseMessaging.getToken();
-        if (token != null) {
-          print("FCM Token: $token");
-        }
+        // Token diambil untuk registrasi ke backend, tapi TIDAK dicetak ke log
+        // (risiko kebocoran identifier perangkat via logcat).
+        await _firebaseMessaging.getToken();
 
-        // Listener jika token diperbarui oleh Firebase
-        _firebaseMessaging.onTokenRefresh.listen((newToken) {
-          print("FCM Token Refreshed: $newToken");
-        });
+        // Listener jika token diperbarui oleh Firebase (tanpa mencetak token).
+        _firebaseMessaging.onTokenRefresh.listen((_) {});
       }
     } catch (e) {
-      print("FCM Service Init Error (Diabaikan jika belum ada google-services.json): $e");
+      debugPrint("FCM Service Init Error (Diabaikan jika belum ada google-services.json): $e");
     }
   }
 
@@ -44,7 +42,7 @@ class FcmService {
         }
       });
     } catch (e) {
-      print("FCM Notification Listener Error: $e");
+      debugPrint("FCM Notification Listener Error: $e");
     }
   }
 
@@ -69,7 +67,7 @@ class FcmService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print("Failed to send FCM token to server: $e");
+      debugPrint("Failed to send FCM token to server: $e");
       return false;
     }
   }

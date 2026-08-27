@@ -21,10 +21,12 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _startAppFlow() async {
     await Future.delayed(const Duration(seconds: 2));
 
-    // Opsional: Tantang pengguna dengan Biometrik Fingerprint jika diizinkan
-    bool authenticated = await BiometricService.authenticate();
+    // Opsional: Tantang pengguna dengan Biometrik Fingerprint jika diizinkan.
+    // Biometrik bersifat opsional — penolakan/ pembatalan TIDAK boleh
+    // menggantung splash. Aplikasi tetap lanjut ke WebView.
+    await BiometricService.authenticate();
 
-    if (authenticated && mounted) {
+    if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const WebViewScreen()),
       );
