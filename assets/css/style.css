@@ -163,7 +163,7 @@ footer {
 
     .hero-title .biru {
         letter-spacing: 0;  /* Hapus -2px yang paksa teks melebar */
-        display: block;     /* "ASTAWIDYA" turun ke baris sendiri */
+        display: inline;    /* FIX: sejajar satu baris dengan KABINET */
     }
 
     .hero-sub {

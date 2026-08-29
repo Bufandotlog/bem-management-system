@@ -101,11 +101,12 @@
 
 /* Title styling - GLOW HANYA DI BIRU */
 .hero-title {
-    font-size: clamp(3rem, 10vw, 5rem);
+    font-size: clamp(2rem, 6vw, 4.5rem);
     font-weight: 800;
     line-height: 1.1;
     color: white;
     text-shadow: 0 5px 15px rgba(0,0,0,0.7);
+    white-space: nowrap; /* FIX: satu baris, jangan wrap */
 }
 
 .hero-title .biru {
