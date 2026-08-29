@@ -82,6 +82,10 @@ export function initScrollReveal() {
                         sec.classList.remove('focus-exit-up', 'focus-exit-down');
                         sec.classList.add('focus-active');
                         
+                        // FIX: reveal child elements (sambutan/visi-misi/card) saat section terlihat
+                        sec.querySelectorAll('.sambutan, .visi-misi, .card, .kontak-item, .menteri-item, .section-title')
+                           .forEach(el => el.classList.add('visible'));
+                        
                         // Trigger typewriter
                         if (sec.classList.contains('sambutan')) {
                             const heading = sec.querySelector('.sambutan-text h2');

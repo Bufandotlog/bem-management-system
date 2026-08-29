@@ -16,16 +16,16 @@
 @import url('kepengurusan-dropdown.css');
 /* @import url('global-background.css'); */ /* NONAKTIFKAN */
 
-/* Animasi Scroll (umum) - FIX: selalu visible supaya scroll normal & konten tidak hilang */
+/* Animasi Scroll (umum) - fade-in saat .visible (aman: observer pasti trigger) */
 .sambutan, .visi-misi, .card, .kontak-item, .menteri-item, .section-title {
-    opacity: 1;
-    transform: none;
-    visibility: visible;
+    opacity: 0;
+    transform: translateY(35px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sambutan.visible, .visi-misi.visible, .card.visible, .kontak-item.visible, .menteri-item.visible, .section-title.visible {
     opacity: 1 !important;
-    transform: none !important;
+    transform: translateY(0) !important;
     visibility: visible !important;
 }
 
