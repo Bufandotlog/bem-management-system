@@ -218,12 +218,10 @@ footer {
         margin-bottom: 0 !important;
         padding: 90px 2rem 40px !important; /* Spacing for fixed header and layout margin */
         
-        /* Transition properties */
-        will-change: transform, opacity;
-        opacity: 0;
-        transform: scale(0.8) translateY(120px);
-        transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1), 
-                    transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+        /* Transition properties (FIX: section selalu visible, scroll normal) */
+        will-change: auto;
+        opacity: 1 !important;
+        transform: none !important;
     }
     
     /* Center containers vertically inside full screen snap sections (FIX: hapus height:100% biar tidak clip) */
@@ -235,34 +233,33 @@ footer {
         width: 100%;
     }
     
-    /* Focus active state (Current element in view) */
+    /* Focus active state (FIX: netral, section selalu terlihat) */
     html.index-html-snap .home-section.focus-active {
         opacity: 1 !important;
-        transform: scale(1) translateY(0) !important;
-        z-index: 10;
+        transform: none !important;
+        z-index: auto;
         pointer-events: auto;
     }
     
-    /* Exit UP state (Scrolling down - exits to top: zoom in + translate up + fade out) */
+    /* Exit UP state (FIX: dibiarkan visible supaya scroll normal) */
     html.index-html-snap .home-section.focus-exit-up {
-        opacity: 0 !important;
-        transform: scale(1.22) translateY(-140px) !important;
-        z-index: 5;
-        pointer-events: none;
+        opacity: 1 !important;
+        transform: none !important;
+        z-index: auto;
+        pointer-events: auto;
     }
     
-    /* Exit DOWN state (Scrolling up - exits to bottom: zoom out + translate down + fade out) */
+    /* Exit DOWN state (FIX: dibiarkan visible supaya scroll normal) */
     html.index-html-snap .home-section.focus-exit-down {
-        opacity: 0 !important;
-        transform: scale(0.8) translateY(140px) !important;
-        z-index: 5;
-        pointer-events: none;
+        opacity: 1 !important;
+        transform: none !important;
+        z-index: auto;
+        pointer-events: auto;
     }
     
-    /* Let footer snap gracefully at the bottom */
+    /* Let footer snap gracefully at the bottom (FIX: hapus stop-always) */
     html.index-html-snap footer {
         scroll-snap-align: end;
-        scroll-snap-stop: always;
     }
 }
 
