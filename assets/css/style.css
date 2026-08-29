@@ -186,9 +186,9 @@ footer {
 
 /* ===== SECTIONS SNAP SCROLL & EXIT/ENTER TRANSITIONS (INDEX PAGE) ===== */
 @media (min-width: 992px) {
-    /* Enable native scroll snapping on HTML container */
+    /* Enable native scroll snapping on HTML container (FIX: proximity agar boleh scroll bebas) */
     html.index-html-snap {
-        scroll-snap-type: y mandatory;
+        scroll-snap-type: y proximity;
         scroll-behavior: smooth;
     }
     
@@ -197,7 +197,6 @@ footer {
         height: 100vh;
         width: 100%;
         scroll-snap-align: start;
-        scroll-snap-stop: always;
         pointer-events: none;
         display: block;
     }
@@ -205,12 +204,11 @@ footer {
     /* Make each section a full viewport screen (FIX: bisa di-scroll kalau isi > viewport) */
     html.index-html-snap .home-section {
         scroll-snap-align: start;
-        scroll-snap-stop: always;
         min-height: 100vh;
         /* height: 100vh; DIHAPUS supaya section bisa tumbuh kalau konten panjang */
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
         box-sizing: border-box;
         position: relative;
@@ -228,13 +226,12 @@ footer {
                     transform 1s cubic-bezier(0.25, 1, 0.5, 1);
     }
     
-    /* Center containers vertically inside full screen snap sections */
+    /* Center containers vertically inside full screen snap sections (FIX: hapus height:100% biar tidak clip) */
     html.index-html-snap .visi-misi-section .container,
     html.index-html-snap .berita-section .container {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        height: 100%;
         width: 100%;
     }
     
