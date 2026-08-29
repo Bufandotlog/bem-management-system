@@ -129,6 +129,7 @@ CREATE TABLE `arsip_surat` (
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `status_arsip` enum('staging','archived') NOT NULL DEFAULT 'archived',
   `status_humas` varchar(20) DEFAULT 'draft',
+  `waktu_kirim_humas` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_arsip_periode` (`periode_id`),
   KEY `fk_arsip_user` (`created_by`),

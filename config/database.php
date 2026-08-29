@@ -251,26 +251,12 @@ defined('DB_DEBUG') || define(
 // ============================================================
 // 6. BASE URL
 // ============================================================
-
-if (!defined('BASE_URL')) {
-    $baseUrl = $getEnv('BASE_URL');
-
-    if ($baseUrl !== null && $baseUrl !== '') {
-        define('BASE_URL', $baseUrl);
-    } else {
-        $https = !empty($_SERVER['HTTPS'])
-            && $_SERVER['HTTPS'] !== 'off';
-
-        $protocol = $https ? 'https://' : 'http://';
-
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-
-        define(
-            'BASE_URL',
-            $protocol . $host . '/'
-        );
-    }
-}
+// [FIX v3.3] BASE_URL tidak didefinisikan di sini lagi agar tidak
+// berkonflik dengan path-detection.php yang lebih cerdas (bisa
+// mendeteksi subfolder project seperti /bpm/ atau /bem/).
+// Definisi BASE_URL sekarang sepenuhnya ditangani oleh
+// config/path-detection.php — panggil setelah .env ter-load.
+// database.php tidak boleh mendefinisikan BASE_URL.
 
 
 // ============================================================

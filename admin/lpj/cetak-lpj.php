@@ -22,7 +22,7 @@ if ($user_role === 'menteri') {
 }
 
 if (!$lpj) {
-    die("LPJ tidak ditemukan atau Anda tidak memiliki akses ke LPJ ini.");
+    accessDenied("LPJ tidak ditemukan atau Anda tidak memiliki akses ke dokumen LPJ ini.");
 }
 
 $k_name = $lpj['nama_kementerian'];

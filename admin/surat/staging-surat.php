@@ -89,11 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_
                 $id = (int)$id;
                 $surat = dbFetchOne("SELECT nomor_surat FROM arsip_surat WHERE id = ? AND periode_id = ?", [$id, $periode_id], "ii");
                 if ($surat) {
-                    dbQuery("UPDATE arsip_surat SET status_humas = 'siap_disebar' WHERE nomor_surat = ? AND periode_id = ?", [$surat['nomor_surat'], $periode_id]);
+                    dbQuery("UPDATE arsip_surat SET status_humas = 'siap_disebar', waktu_kirim_humas = CURRENT_TIMESTAMP WHERE nomor_surat = ? AND periode_id = ?", [$surat['nomor_surat'], $periode_id]);
                     $count_sent++;
                 }
             }
             if ($count_sent > 0) {
+                resyncStagingNumbers($periode_id);
                 // FCM Notification ke Superadmin, Admin, Sekretaris, Ketuplat, dan Sie Humas
                 $targetUserIds = getTargetUserIdsByRole(
                     ['superadmin', 'admin', 'sekretaris'],
@@ -125,8 +126,9 @@ if (isset($_GET['kirim_humas']) && is_numeric($_GET['kirim_humas'])) {
         $id_target = (int)$_GET['kirim_humas'];
         $surat_target = dbFetchOne("SELECT nomor_surat, perihal, kegiatan_id FROM arsip_surat WHERE id = ? AND periode_id = ?", [$id_target, $periode_id], "ii");
         if ($surat_target) {
-            dbQuery("UPDATE arsip_surat SET status_humas = 'siap_disebar' WHERE nomor_surat = ? AND periode_id = ?", [$surat_target['nomor_surat'], $periode_id]);
+            dbQuery("UPDATE arsip_surat SET status_humas = 'siap_disebar', waktu_kirim_humas = CURRENT_TIMESTAMP WHERE nomor_surat = ? AND periode_id = ?", [$surat_target['nomor_surat'], $periode_id]);
             auditLog('UPDATE', 'arsip_surat', $id_target, 'Verifikasi & kirim surat ke Humas: ' . $surat_target['nomor_surat']);
+            resyncStagingNumbers($periode_id);
             
             // FCM & Web Notification ke Superadmin, Admin, Sekretaris, Ketuplat, dan Sie Humas
             $targetUserIds = getTargetUserIdsByRole(
@@ -155,7 +157,8 @@ if (isset($_GET['batal_humas']) && is_numeric($_GET['batal_humas'])) {
         $id_target = (int)$_GET['batal_humas'];
         $surat_target = dbFetchOne("SELECT nomor_surat FROM arsip_surat WHERE id = ? AND periode_id = ?", [$id_target, $periode_id], "ii");
         if ($surat_target) {
-            dbQuery("UPDATE arsip_surat SET status_humas = 'draft' WHERE nomor_surat = ? AND periode_id = ?", [$surat_target['nomor_surat'], $periode_id]);
+            dbQuery("UPDATE arsip_surat SET status_humas = 'draft', waktu_kirim_humas = NULL WHERE nomor_surat = ? AND periode_id = ?", [$surat_target['nomor_surat'], $periode_id]);
+            resyncStagingNumbers($periode_id);
             redirect('admin/surat/staging-surat.php?kegiatan_id={$selected_kegiatan_id}', "Status surat dikembalikan ke Draft.", "success");
         }
     }

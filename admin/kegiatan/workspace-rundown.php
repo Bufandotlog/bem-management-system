@@ -54,6 +54,19 @@ if ($edit_id > 0) {
     }
 }
 
+// === AUTO-PREFILL & PEMINDAHAN KEGIATAN (Sie Acara) ===
+// Daftar kegiatan yang bisa dipindah (status berjalan/persiapan) untuk penanganan kegiatan bersamaan
+$list_kegiatan_switch = dbFetchAll("SELECT id, nama_kegiatan, tanggal_mulai, tanggal_selesai FROM kegiatan WHERE periode_id = ? AND status IN ('persiapan','berjalan') ORDER BY tanggal_mulai ASC", [$periode_id]);
+
+// Hitung prefill tanggal & durasi dari kegiatan induk (jika rundown baru dibuat, bukan mode edit)
+$_prefill_tanggal = !empty($kegiatan['tanggal_mulai']) ? $kegiatan['tanggal_mulai'] : date('Y-m-d');
+$_prefill_durasi = 1;
+if (!empty($kegiatan['tanggal_mulai']) && !empty($kegiatan['tanggal_selesai'])) {
+    $_d1 = new DateTime($kegiatan['tanggal_mulai']);
+    $_d2 = new DateTime($kegiatan['tanggal_selesai']);
+    $_prefill_durasi = max(1, $_d1->diff($_d2)->days + 1);
+}
+
 // --- POST HANDLER: SIMPAN KE ARSIP ---
 $success_msg = '';
 $error_msg = '';
@@ -639,6 +652,27 @@ input.barang-qty::-webkit-outer-spin-button {
 }
 .tpl-item:last-child { border-bottom: none; }
 .tpl-item:hover { background: rgba(74, 144, 226, 0.1); color: var(--accent-color); }
+.tpl-group-label {
+    padding: 8px 15px 4px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+.tpl-badge {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-right: 7px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+.tpl-badge-pemateri { background: rgba(74, 144, 226, 0.18); color: #4a90e2; border: 1px solid rgba(74, 144, 226, 0.4); }
+.tpl-badge-sambutan { background: rgba(202, 162, 74, 0.18); color: #caa24a; border: 1px solid rgba(202, 162, 74, 0.4); }
+.tpl-item.used { opacity: 0.4; }
+.tpl-item.used:hover { opacity: 0.7; color: var(--accent-color); }
 </style>
 
 <div class="cetak-rundown-container">
@@ -676,7 +710,12 @@ input.barang-qty::-webkit-outer-spin-button {
             <div class="info-grid">
                 <div class="form-group">
                     <label>Nama Acara / Kegiatan</label>
-                    <input type="text" name="nama_acara" id="nama_acara" required value="<?php echo htmlspecialchars($kegiatan['nama_kegiatan']); ?>" readonly style="background: rgba(255,255,255,0.05); color: #888;">
+                    <select name="switch_kegiatan" id="switch_kegiatan" onchange="if(this.value){ window.location='workspace-rundown.php?kegiatan_id='+this.value; }" style="width:100%; padding:10px 12px; border-radius:8px; background: rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; outline:none;">
+                        <?php foreach ($list_kegiatan_switch as $lk): ?>
+                            <option value="<?php echo (int)$lk['id']; ?>" <?php echo ((int)$lk['id'] === (int)$kegiatan_id) ? 'selected' : ''; ?>><?php echo htmlspecialchars($lk['nama_kegiatan']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <input type="hidden" id="nama_acara" name="nama_acara" value="<?php echo htmlspecialchars($kegiatan['nama_kegiatan']); ?>">
                 </div>
                 <div class="form-group">
                     <label>Tahun Periode</label>
@@ -685,11 +724,11 @@ input.barang-qty::-webkit-outer-spin-button {
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label><i class="far fa-calendar-alt" style="margin-right: 5px;"></i> Hari & Tanggal Acara</label>
                     <div style="display: flex; gap: 15px; align-items: center; background: #080808; padding: 5px 15px; border-radius: 12px; border: 1px solid var(--border-color);">
-                        <input type="date" name="tanggal_mulai" id="tanggal_mulai" required style="flex: 2; border: none; padding: 10px 0; background: transparent; outline: none; box-shadow: none;" onchange="generateDays()" value="<?php echo $edit_data ? htmlspecialchars($edit_data['tanggal_mulai']) : ''; ?>">
+                        <input type="date" name="tanggal_mulai" id="tanggal_mulai" required style="flex: 2; border: none; padding: 10px 0; background: transparent; outline: none; box-shadow: none;" onchange="generateDays()" value="<?php echo $edit_data ? htmlspecialchars($edit_data['tanggal_mulai']) : htmlspecialchars($_prefill_tanggal); ?>">
                         <span style="color: #888; font-size: 0.9rem;">selama</span>
                         <select name="durasi_hari" id="durasi_hari" style="flex: 1; border: none; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; outline: none;" onchange="generateDays()">
                             <?php for ($i = 1; $i <= 7; $i++): ?>
-                                <option value="<?php echo $i; ?>" <?php echo ($edit_data && (int)$edit_data['durasi_hari'] === $i) ? 'selected' : ''; ?>><?php echo $i; ?> Hari</option>
+                                <option value="<?php echo $i; ?>" <?php echo ($edit_data ? ((int)$edit_data['durasi_hari'] === $i) : ($i === (int)$_prefill_durasi)) ? 'selected' : ''; ?>><?php echo $i; ?> Hari</option>
                             <?php endfor; ?>
                         </select>
                     </div>
@@ -720,26 +759,51 @@ input.barang-qty::-webkit-outer-spin-button {
 </div>
 
 <?php
-// Siapkan rekomendasi pemateri
+// Siapkan rekomendasi pemateri & sambutan (dibedakan ber-badge di UI)
 $tamu_arr = json_decode($kegiatan['tamu_undangan'], true) ?: [];
 $pemateri_list = [];
-$acara_recommendations = [];
 $ket_pemateri_recommendations = [];
+$acara_rec_pemateri = [];   // [{label, val, ket}]
+$acara_rec_sambutan = [];   // [{label, val, ket}]
 
+// Kumpulkan dulu, lalu format (butuh total count utk penomoran sambutan)
+$pemateri_items = [];
+$sambutan_items = [];
 foreach ($tamu_arr as $t) {
-    if (stripos($t['perihal'] ?? '', 'pemateri') !== false) {
-        $nama_raw = trim($t['nama'] ?? '');
-        $parts = explode(',', $nama_raw);
-        $nama_pendek = trim($parts[0]);
-        if (!empty($nama_pendek)) {
-            $pemateri_list[] = $nama_pendek;
-            $acara_recommendations[] = "Penyampaian Materi (....)";
-            $ket_pemateri_recommendations[] = "Yang disampaikan oleh " . $nama_pendek;
-        }
+    $perihal = strtolower($t['perihal'] ?? '');
+    $nama_raw = trim($t['nama'] ?? '');
+    $nama_pendek = trim(explode(',', $nama_raw)[0]);
+    if (empty($nama_pendek)) continue;
+    if (stripos($perihal, 'pemateri') !== false) {
+        $pemateri_items[] = $nama_pendek;
+    } elseif (stripos($perihal, 'sambutan') !== false) {
+        $sambutan_items[] = $nama_pendek;
     }
 }
-// Remove duplicates in case of multiple pemateris resulting in same placeholder
-$acara_recommendations = array_values(array_unique($acara_recommendations));
+$nSam = count($sambutan_items);
+foreach ($pemateri_items as $i => $nama) {
+    $pemateri_list[] = $nama;
+    $acara_rec_pemateri[] = [
+        'label' => 'Penyampaian Materi ' . $nama,                  // label dropdown: pakai nama asli
+        'val'   => 'Penyampaian Materi ' . $nama,                  // saat masuk form: pakai nama asli, konsisten dengan label
+        'ket'   => 'Yang disampaikan oleh ' . $nama
+    ];
+    $ket_pemateri_recommendations[] = 'Yang disampaikan oleh ' . $nama;
+}
+foreach ($sambutan_items as $i => $nama) {
+    $num = ($nSam > 1) ? ' ' . ($i + 1) : '';
+    $acara_rec_sambutan[] = [
+        'label' => 'Penyampaian sambutan ' . $nama, // label dropdown: pakai nama asli
+        'val'   => 'Penyampaian sambutan ' . $nama, // saat masuk form: unik per nama agar dropdown kerja
+        'ket'   => 'Sambutan oleh ' . $nama
+    ];
+    $ket_pemateri_recommendations[] = 'Sambutan oleh ' . $nama;
+}
+// Gabungan (unik) untuk compat search lain yg masih pakai array lama
+$acara_recommendations = array_values(array_unique(array_merge(
+    array_column($acara_rec_pemateri, 'label'),
+    array_column($acara_rec_sambutan, 'label')
+)));
 
 $def_jam = '07';
 $def_menit = '00';
@@ -754,9 +818,16 @@ const ketList = <?php echo json_encode(array_column($ket_list, 'nama_keterangan'
 const tempatList = <?php echo json_encode(array_column($tempat_list, 'nama_tempat')); ?>;
 const pjList = <?php echo json_encode(array_column($pj_list, 'nama_pj')); ?>;
 const acaraRecommendations = <?php echo json_encode(array_values($acara_recommendations)); ?>;
+const acaraRecPemateri = <?php echo json_encode(array_values($acara_rec_pemateri)); ?>;
+const acaraRecSambutan = <?php echo json_encode(array_values($acara_rec_sambutan)); ?>;
 const ketPemateriRecommendations = <?php echo json_encode(array_values($ket_pemateri_recommendations)); ?>;
 const defaultStartHour = '<?php echo $def_jam; ?>';
 const defaultStartMinute = '<?php echo $def_menit; ?>';
+
+// Escaper aman: cegah HTML attribute injection (apostrof/garis miring/etc)
+function escAttr(str) {
+    return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 let dayCount = 0;
 
@@ -840,6 +911,7 @@ function generateDays() {
     try {
         const durasi = parseInt(document.getElementById('durasi_hari').value) || 1;
         const container = document.getElementById('daysContainer');
+        if (!container) { console.error('daysContainer tidak ditemukan'); return; }
         const currentDays = container.querySelectorAll('.day-card').length;
 
         if (durasi > currentDays) {
@@ -999,7 +1071,12 @@ function addRow(dayId, afterRow = null) {
             <div class="tpl-picker" style="width: 100%;">
                 <input type="text" name="acara[${dayId}][]" class="tpl-search-input" placeholder="Nama Acara/Materi" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%;">
                 <div class="tpl-results">
-                    ${acaraRecommendations.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                    <div class="tpl-group-label" style="color:#4a90e2;">Pemateri</div>
+                    ${acaraRecPemateri.map(o => `<div class="tpl-item tpl-pemateri" data-val='${escAttr(o.val)}' data-ket='${escAttr(o.ket)}'><span class="tpl-badge tpl-badge-pemateri">Pemateri</span>${escAttr(o.label)}</div>`).join('')}
+                    ${acaraRecSambutan.length > 0 ? `
+                    <div class="tpl-group-label" style="color:#caa24a;">Sambutan</div>
+                    ${acaraRecSambutan.map(o => `<div class="tpl-item tpl-sambutan" data-val='${escAttr(o.val)}' data-ket='${escAttr(o.ket)}'><span class="tpl-badge tpl-badge-sambutan">Sambutan</span>${escAttr(o.label)}</div>`).join('')}
+                    ` : '<div style="color:#888; font-size:0.75rem; padding:6px 8px;">Tidak ada rekomendasi sambutan</div>'}
                 </div>
             </div>
         </td>
@@ -1012,7 +1089,7 @@ function addRow(dayId, afterRow = null) {
                 <div class="tpl-picker" style="flex: 1; min-width: 150px;">
                     <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                     <div class="tpl-results">
-                        ${[...ketPemateriRecommendations, ...ketList].map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                        ${[...ketPemateriRecommendations, ...ketList].map(v => `<div class="tpl-item" data-val="${escAttr(v)}">${escAttr(v)}</div>`).join('')}
                     </div>
                 </div>
             </div>
@@ -1021,7 +1098,7 @@ function addRow(dayId, afterRow = null) {
             <div class="tpl-picker" style="width: 100%;">
                 <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                 <div class="tpl-results">
-                    ${pjList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                    ${pjList.map(v => `<div class="tpl-item" data-val="${escAttr(v)}">${escAttr(v)}</div>`).join('')}
                 </div>
             </div>
         </td>
@@ -1084,7 +1161,12 @@ function addParallelRow(btn, dayId) {
             <div class="tpl-picker" style="width: 100%;">
                 <input type="text" name="acara[${dayId}][]" class="tpl-search-input" placeholder="Kegiatan Paralel..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem; width: 100%; border-color: rgba(74, 144, 226, 0.4); box-shadow: inset 0 0 10px rgba(74, 144, 226, 0.05);">
                 <div class="tpl-results">
-                    ${acaraRecommendations.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                    <div class="tpl-group-label" style="color:#4a90e2;">Pemateri</div>
+                    ${acaraRecPemateri.map(o => `<div class="tpl-item tpl-pemateri" data-val='${escAttr(o.val)}' data-ket='${escAttr(o.ket)}'><span class="tpl-badge tpl-badge-pemateri">Pemateri</span>${escAttr(o.label)}</div>`).join('')}
+                    ${acaraRecSambutan.length > 0 ? `
+                    <div class="tpl-group-label" style="color:#caa24a;">Sambutan</div>
+                    ${acaraRecSambutan.map(o => `<div class="tpl-item tpl-sambutan" data-val='${escAttr(o.val)}' data-ket='${escAttr(o.ket)}'><span class="tpl-badge tpl-badge-sambutan">Sambutan</span>${escAttr(o.label)}</div>`).join('')}
+                    ` : '<div style="color:#888; font-size:0.75rem; padding:6px 8px;">Tidak ada rekomendasi sambutan</div>'}
                 </div>
             </div>
         </td>
@@ -1097,7 +1179,7 @@ function addParallelRow(btn, dayId) {
                 <div class="tpl-picker" style="flex: 1; min-width: 150px;">
                     <input type="text" name="keterangan[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik..." required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                     <div class="tpl-results">
-                        ${[...ketPemateriRecommendations, ...ketList].map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                        ${[...ketPemateriRecommendations, ...ketList].map(v => `<div class="tpl-item" data-val="${escAttr(v)}">${escAttr(v)}</div>`).join('')}
                     </div>
                 </div>
             </div>
@@ -1106,7 +1188,7 @@ function addParallelRow(btn, dayId) {
             <div class="tpl-picker" style="width: 100%;">
                 <input type="text" name="penanggung_jawab[${dayId}][]" class="tpl-search-input" placeholder="Pilih/Ketik PJ" required autocomplete="off" style="padding: 14px; border-radius: 10px; font-size: 0.95rem;">
                 <div class="tpl-results">
-                    ${pjList.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('')}
+                    ${pjList.map(v => `<div class="tpl-item" data-val="${escAttr(v)}">${escAttr(v)}</div>`).join('')}
                 </div>
             </div>
         </td>
@@ -1337,7 +1419,7 @@ function switchKetTempat(selectElem) {
         if (picker && picker.classList.contains('tpl-picker')) {
             const results = picker.querySelector('.tpl-results');
             if (results) {
-                results.innerHTML = list.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('');
+                results.innerHTML = list.map(v => `<div class="tpl-item" data-val="${escAttr(v)}">${escAttr(v)}</div>`).join('');
             }
         }
     });
@@ -1350,32 +1432,100 @@ function switchKetTempat(selectElem) {
     }
 }
 
+// --- ANTI-DUPLIKAT: rekomendasi tetap tampil, duplikat ditandai warning (bukan disembunyikan) ---
+function checkDuplicateWarnings() {
+    document.querySelectorAll('.dup-warning').forEach(el => el.remove());
+
+    // 1) Duplikat ACARA (exact match, case-insensitive, abaikan kosong)
+    const acaraInputs = document.querySelectorAll('input[name^="acara"]');
+    const acaraVals = {};
+    acaraInputs.forEach(inp => {
+        const v = inp.value.trim().toLowerCase();
+        if (!v) return;
+        if (!acaraVals[v]) acaraVals[v] = [];
+        acaraVals[v].push(inp);
+    });
+    Object.values(acaraVals).forEach(list => {
+        if (list.length > 1) {
+            list.forEach(inp => {
+                const cell = inp.closest('.tpl-picker');
+                if (!cell) return;
+                const w = document.createElement('div');
+                w.className = 'dup-warning';
+                w.style.cssText = 'color:#e67e22;font-size:0.7rem;margin-top:4px;flex-basis:100%;';
+                w.innerText = '⚠ Acara ini sudah diisi di baris lain (duplikat).';
+                cell.insertAdjacentElement('afterend', w);
+            });
+        }
+    });
+
+    // 2) Nama pemateri sama di KETERANGAN ("Yang disampaikan oleh <nama>")
+    const ketInputs = document.querySelectorAll('input[name^="keterangan"]');
+    const nameMap = {};
+    ketInputs.forEach(inp => {
+        const v = inp.value.trim();
+        if (!v) return;
+        const m = v.match(/yang disampaikan oleh\s+(.+)/i);
+        if (m) {
+            const name = m[1].trim().toLowerCase();
+            if (name) {
+                if (!nameMap[name]) nameMap[name] = [];
+                nameMap[name].push(inp);
+            }
+        }
+    });
+    Object.values(nameMap).forEach(list => {
+        if (list.length > 1) {
+            list.forEach(inp => {
+                const cell = inp.closest('.tpl-picker');
+                if (!cell) return;
+                const w = document.createElement('div');
+                w.className = 'dup-warning';
+                w.style.cssText = 'color:#e67e22;font-size:0.7rem;margin-top:4px;flex-basis:100%;';
+                w.innerText = '⚠ Nama pemateri sama sudah dipakai di baris lain. Yakin?';
+                cell.insertAdjacentElement('afterend', w);
+            });
+        }
+    });
+}
+
+// --- Tandai rekomendasi yg SUDAH dipakai (data-val cocok dgn input acara mana pun) jadi pudar, tapi tetap bisa diklik ---
+function markUsedItems() {
+    // Fitur "pudar saat dipakai" dinonaktifkan per permintaan user.
+    // Item dropdown tetap tampil normal meski sudah dipilih.
+    return;
+    const usedVals = new Set();
+    document.querySelectorAll('input[name^="acara"]').forEach(inp => {
+        const v = inp.value.trim().toLowerCase();
+        if (v) usedVals.add(v);
+    });
+    document.querySelectorAll('.tpl-results .tpl-item').forEach(item => {
+        const val = (item.dataset.val || item.innerText).trim().toLowerCase();
+        if (usedVals.has(val)) item.classList.add('used');
+        else item.classList.remove('used');
+    });
+}
+
 document.addEventListener('focusin', function(e) {
     if (e.target.classList.contains('tpl-search-input')) {
-        const results = e.target.nextElementSibling;
+        // Tutup dropdown picker LAIN agar tidak overlap & menutupi dropdown ini
+        // (penyebab: picker yg sedang fokus punya z-index 9999, dropdown-nya menimpa
+        //  dropdown picker sebelah sehingga klik item pemateri/sambutan tidak ke-set)
+        const activeResults = e.target.nextElementSibling;
+        document.querySelectorAll('.tpl-results').forEach(r => {
+            if (r !== activeResults) r.style.display = 'none';
+        });
+        const results = activeResults;
         if (results && results.classList.contains('tpl-results')) {
-            const allInputs = document.querySelectorAll('.tpl-search-input');
-            const usedValues = new Set();
-            allInputs.forEach(inp => {
-                if (inp !== e.target && inp.value.trim() !== '') {
-                    usedValues.add(inp.value.trim().toLowerCase());
-                }
-            });
-            
-            const items = results.querySelectorAll('.tpl-item');
-            items.forEach(item => {
-                const val = (item.dataset.val || item.innerText).trim().toLowerCase();
-                const isRecommendation = val.startsWith('yang disampaikan oleh') || val.startsWith('penyampaian materi (');
-                if (isRecommendation && usedValues.has(val)) {
-                    item.style.display = 'none';
-                    item.classList.add('filtered-out');
-                } else {
-                    item.style.display = 'block';
-                    item.classList.remove('filtered-out');
-                }
+            // Tampilkan SELURUH rekomendasi (termasuk yg mungkin sama) — anti-duplikat via warning, bukan hide
+            results.querySelectorAll('.tpl-item').forEach(item => {
+                item.style.display = 'block';
+                item.classList.remove('filtered-out');
             });
             results.style.display = 'block';
         }
+        checkDuplicateWarnings();
+        markUsedItems();
     }
 });
 
@@ -1386,15 +1536,32 @@ document.addEventListener('keyup', function(e) {
         if (results && results.classList.contains('tpl-results')) {
             const items = results.querySelectorAll('.tpl-item');
             items.forEach(item => {
-                if (item.classList.contains('filtered-out')) {
-                    item.style.display = 'none';
-                    return;
-                }
                 const text = item.innerText.toLowerCase();
                 item.style.display = text.includes(inputVal) ? 'block' : 'none';
             });
         }
+        checkDuplicateWarnings();
     }
+});
+
+// FIX: tangani pemilihan di mousedown + preventDefault agar fokus input tidak lepas
+// (penyebab klik mouse asli gagal: saat mousedown di item, input blur -> dropdown tertutup -> click tidak sampai)
+document.addEventListener('mousedown', function(e) {
+    const item = e.target.closest('.tpl-item');
+    if (!item) return;
+    e.preventDefault(); // cegah input kehilangan fokus
+    const value = item.dataset.val || item.innerText;
+    const picker = item.closest('.tpl-picker');
+    const input = picker.querySelector('.tpl-search-input');
+    input.value = value;
+    if (item.dataset.ket) {
+        const row = item.closest('tr');
+        const ketInput = row ? row.querySelector('input[name^="keterangan"]') : null;
+        if (ketInput && ketInput.value.trim() === '') ketInput.value = item.dataset.ket;
+    }
+    checkDuplicateWarnings();
+    markUsedItems();
+    picker.querySelector('.tpl-results').style.display = 'none';
 });
 
 document.addEventListener('click', function(e) {
@@ -1404,6 +1571,16 @@ document.addEventListener('click', function(e) {
         const picker = item.closest('.tpl-picker');
         const input = picker.querySelector('.tpl-search-input');
         input.value = value;
+        // Auto-prefill keterangan baris yg sama jika item punya data-ket (rekomendasi sistem)
+        if (item.dataset.ket) {
+            const row = item.closest('tr');
+            const ketInput = row ? row.querySelector('input[name^="keterangan"]') : null;
+            if (ketInput && ketInput.value.trim() === '') {
+                ketInput.value = item.dataset.ket;
+            }
+        }
+        checkDuplicateWarnings();
+        markUsedItems();
         picker.querySelector('.tpl-results').style.display = 'none';
     } else if (!e.target.closest('.tpl-picker')) {
         document.querySelectorAll('.tpl-results').forEach(el => el.style.display = 'none');
@@ -1502,7 +1679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (picker) {
                         const results = picker.querySelector('.tpl-results');
                         const list = dayTipeKet === 'ket' ? ketList : tempatList;
-                        if (results) results.innerHTML = list.map(v => `<div class="tpl-item" data-val="${v}">${v}</div>`).join('');
+                        if (results) results.innerHTML = list.map(v => `<div class="tpl-item" data-val="${escAttr(v)}">${escAttr(v)}</div>`).join('');
                     }
                 });
 
@@ -1510,6 +1687,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         <?php endif; ?>
+        checkDuplicateWarnings();
     } catch (e) {
         console.error("Error in DOMContentLoaded:", e);
     }

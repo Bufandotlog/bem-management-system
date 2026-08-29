@@ -7,7 +7,7 @@ requireLogin();
 
 // Hanya superadmin yang boleh backup
 if (!isset($_SESSION['admin_role']) || $_SESSION['admin_role'] !== 'superadmin') {
-    die('Akses ditolak. Hanya superadmin yang dapat melakukan backup.');
+    accessDenied("Hanya Superadmin yang diizinkan melakukan backup database.", "Hubungi Superadmin jika Anda membutuhkan akses ini.");
 }
 
 // ============================================

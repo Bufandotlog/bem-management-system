@@ -22,6 +22,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./databases/schema_mysql.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./databases/create_1nf_views.sql:/docker-entrypoint-initdb.d/02_views.sql:ro
     networks:
       - bem_internal
     # Tuning RAM rendah untuk VPS 1GB

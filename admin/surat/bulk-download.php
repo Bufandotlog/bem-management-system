@@ -6,7 +6,7 @@ require_once __DIR__ . '/../core/auth-check.php';
 
 // Pastikan sudah login
 if (!isLoggedIn()) {
-    die("Akses ditolak.");
+    accessDenied("Anda harus login terlebih dahulu untuk mengunduh dokumen.");
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['ids'])) {

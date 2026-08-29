@@ -21,7 +21,7 @@ $surat = dbFetchOne("
 ", [$id, $periode_id], "ii");
 
 if (!$surat) {
-    die("Surat tidak ditemukan atau Anda tidak memiliki akses ke periode ini.");
+    accessDenied("Surat tidak ditemukan atau Anda tidak memiliki akses ke periode ini.");
 }
 
 // Otorisasi Akses
@@ -51,7 +51,62 @@ if (!empty($surat['id_kegiatan'])) {
 }
 
 if (!$isSekretaris && !$isHumas && !$isPanitiaBerhak) {
-    die("Akses ditolak: Anda tidak memiliki izin untuk mengunduh/mencetak surat ini. Hanya Sekretaris, Superadmin, Humas, atau Ketua Pelaksana/Sie Humas terkait yang diizinkan.");
+    die('<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akses Ditolak</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #1A2F4A 0%, #4A90E2 100%);
+    padding:20px;
+  }
+  .denied-card {
+    background:#fff; border-radius:16px; max-width:480px; width:100%;
+    padding:40px 32px; text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+    border-top:6px solid #E74C3C;
+  }
+  .denied-icon {
+    width:84px; height:84px; margin:0 auto 18px; border-radius:50%;
+    background:#FDECEA; display:flex; align-items:center; justify-content:center;
+  }
+  .denied-icon svg { width:44px; height:44px; fill:#E74C3C; }
+  .denied-card h1 { color:#E74C3C; font-size:24px; margin-bottom:10px; }
+  .denied-card p { color:#555; font-size:15px; line-height:1.6; margin-bottom:22px; }
+  .denied-card .roles {
+    background:#F7F9FC; border:1px solid #E3E9F2; border-radius:10px;
+    padding:12px 16px; font-size:13.5px; color:#34495E; margin-bottom:24px; text-align:left; line-height:1.7;
+  }
+  .denied-card .roles strong { color:#1A2F4A; }
+  .denied-btn {
+    display:inline-block; text-decoration:none; background:#4A90E2; color:#fff;
+    padding:11px 26px; border-radius:8px; font-weight:600; font-size:14px;
+    transition:background .2s ease;
+  }
+  .denied-btn:hover { background:#1A2F4A; }
+</style>
+</head>
+<body>
+  <div class="denied-card">
+    <div class="denied-icon">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 22h20L12 2zm0 3.8l7.1 13.2H4.9L12 5.8zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z"/></svg>
+    </div>
+    <h1>Akses Ditolak</h1>
+    <p>Anda tidak memiliki izin untuk mengunduh atau mencetak surat ini.</p>
+    <div class="roles">
+      Halaman ini hanya dapat diakses oleh:<br>
+      <strong>Sekretaris, Superadmin, Humas,</strong> atau<br>
+      <strong>Ketua Pelaksana / Sie Humas</strong> terkait.
+    </div>
+    <a class="denied-btn" href="javascript:history.back()">&larr; Kembali</a>
+  </div>
+</body>
+</html>');
 }
 
 $konten = json_decode($surat['konten_surat'], true) ?? [];
@@ -459,7 +514,53 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             // Ekstrak nama pendek (sebelum tanda koma pertama)
             $tujuan_parts = explode(',', $tujuan_raw);
             $tujuan_nama_pendek = trim($tujuan_parts[0]);
-            
+
+            // --- EKSTRAK JUDUL MATERI dari rundown (surat pemateri) ---
+            // Judul diambil dari teks ACARA setelah "Penyampaian Materi " pada item
+            // rundown yang ditujukan ke pemateri ini (cocok di keterangan/nama).
+            $judul_materi = '';
+            if (
+                strpos(strtolower($surat['perihal']), 'pemateri') !== false
+                && !empty($konten['rundown_internal_ids'])
+            ) {
+                $r_ids = (array) $konten['rundown_internal_ids'];
+                try {
+                    $pdo_j = getConnection();
+                    foreach ($r_ids as $rid) {
+                        $stmt_j = $pdo_j->prepare('SELECT rundown_json FROM arsip_rundown WHERE id = ?');
+                        $stmt_j->execute([$rid]);
+                        $rj = $stmt_j->fetch(PDO::FETCH_ASSOC);
+                        if (!$rj) {
+                            continue;
+                        }
+                        $rundown_arr = json_decode($rj['rundown_json'], true);
+                        if (!is_array($rundown_arr)) {
+                            continue;
+                        }
+                        foreach ($rundown_arr as $day) {
+                            if (!is_array($day) || empty($day['items'])) {
+                                continue;
+                            }
+                            foreach ($day['items'] as $item) {
+                                $acara = (string) ($item['acara'] ?? '');
+                                $ket   = (string) ($item['keterangan'] ?? '');
+                                if (
+                                    stripos($ket, $tujuan_nama_pendek) !== false
+                                    || stripos($acara, $tujuan_nama_pendek) !== false
+                                ) {
+                                    if (preg_match('/penyampaian\s+materi\s*(.*)$/i', $acara, $m)) {
+                                        $judul_materi = trim($m[1]);
+                                        break 3;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Throwable $e) {
+                    // judul opsional — abaikan jika DB error
+                }
+            }
+
             $konteks_text         = trim($konten['konteks'] ?? '');
             
             // Tentukan "buntut" kalimat (suffix) secara pintar
@@ -525,6 +626,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 . ' kepada '
                 . $sapaan
                 . htmlspecialchars($tujuan_nama_pendek)
+                . (!empty($judul_materi) ? ' dengan judul <strong>"' . htmlspecialchars($judul_materi) . '"</strong>' : '')
                 . $suffix;
             ?>
             <p class="indent"><?php echo $paragraf_permohonan; ?></p>

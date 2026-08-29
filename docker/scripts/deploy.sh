@@ -136,7 +136,7 @@ npm audit || warn "Perhatian: Celah keamanan terdeteksi pada NPM dependencies!"
 # ─────────────────────────────────────────────────────────────
 if [ ! -f "${APP_DIR}/.env" ]; then
     warn ".env belum ada. Buat dari template..."
-    cp .env.production .env
+    cp .env.example .env
     echo ""
     echo -e "${RED}⚠️  PENTING: Edit .env dan isi semua nilai yang kosong!${NC}"
     echo "   nano ${APP_DIR}/.env"

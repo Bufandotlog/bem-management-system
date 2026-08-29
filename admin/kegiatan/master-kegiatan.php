@@ -110,6 +110,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
                         ]);
                     }
                     $success = "Kegiatan berhasil diperbarui.";
+
+                    // === RETAIN CONSISTENCY: sinkron tanggal rundown terikat saat kegiatan diedit ===
+                    if ($tgl_mulai) {
+                        $_new_durasi = 1;
+                        if ($tgl_selesai) {
+                            $_rd1 = new DateTime($tgl_mulai);
+                            $_rd2 = new DateTime($tgl_selesai);
+                            $_new_durasi = max(1, $_rd1->diff($_rd2)->days + 1);
+                        }
+                        dbQuery("UPDATE arsip_rundown SET tanggal_mulai = ?, durasi_hari = ? WHERE kegiatan_id = ? AND periode_id = ?", [
+                            $tgl_mulai, $_new_durasi, $edit_id, $periode_id
+                        ]);
+                    }
                 }
 
                 // Auto-insert kode_kegiatan baru ke surat_templates jika belum ada

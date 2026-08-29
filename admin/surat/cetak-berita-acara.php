@@ -16,7 +16,7 @@ $periode_id = getUserPeriode();
 $ba = dbFetchOne("SELECT * FROM arsip_berita_acara WHERE id = ? AND periode_id = ?", [$id, $periode_id], "ii");
 
 if (!$ba) {
-    die("Berita Acara tidak ditemukan atau Anda tidak memiliki akses ke periode ini.");
+    accessDenied("Berita Acara tidak ditemukan atau Anda tidak memiliki akses ke periode ini.");
 }
 
 $konten = json_decode($ba['konten_json'], true) ?: [];

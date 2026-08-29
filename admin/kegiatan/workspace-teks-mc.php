@@ -418,6 +418,153 @@ if ($rundown_exist && !empty($rundown_exist['rundown_json'])) {
     color: #f1c40f;
     transform: translateY(-3px);
 }
+
+/* ============ RESPONSIVE MOBILE ============ */
+@media (max-width: 768px) {
+    .mc-workspace-container { padding: 0 4px; }
+
+    .card {
+        padding: 16px;
+        border-radius: 18px;
+        margin-bottom: 16px;
+    }
+
+    .card-header {
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .card-header h2 {
+        font-size: 1.1rem;
+        line-height: 1.3;
+    }
+    .card-header .fa-2x { font-size: 1.4rem; }
+
+    .info-grid {
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+        padding: 12px 14px;
+        font-size: 0.95rem;
+    }
+
+    /* Tombol di header kartu tamu: full width stack */
+    .card > div[style*="justify-content: space-between"] {
+        gap: 10px;
+    }
+
+    /* Ubah tabel jadi kartu vertikal */
+    .mc-table-wrapper {
+        overflow-x: visible;
+    }
+    .mc-table {
+        min-width: 0;
+        border-spacing: 0;
+        display: block;
+    }
+    .mc-table thead {
+        display: none;
+    }
+    .mc-table tbody, .mc-table tr, .mc-table td {
+        display: block;
+        width: 100% !important;
+    }
+    .mc-table tr {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        margin-bottom: 14px;
+        padding: 4px 0;
+        overflow: hidden;
+    }
+    .mc-table tr td:first-child {
+        border: none;
+        border-radius: 0;
+        text-align: left;
+        width: auto;
+        padding: 10px 14px 0;
+        font-size: 0.75rem;
+        color: #888;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .mc-table tr td:first-child::before { content: "NO "; }
+    .mc-table tr td:last-child {
+        border: none;
+        border-radius: 0;
+        width: auto;
+        text-align: right;
+        padding: 8px 14px;
+    }
+    .mc-table td {
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 10px 14px;
+        background: transparent;
+    }
+    .mc-table td:not(:first-child):not(:last-child)::before {
+        display: block;
+        font-size: 0.7rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+        font-weight: 700;
+    }
+    /* Label per kolom (urutan: 2=Waktu, 3=Segmen, 4=Script, 5=Cue) */
+    .mc-table td:nth-child(2)::before { content: "Waktu"; }
+    .mc-table td:nth-child(3)::before { content: "Segmen & Pengisi (MC)"; }
+    .mc-table td:nth-child(4)::before { content: "Naskah Bicara MC (Script)"; }
+    .mc-table td:nth-child(5)::before { content: "Catatan Panggung (Cue)"; }
+    .mc-table td:nth-child(6)::before { content: "Aksi"; }
+
+    .mc-table input, .mc-table textarea, .mc-table select {
+        font-size: 0.95rem;
+    }
+    .mc-table textarea { min-height: 64px; }
+
+    .btn-add-row {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Actions bar: stack vertikal, tombol full width */
+    .actions-bar {
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 16px;
+        bottom: 10px;
+        border-radius: 16px;
+        position: sticky;
+    }
+    .actions-bar > div:first-child { width: 100%; }
+    .actions-bar > div:last-child {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .actions-bar .btn-reader,
+    .actions-bar .btn-pdf,
+    .actions-bar .btn-save {
+        width: 100%;
+        justify-content: center;
+        padding: 13px;
+        font-size: 0.95rem;
+    }
+
+    /* Kartu tamu undangan: stack tombol ke bawah */
+    .card > div[style*="background: rgba(241, 196, 15"] > div {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .card { padding: 14px; }
+    .card-header h2 { font-size: 1rem; }
+    .actions-bar { margin-left: -4px; margin-right: -4px; }
+}
 </style>
 
 <div class="mc-workspace-container">

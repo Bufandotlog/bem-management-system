@@ -11,7 +11,7 @@ requireLogin();
 
 if (!isset($_SESSION['admin_id']) && !isset($_SESSION['user_id'])) {
     http_response_code(403);
-    die("Akses Ditolak: Anda harus login sebagai pengurus BEM.");
+    accessDenied("Anda harus login sebagai pengurus terlebih dahulu untuk mengunduh aplikasi ini.");
 }
 
 // -----------------------------------------------------------------------------

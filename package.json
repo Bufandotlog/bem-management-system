@@ -1,7 +1,7 @@
 {
   "name": "bem",
   "version": "1.0.0",
-  "description": "[![PHP Version](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://www.php.net/) [![Database](https://img.shields.io/badge/Database-MySQL%20%7C%20PostgreSQL-orange.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)",
+  "description": "[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/) [![Database](https://img.shields.io/badge/Database-MariaDB%20%2F%20MySQL-orange.svg)](#) [![Secondary DB](https://img.shields.io/badge/Secondary-PostgreSQL%2012%2B-blue.svg)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)",
   "main": "index.js",
   "directories": {
     "doc": "docs",
@@ -17,12 +17,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/Bufandotlog/bem-management-system/issues"
   },
-  "homepage": "https://github.com/Bufandotlog/bem-management-system#readme",
-  "devDependencies": {
-    "@playwright/test": "^1.62.1"
-  }
+  "homepage": "https://github.com/Bufandotlog/bem-management-system#readme"
 }

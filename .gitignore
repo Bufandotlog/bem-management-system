@@ -3,6 +3,7 @@
 # ============================================
 .env
 .env.local
+.env.working
 # Backup .env & archive jangan masuk repo / webroot (bocor kredensial & data privat)
 *.env.bak*
 *.env.bak-*

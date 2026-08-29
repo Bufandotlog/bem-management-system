@@ -11,7 +11,7 @@ requireLogin();
 requireSekretaris();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    die("Akses tidak valid.");
+    accessDenied("Metode akses tidak valid. Halaman ini hanya dapat diakses melalui menu cetak dengan metode POST.");
 }
 
 $tanggal = sanitizeText($_POST['tanggal'] ?? '');

@@ -119,6 +119,17 @@ function resolveBaseUrl() {
         // Gunakan filter_var untuk validasi dan sanitasi
         $filtered = filter_var($url, FILTER_SANITIZE_URL);
         if ($filtered && filter_var($filtered, FILTER_VALIDATE_URL)) {
+            // [FIX] Validasi DNS host: jika BASE_URL pakai domain publik tapi host
+            //       tidak resolve, fallback ke deteksi otomatis agar asset tidak
+            //       error DNS_PROBE_POSSIBLE (problem saat develop di laptop).
+            $host = parse_url($filtered, PHP_URL_HOST);
+            if ($host !== 'localhost' && $host !== '127.0.0.1' && !in_array($host, ['0.0.0.0', '::1'])) {
+                $dnsOk = @gethostbynamel($host);
+                if (empty($dnsOk) && php_sapi_name() !== 'cli') {
+                    error_log("resolveBaseUrl(): host [{$host}] tidak resolve, fallback ke deteksi otomatis");
+                    return detectBaseUrl();
+                }
+            }
             // Pastikan selalu ada trailing slash
             return rtrim($filtered, '/') . '/';
         } else {
@@ -137,10 +148,15 @@ function resolveBaseUrl() {
 
 if (php_sapi_name() === 'cli') {
     $rootDir = dirname(__DIR__);
-    // CLI mode: gunakan fallback yang lebih aman
-    $baseUrlCli = $_ENV['BASE_URL'] ?? 'http://localhost/bem/';
-    // Pastikan trailing slash
-    $baseUrlCli = rtrim($baseUrlCli, '/') . '/';
+    // CLI mode: deteksi otomatis base path agar tak hardcode ke /bpm/
+    $envBase = trim($_ENV['BASE_URL'] ?? '');
+    if ($envBase && preg_match('#^https?://#i', $envBase)) {
+        $baseUrlCli = rtrim($envBase, '/') . '/';
+    } else {
+        $auto = detectBaseUrl();
+        $projFolder = basename($rootDir);
+        $baseUrlCli = preg_replace('#/$#', '', $auto) . '/' . $projFolder . '/';
+    }
     defined('BASE_URL')    || define('BASE_URL',    $baseUrlCli);
     defined('UPLOAD_PATH') || define('UPLOAD_PATH', $rootDir . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR);
     defined('UPLOAD_URL')  || define('UPLOAD_URL',  BASE_URL . 'uploads/');

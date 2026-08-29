@@ -1776,7 +1776,7 @@ function debugVar($data, $die = false) {
 }
 function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
     // 1. Ambil data rundown jika ada
-    $rundown = dbFetchOne("SELECT id, rundown_json FROM arsip_rundown WHERE kegiatan_id = ? AND periode_id = ? LIMIT 1", [$kegiatan_id, $periode_id]);
+    $rundown = dbFetchOne("SELECT id, tanggal_mulai, durasi_hari, rundown_json FROM arsip_rundown WHERE kegiatan_id = ? AND periode_id = ? LIMIT 1", [$kegiatan_id, $periode_id]);
 
     $kegiatan = dbFetchOne("SELECT * FROM kegiatan WHERE id = ?", [$kegiatan_id]);
     if (!$kegiatan) return;
@@ -1939,11 +1939,17 @@ function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
                 $g_nama_parts = explode(',', $g_nama);
                 $g_nama_pendek = trim($g_nama_parts[0]);
                 
-                foreach ($rd_json as $dayData) {
+                foreach ($rd_json as $dayIdx => $dayData) {
                     if ($found_waktu) break;
                     foreach ($dayData['items'] ?? [] as $item) {
                         if (stripos($item['keterangan'] ?? '', $g_nama_pendek) !== false || stripos($item['acara'] ?? '', $g_nama_pendek) !== false) {
                             $pelaksanaan_waktu = $item['waktu'];
+                            // Tarik tanggal pelaksanaan dari rundown (hari ke-$dayIdx sejak tanggal_mulai)
+                            // supaya "Hari, tanggal" di surat tidak tertinggal narasi default 'Sesuai Jadwal Kegiatan'.
+                            $day_ts = strtotime($rundown['tanggal_mulai'] . ' + ' . (int)$dayIdx . ' days');
+                            if ($day_ts !== false) {
+                                $pelaksanaan_hari = tanggalIndonesia($day_ts, true);
+                            }
                             $found_waktu = true;
                             break;
                         }
@@ -2058,17 +2064,24 @@ function resyncStagingNumbers($periode_id = null) {
         
         $current_num = ($max_archived && $max_archived['max_urut']) ? (int)$max_archived['max_urut'] : 0;
         
-        // Ambil semua surat staging untuk jenis_surat ini, diurutkan agar Rapat BPM selalu mendapatkan nomor paling awal
+        // Ambil semua surat staging untuk jenis_surat ini.
+        // Prioritas urutan (sesuai aturan: yang dikirim ke Humas lebih dulu -> diarsip lebih dulu -> nomor lebih kecil):
+        //   1) Surat yang SUDAH dikirim ke Humas (waktu_kirim_humas tidak NULL), urut dari yang paling dahulu dikirim
+        //   2) Surat rapat (persiapan -> pemantapan -> final) yang belum dikirim
+        //   3) Surat lainnya yang belum dikirim, urut kegiatan_id lalu id
         $staging_list = dbFetchAll(
             "SELECT id, nomor_surat FROM arsip_surat 
              WHERE periode_id = ? AND jenis_surat = ? AND status_arsip = 'staging' 
-             ORDER BY kegiatan_id ASC, 
+             ORDER BY 
+                      CASE WHEN waktu_kirim_humas IS NULL THEN 1 ELSE 0 END ASC,
+                      waktu_kirim_humas ASC,
                       CASE 
                         WHEN perihal = 'Undangan Rapat Persiapan' THEN 1
                         WHEN perihal = 'Undangan Rapat Pemantapan' THEN 2
                         WHEN perihal = 'Undangan Rapat Final' THEN 3
                         ELSE 4
                       END ASC, 
+                      kegiatan_id ASC, 
                       id ASC",
             [$periode_id, $kat]
         );
@@ -2496,5 +2509,88 @@ function sendFcmNotification($targetUserIds, string $title, string $body, array 
         error_log("FCM Send Error: " . $e->getMessage());
         return false;
     }
+}
+
+/**
+ * Tampilkan halaman "Akses Ditolak" yang sudah di-style (bukan teks polos),
+ * lalu hentikan eksekusi. Aman untuk halaman cetak/standalone (inline CSS + SVG,
+ * tanpa depend CDN, tanpa hardcode nama org BEM/BPM).
+ *
+ * @param string $pesan        Pesan utama penolakan.
+ * @param string $subJudul     Baris ke-2 opsional (mis. daftar role yang diizinkan).
+ * @param string $judul        Teks heading (default "Akses Ditolak").
+ * @param bool   $exitScript   true = die() setelah output (default true).
+ */
+function accessDenied(string $pesan, string $subJudul = '', string $judul = 'Akses Ditolak', bool $exitScript = true): void
+{
+    $pesanHtml   = htmlspecialchars($pesan, ENT_QUOTES, 'UTF-8');
+    $judulHtml   = htmlspecialchars($judul, ENT_QUOTES, 'UTF-8');
+    $subHtml     = $subJudul !== '' ? '<div class="denied-roles">' . $subJudul . '</div>' : '';
+
+    $html = <<<HTML
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{$judulHtml}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #1A2F4A 0%, #4A90E2 100%);
+    padding:20px;
+  }
+  .denied-card {
+    background:#fff; border-radius:16px; max-width:480px; width:100%;
+    padding:40px 32px; text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+    border-top:6px solid #E74C3C;
+  }
+  .denied-icon {
+    width:84px; height:84px; margin:0 auto 18px; border-radius:50%;
+    background:#FDECEA; display:flex; align-items:center; justify-content:center;
+  }
+  .denied-icon svg { width:44px; height:44px; fill:#E74C3C; }
+  .denied-card h1 { color:#E74C3C; font-size:24px; margin-bottom:10px; }
+  .denied-card p { color:#555; font-size:15px; line-height:1.6; margin-bottom:22px; }
+  .denied-roles {
+    background:#F7F9FC; border:1px solid #E3E9F2; border-radius:10px;
+    padding:12px 16px; font-size:13.5px; color:#34495E; margin-bottom:24px;
+    text-align:left; line-height:1.7;
+  }
+  .denied-roles strong { color:#1A2F4A; }
+  .denied-btn {
+    display:inline-block; text-decoration:none; background:#4A90E2; color:#fff;
+    padding:11px 26px; border-radius:8px; font-weight:600; font-size:14px;
+    transition:background .2s ease;
+  }
+  .denied-btn:hover { background:#1A2F4A; }
+  @media print {
+    body { background:#fff; }
+    .denied-card { box-shadow:none; border:1px solid #ddd; }
+    .denied-btn { display:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="denied-card">
+    <div class="denied-icon">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 22h20L12 2zm0 3.8l7.1 13.2H4.9L12 5.8zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z"/></svg>
+    </div>
+    <h1>{$judulHtml}</h1>
+    <p>{$pesanHtml}</p>
+    {$subHtml}
+    <a class="denied-btn" href="javascript:history.back()">&larr; Kembali</a>
+  </div>
+</body>
+</html>
+HTML;
+
+    if ($exitScript) {
+        die($html);
+    }
+    echo $html;
 }
 
