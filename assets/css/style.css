@@ -202,19 +202,20 @@ footer {
         display: block;
     }
     
-    /* Make each section a full viewport screen */
+    /* Make each section a full viewport screen (FIX: bisa di-scroll kalau isi > viewport) */
     html.index-html-snap .home-section {
         scroll-snap-align: start;
         scroll-snap-stop: always;
         min-height: 100vh;
-        height: 100vh;
+        /* height: 100vh; DIHAPUS supaya section bisa tumbuh kalau konten panjang */
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
         position: relative;
-        overflow: hidden;
+        /* overflow: hidden; DIGANTI auto supaya bisa scroll di dalam section */
+        overflow-y: auto;
         margin-top: 0 !important;
         margin-bottom: 0 !important;
         padding: 90px 2rem 40px !important; /* Spacing for fixed header and layout margin */
