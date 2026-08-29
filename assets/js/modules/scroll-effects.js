@@ -69,11 +69,11 @@ function initScrollHint() {
 function initAnimateOnScroll() {
     const elements = document.querySelectorAll('.sambutan, .visi-misi, .card, .kontak-item, .menteri-item');
     
-    // Set initial style
+    // FIX: jangan set opacity:0 di awal — biarkan elemen langsung terlihat
+    // (scroll-snap + section tinggi membuat reveal via scroll tidak pernah kepicu)
     elements.forEach(element => {
-        element.style.opacity = '0';
-        element.style.transform = 'translateY(30px)';
-        element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        element.style.opacity = '1';
+        element.style.transform = 'none';
     });
 
     function animateOnScroll() {
