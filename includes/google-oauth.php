@@ -34,8 +34,12 @@ function buildGoogleAuthUrl(string $action, string $csrfToken): string {
     }
 
     $state = $action . '_' . $csrfToken;
-    $_SESSION['google_auth_state'] = $state;
-    $_SESSION['google_auth_action'] = $action;
+    if (session_status() === PHP_SESSION_NONE) { session_start(); }
+    $_SESSION['google_oauth'] = [
+        'state' => $state,
+        'action' => $action,
+        'csrf'   => $csrfToken
+    ];
 
     $params = [
         'client_id'     => $config['client_id'],

@@ -16,6 +16,18 @@ require_once __DIR__ . '/path-detection.php';
 defined('SITE_NAME') || define('SITE_NAME', 'BEM Kabinet Astawidya');
 
 // ============================================
+// 2.5 CANONICAL HOST (force www, prevent state mismatch)
+// ============================================
+$canonicalHost = 'www.bembudiutomo.my.id';
+$requestHost   = $_SERVER['HTTP_HOST'] ?? '';
+if ($requestHost !== $canonicalHost) {
+    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    $redirectTo = $scheme . '://' . $canonicalHost . $_SERVER['REQUEST_URI'];
+    header("Location: " . $redirectTo, true, 301);
+    exit();
+}
+
+// ============================================
 // 3. SESSION
 // ============================================
 if (session_status() === PHP_SESSION_NONE) {
@@ -23,7 +35,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
-        'domain'   => '',
+        'domain'   => '.bembudiutomo.my.id',
         'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
         'httponly' => true,
         'samesite' => 'Lax',
