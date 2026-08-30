@@ -10,7 +10,7 @@ $adminGateKey = $_ENV['ADMIN_GATE_KEY'] ?? 'astawidya-bem';
 
 // Jika mengakses dengan query string kunci (?key=xxx), pasang cookie
 if (isset($_GET['key']) && $_GET['key'] === $adminGateKey) {
-    $cookieDomain = preg_replace('/^[^.]+\./', '.', $_SERVER['HTTP_HOST'] ?? 'bembudiutomo.my.id');
+    $cookieDomain = '.' . ($_SERVER['HTTP_HOST'] ?? 'bembudiutomo.my.id');
     $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
         || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     $cookieOptions = [
