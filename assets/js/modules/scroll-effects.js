@@ -75,21 +75,24 @@ function initAnimateOnScroll() {
         element.style.opacity = '1';
         element.style.transform = 'none';
     });
-
+    
     function animateOnScroll() {
         elements.forEach(element => {
             const elementPosition = element.getBoundingClientRect().top;
             const windowHeight = window.innerHeight;
             
-            if (elementPosition < windowHeight - 100) {
+            // FIX: threshold longgar — elemen di dalam viewport atau bahkan pas margin-top 100vh
+            // tetap diperlakukan terlihat agar tidak stuck opacity:0 pada first load
+            if (elementPosition < windowHeight + 100) {
                 element.style.opacity = '1';
                 element.style.transform = 'translateY(0)';
             }
         });
     }
-
-    // Trigger sekali saat load
-    setTimeout(animateOnScroll, 100);
+    
+    // FIX: trigger langsung saat load (synchronous, jangan pakai setTimeout)
+    // agar elemen yang sudah berada di viewport terlihat dari awal
+    animateOnScroll();
     
     // Trigger saat scroll
     window.addEventListener('scroll', animateOnScroll);

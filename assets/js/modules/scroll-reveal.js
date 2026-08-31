@@ -107,7 +107,11 @@ export function initScrollReveal() {
                     if (entry.isIntersecting) {
                         sec.classList.add('visible');
                         sec.classList.remove('focus-exit-up', 'focus-exit-down', 'focus-active');
-                        
+
+                        // FIX: reveal child elements (sambutan/visi-misi/card) juga, sama seperti desktop branch
+                        sec.querySelectorAll('.sambutan, .visi-misi, .card, .kontak-item, .menteri-item, .section-title')
+                            .forEach(el => el.classList.add('visible'));
+
                         if (sec.classList.contains('sambutan')) {
                             const heading = sec.querySelector('.sambutan-text h2');
                             if (heading) setTimeout(() => typeElement(heading, 45), 200);
