@@ -321,7 +321,7 @@ $cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ .
                 <div style="flex:1;height:1px;background:#2a3545;"></div>
             </div>
 
-            <a href="../admin/auth/google-auth.php?action=login" class="btn-google-login" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;background:#ffffff;color:#333333;font-weight:600;font-size:0.95rem;border-radius:8px;text-decoration:none;transition:all 0.2s;box-sizing:border-box;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+            <a href="../admin/auth/google-auth.php?action=login" id="btnGoogleLogin" class="btn-google-login google-locked" data-original-href="../admin/auth/google-auth.php?action=login" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;background:#ffffff;color:#333333;font-weight:600;font-size:0.95rem;border-radius:8px;text-decoration:none;transition:all 0.2s;box-sizing:border-box;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
                 <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
                     <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.11 0-5.74-2.1-6.68-4.93H1.34v3.13C3.33 21.34 7.38 24 12 24z"/>
@@ -365,17 +365,27 @@ $cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ .
 function onTurnstileSuccess(token) {
     var form   = document.getElementById('loginForm');
     var notice = document.getElementById('turnstileNotice');
+    var google = document.getElementById('btnGoogleLogin');
     if (form) {
         form.classList.remove('form-locked');
         document.getElementById('username').focus();
     }
+    if (google) {
+        google.classList.remove('google-locked');
+        // Attach Turnstile token ke URL Google OAuth agar backend bisa verify
+        var base = google.getAttribute('data-original-href') || google.getAttribute('href');
+        google.setAttribute('href', base + (base.indexOf('?') >= 0 ? '&' : '?') + 'cf_token=' + encodeURIComponent(token));
+    }
     if (notice) notice.style.display = 'none';
+    try { sessionStorage.setItem('cf_turnstile_token', token); } catch (e) {}
 }
 
 function onTurnstileError() {
     var form   = document.getElementById('loginForm');
     var notice = document.getElementById('turnstileNotice');
+    var google = document.getElementById('btnGoogleLogin');
     if (form) form.classList.add('form-locked');
+    if (google) google.classList.add('google-locked');
     if (notice) {
         notice.textContent = '✖ Verifikasi gagal. Silakan muat ulang halaman.';
         notice.style.color = '#f44336';
@@ -386,13 +396,32 @@ function onTurnstileError() {
 function onTurnstileExpired() {
     var form   = document.getElementById('loginForm');
     var notice = document.getElementById('turnstileNotice');
+    var google = document.getElementById('btnGoogleLogin');
     if (form) form.classList.add('form-locked');
+    if (google) google.classList.add('google-locked');
     if (notice) {
         notice.textContent = '⚠ Verifikasi kedaluwarsa. Selesaikan ulang verifikasi.';
         notice.style.color = '#FF9800';
         notice.style.display = 'block';
     }
 }
+
+// Fallback: jika script Turnstile tidak load dalam 5 detik (network/adblock
+// memblokir challenges.cloudflare.com), tampilkan pesan & tetap kunci form
+// agar user tidak lanjut tanpa verifikasi.
+(function() {
+    var hasTurnstileEl = document.querySelector('.cf-turnstile');
+    if (!hasTurnstileEl) return;
+    setTimeout(function() {
+        var rendered = hasTurnstileEl.querySelector('iframe') || hasTurnstileEl.children.length > 0;
+        var notice = document.getElementById('turnstileNotice');
+        if (!rendered && notice) {
+            notice.textContent = '⚠ Widget verifikasi gagal dimuat. Periksa koneksi / nonaktifkan adblocker, lalu refresh.';
+            notice.style.color = '#f44336';
+            notice.style.display = 'block';
+        }
+    }, 5000);
+})();
 </script>
 </body>
 </html>

@@ -63,6 +63,28 @@ if ($action === 'login') {
         exit();
     }
 
+    // Validasi Turnstile — cegah bypass verifikasi keamanan via Google
+    $turnstileSiteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY') ?: '';
+    $turnstileSecret  = $_ENV['TURNSTILE_SECRET_KEY'] ?? getenv('TURNSTILE_SECRET_KEY') ?: '';
+    $turnstileEnabledVal = $_ENV['TURNSTILE_ENABLED'] ?? getenv('TURNSTILE_ENABLED');
+    $turnstileEnabled = ($turnstileEnabledVal !== null && $turnstileEnabledVal !== '')
+        ? filter_var($turnstileEnabledVal, FILTER_VALIDATE_BOOLEAN)
+        : ((defined('APP_ENV') ? APP_ENV : 'production') !== 'development');
+
+    if ($turnstileEnabled && !empty($turnstileSiteKey) && !empty($turnstileSecret)) {
+        $cfToken = trim($_GET['cf_token'] ?? $_POST['cf_token'] ?? '');
+        if (empty($cfToken)) {
+            redirect('astawidya/bem.php', 'Selesaikan verifikasi keamanan (Cloudflare Turnstile) terlebih dahulu sebelum login dengan Google.', 'error');
+            exit();
+        }
+        $siteverifyResp = verifyTurnstileToken($cfToken, $turnstileSecret);
+        if (!$siteverifyResp || !($siteverifyResp['success'] ?? false)) {
+            recordFailedAttempt('google_turnstile_failed', null);
+            redirect('astawidya/bem.php', 'Verifikasi Turnstile gagal. Silakan muat ulang halaman dan coba lagi.', 'error');
+            exit();
+        }
+    }
+
     $token = csrfToken();
     $authUrl = buildGoogleAuthUrl('login', $token);
     header("Location: " . $authUrl);

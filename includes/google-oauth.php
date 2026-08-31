@@ -91,6 +91,39 @@ function exchangeGoogleCodeForToken(string $code): ?array {
 }
 
 /**
+ * Verifikasi token Cloudflare Turnstile via siteverify API.
+ * Return null jika request gagal, atau array hasil siteverify.
+ * Caller harus cek $result['success'] === true.
+ */
+function verifyTurnstileToken(string $token, ?string $secret = null, ?string $remoteIp = null): ?array {
+    if (empty($token)) return null;
+    $secret = $secret ?: ($_ENV['TURNSTILE_SECRET_KEY'] ?? getenv('TURNSTILE_SECRET_KEY') ?: '');
+    if (empty($secret)) return null;
+
+    $postFields = http_build_query(array_filter([
+        'secret'   => $secret,
+        'response' => $token,
+        'remoteip' => $remoteIp ?: ($_SERVER['REMOTE_ADDR'] ?? null),
+    ]));
+
+    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200 || !$response) {
+        error_log("verifyTurnstileToken Error HTTP {$httpCode}: {$response}");
+        return null;
+    }
+    return json_decode($response, true);
+}
+
+/**
  * Ambil data user info dari Google menggunakan access token
  */
 function getGoogleUserInfo(string $accessToken): ?array {

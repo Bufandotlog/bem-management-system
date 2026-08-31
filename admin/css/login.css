@@ -185,6 +185,13 @@ body {
     opacity: 0.4;
 }
 
+.google-locked {
+    opacity: 0.4 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    filter: grayscale(0.6);
+}
+
 .turnstile-notice {
     text-align: center;
     color: #FF9800;
