@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus'])) {
             $bph_id = dbLastId();
         }
 
-        if (in_array($posisi, ['sekretaris_umum', 'bendahara_umum']) && isset($_POST['anggota_nama'])) {
+        if (in_array($posisi, ['sekretaris_umum', 'bendahara_umum']) && isset($_POST['anggota_user_id'])) {
             $existing_raw   = dbFetchAll("SELECT id, foto FROM anggota_bph WHERE bph_id=? AND periode_id=?",
                                          [$bph_id, $active_periode], "ii");
             $existing_fotos = array_column($existing_raw, 'foto', 'id');
