@@ -240,7 +240,7 @@ $cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ .
     $hasTurnstile = $turnstileEnabledFront && !empty($turnstileSiteKey) && !$isLocked;
     if ($hasTurnstile):
     ?>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer onerror="onTurnstileScriptError()"></script>
     <?php endif; ?>
 </head>
 <body>
@@ -406,44 +406,28 @@ function onTurnstileExpired() {
     }
 }
 
-// Fallback: jika widget Turnstile tidak load (AdBlocker, ISP, DNS filter
-// memblokir challenges.cloudflare.com), tampilkan pesan troubleshooting
-// & tetap kunci form. Threshold dinaikkan ke 12 detik untuk jaringan
-// lambat; cek apakah script tag sudah error (onerror) sebelum tampilkan.
-(function() {
-    var el = document.querySelector('.cf-turnstile');
-    if (!el) return;
+function onTurnstileScriptError() {
+    var form   = document.getElementById('loginForm');
     var notice = document.getElementById('turnstileNotice');
-    var started = Date.now();
-    var scriptErr = false;
-
-    // Deteksi kalau script api.js gagal load (network error, blocked)
-    var apiScript = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
-    if (apiScript) {
-        apiScript.addEventListener('error', function() { scriptErr = true; });
-    }
-
-    function check() {
-        // Widget OK jika sudah ada iframe (widget rendered)
-        var rendered = el.querySelector('iframe') || el.children.length > 0;
-        if (rendered) return;
-        var elapsed = Date.now() - started;
-        if (elapsed < 12000 && !scriptErr) { setTimeout(check, 500); return; }
-        if (!notice) return;
-        notice.innerHTML =
-            '<strong>⚠ Widget verifikasi gagal dimuat.</strong><br>' +
-            '<small style="display:block;margin-top:6px;line-height:1.4;">' +
-            'Kemungkinan diblokir oleh AdBlocker / ISP / DNS. Coba:<br>' +
-            '1. Whitelist <code>challenges.cloudflare.com</code> dan <code>bembudiutomo.my.id</code> di AdBlock<br>' +
-            '2. Matikan VPN / Proxy / DNS filtering<br>' +
-            '3. Coba browser berbeda (Chrome / Firefox tanpa ekstensi)<br>' +
-            '4. Hubungi admin jika masalah berlanjut' +
-            '</small>';
+    var google = document.getElementById('btnGoogleLogin');
+    if (form)   form.classList.add('form-locked');
+    if (google) google.classList.add('google-locked');
+    if (notice) {
+        notice.textContent = '✖ Skrip verifikasi diblokir oleh AdBlocker / Ekstensi Browser. Nonaktifkan AdBlocker lalu refresh.';
         notice.style.color = '#f44336';
         notice.style.display = 'block';
     }
-    setTimeout(check, 500);
-})();
+}
+
+<?php if ($hasTurnstile): ?>
+// Jika widget Turnstile tidak load dalam 3.5 detik (AdBlocker/ekstensi
+// memblokir challenges.cloudflare.com), tampilkan pesan troubleshooting.
+setTimeout(function() {
+    if (typeof turnstile === 'undefined') {
+        onTurnstileScriptError();
+    }
+}, 3500);
+<?php endif; ?>
 </script>
 </body>
 </html>

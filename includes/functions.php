@@ -560,6 +560,7 @@ function sendCspHeader(): void {
     if (headers_sent()) return;
     $csp = "default-src 'self'; " .
            "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cdnjs.cloudflare.com; " .
+           "worker-src 'self' blob: https://challenges.cloudflare.com https://cdnjs.cloudflare.com; " .
            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " .
            "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " .
            "img-src 'self' data: http: https:; " .
