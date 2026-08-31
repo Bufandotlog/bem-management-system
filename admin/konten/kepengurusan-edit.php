@@ -354,13 +354,8 @@ $posisiEncoded = urlencode($posisi);
             </select>
         </div>
         <?php else: ?>
-        <!-- Sekretaris & Bendahara: TIDAK ada kepala, hanya anggota → field disembunyikan -->
+        <!-- Sekretaris & Bendahara: TIDAK ada kepala, hanya anggota -->
         <input type="hidden" name="user_id" value="">
-        <div class="form-group" style="opacity: 0.6;">
-            <label>Kepala Divisi</label>
-            <input type="text" class="form-control" value="Tidak ada (hanya anggota: Sekum 1/2 atau Bendum 1/2)" readonly>
-            <small>Anggota dikelola di bagian <strong>Anggota</strong> di bawah. Tidak ada posisi "Kepala Sekretariat/Bendahara".</small>
-        </div>
         <?php endif; ?>
         <div class="form-group">
             <label>Jabatan</label>
