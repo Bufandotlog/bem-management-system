@@ -19,6 +19,8 @@ if (!in_array($posisi, $posisi_valid)) {
     exit();
 }
 
+$judul    = ['ketua'=>'Ketua BEM','wakil_ketua'=>'Wakil Ketua BEM','sekretaris_umum'=>'Sekretaris Umum','bendahara_umum'=>'Bendahara Umum'];
+
 $data = dbFetchOne(
     "SELECT * FROM struktur_bph WHERE posisi = ? AND periode_id = ?",
     [$posisi, $active_periode], "si"
@@ -265,7 +267,6 @@ if (in_array($posisi, ['sekretaris_umum', 'bendahara_umum']) && $data) {
 $list_akun = dbFetchAll("SELECT id, nama, username FROM users WHERE is_active = 1 AND (periode_id = ? OR periode_id IS NULL) AND role != 'superadmin' ORDER BY nama ASC", [$active_periode]);
 
 $icon_map = ['ketua'=>'crown','wakil_ketua'=>'user-tie','sekretaris_umum'=>'file-alt','bendahara_umum'=>'coins'];
-$judul    = ['ketua'=>'Ketua BEM','wakil_ketua'=>'Wakil Ketua BEM','sekretaris_umum'=>'Sekretaris Umum','bendahara_umum'=>'Bendahara Umum'];
 $icon         = $icon_map[$posisi];
 $periode_info = ($periode_data['nama'] ?? 'Astawidya')
               . ' (' . ($periode_data['tahun_mulai'] ?? '2025')
