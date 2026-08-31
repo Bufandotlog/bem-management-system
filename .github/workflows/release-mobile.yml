@@ -158,6 +158,7 @@ jobs:
           PYEOF
 
       - name: Deploy to VPS (rsync via SSH)
+        working-directory: mobile_app/build/app/outputs/flutter-apk
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
