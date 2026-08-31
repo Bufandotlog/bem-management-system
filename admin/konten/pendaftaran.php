@@ -74,17 +74,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Insert Kepengurusan
                     if ($row['penempatan'] === 'BPH') {
-                        $bph_id = 1; // Inti
-                        if (strpos(strtolower($row['jabatan']), 'sekretaris') !== false) {
-                            $bph_id = 2; // Sekretariat
+                        // Tentukan posisi BPH berdasarkan jabatan, bukan ID hardcode.
+                        // Model: 1 header struktur_bph per posisi (ketua/wakil/ketua/sekum/bendum),
+                        //      dengan 0..N anggota di anggota_bph yang merujuk ke header via FK.
+                        $jabatan_lower = strtolower($row['jabatan'] ?? '');
+                        $is_sekum = strpos($jabatan_lower, 'sekretaris') !== false;
+                        $is_bendum = strpos($jabatan_lower, 'bendahara') !== false;
+
+                        // Resolve bph_id secara dinamis: cari header di struktur_bph
+                        // by posisi + periode_id. Jika belum ada, create on-the-fly.
+                        if ($is_sekum) {
+                            $bph_id = getOrCreateBphByPosisi('sekretaris_umum', $periode_id);
                             if (strtolower(trim($row['jabatan'])) === 'sekretaris umum i' && !empty($row['file_ttd'])) {
                                 dbUpsertPengaturan('ttd_sekretaris_name', strtoupper($row['nama_lengkap']));
                                 dbUpsertPengaturan('ttd_sekretaris_jabatan', 'Sekretaris BEM INSTBUNAS Majalengka');
                                 dbUpsertPengaturan('ttd_sekretaris_image', $row['file_ttd']);
                             }
+                        } elseif ($is_bendum) {
+                            $bph_id = getOrCreateBphByPosisi('bendahara_umum', $periode_id);
+                        } else {
+                            $bph_id = getOrCreateBphByPosisi('ketua', $periode_id);
                         }
-                        if (strpos(strtolower($row['jabatan']), 'bendahara') !== false) $bph_id = 3; // Kebendaharaan
-                        
+
                         dbInsert("INSERT INTO anggota_bph (periode_id, created_by, bph_id, user_id, nama, jabatan, foto) VALUES (?, ?, ?, ?, ?, ?, ?)", [
                             $periode_id, $_SESSION['admin_id'], $bph_id, $user_id, $row['nama_lengkap'], $row['jabatan'], $row['file_ttd']
                         ]);

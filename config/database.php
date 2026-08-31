@@ -474,7 +474,68 @@ function dbUpdate(
 
 
 // ============================================================
-// 11. UPSERT PENGATURAN
+// 11. BPH HELPER — resolve bph_id by posisi + periode
+// ============================================================
+
+/**
+ * Dapatkan (atau create-on-the-fly) bph_id dari struktur_bph
+ * berdasarkan posisi + periode_id.
+ *
+ * Bug lama di admin/konten/pendaftaran.php menghardcode bph_id=1/2/3
+ * berdasarkan string jabatan, yang dapat melanggar FK anggota_bph.bph_id
+ * → struktur_bph.id bila ID tersebut tidak ada.
+ *
+ * Solusi: query by posisi (canonical key di struktur_bph) dan create
+ * bila belum ada, konsisten dengan pola di admin/konten/kepengurusan-edit.php
+ * yang query: "SELECT * FROM struktur_bph WHERE posisi=? AND periode_id=?".
+ *
+ * @param string $posisi    'ketua'|'wakil_ketua'|'sekretaris_umum'|'bendahara_umum'
+ * @param int    $periode_id
+ * @return int bph_id yang valid dan ada di struktur_bph
+ */
+function getOrCreateBphByPosisi(
+    string $posisi,
+    int    $periode_id
+): int {
+    // Cari header BPH yang sudah ada
+    $existing = dbFetchOne(
+        "SELECT id FROM struktur_bph WHERE posisi = ? AND periode_id = ?",
+        [$posisi, $periode_id],
+        "si"
+    );
+
+    if ($existing) {
+        return (int) $existing['id'];
+    }
+
+    // Header belum ada → create on-the-fly agar FK anggota_bph valid
+    $judul_map = [
+        'ketua'             => 'Ketua BEM',
+        'wakil_ketua'       => 'Wakil Ketua BEM',
+        'sekretaris_umum'   => 'Sekretaris Umum BEM',
+        'bendahara_umum'    => 'Bendahara Umum BEM',
+    ];
+
+    $nama_default  = $judul_map[$posisi] ?? $posisi;
+    $jabatan_default = $nama_default;
+
+    $bph_id = dbInsert(
+        "INSERT INTO struktur_bph
+            (periode_id, created_by, posisi, nama, jabatan, urutan)
+         VALUES
+            (?, ?, ?, ?, ?, 0)",
+        [$periode_id, $_SESSION['admin_id'] ?? null, $posisi, $nama_default, $jabatan_default],
+        "iisss"
+    );
+
+    auditLog('INSERT', 'struktur_bph', $bph_id, "Auto-create BPH header: $nama_default (pending approval via kepengurusan-edit.php)");
+
+    return $bph_id;
+}
+
+
+// ============================================================
+// 12. UPSERT PENGATURAN
 // ============================================================
 
 /**
