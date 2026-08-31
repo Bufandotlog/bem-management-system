@@ -85,13 +85,30 @@ class _WebViewScreenState extends State<WebViewScreen> {
     if (result != null && result['status'] == 'success') {
       String? cookieHeader = result['session_cookie'];
       if (cookieHeader != null) {
-        // Sync cookie to WebView
-        CookieManager cookieManager = CookieManager.instance();
-        await cookieManager.setCookie(
-          url: WebUri(AppConfig.baseUrl),
-          name: "PHPSESSID",
-          value: cookieHeader.split(';')[0].replaceAll("PHPSESSID=", ""),
-        );
+        // Sync cookie to WebView. Header Set-Cookie bisa mengandung banyak
+        // atribut (expires, path, HttpOnly, SameSite, dll) dalam urutan
+        // arbitrary — split(';')[0] tidak aman. Pakai regex untuk ambil
+        // value PHPSESSID saja.
+        final RegExp phpsessidRe = RegExp(r'PHPSESSID=([^;,\s]+)');
+        final RegExpMatch? m = phpsessidRe.firstMatch(cookieHeader);
+        if (m != null) {
+          final String phpsessid = m.group(1)!;
+          CookieManager cookieManager = CookieManager.instance();
+          // Domain eksplisit = '.bembudiutomo.my.id' (parent), supaya cookie
+          // dipakai untuk sub-path (mis. /admin/) juga, dan konsisten dengan
+          // cookie gate `admin_access` di server (lihat FIX-OAUTH-STATE-MISMATCH).
+          // isSecure: true (server set via HTTPS).
+          await cookieManager.setCookie(
+            url: WebUri(AppConfig.baseUrl),
+            name: "PHPSESSID",
+            value: phpsessid,
+            domain: ".bembudiutomo.my.id",
+            path: "/",
+            isSecure: true,
+          );
+        } else {
+          debugPrint('PHPSESSID tidak ditemukan di Set-Cookie header: $cookieHeader');
+        }
         await FcmService.sendTokenToServer(cookieHeader);
       }
 

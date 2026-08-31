@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- INTERNET: WAJIB untuk WebView fetch https://bembudiutomo.my.id di release build.
+         Tanpa ini WebView gagal request dan Android kill proses host (force-close). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- ACCESS_NETWORK_STATE: dipakai connectivity_plus untuk deteksi offline
+         (lihat webview_screen.dart _checkInitialConnectivity / _initConnectivityListener). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
         android:label="bem_mobile_app"
         android:name="${applicationName}"
