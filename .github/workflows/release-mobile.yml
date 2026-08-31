@@ -106,7 +106,7 @@ jobs:
         working-directory: mobile_app/build/app/outputs/flutter-apk
         run: |
           set -euo pipefail
-          sha256sum *.apk > sha256.txt
+          sha256sum app-release.apk app-*-release.apk 2>/dev/null | grep -v '.sha1' > sha256.txt || true
           cat sha256.txt
 
       - name: Generate releases.json
@@ -116,29 +116,40 @@ jobs:
           BUILD: ${{ steps.version.outputs.build }}
         run: |
           set -euo pipefail
-          python3 - <<PYEOF
+          python3 - <<'PYEOF'
           import json, os, hashlib, datetime, glob
 
           version = os.environ['VERSION']
           build = int(os.environ['BUILD'])
+          files = ['app-release.apk'] + sorted(glob.glob('app-*-release.apk'))
+          seen = set()
           apks = []
-          for f in sorted(glob.glob('*.apk')):
+          for f in files:
+              if f in seen or not os.path.exists(f):
+                  continue
+              seen.add(f)
               size_mb = round(os.path.getsize(f) / (1024*1024), 1)
               with open(f, 'rb') as fh:
                   sha = hashlib.sha256(fh.read()).hexdigest()
-              if 'arm64' in f:
+              if f == 'app-release.apk':
+                  arch = 'universal'
+              elif 'arm64' in f:
                   arch = 'arm64-v8a'
               elif 'armeabi' in f:
                   arch = 'armeabi-v7a'
+              elif 'x86_64' in f:
+                  arch = 'x86_64'
+              elif 'x86-' in f:
+                  arch = 'x86'
               else:
-                  arch = 'universal'
+                  arch = 'other'
               apks.append({'arch': arch, 'file': f, 'size_mb': size_mb, 'sha256': sha})
 
           data = {
               'app': 'BEM Astawidya',
               'latest': version,
               'build': build,
-              'released_at': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'released_at': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
               'apks': apks,
           }
           with open('releases.json', 'w') as fh:

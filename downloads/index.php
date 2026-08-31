@@ -70,6 +70,7 @@ function human_arch(string $arch): string {
         'arm64-v8a'    => 'ARM64 (arm64-v8a)',
         'armeabi-v7a'  => 'ARMv7 (armeabi-v7a)',
         'x86_64'       => 'x86_64 (Emulator/Chromebook)',
+        'x86'          => 'x86 (Emulator)',
         'universal'    => 'Universal (semua perangkat)',
         default        => $arch,
     };

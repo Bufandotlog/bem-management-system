@@ -160,6 +160,9 @@ $isHomePage = ($current_page == 'index.php');
                 <li class="<?php echo ($current_page == 'kontak.php') ? 'active' : ''; ?>">
                     <a href="<?php echo baseUrl('kontak.php'); ?>">Kontak</a>
                 </li>
+                <li>
+                    <a href="<?php echo baseUrl('downloads/'); ?>" style="color:#16a34a;font-weight:600;">📱 Unduh Aplikasi</a>
+                </li>
             </ul>
             
             <!-- Mobile Menu Toggle -->
