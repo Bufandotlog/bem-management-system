@@ -240,7 +240,7 @@ $cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ .
     $hasTurnstile = $turnstileEnabledFront && !empty($turnstileSiteKey) && !$isLocked;
     if ($hasTurnstile):
     ?>
-    <script src="../astawidya/assets/turnstile/api.js?<?php echo filemtime(__DIR__ . '/assets/turnstile/api.js') ?: '1'; ?>" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <?php endif; ?>
 </head>
 <body>
