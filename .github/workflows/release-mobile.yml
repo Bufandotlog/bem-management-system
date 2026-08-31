@@ -1,0 +1,167 @@
+name: Release BEM Mobile
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'mobile_app/**'
+      - '.github/workflows/release-mobile.yml'
+
+# Hindari race-condition: hanya satu workflow release berjalan pada satu waktu.
+concurrency:
+  group: release-bem-mobile
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Deploy APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter 3.44.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.44.9'
+          cache: true
+
+      - name: Decode Android signing material
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_PROPS_B64: ${{ secrets.KEY_PROPERTIES_BASE64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p mobile_app/android/app
+          echo "$KEYSTORE_B64" | base64 -d > mobile_app/android/app/bem-release.keystore
+          echo "$KEY_PROPS_B64" | base64 -d > mobile_app/android/key.properties
+          echo "Keystore + key.properties decoded."
+
+      - name: Show Flutter version
+        working-directory: mobile_app
+        run: flutter --version
+
+      - name: Install dependencies
+        working-directory: mobile_app
+        run: flutter pub get
+
+      - name: Parse version from pubspec.yaml
+        id: version
+        working-directory: mobile_app
+        run: |
+          set -euo pipefail
+          RAW=$(grep '^version:' pubspec.yaml | head -1 | awk '{print $2}' | tr -d '\r\n')
+          VERSION=${RAW%%+*}
+          BUILD=${RAW##*+}
+          if [[ -z "$VERSION" || -z "$BUILD" ]]; then
+            echo "ERROR: cannot parse version from pubspec.yaml (raw='$RAW')" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "Parsed: version=$VERSION build=$BUILD"
+
+      - name: Run flutter analyze
+        working-directory: mobile_app
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build APK (universal)
+        working-directory: mobile_app
+        run: flutter build apk --release
+
+      - name: Build APK (split per ABI)
+        working-directory: mobile_app
+        run: flutter build apk --release --split-per-abi
+
+      - name: Inspect produced APKs
+        working-directory: mobile_app/build/app/outputs/flutter-apk
+        run: |
+          set -euo pipefail
+          ls -la
+          echo "---"
+          for f in *.apk; do
+            [[ -e "$f" ]] || { echo "No APK found"; exit 1; }
+            SIZE_MB=$(du -m "$f" | cut -f1)
+            SHA=$(sha256sum "$f" | awk '{print $1}')
+            echo "${f}|${SIZE_MB}|${SHA}"
+          done
+
+      - name: Generate SHA-256 file
+        working-directory: mobile_app/build/app/outputs/flutter-apk
+        run: |
+          set -euo pipefail
+          sha256sum *.apk > sha256.txt
+          cat sha256.txt
+
+      - name: Generate releases.json
+        working-directory: mobile_app/build/app/outputs/flutter-apk
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: |
+          set -euo pipefail
+          python3 - <<PYEOF
+          import json, os, hashlib, datetime, glob
+
+          version = os.environ['VERSION']
+          build = int(os.environ['BUILD'])
+          apks = []
+          for f in sorted(glob.glob('*.apk')):
+              size_mb = round(os.path.getsize(f) / (1024*1024), 1)
+              with open(f, 'rb') as fh:
+                  sha = hashlib.sha256(fh.read()).hexdigest()
+              if 'arm64' in f:
+                  arch = 'arm64-v8a'
+              elif 'armeabi' in f:
+                  arch = 'armeabi-v7a'
+              else:
+                  arch = 'universal'
+              apks.append({'arch': arch, 'file': f, 'size_mb': size_mb, 'sha256': sha})
+
+          data = {
+              'app': 'BEM Astawidya',
+              'latest': version,
+              'build': build,
+              'released_at': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'apks': apks,
+          }
+          with open('releases.json', 'w') as fh:
+              json.dump(data, fh, indent=2)
+          print(json.dumps(data, indent=2))
+          PYEOF
+
+      - name: Deploy to VPS
+        uses: appleboy/rsync-action@v0.1.7
+        with:
+          hosts: ${{ secrets.VPS_HOST }}
+          port: 40222
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            mkdir -p /var/www/html/bem/downloads
+            rsync -avz --delete \
+              app-*.apk \
+              sha256.txt \
+              releases.json \
+              /var/www/html/bem/downloads/
+          options: >-
+            --include='app-*.apk'
+            --include='sha256.txt'
+            --include='releases.json'
+            --exclude='*'
