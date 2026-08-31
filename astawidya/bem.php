@@ -240,7 +240,7 @@ $cssVer = file_exists(__DIR__ . '/../admin/css/login.css') ? filemtime(__DIR__ .
     $hasTurnstile = $turnstileEnabledFront && !empty($turnstileSiteKey) && !$isLocked;
     if ($hasTurnstile):
     ?>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="../astawidya/assets/turnstile/api.js?<?php echo filemtime(__DIR__ . '/assets/turnstile/api.js') ?: '1'; ?>" async defer></script>
     <?php endif; ?>
 </head>
 <body>
@@ -406,21 +406,34 @@ function onTurnstileExpired() {
     }
 }
 
-// Fallback: jika script Turnstile tidak load dalam 5 detik (network/adblock
-// memblokir challenges.cloudflare.com), tampilkan pesan & tetap kunci form
-// agar user tidak lanjut tanpa verifikasi.
+// Fallback: jika widget Turnstile tidak load dalam 8 detik (adblocker
+// memblokir challenges.cloudflare.com yang dipakai widget untuk fetch
+// challenge), tampilkan pesan troubleshooting & tetap kunci form.
 (function() {
-    var hasTurnstileEl = document.querySelector('.cf-turnstile');
-    if (!hasTurnstileEl) return;
-    setTimeout(function() {
-        var rendered = hasTurnstileEl.querySelector('iframe') || hasTurnstileEl.children.length > 0;
-        var notice = document.getElementById('turnstileNotice');
-        if (!rendered && notice) {
-            notice.textContent = '⚠ Widget verifikasi gagal dimuat. Periksa koneksi / nonaktifkan adblocker, lalu refresh.';
-            notice.style.color = '#f44336';
-            notice.style.display = 'block';
-        }
-    }, 5000);
+    var el = document.querySelector('.cf-turnstile');
+    if (!el) return;
+    var notice = document.getElementById('turnstileNotice');
+    var started = Date.now();
+
+    function check() {
+        var rendered = el.querySelector('iframe') || el.children.length > 0;
+        if (rendered) return; // widget OK
+        var elapsed = Date.now() - started;
+        if (elapsed < 8000) { setTimeout(check, 500); return; }
+        if (!notice) return;
+        notice.innerHTML =
+            '<strong>⚠ Widget verifikasi gagal dimuat.</strong><br>' +
+            '<small style="display:block;margin-top:6px;line-height:1.4;">' +
+            'Kemungkinan diblokir oleh AdBlocker / ISP / DNS. Coba:<br>' +
+            '1. Whitelist <code>challenges.cloudflare.com</code> dan <code>bembudiutomo.my.id</code> di AdBlock<br>' +
+            '2. Matikan VPN / Proxy / DNS filtering<br>' +
+            '3. Coba browser berbeda (Chrome / Firefox tanpa ekstensi)<br>' +
+            '4. Hubungi admin jika masalah berlanjut' +
+            '</small>';
+        notice.style.color = '#f44336';
+        notice.style.display = 'block';
+    }
+    setTimeout(check, 500);
 })();
 </script>
 </body>
