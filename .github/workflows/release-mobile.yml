@@ -157,22 +157,32 @@ jobs:
           print(json.dumps(data, indent=2))
           PYEOF
 
-      - name: Deploy to VPS
-        uses: appleboy/rsync-action@v0.1.7
-        with:
-          hosts: ${{ secrets.VPS_HOST }}
-          port: 40222
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            mkdir -p /var/www/html/bem/downloads
-            rsync -avz --delete \
-              app-*.apk \
-              sha256.txt \
-              releases.json \
-              /var/www/html/bem/downloads/
-          options: >-
-            --include='app-*.apk'
-            --include='sha256.txt'
-            --include='releases.json'
-            --exclude='*'
+      - name: Deploy to VPS (rsync via SSH)
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deploy_key
+          echo "$SSH_KEY" > /tmp/deploy_key/id_ed25519
+          chmod 600 /tmp/deploy_key/id_ed25519
+          eval "$(ssh-agent -s)"
+          ssh-add /tmp/deploy_key/id_ed25519
+          # disable strict host key checking agar first-run tidak hang
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking accept-new" > ~/.ssh/config
+          # rsync hanya file release + json + checksum
+          rsync -avz --delete \
+            -e "ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new" \
+            --include='app-release.apk' \
+            --include='app-*-release.apk' \
+            --include='sha256.txt' \
+            --include='releases.json' \
+            --include='index.php' \
+            --exclude='*' \
+            ./ \
+            "${VPS_USER}@${VPS_HOST}:/var/www/html/bem/downloads/"
+          # bersihkan key dari runner
+          ssh-agent -k || true
+          rm -rf /tmp/deploy_key
