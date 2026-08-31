@@ -107,7 +107,7 @@ $periode_info = htmlspecialchars(
 <!-- Page Header -->
 <div class="page-header">
     <h1>Manajemen Kepengurusan</h1>
-    <p>Kelola struktur organisasi BEM Kabinet Astawidya</p>
+    <!-- <p>Kelola struktur organisasi BEM Kabinet Astawidya</p> — dihapus 31 Agt 2026: deskripsi berulang -->
     <div style="margin-top: 10px; padding: 8px 15px; background: rgba(74,144,226,0.1); border-radius: 5px; display: inline-block;">
         <i class="fas fa-calendar-alt" style="color: var(--primary);"></i>
         <span style="color: var(--text-light);"><?php echo $periode_info; ?></span>
