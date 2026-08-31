@@ -2,7 +2,6 @@
 // api/mobile/register-fcm-token.php
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/functions.php';
 
 if (!isLoggedIn()) {
@@ -12,6 +11,7 @@ if (!isLoggedIn()) {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
+if (!is_array($input)) $input = [];
 $fcmToken = sanitizeText($input['fcm_token'] ?? '', 255);
 $deviceType = sanitizeText($input['device_type'] ?? 'android', 50);
 $appVersion = sanitizeText($input['app_version'] ?? '1.0.0', 20);
