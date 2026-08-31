@@ -406,20 +406,29 @@ function onTurnstileExpired() {
     }
 }
 
-// Fallback: jika widget Turnstile tidak load dalam 8 detik (adblocker
-// memblokir challenges.cloudflare.com yang dipakai widget untuk fetch
-// challenge), tampilkan pesan troubleshooting & tetap kunci form.
+// Fallback: jika widget Turnstile tidak load (AdBlocker, ISP, DNS filter
+// memblokir challenges.cloudflare.com), tampilkan pesan troubleshooting
+// & tetap kunci form. Threshold dinaikkan ke 12 detik untuk jaringan
+// lambat; cek apakah script tag sudah error (onerror) sebelum tampilkan.
 (function() {
     var el = document.querySelector('.cf-turnstile');
     if (!el) return;
     var notice = document.getElementById('turnstileNotice');
     var started = Date.now();
+    var scriptErr = false;
+
+    // Deteksi kalau script api.js gagal load (network error, blocked)
+    var apiScript = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+    if (apiScript) {
+        apiScript.addEventListener('error', function() { scriptErr = true; });
+    }
 
     function check() {
+        // Widget OK jika sudah ada iframe (widget rendered)
         var rendered = el.querySelector('iframe') || el.children.length > 0;
-        if (rendered) return; // widget OK
+        if (rendered) return;
         var elapsed = Date.now() - started;
-        if (elapsed < 8000) { setTimeout(check, 500); return; }
+        if (elapsed < 12000 && !scriptErr) { setTimeout(check, 500); return; }
         if (!notice) return;
         notice.innerHTML =
             '<strong>⚠ Widget verifikasi gagal dimuat.</strong><br>' +
