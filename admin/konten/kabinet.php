@@ -43,6 +43,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 // ============================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 
+    // --- 413 PROTECT: pre-check ukuran request sebelum PHP proses ---
+    $contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+    $maxAllowed    = (int) (defined('MAX_FILE_SIZE') ? MAX_FILE_SIZE : 5 * 1024 * 1024);
+    // Beri buffer 1MB untuk field text tambahan
+    $limitWithBuffer = $maxAllowed + 1024 * 1024;
+
+    if ($contentLength > $limitWithBuffer) {
+        redirect('admin/konten/kabinet.php',
+            'Ukuran file/permintaan melebihi batas maksimal (' . round($maxAllowed/1024/1024, 0) . 'MB). '
+            . 'Kompresi gambar (JPEG quality 80-90%) atau kurangi ukuran foto.',
+            'error'
+        );
+        exit();
+    }
+
     if (!csrfVerify()) {
         redirect('admin/konten/kabinet.php', 'Request tidak valid.', 'error');
         exit();
@@ -229,7 +244,8 @@ $beda_selesai = $periode_aktif && $periode_aktif['tahun_selesai'] != ($kabinet['
             <input type="file" id="inputLogo" name="logo"
                    accept="image/jpeg,image/png,image/gif,image/webp"
                    onchange="previewFile(this, 'logo-preview')">
-            <small>Format: JPG, PNG, GIF, WebP. Maks 5MB. Kosongkan jika tidak ingin mengubah.</small>
+            <small>Format: JPG, PNG, GIF, WebP. Maks <?php echo round(MAX_FILE_SIZE/1024/1024,0); ?>MB (ukuran file). 
+              <strong style="color:var(--warning,#d97706)"> — nginx limit 64MB, PHP limit <?php echo round(MAX_FILE_SIZE/1024/1024,0); ?>MB</strong></small>
 
             <div class="new-file-preview" id="logo-preview">
                 <img id="logo-preview-img" alt="Preview logo baru">
@@ -269,7 +285,8 @@ $beda_selesai = $periode_aktif && $periode_aktif['tahun_selesai'] != ($kabinet['
             <input type="file" id="inputFoto" name="foto_bersama"
                    accept="image/jpeg,image/png,image/gif,image/webp"
                    onchange="previewFile(this, 'foto-preview')">
-            <small>Format: JPG, PNG, GIF, WebP. Maks 5MB. Kosongkan jika tidak ingin mengubah.</small>
+            <small>Format: JPG, PNG, GIF, WebP. Maks <?php echo round(MAX_FILE_SIZE/1024/1024,0); ?>MB (ukuran file). 
+              <strong style="color:var(--warning,#d97706)"> — gunakan <a href="https://tinypng.com" target="_blank">TinyPNG</a> bila perlu</strong></small>
 
             <div class="new-file-preview" id="foto-preview">
                 <img id="foto-preview-img" alt="Preview foto baru">
@@ -307,7 +324,7 @@ function previewFile(input, wrapId) {
     const file = input.files[0];
     if (!file) return;
     if (file.size > <?php echo MAX_FILE_SIZE; ?>) {
-        alert('Ukuran file terlalu besar! Maksimal <?php echo round(MAX_FILE_SIZE/1024/1024, 2); ?>MB.');
+        alert('Ukuran file terlalu besar! Maksimal <?php echo round(MAX_FILE_SIZE/1024/1024, 0); ?>MB.');
         input.value = '';
         document.getElementById(wrapId).style.display = 'none';
         return;
