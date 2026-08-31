@@ -88,14 +88,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action_hapus'])) {
         exit();
     }
 
+    // Untuk ketua & wakil_ketua: wajib pilih akun (ada 1 kepala)
+    // Untuk sekretaris_umum & bendahara_umum: TIDAK ada kepala, hanya anggota → user_id opsional (NULL)
+    $require_user_id = in_array($posisi, ['ketua', 'wakil_ketua']);
+    
     $user_id = !empty($_POST['user_id']) ? (int)$_POST['user_id'] : null;
-    if (!$user_id) {
+    if ($require_user_id && !$user_id) {
         redirect('admin/konten/kepengurusan-edit.php?posisi=' . urlencode($posisi), 'Harap pilih akun anggota terdaftar.', 'error');
         exit();
     }
     
-    $u = dbFetchOne("SELECT nama FROM users WHERE id = ?", [$user_id], "i");
-    $nama = $u['nama'] ?? '';
+    // Untuk sekretaris/bendahara tanpa user_id, nama diambil dari jabatan default
+    if ($user_id) {
+        $u = dbFetchOne("SELECT nama FROM users WHERE id = ?", [$user_id], "i");
+        $nama = $u['nama'] ?? '';
+    } else {
+        $nama = $judul[$posisi]; // default: "Sekretaris Umum" / "Bendahara Umum"
+    }
     
     $jabatan = sanitizeText($_POST['jabatan'] ?? '', 100);
     $foto    = $data['foto'] ?? '';
@@ -329,8 +338,10 @@ $posisiEncoded = urlencode($posisi);
     <!-- Informasi Dasar -->
     <div class="form-section">
         <h2><i class="fas fa-info-circle"></i> Informasi Dasar</h2>
+        <?php if (in_array($posisi, ['ketua', 'wakil_ketua'])): ?>
+        <!-- Ketua & Wakil Ketua: WAJIB pilih akun (ada 1 kepala) -->
         <div class="form-group" id="bphFieldContainer">
-            <label>Pilih Akun Terdaftar</label>
+            <label>Pilih Akun Terdaftar <span class="required">*</span></label>
             <select name="user_id" class="form-control" required>
                 <option value="">-- Pilih Akun Terdaftar --</option>
                 <?php foreach($list_akun as $akun): 
@@ -342,6 +353,15 @@ $posisiEncoded = urlencode($posisi);
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php else: ?>
+        <!-- Sekretaris & Bendahara: TIDAK ada kepala, hanya anggota → field disembunyikan -->
+        <input type="hidden" name="user_id" value="">
+        <div class="form-group" style="opacity: 0.6;">
+            <label>Kepala Divisi</label>
+            <input type="text" class="form-control" value="Tidak ada (hanya anggota: Sekum 1/2 atau Bendum 1/2)" readonly>
+            <small>Anggota dikelola di bagian <strong>Anggota</strong> di bawah. Tidak ada posisi "Kepala Sekretariat/Bendahara".</small>
+        </div>
+        <?php endif; ?>
         <div class="form-group">
             <label>Jabatan</label>
             <input type="text" name="jabatan"
