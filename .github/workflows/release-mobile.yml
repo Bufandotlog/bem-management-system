@@ -169,20 +169,20 @@ jobs:
           chmod 600 /tmp/deploy_key/id_ed25519
           eval "$(ssh-agent -s)"
           ssh-add /tmp/deploy_key/id_ed25519
-          # disable strict host key checking agar first-run tidak hang
           mkdir -p ~/.ssh
           echo "StrictHostKeyChecking accept-new" > ~/.ssh/config
-          # rsync hanya file release + json + checksum
-          rsync -avz --delete \
+          # rsync dari working-directory yang sudah benar (step sebelumnya).
+          # Working-directory step ini sama dengan step generate releases.json/sha256
+          # agar APK + metadata selalu dikirim sebagai satu paket.
+          rsync -avz \
             -e "ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new" \
-            --include='app-release.apk' \
-            --include='app-*-release.apk' \
-            --include='sha256.txt' \
-            --include='releases.json' \
-            --include='index.php' \
-            --exclude='*' \
-            ./ \
+            ./app-release.apk \
+            ./app-arm64-v8a-release.apk \
+            ./app-armeabi-v7a-release.apk \
+            ./app-x86-release.apk \
+            ./app-x86_64-release.apk \
+            ./sha256.txt \
+            ./releases.json \
             "${VPS_USER}@${VPS_HOST}:/var/www/html/bem/downloads/"
-          # bersihkan key dari runner
           ssh-agent -k || true
           rm -rf /tmp/deploy_key
