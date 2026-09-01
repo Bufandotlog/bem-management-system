@@ -18,7 +18,7 @@ defined('SITE_NAME') || define('SITE_NAME', 'BEM Kabinet Astawidya');
 // ============================================
 // 2.5 CANONICAL HOST (force www, prevent state mismatch)
 // ============================================
-$canonicalHost = 'www.bembudiutomo.my.id';
+$canonicalHost = 'bembudiutomo.my.id';
 $requestHost   = $_SERVER['HTTP_HOST'] ?? '';
 if ($requestHost !== $canonicalHost) {
     $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
