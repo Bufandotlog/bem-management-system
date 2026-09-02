@@ -172,10 +172,18 @@ jobs:
           ssh-add /tmp/deploy_key/id_ed25519
           mkdir -p ~/.ssh
           echo "StrictHostKeyChecking accept-new" > ~/.ssh/config
-          # rsync dari working-directory yang sudah benar (step sebelumnya).
-          # Working-directory step ini sama dengan step generate releases.json/sha256
-          # agar APK + metadata selalu dikirim sebagai satu paket.
-          rsync -avz \
+          # Strategi deploy 2 langkah karena /var/www/html/bem/downloads/ di-VPS
+          # mode 775 owner www-data:www-data, dan user 'bufan' (SSH user GitHub
+          # Actions) bukan member www-data group → rsync langsung exit 23
+          # (Permission denied). Solusi: rsync ke staging path di $HOME bufan
+          # (writable), lalu sudo -n mv ke final location. 'bufan' punya NOPASSWD
+          # sudoers, jadi tidak perlu prompt password.
+          # 1. Rsync ke staging di VPS (path writable untuk bufan).
+          # 2. SSH kedua: trigger sudo -n mv di VPS (NOPASSWD, no prompt).
+          # 3. Verifikasi jumlah file di final location.
+          STAGING="/home/${VPS_USER}/staging-bem-downloads"
+          FINAL="/var/www/html/bem/downloads"
+          rsync -avz --mkpath \
             -e "ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new" \
             ./app-release.apk \
             ./app-arm64-v8a-release.apk \
@@ -184,6 +192,39 @@ jobs:
             ./app-x86_64-release.apk \
             ./sha256.txt \
             ./releases.json \
-            "${VPS_USER}@${VPS_HOST}:/var/www/html/bem/downloads/"
+            "${VPS_USER}@${VPS_HOST}:${STAGING}/"
+          # SSH kedua: pindahkan file dari staging ke final via sudo -n (NOPASSWD).
+          # Hapus file lama di final agar update konsisten, lalu mv dari staging.
+          # Chown ke www-data:www-data agar konsisten dengan index.php (mode 775
+          # group owner). PHP-FPM dan Nginx read akses tidak masalah (other=read).
+          ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new \
+            "${VPS_USER}@${VPS_HOST}" \
+            "sudo -n bash -c '
+              set -e
+              STAGING=\"${STAGING}\"
+              FINAL=\"${FINAL}\"
+              # Hapus file lama di final agar tidak ada leftover.
+              rm -f \"\${FINAL}\"/app-*.apk \"\${FINAL}\"/releases.json \"\${FINAL}\"/sha256.txt
+              # Pindahkan file dari staging ke final.
+              mv -v \"\${STAGING}\"/* \"\${FINAL}\"/
+              # Chown ke www-data:www-data (sesuai owner index.php & mode 775 group).
+              chown www-data:www-data \"\${FINAL}\"/app-*.apk \"\${FINAL}\"/releases.json \"\${FINAL}\"/sha256.txt
+              # Bersihkan staging.
+              rm -rf \"\${STAGING}\"
+              # Tampilkan hasil akhir.
+              echo \"--- After deploy ---\"
+              ls -la \"\${FINAL}\"
+              echo \"--- File count ---\"
+              ls \"\${FINAL}\" | wc -l
+            '"
+          # Verifikasi jumlah file via SSH baca saja (no sudo).
+          COUNT=$(ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new \
+            "${VPS_USER}@${VPS_HOST}" \
+            "ls ${FINAL} 2>/dev/null | wc -l")
+          echo "Final file count: ${COUNT}"
+          if [[ "${COUNT}" -lt 7 ]]; then
+            echo "ERROR: expected >=7 files (5 APK + releases.json + sha256.txt), got ${COUNT}" >&2
+            exit 1
+          fi
           ssh-agent -k || true
           rm -rf /tmp/deploy_key
