@@ -7,6 +7,10 @@ on:
     paths:
       - 'mobile_app/**'
       - '.github/workflows/release-mobile.yml'
+  # Manual trigger via GitHub UI/API (Actions tab → Run workflow).
+  # Berguna untuk re-deploy metadata (releases.json + sha256.txt) tanpa
+  # harus push perubahan ke mobile_app/**.
+  workflow_dispatch:
 
 # Hindari race-condition: hanya satu workflow release berjalan pada satu waktu.
 concurrency:
