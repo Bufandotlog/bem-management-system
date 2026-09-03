@@ -676,12 +676,20 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             }
             $tahun_surat = end($parts) ?: date('Y');
             // [FITUR 2026-09-04] Nama periode untuk header Format 2
-            $periode_label_header = $db_periode['nama'] ?? 'PERIODE ' . $tahun_surat;
+            // db_periode['nama'] sudah mengandung 'PERIODE' (e.g. 'RANCAGE BHAKTI PERIODE 2026-2027').
+            // Hindari duplikat 'PERIODE PERIODE' dengan deteksi string.
+            $raw_periode = trim($db_periode['nama'] ?? '');
+            $upper_periode = strtoupper($raw_periode);
+            if (stripos($raw_periode, 'periode') !== false) {
+                $periode_label_header = $upper_periode;
+            } else {
+                $periode_label_header = 'PERIODE ' . $tahun_surat;
+            }
 
             if ($format_ttd === '2'):
                 // FORMAT 2: BEM Direct Periode (2 TTD) — Tanpa Panitia, Tanpa Warek/BPM
             ?>
-                <div class="ttd-title">BEM INSTBUNAS MAJALENGKA PERIODE <?php echo strtoupper(htmlspecialchars($periode_label_header)); ?></div>
+                <div class="ttd-title">BEM INSTBUNAS MAJALENGKA <?php echo htmlspecialchars($periode_label_header); ?></div>
                 <table class="ttd-table" style="margin-bottom: 5px;">
                     <tr>
                         <td style="position:relative;">
