@@ -1447,20 +1447,20 @@ function filterLampiran() {
         if (namaKegiatanAsli !== '') {
             rteNamaKeg.innerHTML = namaKegiatanAsli;
             inputNamaKeg.value = namaKegiatanAsli;
-        } else {
-            rteNamaKeg.innerHTML = '';
-            inputNamaKeg.value = '';
         }
+        // [FIX 2026-09-04] JANGAN clear rte_nama_keg/input_nama_kegiatan saat clone/edit
+        // jika kegiatan_id tidak ada di <select>. Sebelumnya, line 1451-1452 clear hidden
+        // input, menyebabkan preview paragraf tampil [Nama Kegiatan] placeholder
+        // walaupun data nama_kegiatan ada di $edit_data (hidden input value dari PHP).
+        // Cukup preserve nilai existing; user masih bisa edit manual.
     }
     
     if (rteTema && inputTema) {
         if (temaKegiatan !== '') {
             rteTema.innerHTML = temaKegiatan;
             inputTema.value = temaKegiatan;
-        } else {
-            rteTema.innerHTML = '';
-            inputTema.value = '';
         }
+        // Sama seperti di atas: jangan clear. Preserve value existing.
     }
     
     if(typeof updatePreviewParagraf === 'function') updatePreviewParagraf();
