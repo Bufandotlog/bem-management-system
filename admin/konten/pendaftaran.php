@@ -103,8 +103,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $periode_id, $_SESSION['admin_id'], $bph_id, $user_id, $row['nama_lengkap'], $row['jabatan'], $row['file_ttd']
                         ]);
                     } else {
+                        // [FIX 2026-09-04] Resolve kementerian_id ke periode aktif
+                        // pendaftaran_anggota.kementerian_id bisa reference kementerian
+                        // dari periode lama (cross-period issue). Saat INSERT ke
+                        // anggota_kementerian dengan periode_id=2, kementerian_id harus
+                        // di-resolve ke ID di periode 2 yg nama-nya sama.
+                        $resolved_kem_id = $row['kementerian_id'];
+                        if (!empty($row['kementerian_id'])) {
+                            $kem_asli = dbFetchOne("SELECT nama FROM kementerian WHERE id = ?", [$row['kementerian_id']]);
+                            if ($kem_asli) {
+                                $kem_aktif = dbFetchOne(
+                                    "SELECT id FROM kementerian WHERE nama = ? AND periode_id = ?",
+                                    [$kem_asli['nama'], $periode_id], "si"
+                                );
+                                if ($kem_aktif) {
+                                    $resolved_kem_id = $kem_aktif['id'];
+                                }
+                            }
+                        }
                         dbInsert("INSERT INTO anggota_kementerian (periode_id, created_by, kementerian_id, user_id, nama, jabatan, file_ttd) VALUES (?, ?, ?, ?, ?, ?, ?)", [
-                            $periode_id, $_SESSION['admin_id'], $row['kementerian_id'], $user_id, $row['nama_lengkap'], $row['jabatan'], $row['file_ttd']
+                            $periode_id, $_SESSION['admin_id'], $resolved_kem_id, $user_id, $row['nama_lengkap'], $row['jabatan'], $row['file_ttd']
                         ]);
                     }
 
