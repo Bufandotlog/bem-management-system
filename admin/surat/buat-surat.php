@@ -892,7 +892,14 @@ if ($is_edit || $is_clone) {
         <div class="card">
             <div class="card-header"><i class="fas fa-quote-left"></i> Paragraf Pembuka</div>
             <div class="card-body">
-                <?php $mode_custom_default = !empty($edit_data['tema_kegiatan']) && empty($edit_data['nama_kegiatan']); ?>
+                <?php
+                // [FIX 2026-09-04] Mode detection: prioritas TEMPLATE
+                // Mode custom HANYA jika nama_kegiatan kosong DAN tema_kegiatan ada isinya.
+                // Sebelumnya: !empty(tema_kegiatan) && empty(nama_kegiatan) — benar jika salah satu kosong.
+                // BUG: untuk surat yang punya KEDUA nama_kegiatan + tema_kegiatan, mode jadi custom
+                // (salah), menyembunyikan blok template & membuat field nama_kegiatan/tema "hilang" dari view.
+                $mode_custom_default = empty($edit_data['nama_kegiatan']) && !empty($edit_data['tema_kegiatan']);
+                ?>
                 <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
                     <button type="button" id="toggle-mode-btn" onclick="toggleModeParagraf()" class="btn-outline"><?php echo $mode_custom_default ? 'Ganti ke Mode Template' : 'Ganti ke Mode Custom'; ?></button>
                 </div>
@@ -1536,6 +1543,27 @@ function filterLampiran() {
 document.addEventListener('DOMContentLoaded', function() {
     if(document.getElementById('preview-paragraf-text')) {
         updatePreviewParagraf();
+    }
+    // [FIX 2026-09-04] Sync date picker tgl-mulai (YYYY-MM-DD) dari out-tanggal
+    // (formatted "Sabtu, 5 September 2026") saat clone/edit. Tanpa ini, date picker
+    // kosong saat clone, dan formatTanggalRange() return early sehingga JS
+    // tidak bisa regenerate preview dari input date.
+    const tglMulai = document.getElementById('tgl-mulai');
+    const outTanggal = document.getElementById('out-tanggal');
+    if (tglMulai && outTanggal && !tglMulai.value) {
+        const formatted = outTanggal.value || '';
+        // Parse "Sabtu, 5 September 2026" atau "Sabtu-Minggu, 5-6 September 2026"
+        const match = formatted.match(/(\d{1,2})(?:\s*-\s*(\d{1,2}))?\s+([A-Za-z]+)\s+(\d{4})/);
+        if (match) {
+            const day = match[1].padStart(2, '0');
+            const monthName = match[3].toLowerCase();
+            const months = { januari:'01', februari:'02', maret:'03', april:'04', mei:'05', juni:'06',
+                             juli:'07', agustus:'08', september:'09', oktober:'10', november:'11', desember:'12' };
+            const month = months[monthName];
+            if (month) {
+                tglMulai.value = `${match[4]}-${month}-${day}`;
+            }
+        }
     }
     filterLampiran();
 });
