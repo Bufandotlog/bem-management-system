@@ -112,3 +112,7 @@ downloads/*.sha1
 downloads/releases.json
 downloads/sha256.txt
 mobile_app/build/
+# Private release storage (mirror dari downloads, dilindungi .htaccess deny all)
+storage/app_release/*.apk
+storage/app_release/*.apk.bak-*
+storage/app_release/releases.json

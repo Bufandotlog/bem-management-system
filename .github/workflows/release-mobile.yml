@@ -230,5 +230,66 @@ jobs:
             echo "ERROR: expected >=7 files (5 APK + releases.json + sha256.txt), got ${COUNT}" >&2
             exit 1
           fi
+
+      - name: Sync APK + releases.json to private storage
+        working-directory: mobile_app/build/app/outputs/flutter-apk
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deploy_key
+          echo "$SSH_KEY" > /tmp/deploy_key/id_ed25519
+          chmod 600 /tmp/deploy_key/id_ed25519
+          eval "$(ssh-agent -s)"
+          ssh-add /tmp/deploy_key/id_ed25519
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking accept-new" > ~/.ssh/config
+          # Strategi sama dengan deploy: rsync ke staging writable, lalu sudo -n
+          # mv ke /var/www/html/bem/storage/app_release/ (mode 775, owner
+          # www-data:www-data, dilindungi .htaccess "Require all denied").
+          # 'bufan' user bukan member www-data, jadi tidak bisa write langsung.
+          STORAGE_STAGING="/home/${VPS_USER}/staging-bem-storage"
+          STORAGE_FINAL="/var/www/html/bem/storage/app_release"
+          rsync -avz --mkpath \
+            -e "ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new" \
+            ./app-release.apk \
+            ./app-arm64-v8a-release.apk \
+            ./app-armeabi-v7a-release.apk \
+            ./app-x86-release.apk \
+            ./app-x86_64-release.apk \
+            ./releases.json \
+            "${VPS_USER}@${VPS_HOST}:${STORAGE_STAGING}/"
+          ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new \
+            "${VPS_USER}@${VPS_HOST}" \
+            "sudo -n bash -c '
+              set -e
+              STAGING=\"${STORAGE_STAGING}\"
+              FINAL=\"${STORAGE_FINAL}\"
+              # Hapus APK lama (semua varian) + releases.json. JANGAN hapus
+              # bem-mobile-v*.apk (legacy single-file format, sudah di-backup
+              # di server, biar ada histori).
+              rm -f \"\${FINAL}\"/app-*.apk \"\${FINAL}\"/releases.json
+              mv -v \"\${STAGING}\"/* \"\${FINAL}\"/
+              # Chown ke www-data:www-data (konsisten dengan index.php/FPM).
+              chown www-data:www-data \"\${FINAL}\"/app-*.apk \"\${FINAL}\"/releases.json
+              # Mode 644: read-only untuk other, tulis hanya www-data.
+              chmod 644 \"\${FINAL}\"/app-*.apk \"\${FINAL}\"/releases.json
+              rm -rf \"\${STAGING}\"
+              echo \"--- After storage sync ---\"
+              ls -la \"\${FINAL}\"
+              echo \"--- APK count ---\"
+              ls \"\${FINAL}\"/app-*.apk 2>/dev/null | wc -l
+            '"
+          # Verifikasi: 5 APK + releases.json = 6 files minimal.
+          STORAGE_COUNT=$(ssh -i /tmp/deploy_key/id_ed25519 -p 40222 -o StrictHostKeyChecking=accept-new \
+            "${VPS_USER}@${VPS_HOST}" \
+            "ls ${STORAGE_FINAL}/app-*.apk ${STORAGE_FINAL}/releases.json 2>/dev/null | wc -l")
+          echo "Storage file count: ${STORAGE_COUNT}"
+          if [[ "${STORAGE_COUNT}" -lt 6 ]]; then
+            echo "ERROR: expected >=6 files in storage (5 APK + releases.json), got ${STORAGE_COUNT}" >&2
+            exit 1
+          fi
           ssh-agent -k || true
           rm -rf /tmp/deploy_key
