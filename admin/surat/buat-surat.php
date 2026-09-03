@@ -238,12 +238,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // --- HANDLER LAMPIRAN INTERNAL (JSON DATA) ---
         $lampiran_internal_ids = $_POST['lampiran_internal'] ?? [];
         $konten_data['lampiran_internal_ids'] = $lampiran_internal_ids;
-        
+
         // --- HANDLER RUNDOWN INTERNAL (JSON DATA) ---
         $rundown_internal_ids = $_POST['rundown_internal'] ?? [];
         $konten_data['rundown_internal_ids'] = $rundown_internal_ids;
-        
+
         $konten_data['lampiran_files'] = $lampiran_files;
+
+        // [FITUR 2026-09-04] Format TTD selector
+        $format_ttd = $_POST['format_ttd'] ?? '1';
+        if (!in_array($format_ttd, ['1', '2', '3'], true)) {
+            $format_ttd = '1';
+        }
+        $konten_data['format_ttd'] = $format_ttd;
+
         $konten_json = json_encode($konten_data);
         
         if ($konten_json === false) {
@@ -311,7 +319,8 @@ $def = [
     'konteks'                  => '',
     'panitia_ketua'            => '',
     'panitia_sekretaris'       => '',
-    'tembusan'                 => ''
+    'tembusan'                 => '',
+    'format_ttd'               => '1'  // [FITUR 2026-09-04] default Format 1
 ];
 if ($is_edit || $is_clone) {
     foreach($def as $k=>$v) if(!isset($edit_data[$k])) $edit_data[$k] = $v;
@@ -1135,6 +1144,39 @@ if ($is_edit || $is_clone) {
                         </div>
                     </div>
                 <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- CARD 4.5: FORMAT & LAYOUT TANDA TANGAN [FITUR 2026-09-04] -->
+        <div class="card">
+            <div class="card-header"><i class="fas fa-th-large"></i> Format &amp; Layout Tanda Tangan</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Pilih Format Tanda Tangan</label>
+                    <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer; background:rgba(74,144,226,0.05);">
+                            <input type="radio" name="format_ttd" value="1" <?php echo ($edit_data['format_ttd'] ?? '1') === '1' ? 'checked' : ''; ?> style="margin-top:4px;">
+                            <div>
+                                <div style="font-weight:bold; color:#8BB9F0;">Format 1 — Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BEM</div>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua Pelaksana &amp; Sekretaris. Baris bawah: WAREK III &amp; Ketua BEM (Mengetahui).</div>
+                            </div>
+                        </label>
+                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
+                            <input type="radio" name="format_ttd" value="2" <?php echo ($edit_data['format_ttd'] ?? '') === '2' ? 'checked' : ''; ?> style="margin-top:4px;">
+                            <div>
+                                <div style="font-weight:bold; color:#8BB9F0;">Format 2 — BEM Direct (2 TTD Periode)</div>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: BEM INSTBUNAS MAJALENGKA PERIODE [TAHUN]. Baris: Ketua BEM &amp; Sekretaris BEM. Tanpa panitia/Warek/BPM.</div>
+                            </div>
+                        </label>
+                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
+                            <input type="radio" name="format_ttd" value="3" <?php echo ($edit_data['format_ttd'] ?? '') === '3' ? 'checked' : ''; ?> style="margin-top:4px;">
+                            <div>
+                                <div style="font-weight:bold; color:#8BB9F0;">Format 3 — Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BPM</div>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua BEM/Ketua Pelaksana &amp; Sekretaris. Baris bawah: WAREK III &amp; Ketua BPM (Mengetahui).</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 

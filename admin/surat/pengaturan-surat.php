@@ -30,6 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         $p_jab = sanitizeText($_POST['ttd_presma_jabatan'] ?? '');
         $s_name = sanitizeText($_POST['ttd_sekretaris_name'] ?? '');
         $s_jab = sanitizeText($_POST['ttd_sekretaris_jabatan'] ?? '');
+        // [FITUR 2026-09-04] BPM settings
+        $bpm_name = sanitizeText($_POST['ttd_bpm_name'] ?? '');
+        $bpm_jab = sanitizeText($_POST['ttd_bpm_jabatan'] ?? '');
 
         dbUpsertPengaturan('ttd_warek_name', $w_name);
         dbUpsertPengaturan('ttd_warek_jabatan', $w_jab);
@@ -37,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         dbUpsertPengaturan('ttd_presma_jabatan', $p_jab);
         dbUpsertPengaturan('ttd_sekretaris_name', $s_name);
         dbUpsertPengaturan('ttd_sekretaris_jabatan', $s_jab);
+        dbUpsertPengaturan('ttd_bpm_name', $bpm_name);
+        dbUpsertPengaturan('ttd_bpm_jabatan', $bpm_jab);
 
         // Fetch current settings to handle image deletion
         $db_pengaturan = dbFetchAll("SELECT kunci, nilai FROM pengaturan");
@@ -46,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         }
 
         // Handle Image Deletion
-        $delete_targets = ['warek', 'presma', 'sekretaris', 'cap_panitia', 'cap_warek', 'cap_presma'];
+        $delete_targets = ['warek', 'presma', 'sekretaris', 'cap_panitia', 'cap_warek', 'cap_presma', 'bpm', 'cap_bpm'];
         foreach ($delete_targets as $tgt) {
             if (($_POST['delete_' . $tgt] ?? '') === '1') {
                 $db_key = in_array($tgt, ['warek', 'presma', 'sekretaris']) ? 'ttd_' . $tgt . '_image' : $tgt . '_image';
@@ -85,6 +90,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         if (!empty($_FILES['cap_presma_image']['name'])) {
             $uploaded = uploadFile($_FILES['cap_presma_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('cap_presma_image', $uploaded);
+        }
+        // [FITUR 2026-09-04] BPM TTD & Cap
+        if (!empty($_FILES['ttd_bpm_image']['name'])) {
+            $uploaded = uploadFile($_FILES['ttd_bpm_image'], 'umum');
+            if ($uploaded) dbUpsertPengaturan('ttd_bpm_image', $uploaded);
+            else $error = "Gagal upload ttd_bpm_image.";
+        }
+        if (!empty($_FILES['cap_bpm_image']['name'])) {
+            $uploaded = uploadFile($_FILES['cap_bpm_image'], 'umum');
+            if ($uploaded) dbUpsertPengaturan('cap_bpm_image', $uploaded);
         }
         if(empty($error)) $success = "Pengaturan Tanda Tangan & Stempel berhasil diperbarui.";
     }
@@ -254,6 +269,12 @@ $def_sekretaris_img  = $pengaturan['ttd_sekretaris_image'] ?? '';
 $def_cap_panitia = $pengaturan['cap_panitia_image'] ?? '';
 $def_cap_warek   = $pengaturan['cap_warek_image'] ?? '';
 $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
+
+// [FITUR 2026-09-04] BPM defaults
+$def_bpm_name = $pengaturan['ttd_bpm_name'] ?? '';
+$def_bpm_jab  = $pengaturan['ttd_bpm_jabatan'] ?? 'Ketua BPM INSTBUNAS Majalengka';
+$def_bpm_img  = $pengaturan['ttd_bpm_image'] ?? '';
+$def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
 ?>
 
 <style>
@@ -560,9 +581,9 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                     </div>
                 </div>
                 <div class="upload-card">
-                    <div class="upload-card-header"><i class="fas fa-user-graduate"></i> Presiden Mahasiswa (BEM)</div>
+                    <div class="upload-card-header"><i class="fas fa-user-graduate"></i> Ketua BEM (Presma)</div>
                     <div class="upload-card-body">
-                        <div class="form-group"><label>Nama Presma</label><input type="text" name="ttd_presma_name" class="form-control" value="<?php echo htmlspecialchars($def_presma_name); ?>" required></div>
+                        <div class="form-group"><label>Nama Ketua BEM</label><input type="text" name="ttd_presma_name" class="form-control" value="<?php echo htmlspecialchars($def_presma_name); ?>" required></div>
                         <div class="form-group"><label>Jabatan</label><input type="text" name="ttd_presma_jabatan" class="form-control" value="<?php echo htmlspecialchars($def_presma_jab); ?>" required></div>
                         <div class="upload-area" data-target="presma">
                             <div class="drop-zone" id="dropzone_presma">
@@ -594,6 +615,26 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                             <div class="preview-container" id="preview_sekretaris_ctn" style="<?php echo $def_sekretaris_img ? 'display:flex' : 'display:none'; ?>">
                                 <img id="preview_sekretaris_img" class="preview-img" src="<?php echo $def_sekretaris_img ? uploadUrl($def_sekretaris_img) : '#'; ?>">
                                 <button type="button" class="btn-remove-img" data-target="sekretaris" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                            <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="upload-card">
+                    <div class="upload-card-header"><i class="fas fa-gavel"></i> Ketua BPM (Untuk Format 3)</div>
+                    <div class="upload-card-body">
+                        <div class="form-group"><label>Nama Ketua BPM</label><input type="text" name="ttd_bpm_name" class="form-control" value="<?php echo htmlspecialchars($def_bpm_name); ?>"></div>
+                        <div class="form-group"><label>Jabatan</label><input type="text" name="ttd_bpm_jabatan" class="form-control" value="<?php echo htmlspecialchars($def_bpm_jab); ?>"></div>
+                        <div class="upload-area" data-target="bpm">
+                            <div class="drop-zone" id="dropzone_bpm">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <p>Seret & lepas gambar di sini<br>atau klik untuk memilih</p>
+                                <input type="file" id="file_bpm" name="ttd_bpm_image" accept="image/png, image/jpeg, image/webp" style="display:none;">
+                                <button type="button" class="btn-select-file" onclick="document.getElementById('file_bpm').click()">Pilih File</button>
+                            </div>
+                            <div class="preview-container" id="preview_bpm_ctn" style="<?php echo $def_bpm_img ? 'display:flex' : 'display:none'; ?>">
+                                <img id="preview_bpm_img" class="preview-img" src="<?php echo $def_bpm_img ? uploadUrl($def_bpm_img) : '#'; ?>">
+                                <button type="button" class="btn-remove-img" data-target="bpm" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
                         </div>
@@ -650,6 +691,23 @@ $def_cap_presma  = $pengaturan['cap_presma_image'] ?? '';
                             <div class="preview-container" id="preview_cap_presma_ctn" style="<?php echo $def_cap_presma ? 'display:flex' : 'display:none'; ?>">
                                 <img id="preview_cap_presma_img" class="preview-img" src="<?php echo $def_cap_presma ? uploadUrl($def_cap_presma) : '#'; ?>">
                                 <button type="button" class="btn-remove-img" data-target="cap_presma" title="Hapus Cap"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                            <small>PNG/JPG transparan.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="upload-card">
+                    <div class="upload-card-header"><i class="fas fa-landmark"></i> Cap BPM (Untuk Format 3)</div>
+                    <div class="upload-card-body">
+                        <div class="upload-area" data-target="cap_bpm">
+                            <div class="drop-zone" id="dropzone_cap_bpm">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i><p>Seret & lepas cap di sini</p>
+                                <input type="file" id="file_cap_bpm" name="cap_bpm_image" accept="image/png, image/jpeg, image/webp" style="display:none;">
+                                <button type="button" class="btn-select-file" onclick="document.getElementById('file_cap_bpm').click()">Pilih File</button>
+                            </div>
+                            <div class="preview-container" id="preview_cap_bpm_ctn" style="<?php echo $def_cap_bpm ? 'display:flex' : 'display:none'; ?>">
+                                <img id="preview_cap_bpm_img" class="preview-img" src="<?php echo $def_cap_bpm ? uploadUrl($def_cap_bpm) : '#'; ?>">
+                                <button type="button" class="btn-remove-img" data-target="cap_bpm" title="Hapus Cap"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan.</small>
                         </div>
@@ -969,9 +1027,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop('dropzone_warek', 'file_warek', 'preview_warek_ctn', 'preview_warek_img');
     setupDragAndDrop('dropzone_presma', 'file_presma', 'preview_presma_ctn', 'preview_presma_img');
     setupDragAndDrop('dropzone_sekretaris', 'file_sekretaris', 'preview_sekretaris_ctn', 'preview_sekretaris_img');
+    setupDragAndDrop('dropzone_bpm', 'file_bpm', 'preview_bpm_ctn', 'preview_bpm_img');
     setupDragAndDrop('dropzone_cap_panitia', 'file_cap_panitia', 'preview_cap_panitia_ctn', 'preview_cap_panitia_img');
     setupDragAndDrop('dropzone_cap_warek', 'file_cap_warek', 'preview_cap_warek_ctn', 'preview_cap_warek_img');
     setupDragAndDrop('dropzone_cap_presma', 'file_cap_presma', 'preview_cap_presma_ctn', 'preview_cap_presma_img');
+    setupDragAndDrop('dropzone_cap_bpm', 'file_cap_bpm', 'preview_cap_bpm_ctn', 'preview_cap_bpm_img');
 });
 
 // ========== ACCORDION TOGGLE ==========
