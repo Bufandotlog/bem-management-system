@@ -734,8 +734,13 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 <table class="ttd-table" style="margin-bottom: 5px;">
                     <tr>
                         <td style="position:relative;">
-                            <?php echo ($format_ttd === '3') ? 'Ketua BEM' : 'Ketua Pelaksana'; ?>
-                            <?php if(!empty($pengaturan['cap_panitia_image']) && ($konten['use_cap_panitia'] ?? '1') === '1'): ?>
+                            <?php if ($format_ttd === '3'): ?>
+                                Ketua BEM<br>
+                                <span class="ttd-jabatan">INSTBUNAS Majalengka</span>
+                            <?php else: ?>
+                                <?php echo ($format_ttd === '2') ? 'Ketua BEM' : 'Ketua Pelaksana'; ?>
+                            <?php endif; ?>
+                            <?php if(($format_ttd !== '3') && !empty($pengaturan['cap_panitia_image']) && ($konten['use_cap_panitia'] ?? '1') === '1'): ?>
                                 <img src="<?php echo uploadUrl($pengaturan['cap_panitia_image']); ?>" style="position:absolute; top:20px; left:100%; transform:translateX(-50%); max-width:190px; max-height:95px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
                             <?php endif; ?>
                             <?php if(!empty($konten['panitia_ketua_ttd'])): ?>
@@ -770,7 +775,8 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                         </td>
                         <td style="position:relative;">
                             <?php if ($format_ttd === '3'): ?>
-                                Ketua BPM
+                                Ketua BPM<br>
+                                <span class="ttd-jabatan">INSTBUNAS Majalengka</span>
                                 <?php if(!empty($pengaturan['cap_bpm_image']) && ($konten['use_cap_bpm'] ?? '1') === '1'): ?>
                                     <img src="<?php echo uploadUrl($pengaturan['cap_bpm_image']); ?>" style="position:absolute; bottom:0px; left:10%; max-width:180px; max-height:130px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
                                 <?php endif; ?>

@@ -189,9 +189,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'panitia_sekretaris_ttd'  => saveSignatureToFile($_POST['panitia_sekretaris_ttd'] ?? '', 'sekretaris'),
             'use_ttd_warek'           => isset($_POST['use_ttd_warek']) ? '1' : '0',
             'use_ttd_presma'          => isset($_POST['use_ttd_presma']) ? '1' : '0',
+            'use_ttd_bpm'             => isset($_POST['use_ttd_bpm']) ? '1' : '0',
             'use_cap_panitia'         => isset($_POST['use_cap_panitia']) ? '1' : '0',
             'use_cap_warek'           => isset($_POST['use_cap_warek']) ? '1' : '0',
             'use_cap_presma'          => isset($_POST['use_cap_presma']) ? '1' : '0',
+            'use_cap_bpm'             => isset($_POST['use_cap_bpm']) ? '1' : '0',
             'tembusan'                => strip_tags(trim($_POST['tembusan'] ?? ''))
         ];
 
@@ -1282,9 +1284,11 @@ if ($is_edit || $is_clone) {
                 <div class="grid-2">
                     <div class="switch-container"><span class="switch-label"><i class="fas fa-user-tie"></i> Sertakan TTD WAREK III</span><label class="switch"><input type="checkbox" name="use_ttd_warek" value="1" <?php echo ($edit_data['use_ttd_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
                     <div class="switch-container"><span class="switch-label"><i class="fas fa-user-graduate"></i> Sertakan TTD PRESMA BEM</span><label class="switch"><input type="checkbox" name="use_ttd_presma" value="1" <?php echo ($edit_data['use_ttd_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap PANITIA</span><label class="switch"><input type="checkbox" name="use_cap_panitia" value="1" <?php echo ($edit_data['use_cap_panitia'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
+                    <div class="switch-container format-non3-only"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap PANITIA <small style="color:#ff9b6b;">(Format 1/2)</small></span><label class="switch"><input type="checkbox" name="use_cap_panitia" value="1" <?php echo ($edit_data['use_cap_panitia'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
                     <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap WAREK</span><label class="switch"><input type="checkbox" name="use_cap_warek" value="1" <?php echo ($edit_data['use_cap_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
                     <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap BEM</span><label class="switch"><input type="checkbox" name="use_cap_presma" value="1" <?php echo ($edit_data['use_cap_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
+                    <div class="switch-container format-3-only" style="display:none;"><span class="switch-label"><i class="fas fa-user-tie"></i> <strong>Sertakan TTD BPM</strong> <small style="color:#8BB9F0;">(Format 3)</small></span><label class="switch"><input type="checkbox" name="use_ttd_bpm" value="1" <?php echo ($edit_data['use_ttd_bpm'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
+                    <div class="switch-container format-3-only" style="display:none;"><span class="switch-label"><i class="fas fa-stamp"></i> <strong>Sertakan Cap BPM</strong> <small style="color:#8BB9F0;">(Format 3)</small></span><label class="switch"><input type="checkbox" name="use_cap_bpm" value="1" <?php echo ($edit_data['use_cap_bpm'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
                 </div>
             </div>
         </div>
@@ -1298,6 +1302,29 @@ if ($is_edit || $is_clone) {
             <?php endif; ?>
         </div>
     </form>
+
+    <script>
+    // [FITUR 2026-09-04] Format-specific visibility:
+    //   format-3-only: tampil HANYA saat user pilih Format 3 (untuk toggle TTD/Cap BPM).
+    //   format-non3-only: tampil HANYA saat user pilih BUKAN Format 3 (untuk toggle Cap PANITIA).
+    //   Untuk surat existing format_ttd=1/2 (legacy), default tampil non3.
+    (function() {
+        function syncFormatOnly() {
+            var checked = document.querySelector('input[name="format_ttd"]:checked');
+            var fmt = checked ? checked.value : '1';
+            var only3 = document.querySelectorAll('.format-3-only');
+            var onlyNon3 = document.querySelectorAll('.format-non3-only');
+            only3.forEach(function(el) { el.style.display = (fmt === '3') ? '' : 'none'; });
+            onlyNon3.forEach(function(el) { el.style.display = (fmt === '3') ? 'none' : ''; });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            syncFormatOnly();
+            document.querySelectorAll('input[name="format_ttd"]').forEach(function(r) {
+                r.addEventListener('change', syncFormatOnly);
+            });
+        });
+    })();
+    </script>
 </div>
 
 <!-- JAVASCRIPT -->
