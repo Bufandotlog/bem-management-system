@@ -685,14 +685,18 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             } else {
                 $periode_label_header = 'PERIODE ' . $tahun_surat;
             }
-            // [KOR 2026-09-04] Label Sekretaris konsisten: ambil dari jabatan ttd_sekretaris_jabatan
-            //   (settings "Sekretaris BEM / Sekretaris Umum"). Hilangkan awalan "Sekretaris" supaya
-            //   tidak double (di-tabel cukup tampil "Umum" sebagai baris jabatan, atau full jika generic).
+            // [KOR 2026-09-04] Label Sekretaris konsisten: mengikuti konvensi BEM
+            //   bahwa "Sekretaris BEM" == "Sekretaris Umum". Label tabel di TTD
+            //   cukup "Sekretaris Umum" (short form). Fallback ke nilai jabatan
+            //   jika tidak mengandung kata "Sekretaris".
             $sekretaris_jab_raw = trim($pengaturan['ttd_sekretaris_jabatan'] ?? '');
-            // Untuk label header tabel cukup "Sekretaris Umum" (short form), atau fallback "Sekretaris".
-            $ttd_label_sekretaris = (stripos($sekretaris_jab_raw, 'umum') !== false)
-                ? 'Sekretaris Umum'
-                : ($sekretaris_jab_raw !== '' ? $sekretaris_jab_raw : 'Sekretaris');
+            if (stripos($sekretaris_jab_raw, 'sekretaris') !== false) {
+                $ttd_label_sekretaris = 'Sekretaris Umum';
+            } elseif ($sekretaris_jab_raw !== '') {
+                $ttd_label_sekretaris = $sekretaris_jab_raw;
+            } else {
+                $ttd_label_sekretaris = 'Sekretaris';
+            }
 
             if ($format_ttd === '2'):
                 // FORMAT 2: BEM Direct Periode (2 TTD) — Tanpa Panitia, Tanpa Warek/BPM
