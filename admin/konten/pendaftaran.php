@@ -96,11 +96,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $bph_id = getOrCreateBphByPosisi('ketua', $periode_id);
                         }
 
-                        dbInsert("INSERT INTO anggota_bph (periode_id, created_by, bph_id, user_id, nama, jabatan, foto) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                        // [FIX 2026-09-04] file_ttd ke kolom file_ttd, BUKAN foto.
+                        // Sebelumnya TTD di-copy ke kolom foto (yg seharusnya foto profil)
+                        // — ini membingungkan picker Panitia Tetap krn path-nya campur.
+                        dbInsert("INSERT INTO anggota_bph (periode_id, created_by, bph_id, user_id, nama, jabatan, file_ttd) VALUES (?, ?, ?, ?, ?, ?, ?)", [
                             $periode_id, $_SESSION['admin_id'], $bph_id, $user_id, $row['nama_lengkap'], $row['jabatan'], $row['file_ttd']
                         ]);
                     } else {
-                        dbInsert("INSERT INTO anggota_kementerian (periode_id, created_by, kementerian_id, user_id, nama, jabatan, foto) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                        dbInsert("INSERT INTO anggota_kementerian (periode_id, created_by, kementerian_id, user_id, nama, jabatan, file_ttd) VALUES (?, ?, ?, ?, ?, ?, ?)", [
                             $periode_id, $_SESSION['admin_id'], $row['kementerian_id'], $user_id, $row['nama_lengkap'], $row['jabatan'], $row['file_ttd']
                         ]);
                     }

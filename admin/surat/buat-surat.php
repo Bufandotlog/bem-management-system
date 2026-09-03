@@ -75,9 +75,13 @@ $list_tujuan   = array_filter($templates, fn($t) => $t['jenis'] === 'tujuan');
 $list_kegiatan = array_filter($templates, fn($t) => $t['jenis'] === 'kegiatan');
 $list_tempat   = array_filter($templates, fn($t) => $t['jenis'] === 'tempat');
 
-$list_panitia_all = dbFetchAll("SELECT * FROM panitia_tetap WHERE periode_id = ? ORDER BY nama ASC", [$periode_id], "i");
+$list_panitia_all = dbFetchAll("SELECT pt.*, pk.nama AS periode_label FROM panitia_tetap pt LEFT JOIN periode_kepengurusan pk ON pt.periode_id = pk.id WHERE pt.periode_id = ? ORDER BY pt.nama ASC", [$periode_id], "i");
 $panitia_ketua_list = array_filter($list_panitia_all, fn($p) => $p['jabatan'] === 'ketua');
 $panitia_sekretaris_list = array_filter($list_panitia_all, fn($p) => $p['jabatan'] === 'sekretaris');
+
+// Label periode untuk info di picker
+$periode_info = dbFetchOne("SELECT nama FROM periode_kepengurusan WHERE id = ?", [$periode_id], "i");
+$periode_label_picker = $periode_info['nama'] ?? ('Periode ' . $periode_id);
 
 // Ambil data lampiran internal (Peminjaman Barang)
 $lampiran_internal_list = dbFetchAll("SELECT id, nama_acara, tanggal_kegiatan, tahun FROM lampiran_pinjam WHERE periode_id = ? ORDER BY created_at DESC", [$periode_id], "i");
@@ -1146,7 +1150,7 @@ if ($is_edit || $is_clone) {
                                 <?php foreach($panitia_ketua_list as $pk): ?>
                                 <div class="tpl-item" onclick="selectSavedPanitia('ketua', <?php echo htmlspecialchars(json_encode(['nama' => $pk['nama'], 'ttd' => $pk['file_ttd']])); ?>)">
                                     <div class="tpl-item-label"><?php echo htmlspecialchars($pk['nama']); ?></div>
-                                    <div class="tpl-item-text">Ketua Pelaksana Tersimpan</div>
+                                    <div class="tpl-item-text">Ketua Tersimpan • <?php echo htmlspecialchars($periode_label_picker); ?></div>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
@@ -1179,7 +1183,7 @@ if ($is_edit || $is_clone) {
                                 <?php foreach($panitia_sekretaris_list as $ps): ?>
                                 <div class="tpl-item" onclick="selectSavedPanitia('sekretaris', <?php echo htmlspecialchars(json_encode(['nama' => $ps['nama'], 'ttd' => $ps['file_ttd']])); ?>)">
                                     <div class="tpl-item-label"><?php echo htmlspecialchars($ps['nama']); ?></div>
-                                    <div class="tpl-item-text">Sekretaris Pelaksana Tersimpan</div>
+                                    <div class="tpl-item-text">Sekretaris Tersimpan • <?php echo htmlspecialchars($periode_label_picker); ?></div>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
