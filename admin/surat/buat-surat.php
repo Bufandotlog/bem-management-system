@@ -1172,7 +1172,7 @@ if ($is_edit || $is_clone) {
                             <input type="radio" name="format_ttd" value="3" <?php echo ($edit_data['format_ttd'] ?? '') === '3' ? 'checked' : ''; ?> style="margin-top:4px;">
                             <div>
                                 <div style="font-weight:bold; color:#8BB9F0;">Format 3 — Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BPM</div>
-                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua BEM/Ketua Pelaksana &amp; Sekretaris. Baris bawah: WAREK III &amp; Ketua BPM (Mengetahui).</div>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua BEM &amp; Sekretaris. Baris bawah: WAREK III &amp; Ketua BPM (Mengetahui).</div>
                             </div>
                         </label>
                     </div>

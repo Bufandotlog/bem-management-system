@@ -685,6 +685,14 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             } else {
                 $periode_label_header = 'PERIODE ' . $tahun_surat;
             }
+            // [KOR 2026-09-04] Label Sekretaris konsisten: ambil dari jabatan ttd_sekretaris_jabatan
+            //   (settings "Sekretaris BEM / Sekretaris Umum"). Hilangkan awalan "Sekretaris" supaya
+            //   tidak double (di-tabel cukup tampil "Umum" sebagai baris jabatan, atau full jika generic).
+            $sekretaris_jab_raw = trim($pengaturan['ttd_sekretaris_jabatan'] ?? '');
+            // Untuk label header tabel cukup "Sekretaris Umum" (short form), atau fallback "Sekretaris".
+            $ttd_label_sekretaris = (stripos($sekretaris_jab_raw, 'umum') !== false)
+                ? 'Sekretaris Umum'
+                : ($sekretaris_jab_raw !== '' ? $sekretaris_jab_raw : 'Sekretaris');
 
             if ($format_ttd === '2'):
                 // FORMAT 2: BEM Direct Periode (2 TTD) — Tanpa Panitia, Tanpa Warek/BPM
@@ -703,7 +711,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             <div class="ttd-name"><?php echo htmlspecialchars($pengaturan['ttd_presma_name'] ?? $nama_ketua_bem); ?></div>
                         </td>
                         <td style="position:relative;">
-                            Sekretaris
+                            <?php echo $ttd_label_sekretaris; ?>
                             <?php if(!empty($pengaturan['ttd_sekretaris_image'])): ?>
                                 <img src="<?php echo uploadUrl($pengaturan['ttd_sekretaris_image']); ?>" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); max-height:85px; mix-blend-mode:multiply; pointer-events:none;">
                             <?php endif; ?>
@@ -732,7 +740,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             <div class="ttd-name"><?php echo htmlspecialchars($konten['panitia_ketua'] ?? ''); ?></div>
                         </td>
                         <td style="position:relative;">
-                            Sekretaris
+                            <?php echo $ttd_label_sekretaris; ?>
                             <?php if(!empty($konten['panitia_sekretaris_ttd'])): ?>
                                 <img src="<?php echo renderTTD_inline($konten['panitia_sekretaris_ttd']); ?>" style="position:absolute; bottom:15px; left:50%; transform:translateX(-50%); max-height:85px; mix-blend-mode:multiply; pointer-events:none;">
                             <?php endif; ?>

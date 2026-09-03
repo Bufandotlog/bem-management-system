@@ -496,6 +496,15 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
         .preview-img { max-width: 80px; max-height: 60px; }
         .accordion-header { padding: 12px 16px; }
         .accordion-body { padding: 12px; }
+        /* [KOR 2026-09-04] Mobile-friendly upload cards */
+        .upload-card-header { font-size: 0.95rem; padding: 10px 14px; }
+        .upload-card-body { padding: 14px; }
+        .drop-zone { padding: 16px 12px; }
+        .drop-zone .upload-icon { font-size: 2rem; }
+        .drop-zone p { font-size: 0.8rem; }
+        .preview-container { padding: 10px; gap: 10px; }
+        .form-group label { font-size: 0.9rem; }
+        .form-group input { font-size: 16px !important; } /* Cegah iOS zoom */
     }
 
     /* ===== TABEL MENJADI CARD DI MOBILE ===== */
