@@ -104,7 +104,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $periode_id, $_SESSION['admin_id'], $row['kementerian_id'], $user_id, $row['nama_lengkap'], $row['jabatan'], $row['file_ttd']
                         ]);
                     }
-                    
+
+                    // [FIX 2026-09-04] Auto-promote TTD ke panitia_tetap untuk surat.
+                    // Tanpa ini, dropdown "Ketua/Sekretaris Pelaksana" di buat-surat.php
+                    // dan staging-surat.php kosong untuk periode baru (TTD pendaftar
+                    // tersimpan di users.file_ttd / anggota_*.foto tapi tidak pernah masuk
+                    // ke panitia_tetap yang dibaca oleh picker Panitia Tersimpan).
+                    // Hanya jabatan ketua/sekretaris yang di-promote; bendahara/anggota
+                    // tidak relevan untuk TTD surat.
+                    $jabatan_norm = strtolower(trim($row['jabatan'] ?? ''));
+                    $panitia_jabatan = null;
+                    if (strpos($jabatan_norm, 'sekretaris') !== false) {
+                        $panitia_jabatan = 'sekretaris';
+                    } elseif (strpos($jabatan_norm, 'ketua') !== false) {
+                        $panitia_jabatan = 'ketua';
+                    }
+                    if ($panitia_jabatan !== null && !empty($row['file_ttd'])) {
+                        // Skip jika sudah ada entry panitia_tetap untuk nama+jabatan+periode
+                        // yang sama (cegah duplikat saat re-approval / edit jabatan).
+                        $exists = dbFetchOne(
+                            "SELECT id FROM panitia_tetap WHERE periode_id = ? AND UPPER(TRIM(nama)) = ? AND jabatan = ?",
+                            [$periode_id, strtoupper(trim($row['nama_lengkap'])), $panitia_jabatan],
+                            "iss"
+                        );
+                        if (!$exists) {
+                            dbQuery(
+                                "INSERT INTO panitia_tetap (periode_id, nama, jabatan, file_ttd) VALUES (?, ?, ?, ?)",
+                                [$periode_id, strtoupper(trim($row['nama_lengkap'])), $panitia_jabatan, $row['file_ttd']],
+                                "isss"
+                            );
+                        }
+                    }
+
                     dbQuery("UPDATE pendaftaran_anggota SET status = 'approved' WHERE id = ?", [$id]);
                     dbCommit();
 
