@@ -633,6 +633,21 @@ if ($is_edit || $is_clone) {
 @media (max-width: 600px) {
     .buat-surat-container .date-range-wrap { flex-direction: column; align-items: stretch; }
     .buat-surat-container .date-range-wrap span { display: none; } /* Sembunyikan kata 'sampai' di mobile */
+    /* [KOR 2026-09-04] Card 4.5 format_ttd: mobile-friendly stack */
+    .buat-surat-container .format-ttd-option {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .buat-surat-container .format-ttd-option > div {
+        width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    /* Perkecil font di mobile */
+    .buat-surat-container .format-ttd-option > div > div:first-child {
+        font-size: 0.95rem;
+        line-height: 1.3;
+    }
 }
 .buat-surat-container .preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 15px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
 
@@ -1154,25 +1169,25 @@ if ($is_edit || $is_clone) {
                 <div class="form-group">
                     <label>Pilih Format Tanda Tangan</label>
                     <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
-                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer; background:rgba(74,144,226,0.05);">
+                        <label class="format-ttd-option" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer; background:rgba(74,144,226,0.05);">
                             <input type="radio" name="format_ttd" value="1" <?php echo ($edit_data['format_ttd'] ?? '1') === '1' ? 'checked' : ''; ?> style="margin-top:4px;">
                             <div>
                                 <div style="font-weight:bold; color:#8BB9F0;">Format 1 — Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BEM</div>
-                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua Pelaksana &amp; Sekretaris. Baris bawah: WAREK III &amp; Ketua BEM (Mengetahui).</div>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua Pelaksana &amp; Sekretaris Umum. Baris bawah: WAREK III &amp; Ketua BEM (Mengetahui).</div>
                             </div>
                         </label>
-                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
+                        <label class="format-ttd-option" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
                             <input type="radio" name="format_ttd" value="2" <?php echo ($edit_data['format_ttd'] ?? '') === '2' ? 'checked' : ''; ?> style="margin-top:4px;">
                             <div>
                                 <div style="font-weight:bold; color:#8BB9F0;">Format 2 — BEM Direct (2 TTD Periode)</div>
-                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: BEM INSTBUNAS MAJALENGKA PERIODE [TAHUN]. Baris: Ketua BEM &amp; Sekretaris BEM. Tanpa panitia/Warek/BPM.</div>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: BEM INSTBUNAS MAJALENGKA PERIODE [TAHUN]. Baris: Ketua BEM &amp; Sekretaris Umum. Tanpa panitia/Warek/BPM.</div>
                             </div>
                         </label>
-                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
+                        <label class="format-ttd-option" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
                             <input type="radio" name="format_ttd" value="3" <?php echo ($edit_data['format_ttd'] ?? '') === '3' ? 'checked' : ''; ?> style="margin-top:4px;">
                             <div>
                                 <div style="font-weight:bold; color:#8BB9F0;">Format 3 — Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BPM</div>
-                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua BEM &amp; Sekretaris. Baris bawah: WAREK III &amp; Ketua BPM (Mengetahui).</div>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua BEM &amp; Sekretaris Umum. Baris bawah: WAREK III &amp; Ketua BPM (Mengetahui).</div>
                             </div>
                         </label>
                     </div>
