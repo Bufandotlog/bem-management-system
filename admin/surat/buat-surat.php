@@ -189,11 +189,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'panitia_sekretaris_ttd'  => saveSignatureToFile($_POST['panitia_sekretaris_ttd'] ?? '', 'sekretaris'),
             'use_ttd_warek'           => isset($_POST['use_ttd_warek']) ? '1' : '0',
             'use_ttd_presma'          => isset($_POST['use_ttd_presma']) ? '1' : '0',
+            'use_ttd_sekretaris'      => isset($_POST['use_ttd_sekretaris']) ? '1' : '0',
             'use_ttd_bpm'             => isset($_POST['use_ttd_bpm']) ? '1' : '0',
             'use_cap_panitia'         => isset($_POST['use_cap_panitia']) ? '1' : '0',
             'use_cap_warek'           => isset($_POST['use_cap_warek']) ? '1' : '0',
             'use_cap_presma'          => isset($_POST['use_cap_presma']) ? '1' : '0',
             'use_cap_bpm'             => isset($_POST['use_cap_bpm']) ? '1' : '0',
+            'use_cap_sekretaris'      => isset($_POST['use_cap_sekretaris']) ? '1' : '0',
             'tembusan'                => strip_tags(trim($_POST['tembusan'] ?? ''))
         ];
 
@@ -635,20 +637,175 @@ if ($is_edit || $is_clone) {
 @media (max-width: 600px) {
     .buat-surat-container .date-range-wrap { flex-direction: column; align-items: stretch; }
     .buat-surat-container .date-range-wrap span { display: none; } /* Sembunyikan kata 'sampai' di mobile */
-    /* [KOR 2026-09-04] Card 4.5 format_ttd: mobile-friendly stack */
-    .buat-surat-container .format-ttd-option {
-        flex-direction: column !important;
-        gap: 8px !important;
+    /* Card 4.5 format_ttd styling */
+    .buat-surat-container .card-format-ttd {
+        overflow: hidden;
     }
-    .buat-surat-container .format-ttd-option > div {
+    .buat-surat-container .section-sublabel {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .buat-surat-container .format-ttd-container {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .buat-surat-container label.format-ttd-card {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+        padding: 18px 20px !important;
+        border: 1.5px solid var(--border-color) !important;
+        border-radius: 18px !important;
+        cursor: pointer !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+        font-size: 0.95rem !important;
+        color: var(--text-main) !important;
+        margin-bottom: 0 !important;
+        font-weight: normal !important;
+    }
+    .buat-surat-container label.format-ttd-card:hover {
+        border-color: rgba(74, 144, 226, 0.45) !important;
+        background: rgba(74, 144, 226, 0.04) !important;
+        transform: translateY(-2px);
+    }
+    .buat-surat-container label.format-ttd-card.active,
+    .buat-surat-container label.format-ttd-card:has(input[type="radio"]:checked) {
+        border-color: var(--accent-color) !important;
+        background: linear-gradient(135deg, rgba(74, 144, 226, 0.12) 0%, rgba(0, 242, 254, 0.05) 100%) !important;
+        box-shadow: 0 4px 20px rgba(74, 144, 226, 0.2), inset 0 0 0 1px rgba(74, 144, 226, 0.25) !important;
+    }
+    .format-ttd-card input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+    }
+    .format-ttd-card .radio-indicator {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #5a6b82;
+        background: rgba(0, 0, 0, 0.3);
+        margin-top: 2px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s ease;
+    }
+    .format-ttd-card:hover .radio-indicator {
+        border-color: var(--accent-color);
+    }
+    .format-ttd-card.active .radio-indicator,
+    .format-ttd-card:has(input[type="radio"]:checked) .radio-indicator {
+        border-color: #4facfe;
+        background: #4facfe;
+        box-shadow: 0 0 12px rgba(79, 172, 254, 0.6);
+    }
+    .format-ttd-card.active .radio-indicator::after,
+    .format-ttd-card:has(input[type="radio"]:checked) .radio-indicator::after {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ffffff;
+    }
+    .format-ttd-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
         width: 100%;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
     }
-    /* Perkecil font di mobile */
-    .buat-surat-container .format-ttd-option > div > div:first-child {
-        font-size: 0.95rem;
-        line-height: 1.3;
+    .format-ttd-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .format-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .format-badge.badge-1 {
+        background: rgba(74, 144, 226, 0.2);
+        color: #4facfe;
+        border: 1px solid rgba(74, 144, 226, 0.4);
+    }
+    .format-badge.badge-2 {
+        background: rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
+        border: 1px solid rgba(46, 204, 113, 0.4);
+    }
+    .format-badge.badge-3 {
+        background: rgba(155, 89, 182, 0.2);
+        color: #a569bd;
+        border: 1px solid rgba(155, 89, 182, 0.4);
+    }
+    .format-title {
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        line-height: 1.35;
+    }
+    .format-ttd-card.active .format-title {
+        color: #ffffff;
+    }
+    .format-ttd-details {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        background: rgba(0, 0, 0, 0.25);
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    @media (min-width: 992px) {
+        .format-ttd-details {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+    }
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .detail-label {
+        color: var(--text-muted);
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .detail-label i {
+        color: var(--accent-color);
+        font-size: 0.75rem;
+    }
+    .detail-val {
+        color: #cbd5e1;
+        font-size: 0.85rem;
+        font-weight: 500;
+        line-height: 1.35;
     }
 }
 .buat-surat-container .preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 15px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
@@ -1165,40 +1322,98 @@ if ($is_edit || $is_clone) {
         </div>
 
         <!-- CARD 4.5: FORMAT & LAYOUT TANDA TANGAN [FITUR 2026-09-04] -->
-        <div class="card">
-            <div class="card-header"><i class="fas fa-th-large"></i> Format &amp; Layout Tanda Tangan</div>
+        <div class="card card-format-ttd">
+            <div class="card-header"><i class="fas fa-file-signature"></i> Format &amp; Layout Tanda Tangan</div>
             <div class="card-body">
-                <div class="form-group">
-                    <label>Pilih Format Tanda Tangan</label>
-                    <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
-                        <label class="format-ttd-option" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer; background:rgba(74,144,226,0.05);">
-                            <input type="radio" name="format_ttd" value="1" <?php echo ($edit_data['format_ttd'] ?? '1') === '1' ? 'checked' : ''; ?> style="margin-top:4px;">
-                            <div>
-                                <div style="font-weight:bold; color:#8BB9F0;">Format 1 — Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BEM</div>
-                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua Pelaksana &amp; Sekretaris Umum. Baris bawah: WAREK III &amp; Ketua BEM (Mengetahui).</div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="section-sublabel">Pilih Format &amp; Susunan Tanda Tangan Dokumen</label>
+                    <div class="format-ttd-container">
+                        
+                        <!-- FORMAT 1 -->
+                        <label class="format-ttd-card <?php echo ($edit_data['format_ttd'] ?? '1') === '1' ? 'active' : ''; ?>">
+                            <input type="radio" name="format_ttd" value="1" <?php echo ($edit_data['format_ttd'] ?? '1') === '1' ? 'checked' : ''; ?>>
+                            <div class="radio-indicator"></div>
+                            <div class="format-ttd-content">
+                                <div class="format-ttd-header">
+                                    <span class="format-badge badge-1">Format 1</span>
+                                    <span class="format-title">Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BEM</span>
+                                </div>
+                                <div class="format-ttd-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-heading"></i> Header Dokumen</span>
+                                        <span class="detail-val">PANITIA PELAKSANA [NAMA KEGIATAN]</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-users"></i> Baris 1 (Atas)</span>
+                                        <span class="detail-val">Ketua Pelaksana &amp; Sekretaris Umum</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-user-check"></i> Baris 2 (Mengetahui)</span>
+                                        <span class="detail-val">WAREK III &amp; Ketua BEM</span>
+                                    </div>
+                                </div>
                             </div>
                         </label>
-                        <label class="format-ttd-option" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
-                            <input type="radio" name="format_ttd" value="2" <?php echo ($edit_data['format_ttd'] ?? '') === '2' ? 'checked' : ''; ?> style="margin-top:4px;">
-                            <div>
-                                <div style="font-weight:bold; color:#8BB9F0;">Format 2 — BEM Direct (2 TTD Periode)</div>
-                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: BEM INSTBUNAS MAJALENGKA PERIODE [TAHUN]. Baris: Ketua BEM &amp; Sekretaris Umum. Tanpa panitia/Warek/BPM.</div>
+
+                        <!-- FORMAT 2 -->
+                        <label class="format-ttd-card <?php echo ($edit_data['format_ttd'] ?? '') === '2' ? 'active' : ''; ?>">
+                            <input type="radio" name="format_ttd" value="2" <?php echo ($edit_data['format_ttd'] ?? '') === '2' ? 'checked' : ''; ?>>
+                            <div class="radio-indicator"></div>
+                            <div class="format-ttd-content">
+                                <div class="format-ttd-header">
+                                    <span class="format-badge badge-2">Format 2</span>
+                                    <span class="format-title">BEM Direct (2 TTD Periode Kepengurusan)</span>
+                                </div>
+                                <div class="format-ttd-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-heading"></i> Header Dokumen</span>
+                                        <span class="detail-val">BEM INSTBUNAS MAJALENGKA PERIODE [TAHUN]</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-users"></i> Baris Utama</span>
+                                        <span class="detail-val">Ketua BEM &amp; Sekretaris Umum</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-info-circle"></i> Catatan Stempel</span>
+                                        <span class="detail-val">Tanpa Panitia / Warek III / BPM</span>
+                                    </div>
+                                </div>
                             </div>
                         </label>
-                        <label class="format-ttd-option" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1px solid #2a3545; border-radius:6px; cursor:pointer;">
-                            <input type="radio" name="format_ttd" value="3" <?php echo ($edit_data['format_ttd'] ?? '') === '3' ? 'checked' : ''; ?> style="margin-top:4px;">
-                            <div>
-                                <div style="font-weight:bold; color:#8BB9F0;">Format 3 — Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BPM</div>
-                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">Header: PANITIA PELAKSANA [NAMA KEGIATAN]. Baris atas: Ketua BEM &amp; Sekretaris Umum. Baris bawah: WAREK III &amp; Ketua BPM (Mengetahui).</div>
+
+                        <!-- FORMAT 3 -->
+                        <label class="format-ttd-card <?php echo ($edit_data['format_ttd'] ?? '') === '3' ? 'active' : ''; ?>">
+                            <input type="radio" name="format_ttd" value="3" <?php echo ($edit_data['format_ttd'] ?? '') === '3' ? 'checked' : ''; ?>>
+                            <div class="radio-indicator"></div>
+                            <div class="format-ttd-content">
+                                <div class="format-ttd-header">
+                                    <span class="format-badge badge-3">Format 3</span>
+                                    <span class="format-title">Panitia Pelaksana + Mengetahui Warek III &amp; Ketua BPM</span>
+                                </div>
+                                <div class="format-ttd-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-heading"></i> Header Dokumen</span>
+                                        <span class="detail-val">PANITIA PELAKSANA [NAMA KEGIATAN]</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-users"></i> Baris 1 (Atas)</span>
+                                        <span class="detail-val">Ketua BEM &amp; Sekretaris Umum</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label"><i class="fas fa-user-check"></i> Baris 2 (Mengetahui)</span>
+                                        <span class="detail-val">WAREK III &amp; Ketua BPM</span>
+                                    </div>
+                                </div>
                             </div>
                         </label>
+
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- CARD 5: TANDA TANGAN PANITIA -->
-        <div class="card">
+        <!-- CARD 5: TANDA TANGAN PANITIA (HANYA FORMAT 1) -->
+        <div class="card card-panitia format-1-only">
             <div class="card-header"><i class="fas fa-pen-nib"></i> Penanggung Jawab / Panitia</div>
             <div class="card-body">
                 <div class="form-group" style="margin-bottom:24px;">
@@ -1279,16 +1494,62 @@ if ($is_edit || $is_clone) {
 
         <!-- CARD 6: OPSI TANDA TANGAN & STEMPEL -->
         <div class="card">
-            <div class="card-header"><i class="fas fa-stamp"></i> Opsi Pengesahan & Stempel</div>
+            <div class="card-header"><i class="fas fa-stamp"></i> Opsi Pengesahan &amp; Stempel</div>
             <div class="card-body">
                 <div class="grid-2">
-                    <div class="switch-container"><span class="switch-label"><i class="fas fa-user-tie"></i> Sertakan TTD WAREK III</span><label class="switch"><input type="checkbox" name="use_ttd_warek" value="1" <?php echo ($edit_data['use_ttd_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container"><span class="switch-label"><i class="fas fa-user-graduate"></i> Sertakan TTD PRESMA BEM</span><label class="switch"><input type="checkbox" name="use_ttd_presma" value="1" <?php echo ($edit_data['use_ttd_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container format-non3-only"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap PANITIA <small style="color:#ff9b6b;">(Format 1/2)</small></span><label class="switch"><input type="checkbox" name="use_cap_panitia" value="1" <?php echo ($edit_data['use_cap_panitia'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap WAREK</span><label class="switch"><input type="checkbox" name="use_cap_warek" value="1" <?php echo ($edit_data['use_cap_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container"><span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap BEM</span><label class="switch"><input type="checkbox" name="use_cap_presma" value="1" <?php echo ($edit_data['use_cap_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container format-3-only" style="display:none;"><span class="switch-label"><i class="fas fa-user-tie"></i> <strong>Sertakan TTD BPM</strong> <small style="color:#8BB9F0;">(Format 3)</small></span><label class="switch"><input type="checkbox" name="use_ttd_bpm" value="1" <?php echo ($edit_data['use_ttd_bpm'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
-                    <div class="switch-container format-3-only" style="display:none;"><span class="switch-label"><i class="fas fa-stamp"></i> <strong>Sertakan Cap BPM</strong> <small style="color:#8BB9F0;">(Format 3)</small></span><label class="switch"><input type="checkbox" name="use_cap_bpm" value="1" <?php echo ($edit_data['use_cap_bpm'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label></div>
+                    <!-- TTD PRESMA BEM (Selalu Muncul) -->
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fas fa-user-graduate"></i> Sertakan TTD PRESMA BEM</span>
+                        <label class="switch"><input type="checkbox" name="use_ttd_presma" value="1" <?php echo ($edit_data['use_ttd_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- TTD SEKRETARIS BEM (Format 2 & 3) -->
+                    <div class="switch-container format-2and3-only">
+                        <span class="switch-label"><i class="fas fa-user-edit"></i> Sertakan TTD SEKRETARIS BEM <small style="color:#2ecc71;">(Format 2/3)</small></span>
+                        <label class="switch"><input type="checkbox" name="use_ttd_sekretaris" value="1" <?php echo ($edit_data['use_ttd_sekretaris'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- Cap SEKRETARIS BEM (Format 2 & 3) -->
+                    <div class="switch-container format-2and3-only">
+                        <span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap SEKRETARIS BEM <small style="color:#2ecc71;">(Format 2/3)</small></span>
+                        <label class="switch"><input type="checkbox" name="use_cap_sekretaris" value="1" <?php echo ($edit_data['use_cap_sekretaris'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- Cap BEM (Selalu Muncul) -->
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap BEM</span>
+                        <label class="switch"><input type="checkbox" name="use_cap_presma" value="1" <?php echo ($edit_data['use_cap_presma'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- Cap PANITIA (Format 1 Saja) -->
+                    <div class="switch-container format-1-only">
+                        <span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap PANITIA <small style="color:#ff9b6b;">(Format 1)</small></span>
+                        <label class="switch"><input type="checkbox" name="use_cap_panitia" value="1" <?php echo ($edit_data['use_cap_panitia'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- TTD WAREK III (Format 1 & 3) -->
+                    <div class="switch-container format-1and3-only">
+                        <span class="switch-label"><i class="fas fa-user-tie"></i> Sertakan TTD WAREK III <small style="color:#4facfe;">(Format 1/3)</small></span>
+                        <label class="switch"><input type="checkbox" name="use_ttd_warek" value="1" <?php echo ($edit_data['use_ttd_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- Cap WAREK (Format 1 & 3) -->
+                    <div class="switch-container format-1and3-only">
+                        <span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap WAREK <small style="color:#4facfe;">(Format 1/3)</small></span>
+                        <label class="switch"><input type="checkbox" name="use_cap_warek" value="1" <?php echo ($edit_data['use_cap_warek'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- TTD BPM (Format 3 Saja) -->
+                    <div class="switch-container format-3-only">
+                        <span class="switch-label"><i class="fas fa-user-tie"></i> <strong>Sertakan TTD BPM</strong> <small style="color:#a569bd;">(Format 3)</small></span>
+                        <label class="switch"><input type="checkbox" name="use_ttd_bpm" value="1" <?php echo ($edit_data['use_ttd_bpm'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
+
+                    <!-- Cap BPM (Format 3 Saja) -->
+                    <div class="switch-container format-3-only">
+                        <span class="switch-label"><i class="fas fa-stamp"></i> <strong>Sertakan Cap BPM</strong> <small style="color:#a569bd;">(Format 3)</small></span>
+                        <label class="switch"><input type="checkbox" name="use_cap_bpm" value="1" <?php echo ($edit_data['use_cap_bpm'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1312,10 +1573,44 @@ if ($is_edit || $is_clone) {
         function syncFormatOnly() {
             var checked = document.querySelector('input[name="format_ttd"]:checked');
             var fmt = checked ? checked.value : '1';
-            var only3 = document.querySelectorAll('.format-3-only');
-            var onlyNon3 = document.querySelectorAll('.format-non3-only');
-            only3.forEach(function(el) { el.style.display = (fmt === '3') ? '' : 'none'; });
-            onlyNon3.forEach(function(el) { el.style.display = (fmt === '3') ? 'none' : ''; });
+
+            // 1. Toggle visibility based on format classes
+            document.querySelectorAll('.format-1-only').forEach(function(el) {
+                el.style.display = (fmt === '1') ? '' : 'none';
+            });
+            document.querySelectorAll('.format-2-only').forEach(function(el) {
+                el.style.display = (fmt === '2') ? '' : 'none';
+            });
+            document.querySelectorAll('.format-3-only').forEach(function(el) {
+                el.style.display = (fmt === '3') ? '' : 'none';
+            });
+            document.querySelectorAll('.format-1and3-only').forEach(function(el) {
+                el.style.display = (fmt === '1' || fmt === '3') ? '' : 'none';
+            });
+            document.querySelectorAll('.format-2and3-only').forEach(function(el) {
+                el.style.display = (fmt === '2' || fmt === '3') ? '' : 'none';
+            });
+
+            // 2. Dynamic handling for required attributes on Panitia inputs
+            var panitiaKetua = document.querySelector('input[name="panitia_ketua"]');
+            var panitiaSekretaris = document.querySelector('input[name="panitia_sekretaris"]');
+            if (fmt === '1') {
+                if (panitiaKetua) panitiaKetua.setAttribute('required', 'required');
+                if (panitiaSekretaris) panitiaSekretaris.setAttribute('required', 'required');
+            } else {
+                if (panitiaKetua) panitiaKetua.removeAttribute('required');
+                if (panitiaSekretaris) panitiaSekretaris.removeAttribute('required');
+            }
+
+            // 3. Sync active class on format cards
+            document.querySelectorAll('.format-ttd-card').forEach(function(card) {
+                var radio = card.querySelector('input[type="radio"]');
+                if (radio && radio.checked) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
         }
         document.addEventListener('DOMContentLoaded', function() {
             syncFormatOnly();
