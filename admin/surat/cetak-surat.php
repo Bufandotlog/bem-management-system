@@ -783,7 +783,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             Ketua BPM<br>
                             <span class="ttd-jabatan">INSTBUNAS Majalengka</span>
                             <?php if(!empty($pengaturan['cap_bpm_image']) && ($konten['use_cap_bpm'] ?? '1') === '1'): ?>
-                                <img src="<?php echo uploadUrl($pengaturan['cap_bpm_image']); ?>" style="position:absolute; bottom:-10px; left:5%; max-width:220px; max-height:170px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
+                                <img src="<?php echo uploadUrl($pengaturan['cap_bpm_image']); ?>" style="position:absolute; bottom:-35px; left:-2%; max-width:280px; max-height:220px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
                             <?php endif; ?>
                             <?php if(!empty($pengaturan['ttd_bpm_image']) && ($konten['use_ttd_bpm'] ?? '1') === '1'): ?>
                                 <img src="<?php echo uploadUrl($pengaturan['ttd_bpm_image']); ?>" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); max-height:85px; mix-blend-mode:multiply; pointer-events:none;">
