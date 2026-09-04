@@ -1,16 +1,21 @@
 <?php
 // admin/download_app.php - Proxy Unduhan Terproteksi APK Mobile BEM
-// VERSI: 2.0 - Multi-variant (universal + 4 ABI) dibaca dari releases.json
+// VERSI: 2.1 - Multi-variant (universal + 4 ABI) + preview release (Kodular webview)
 //
 // Sumber kebenaran: /var/www/html/bem/storage/app_release/releases.json
 // (di-generate oleh .github/workflows/release-mobile.yml, dilindungi .htaccess)
 //
-// Cara pakai:
+// Cara pakai (rilis stabil, default):
 //   /admin/download_app.php            -> default: universal
 //   /admin/download_app.php?arch=arm64-v8a   -> APK arm64 (HP modern)
 //   /admin/download_app.php?arch=armeabi-v7a -> APK armv7 (HP lama)
 //   /admin/download_app.php?arch=x86         -> APK x86 (emulator)
 //   /admin/download_app.php?arch=x86_64      -> APK x86_64 (emulator 64-bit)
+//
+// Cara pakai (rilis preview, internal-only):
+//   /admin/download_app.php?release=preview -> APK Kodular webview darurat
+//   Catatan: APK preview dibuat via Kodular (WebView -> bembudiutomo.my.id).
+//   Bukan pengganti rilis Flutter resmi. Hanya untuk rilis cepat.
 //
 // Validasi: SHA-256 APK dicek on-the-fly terhadap metadata di releases.json.
 // Bila file APK atau metadata tidak ada / SHA mismatch -> 4xx/5xx + audit.
@@ -33,12 +38,22 @@ if (!isset($_SESSION['admin_id']) && !isset($_SESSION['user_id'])) {
 $storageDir  = __DIR__ . '/../storage/app_release';
 $releasesJson = $storageDir . '/releases.json';
 
-// Whitelist ABI (lihat releases.json).
+// -----------------------------------------------------------------------------
+// 2b. Pilih rilis: stable (rilis resmi Flutter, default) atau preview (Kodular
+//     webview darurat, internal-only). '?release=preview' override ke preview;
+//     default tetap 'stable' agar pengurus tidak salah unduh.
+// -----------------------------------------------------------------------------
+$releaseType = isset($_GET['release']) ? strtolower((string) $_GET['release']) : 'stable';
+if (!in_array($releaseType, ['stable', 'preview'], true)) {
+    http_response_code(400);
+    die("Tipe rilis tidak dikenal. Pilihan: stable, preview");
+}
+
+// Whitelist ABI (lihat releases.json). Diabaikan untuk preview (selalu 1 file universal).
 $allowedArchs = ['universal', 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'];
 
-// Default = universal (backward-compat dgn versi 1.0).
 $requestedArch = isset($_GET['arch']) ? (string) $_GET['arch'] : 'universal';
-if (!in_array($requestedArch, $allowedArchs, true)) {
+if ($releaseType === 'stable' && !in_array($requestedArch, $allowedArchs, true)) {
     http_response_code(400);
     die("Arsitektur tidak dikenal. Pilihan valid: " . implode(', ', $allowedArchs));
 }
@@ -58,24 +73,37 @@ if (!is_array($releases) || !isset($releases['apks']) || !is_array($releases['ap
 
 // Cari entry untuk arch yang diminta.
 $entry = null;
-foreach ($releases['apks'] as $row) {
-    if (isset($row['arch']) && $row['arch'] === $requestedArch) {
-        $entry = $row;
-        break;
+if ($releaseType === 'preview') {
+    if (!isset($releases['preview']['apks']) || !is_array($releases['preview']['apks']) || empty($releases['preview']['apks'])) {
+        http_response_code(404);
+        die("Rilis preview belum tersedia. Hubungi admin.");
+    }
+    $entry = $releases['preview']['apks'][0];
+    $requestedArch = (string) ($entry['arch'] ?? 'universal');
+} else {
+    foreach ($releases['apks'] as $row) {
+        if (isset($row['arch']) && $row['arch'] === $requestedArch) {
+            $entry = $row;
+            break;
+        }
     }
 }
 if ($entry === null) {
     http_response_code(404);
-    die("Varian {$requestedArch} tidak tersedia dalam rilis ini. Pilih: " . implode(', ', $allowedArchs));
+    die("Varian {$requestedArch} tidak tersedia dalam rilis {$releaseType}. Pilih: " . implode(', ', $allowedArchs));
 }
 
 $apkFileName  = (string) ($entry['file']  ?? '');
 $masterSha256 = strtolower((string) ($entry['sha256'] ?? ''));
-$appVersion   = (string) ($releases['latest'] ?? 'unknown');
+$appVersion   = (string) (
+    $releaseType === 'preview'
+        ? ($releases['preview']['version'] ?? '0.0.0-preview')
+        : ($releases['latest'] ?? 'unknown')
+);
 
 if ($apkFileName === '' || $masterSha256 === '' || !preg_match('/^[a-f0-9]{64}$/', $masterSha256)) {
     http_response_code(500);
-    error_log("[APK DOWNLOAD] Entry releases.json tidak valid untuk arch={$requestedArch}");
+    error_log("[APK DOWNLOAD] Entry releases.json tidak valid untuk arch={$requestedArch} release={$releaseType}");
     die("Metadata rilis untuk varian ini tidak valid. Hubungi admin.");
 }
 
@@ -116,10 +144,10 @@ if (function_exists('auditLog')) {
         'DOWNLOAD',
         'app_release',
         $userId,
-        "Pengurus [{$userName}] mengunduh BEM Mobile APK v{$appVersion} ({$requestedArch}) IP: {$userIp}"
+        "Pengurus [{$userName}] mengunduh BEM Mobile APK v{$appVersion} ({$releaseType}/{$requestedArch}) IP: {$userIp}"
     );
 } else {
-    error_log("[APK DOWNLOAD] User ID: {$userId} ({$userName}) | arch: {$requestedArch} | v: {$appVersion} | IP: {$userIp} | Date: " . date('Y-m-d H:i:s'));
+    error_log("[APK DOWNLOAD] User ID: {$userId} ({$userName}) | release: {$releaseType} | arch: {$requestedArch} | v: {$appVersion} | IP: {$userIp} | Date: " . date('Y-m-d H:i:s'));
 }
 
 // -----------------------------------------------------------------------------
@@ -129,11 +157,16 @@ if (ob_get_level()) {
     ob_end_clean();
 }
 
-// Filename: BEM-Astawidya-v<version>-<arch>.apk (mis. BEM-Astawidya-v1.0.0-arm64-v8a.apk).
-// Untuk universal: BEM-Astawidya-Official.apk (backward-compat dgn versi 1.0).
-$downloadName = ($requestedArch === 'universal')
-    ? 'BEM-Astawidya-Official.apk'
-    : sprintf('BEM-Astawidya-v%s-%s.apk', $appVersion, $requestedArch);
+// Filename: stable=universal -> BEM-Astawidya-Official.apk (backward-compat v1.0),
+// stable=arch -> BEM-Astawidya-v<version>-<arch>.apk.
+// Preview -> BEM-Astawidya-v<version>-preview.apk (selalu 1 file).
+if ($releaseType === 'preview') {
+    $downloadName = sprintf('BEM-Astawidya-v%s-preview.apk', $appVersion);
+} elseif ($requestedArch === 'universal') {
+    $downloadName = 'BEM-Astawidya-Official.apk';
+} else {
+    $downloadName = sprintf('BEM-Astawidya-v%s-%s.apk', $appVersion, $requestedArch);
+}
 
 header('Content-Description: File Transfer');
 header('Content-Type: application/vnd.android.package-archive');
@@ -145,6 +178,7 @@ header('Pragma: public');
 header('Content-Length: ' . filesize($apkPath));
 header('X-App-Version: ' . $appVersion);
 header('X-App-Arch: ' . $requestedArch);
+header('X-App-Release: ' . $releaseType);
 
 readfile($apkPath);
 exit();

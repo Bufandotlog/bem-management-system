@@ -145,9 +145,12 @@ switch ($admin_role) {
             </small>
         </div>
     </div>
-    <div class="apk-banner-btn-wrap" style="align-self: center;">
+    <div class="apk-banner-btn-wrap" style="align-self: center; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
         <a href="<?php echo baseUrl('admin/download_app.php'); ?>" class="btn-primary apk-banner-btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 24px; font-weight: 600; text-decoration: none; background: rgba(74, 144, 226, 0.15); color: #70a1ff; border: 1px solid rgba(74, 144, 226, 0.35); font-size: 0.82rem; white-space: nowrap; transition: all 0.2s ease;">
             <i class="fas fa-download"></i> Unduh APK Resmi
+        </a>
+        <a href="<?php echo baseUrl('admin/download_app.php?release=preview'); ?>" class="btn-primary apk-banner-btn" title="APK darurat (Kodular WebView). Bukan pengganti rilis resmi. Hanya untuk rilis cepat internal." style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 24px; font-weight: 600; text-decoration: none; background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px dashed rgba(245, 158, 11, 0.45); font-size: 0.82rem; white-space: nowrap; transition: all 0.2s ease;">
+            <i class="fas fa-flask"></i> Unduh APK Preview
         </a>
     </div>
 </div>
