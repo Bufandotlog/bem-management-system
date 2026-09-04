@@ -637,6 +637,7 @@ if ($is_edit || $is_clone) {
 @media (max-width: 600px) {
     .buat-surat-container .date-range-wrap { flex-direction: column; align-items: stretch; }
     .buat-surat-container .date-range-wrap span { display: none; } /* Sembunyikan kata 'sampai' di mobile */
+}
     /* Card 4.5 format_ttd styling */
     .buat-surat-container .card-format-ttd {
         overflow: hidden;
@@ -807,7 +808,6 @@ if ($is_edit || $is_clone) {
         font-weight: 500;
         line-height: 1.35;
     }
-}
 .buat-surat-container .preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 15px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
 
 /* Mini RTE Editor */

@@ -675,15 +675,19 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 $format_ttd = '1';
             }
             $tahun_surat = end($parts) ?: date('Y');
-            // [FITUR 2026-09-04] Nama periode untuk header Format 2
-            // db_periode['nama'] sudah mengandung 'PERIODE' (e.g. 'RANCAGE BHAKTI PERIODE 2026-2027').
-            // Hindari duplikat 'PERIODE PERIODE' dengan deteksi string.
-            $raw_periode = trim($db_periode['nama'] ?? '');
-            $upper_periode = strtoupper($raw_periode);
-            if (stripos($raw_periode, 'periode') !== false) {
-                $periode_label_header = $upper_periode;
+            // [FITUR 2026-09-04] Nama periode untuk header Format 2 & 3
+            // Ambil tahun_mulai dan tahun_selesai dari tabel periode_kepengurusan
+            // agar label header selalu "PERIODE YYYY/YYYY+1" (contoh: PERIODE 2026/2027)
+            $db_periode_row = dbFetchOne(
+                "SELECT tahun_mulai, tahun_selesai FROM periode_kepengurusan WHERE id = ? LIMIT 1",
+                [$periode_id], "i"
+            );
+            if ($db_periode_row && !empty($db_periode_row['tahun_mulai'])) {
+                $periode_label_header = 'PERIODE ' . $db_periode_row['tahun_mulai'] . '/' . $db_periode_row['tahun_selesai'];
             } else {
-                $periode_label_header = 'PERIODE ' . $tahun_surat;
+                // Fallback: gunakan tahun dari nomor surat + tahun berikutnya
+                $thn = (int)$tahun_surat;
+                $periode_label_header = 'PERIODE ' . $thn . '/' . ($thn + 1);
             }
             // [KOR 2026-09-04] Label Sekretaris konsisten: mengikuti konvensi BEM
             //   bahwa "Sekretaris BEM" == "Sekretaris Umum". Label tabel di TTD
@@ -729,12 +733,9 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             <?php
             elseif ($format_ttd === '3'):
                 // FORMAT 3: BEM Direct (Baris 1) + Mengetahui Warek III & Ketua BPM (Baris 2)
+                // Header selalu "BEM INSTBUNAS MAJALENGKA PERIODE YYYY/YYYY+1" (sama seperti Format 2)
             ?>
-                <?php if(!empty($nama_panitia)): ?>
-                    <div class="ttd-title">PANITIA PELAKSANA <?php echo strtoupper(strip_tags($nama_panitia)); ?> <?php echo $tahun_surat; ?></div>
-                <?php else: ?>
-                    <div class="ttd-title">BEM INSTBUNAS MAJALENGKA <?php echo htmlspecialchars($periode_label_header); ?></div>
-                <?php endif; ?>
+                <div class="ttd-title">BEM INSTBUNAS MAJALENGKA <?php echo htmlspecialchars($periode_label_header); ?></div>
 
                 <table class="ttd-table" style="margin-bottom: 5px;">
                     <tr>
@@ -750,7 +751,8 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             <div class="ttd-name"><?php echo htmlspecialchars($pengaturan['ttd_presma_name'] ?? $nama_ketua_bem); ?></div>
                         </td>
                         <td style="position:relative;">
-                            <?php echo $ttd_label_sekretaris; ?>
+                            <?php echo $ttd_label_sekretaris; ?><br>
+                            <span class="ttd-jabatan">INSTBUNAS Majalengka</span>
                             <?php if(!empty($pengaturan['ttd_sekretaris_image']) && ($konten['use_ttd_sekretaris'] ?? '1') === '1'): ?>
                                 <img src="<?php echo uploadUrl($pengaturan['ttd_sekretaris_image']); ?>" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); max-height:85px; mix-blend-mode:multiply; pointer-events:none;">
                             <?php endif; ?>
@@ -781,12 +783,12 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             Ketua BPM<br>
                             <span class="ttd-jabatan">INSTBUNAS Majalengka</span>
                             <?php if(!empty($pengaturan['cap_bpm_image']) && ($konten['use_cap_bpm'] ?? '1') === '1'): ?>
-                                <img src="<?php echo uploadUrl($pengaturan['cap_bpm_image']); ?>" style="position:absolute; bottom:0px; left:10%; max-width:180px; max-height:130px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
+                                <img src="<?php echo uploadUrl($pengaturan['cap_bpm_image']); ?>" style="position:absolute; bottom:-10px; left:5%; max-width:220px; max-height:170px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
                             <?php endif; ?>
                             <?php if(!empty($pengaturan['ttd_bpm_image']) && ($konten['use_ttd_bpm'] ?? '1') === '1'): ?>
                                 <img src="<?php echo uploadUrl($pengaturan['ttd_bpm_image']); ?>" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); max-height:85px; mix-blend-mode:multiply; pointer-events:none;">
                             <?php endif; ?>
-                            <div class="ttd-name"><?php echo htmlspecialchars($pengaturan['ttd_bpm_name'] ?? ''); ?></div>
+                            <div class="ttd-name"><?php echo htmlspecialchars($pengaturan['ttd_bpm_name'] ?? ($pengaturan['ttd_bpm_jabatan'] ?? '')); ?></div>
                         </td>
                     </tr>
                 </table>
