@@ -135,10 +135,10 @@ switch ($admin_role) {
         <div style="flex: 1; min-width: 0; overflow: hidden;">
             <h3 class="apk-banner-title" style="margin: 0 0 4px 0; font-size: 1rem; color: #ffffff; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700;">
                 Aplikasi Mobile Pengurus BEM
-                <span class="badge" style="background: rgba(74, 144, 226, 0.15); color: #70a1ff; border: 1px solid rgba(74, 144, 226, 0.3); font-weight: 700; font-size: 0.65rem; padding: 3px 8px; border-radius: 20px;">v1.0 Release</span>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 700; font-size: 0.65rem; padding: 3px 8px; border-radius: 20px;">Sedang Diperbaiki</span>
             </h3>
             <p class="apk-banner-desc" style="margin: 0 0 4px 0; font-size: 0.78rem; color: #888888; line-height: 1.4;">
-                Installer APK Android resmi terproteksi. Dilengkapi Push Notification & verifikasi surat.
+                Rilis resmi Flutter v1.0 sedang dalam perbaikan. Untuk sementara gunakan APK Preview di samping (WebView Kodular, web penuh).
             </p>
             <small style="font-family: monospace; font-size: 0.65rem; color: #777777; display: block; word-break: break-all; overflow-wrap: anywhere; max-width: 100%;">
                 SHA-256: d5aa38de289f7f9d3fe55fe91ef3a1af4046f3fc5079974d53817222d659454f
@@ -146,8 +146,8 @@ switch ($admin_role) {
         </div>
     </div>
     <div class="apk-banner-btn-wrap" style="align-self: center; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
-        <a href="<?php echo baseUrl('admin/download_app.php'); ?>" class="btn-primary apk-banner-btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 24px; font-weight: 600; text-decoration: none; background: rgba(74, 144, 226, 0.15); color: #70a1ff; border: 1px solid rgba(74, 144, 226, 0.35); font-size: 0.82rem; white-space: nowrap; transition: all 0.2s ease;">
-            <i class="fas fa-download"></i> Unduh APK Resmi
+        <a href="#" onclick="alert('Sedang diperbaiki.\n\nRilis resmi BEM Mobile v1.0 (Flutter) sedang dalam tahap testing dan perbaikan. Untuk sementara, silakan gunakan APK Preview (WebView Kodular) yang tersedia di sebelah tombol ini.\n\nTerima kasih atas kesabarannya.'); return false;" class="btn-primary apk-banner-btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 24px; font-weight: 600; text-decoration: none; background: rgba(120, 120, 120, 0.12); color: #888888; border: 1px solid rgba(120, 120, 120, 0.35); font-size: 0.82rem; white-space: nowrap; transition: all 0.2s ease; cursor: not-allowed; opacity: 0.7;" title="Sedang diperbaiki. Gunakan APK Preview sebagai alternatif sementara.">
+            <i class="fas fa-tools"></i> Unduh APK Resmi
         </a>
         <a href="<?php echo baseUrl('admin/download_app.php?release=preview'); ?>" class="btn-primary apk-banner-btn" title="APK darurat (Kodular WebView). Bukan pengganti rilis resmi. Hanya untuk rilis cepat internal." style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 24px; font-weight: 600; text-decoration: none; background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px dashed rgba(245, 158, 11, 0.45); font-size: 0.82rem; white-space: nowrap; transition: all 0.2s ease;">
             <i class="fas fa-flask"></i> Unduh APK Preview
