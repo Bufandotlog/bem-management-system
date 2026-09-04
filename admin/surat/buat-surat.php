@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'use_cap_warek'           => isset($_POST['use_cap_warek']) ? '1' : '0',
             'use_cap_presma'          => isset($_POST['use_cap_presma']) ? '1' : '0',
             'use_cap_bpm'             => isset($_POST['use_cap_bpm']) ? '1' : '0',
-            'use_cap_sekretaris'      => isset($_POST['use_cap_sekretaris']) ? '1' : '0',
+            // use_cap_sekretaris removed 2026-09-04: Sekretaris tidak memiliki cap
             'tembusan'                => strip_tags(trim($_POST['tembusan'] ?? ''))
         ];
 
@@ -1507,12 +1507,6 @@ if ($is_edit || $is_clone) {
                     <div class="switch-container format-2and3-only">
                         <span class="switch-label"><i class="fas fa-user-edit"></i> Sertakan TTD SEKRETARIS BEM <small style="color:#2ecc71;">(Format 2/3)</small></span>
                         <label class="switch"><input type="checkbox" name="use_ttd_sekretaris" value="1" <?php echo ($edit_data['use_ttd_sekretaris'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
-                    </div>
-
-                    <!-- Cap SEKRETARIS BEM (Format 2 & 3) -->
-                    <div class="switch-container format-2and3-only">
-                        <span class="switch-label"><i class="fas fa-stamp"></i> Sertakan Cap SEKRETARIS BEM <small style="color:#2ecc71;">(Format 2/3)</small></span>
-                        <label class="switch"><input type="checkbox" name="use_cap_sekretaris" value="1" <?php echo ($edit_data['use_cap_sekretaris'] ?? '1') == '1' ? 'checked' : ''; ?>><span class="slider"></span></label>
                     </div>
 
                     <!-- Cap BEM (Selalu Muncul) -->

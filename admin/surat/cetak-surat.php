@@ -723,9 +723,6 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             <?php if(!empty($pengaturan['ttd_sekretaris_image']) && ($konten['use_ttd_sekretaris'] ?? '1') === '1'): ?>
                                 <img src="<?php echo uploadUrl($pengaturan['ttd_sekretaris_image']); ?>" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); max-height:85px; mix-blend-mode:multiply; pointer-events:none;">
                             <?php endif; ?>
-                            <?php if(!empty($pengaturan['cap_sekretaris_image']) && ($konten['use_cap_sekretaris'] ?? '1') === '1'): ?>
-                                <img src="<?php echo uploadUrl($pengaturan['cap_sekretaris_image']); ?>" style="position:absolute; bottom:0px; left:10%; max-width:180px; max-height:130px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
-                            <?php endif; ?>
                             <div class="ttd-name"><?php echo htmlspecialchars($pengaturan['ttd_sekretaris_name'] ?? $nama_sekretaris_bem); ?></div>
                         </td>
                     </tr>
@@ -755,9 +752,6 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                             <span class="ttd-jabatan">INSTBUNAS Majalengka</span>
                             <?php if(!empty($pengaturan['ttd_sekretaris_image']) && ($konten['use_ttd_sekretaris'] ?? '1') === '1'): ?>
                                 <img src="<?php echo uploadUrl($pengaturan['ttd_sekretaris_image']); ?>" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); max-height:85px; mix-blend-mode:multiply; pointer-events:none;">
-                            <?php endif; ?>
-                            <?php if(!empty($pengaturan['cap_sekretaris_image']) && ($konten['use_cap_sekretaris'] ?? '1') === '1'): ?>
-                                <img src="<?php echo uploadUrl($pengaturan['cap_sekretaris_image']); ?>" style="position:absolute; bottom:0px; left:10%; max-width:180px; max-height:130px; mix-blend-mode:multiply; pointer-events:none; opacity:0.85; z-index:2;">
                             <?php endif; ?>
                             <div class="ttd-name"><?php echo htmlspecialchars($pengaturan['ttd_sekretaris_name'] ?? $nama_sekretaris_bem); ?></div>
                         </td>
