@@ -292,8 +292,31 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
         .ttd-area .ttd-title { font-weight: bold; margin-bottom: 5px; }
         .ttd-table { width: 100%; margin-bottom: 5px; border-collapse: collapse; border: none !important; }
         .ttd-table td { width: 50%; vertical-align: top; padding-bottom: 5px; border: none !important; }
-        .ttd-name { font-weight: bold; text-decoration: underline; margin-top: 55px; }
-        .ttd-jabatan { font-size: 14px; }
+        .ttd-name { font-weight: bold; text-decoration: underline; margin-top: 55px; position: relative; z-index: 1; }
+        .ttd-jabatan { font-size: 14px; position: relative; z-index: 1; }
+
+        .page.rundown-page {
+            padding: 20mm;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .rundown-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            page-break-inside: auto;
+        }
+        .rundown-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        .rundown-table th,
+        .rundown-table td {
+            border: 1px solid #000;
+            padding: 8px 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
 
         @page {
             size: A4 portrait;
@@ -304,16 +327,37 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
             .page { 
                 margin: 0 !important; 
-                padding: 10mm 15mm; 
+                padding: 0 !important;
                 border: none !important; 
                 border-radius: 0 !important; 
-                width: 210mm; 
-                min-height: 295mm; /* Mengurangi toleransi PDF driver */
+                width: 100% !important;
+                min-height: 0 !important;
+                height: auto !important;
                 box-shadow: none !important; 
                 outline: none !important;
                 background: white !important; 
-                page-break-after: always; 
             }
+            <?php if (!isset($_GET['bulk'])): ?>
+            .page.surat-page {
+                padding: 0 20mm 15mm !important;
+                width: 210mm !important;
+            }
+            .page.surat-page .ttd-name {
+                margin-top: 15px !important;
+            }
+            .page.lampiran-page {
+                padding: 10mm 15mm !important;
+                width: 210mm !important;
+                page-break-before: always;
+            }
+            .page.rundown-page {
+                padding: 15mm 20mm !important;
+            }
+            .rundown-page-continuation {
+                page-break-before: always;
+                break-before: page;
+            }
+            <?php endif; ?>
             * { 
                 box-shadow: none !important; 
                 outline: none !important; 
@@ -334,9 +378,6 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 border-color: #000 !important;
             }
             .pdf-page-canvas { border: none !important; }
-            .page:last-of-type {
-                page-break-after: avoid !important;
-            }
             .no-print { display: none !important; }
         }
     </style>
@@ -357,43 +398,54 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
     </div>
     <?php endif; ?>
 
-    <div class="page">
-        <!-- 1. KOP SURAT -->
-        <?php 
-        $kop_path = rtrim(UPLOAD_PATH, '/\\') . '/kop_surat.png';
-        $kop_exists = file_exists($kop_path);
-        if (!$kop_exists && ($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
-            $kop_exists = downloadFromS3('kop_surat.png', $kop_path);
-        }
-        if ($kop_exists): 
-            $kop_url = uploadUrl('kop_surat.png');
-        ?>
-            <div style="margin: -10mm -15mm -5px -15mm; text-align: center;">
-                <img src="<?php echo htmlspecialchars($kop_url); ?>" style="width:100%; height:auto; display:block;" alt="Kop Surat">
-            </div>
-        <?php else: ?>
-            <div class="kop-surat">
-                <img src="<?php echo assetUrl('images/favicon/android-chrome-192x192.png'); ?>" class="kop-logo" alt="Logo">
-                <div class="kop-teks">
-                    <h1>BADAN EKSEKUTIF MAHASISWA</h1>
-                    <h2>INSTBUNAS</h2>
-                    <h4>SK No. 610/VIII/SK-BEM/INSTBUNAS/2024</h4>
-                    <div class="kop-alamat">Jl. Siliwangi No. 121 (Jl. Raya Kadipaten - Majalengka) Heuleut - Kadipaten - Majalengka</div>
-                </div>
-                <div class="kop-extra">
-                    <!-- QR Placeholder -->
-                    <div style="width: 80px; height: 80px; background: white; border: 1px solid #000; display:flex; align-items:center; justify-content:center; padding:2px;">
-                        <i class="fas fa-qrcode" style="font-size: 60px;"></i>
-                    </div>
-                    <div class="contact-item wa">
-                        <i class="fab fa-whatsapp"></i> <span>083869304199</span>
-                    </div>
-                    <div class="contact-item email">
-                        <i class="fas fa-envelope"></i> <span>beminstbunas@gmail.com</span>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
+    <div class="page surat-page">
+        <table style="width: 100%; border-collapse: collapse; border: none;">
+            <thead>
+                <tr>
+                    <td style="border: none; padding: 0;">
+                        <!-- 1. KOP SURAT -->
+                        <?php 
+                        $kop_path = rtrim(UPLOAD_PATH, '/\\') . '/kop_surat.png';
+                        $kop_exists = file_exists($kop_path);
+                        if (!$kop_exists && ($_ENV['STORAGE_METHOD'] ?? 'local') === 's3') {
+                            $kop_exists = downloadFromS3('kop_surat.png', $kop_path);
+                        }
+                        if ($kop_exists): 
+                            $v = file_exists($kop_path) ? filemtime($kop_path) : time();
+                            $kop_url = uploadUrl('kop_surat.png') . '?v=' . $v;
+                        ?>
+                            <div style="margin: 0 -15mm -5px -15mm; text-align: center;">
+                                <img src="<?php echo htmlspecialchars($kop_url); ?>" style="width:100%; height:auto; display:block;" alt="Kop Surat">
+                            </div>
+                        <?php else: ?>
+                            <div class="kop-surat">
+                                <img src="<?php echo assetUrl('images/favicon/android-chrome-192x192.png'); ?>" class="kop-logo" alt="Logo">
+                                <div class="kop-teks">
+                                    <h1>BADAN EKSEKUTIF MAHASISWA</h1>
+                                    <h2>INSTBUNAS</h2>
+                                    <h4>SK No. 610/VIII/SK-BEM/INSTBUNAS/2024</h4>
+                                    <div class="kop-alamat">Jl. Siliwangi No. 121 (Jl. Raya Kadipaten - Majalengka) Heuleut - Kadipaten - Majalengka</div>
+                                </div>
+                                <div class="kop-extra">
+                                    <!-- QR Placeholder -->
+                                    <div style="width: 80px; height: 80px; background: white; border: 1px solid #000; display:flex; align-items:center; justify-content:center; padding:2px;">
+                                        <i class="fas fa-qrcode" style="font-size: 60px;"></i>
+                                    </div>
+                                    <div class="contact-item wa">
+                                        <i class="fab fa-whatsapp"></i> <span>083869304199</span>
+                                    </div>
+                                    <div class="contact-item email">
+                                        <i class="fas fa-envelope"></i> <span>beminstbunas@gmail.com</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: none; padding: 0;">
 
         <!-- 2. META SURAT -->
         <!-- 
@@ -844,7 +896,10 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 </table>
             <?php endif; ?>
         </div>
-
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <!-- RENDER LAMPIRAN INTERNAL (DATA DARI DATABASE) -->
@@ -852,7 +907,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
         <?php foreach($internal_data as $idx_int => $data_int): 
             $barang_list = json_decode($data_int['barang_json'], true) ?: [];
         ?>
-        <div class="page" style="margin-top: 10mm; page-break-before: always; position: relative;">
+        <div class="page lampiran-page" style="margin-top: 10mm; page-break-before: always; position: relative;">
             <div style="text-align: left; font-size: 12pt; margin-bottom: 20px; font-style: italic;">Lampiran <?php echo ($idx_int + 1); ?></div>
             
             <div style="text-align: center; margin-bottom: 30px;">
@@ -1006,23 +1061,22 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 $tanggal_utama_r = "$s_d $s_m $s_y";
             }
             
-            $total_days_r = count($rd_json);
-        ?>
-        <div class="page" style="margin-top: 10mm; page-break-before: always; position: relative;">
-            <div style="text-align: left; font-size: 12pt; margin-bottom: 20px; font-style: italic;">Lampiran <?php echo ($lampiran_offset + $idx_rd + 1); ?></div>
-            
-            <div style="text-align: center; margin-bottom: 30px; text-transform: uppercase;">
-                <h1 style="font-size: 14pt; font-weight: bold; margin: 3px 0;">SUSUNAN ACARA</h1>
-                <h2 style="font-size: 14pt; font-weight: bold; margin: 3px 0;"><?php echo htmlspecialchars($rd_nama); ?></h2>
-                <h3 style="font-size: 14pt; font-weight: bold; margin: 3px 0;">PERIODE <?php echo htmlspecialchars($rd_tahun); ?></h3>
-                <p style="font-weight: bold; margin-top: 5px; font-size: 12pt;"><?php echo htmlspecialchars($tanggal_utama_r); ?></p>
-            </div>
-
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; page-break-inside: auto;">
-            <?php 
+            $rd_days = [];
+            foreach ($rd_json as $day_index => $day_data) {
+                if (!empty($day_data['items'])) {
+                    $rd_days[] = ['day_index' => $day_index, 'data' => $day_data];
+                }
+            }
+            $total_days_r = count($rd_days);
+            ?>
+            <?php
+            $first_rundown_page = true;
             $day_counter = 1;
-            foreach($rd_json as $dayIdx => $dayData):
-                $day_ts = strtotime($rd_tanggal_mulai . " + $dayIdx days");
+            foreach($rd_days as $rd_day_index => $rd_day):
+                $dayIdx = $rd_day['day_index'];
+                $dayData = $rd_day['data'];
+                $day_number = (int)($dayData['day_number'] ?? ($dayIdx + 1));
+                $day_ts = strtotime($rd_tanggal_mulai . " + " . ($day_number - 1) . " days");
                 $hari_nama = $hari_id_r[date('l', $day_ts)] ?? date('l', $day_ts);
                 $tgl_d = date('d', $day_ts);
                 $tgl_m = $bulan_id_r[date('F', $day_ts)] ?? date('F', $day_ts);
@@ -1034,78 +1088,101 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                     $judul_hari = strtoupper($rd_nama) . ' - HARI KE-' . $day_counter;
                 }
                 
-                $items = $dayData['items'] ?? [];
-                // Skip if no items to avoid "nanggung" tables
-                if (empty($items)) continue;
+                $numbered_items = [];
+                $current_number = 0;
+                $current_time = '';
+                foreach ($dayData['items'] as $item) {
+                    if (empty($item['is_parallel'])) {
+                        $current_number++;
+                        $current_time = $item['waktu'];
+                    }
+                    $item['display_number'] = $current_number;
+                    $item['display_time'] = $current_time;
+                    $numbered_items[] = $item;
+                }
+                $item_chunks = array_chunk($numbered_items, 8);
             ?>
-                <thead>
-                    <?php if ($day_counter > 1): ?>
-                    <tr>
-                        <td colspan="5" style="border: none; height: 30px;"></td>
-                    </tr>
-                    <?php endif; ?>
-                    <tr>
-                        <th colspan="5" style="background-color: #d9e2f3; font-weight: bold; font-size: 12pt; padding: 10px; border: 1px solid #000; text-align: center; -webkit-print-color-adjust: exact;">
-                            <?php echo htmlspecialchars($judul_hari); ?><br><br>
-                            <?php echo htmlspecialchars("$hari_nama, $tgl_d $tgl_m $tgl_y"); ?>
-                        </th>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 5%; -webkit-print-color-adjust: exact;">NO</th>
-                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 15%; -webkit-print-color-adjust: exact;">WAKTU</th>
-                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 35%; -webkit-print-color-adjust: exact;">ACARA</th>
-                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 30%; -webkit-print-color-adjust: exact;"><?php echo ($dayData['tipe_ket'] ?? 'ket') === 'ket' ? 'KETERANGAN' : 'TEMPAT'; ?></th>
-                        <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 15%; -webkit-print-color-adjust: exact;">PENANGGUNG<br>JAWAB</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $num = 1;
-                    for ($idx = 0; $idx < count($items); $idx++): 
-                        $item = $items[$idx];
-                        $is_par = !empty($item['is_parallel']);
-                        
-                        $rowspan = 1;
-                        if (!$is_par) {
-                            for ($j = $idx + 1; $j < count($items); $j++) {
-                                if (!empty($items[$j]['is_parallel'])) {
-                                    $rowspan++;
-                                } else {
-                                    break;
+            <?php foreach ($item_chunks as $chunk_index => $chunk_items): ?>
+            <div class="page lampiran-page rundown-page<?php echo $first_rundown_page ? '' : ' rundown-page-continuation'; ?>" style="margin-top: 10mm; position:relative; z-index:0;">
+                <?php if ($first_rundown_page): ?>
+                <div style="text-align: left; font-size: 12pt; margin-bottom: 20px; font-style: italic;">Lampiran <?php echo ($lampiran_offset + $idx_rd + 1); ?></div>
+                <div style="text-align: center; margin-bottom: 30px; text-transform: uppercase;">
+                    <h1 style="font-size: 14pt; font-weight: bold; margin: 3px 0;">SUSUNAN ACARA</h1>
+                    <h2 style="font-size: 14pt; font-weight: bold; margin: 3px 0;"><?php echo htmlspecialchars($rd_nama); ?></h2>
+                    <h3 style="font-size: 14pt; font-weight: bold; margin: 3px 0;">PERIODE <?php echo htmlspecialchars($rd_tahun); ?></h3>
+                    <p style="font-weight: bold; margin-top: 5px; font-size: 12pt;"><?php echo htmlspecialchars($tanggal_utama_r); ?></p>
+                </div>
+                <?php $first_rundown_page = false; endif; ?>
+                <table class="rundown-table" style="width: 100%; border-collapse: collapse; margin-bottom: 30px; page-break-inside: auto;">
+                    <thead>
+                        <?php if ($day_counter > 1 && $chunk_index === 0): ?>
+                        <tr>
+                            <td colspan="5" style="border: none; height: 30px;"></td>
+                        </tr>
+                        <?php endif; ?>
+                        <tr>
+                            <th colspan="5" style="background-color: #d9e2f3; font-weight: bold; font-size: 12pt; padding: 10px; border: 1px solid #000; text-align: center; -webkit-print-color-adjust: exact;">
+                                <?php echo htmlspecialchars($judul_hari); ?><br><br>
+                                <?php echo htmlspecialchars("$hari_nama, $tgl_d $tgl_m $tgl_y"); ?>
+                            </th>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 5%; -webkit-print-color-adjust: exact;">NO</th>
+                            <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 15%; -webkit-print-color-adjust: exact;">WAKTU</th>
+                            <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 35%; -webkit-print-color-adjust: exact;">ACARA</th>
+                            <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 30%; -webkit-print-color-adjust: exact;"><?php echo ($dayData['tipe_ket'] ?? 'ket') === 'ket' ? 'KETERANGAN' : 'TEMPAT'; ?></th>
+                            <th style="background-color: #bfbfbf; font-weight: bold; border: 1px solid #000; padding: 8px 12px; text-align: center; width: 15%; -webkit-print-color-adjust: exact;">PENANGGUNG<br>JAWAB</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($chunk_items as $idx => $item):
+                            $is_par = !empty($item['is_parallel']);
+                            $show_schedule_cells = !$is_par || ($idx === 0 && $item['display_number'] > 0);
+                            $rowspan = 1;
+                            if ($show_schedule_cells) {
+                                for ($j = $idx + 1; $j < count($chunk_items); $j++) {
+                                    if (
+                                        !empty($chunk_items[$j]['is_parallel'])
+                                        && $chunk_items[$j]['display_number'] === $item['display_number']
+                                    ) {
+                                        $rowspan++;
+                                    } else {
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                    ?>
-                        <?php 
-                        $is_highlight = false;
-                        $perihal_surat_lower = strtolower($surat['perihal'] ?? '');
-                        $is_pemateri_letter = (strpos($perihal_surat_lower, 'pemateri') !== false || strpos($perihal_surat_lower, 'narasumber') !== false);
-                        
-                        if ($is_pemateri_letter && isset($tujuan_nama_pendek) && !empty($tujuan_nama_pendek)) {
-                            if (stripos($item['keterangan'], $tujuan_nama_pendek) !== false || stripos($item['acara'], $tujuan_nama_pendek) !== false) {
-                                $is_highlight = true;
+                            $is_highlight = false;
+                            $perihal_surat_lower = strtolower($surat['perihal'] ?? '');
+                            $is_pemateri_letter = (strpos($perihal_surat_lower, 'pemateri') !== false || strpos($perihal_surat_lower, 'narasumber') !== false);
+
+                            if ($is_pemateri_letter && isset($tujuan_nama_pendek) && !empty($tujuan_nama_pendek)) {
+                                if (stripos($item['keterangan'], $tujuan_nama_pendek) !== false || stripos($item['acara'], $tujuan_nama_pendek) !== false) {
+                                    $is_highlight = true;
+                                }
                             }
-                        }
-                        $bg_style = $is_highlight ? 'background-color: #d9e2f3; -webkit-print-color-adjust: exact;' : '';
+                            $bg_style = $is_highlight ? 'background-color: #d9e2f3; -webkit-print-color-adjust: exact;' : '';
                         ?>
                         <tr style="page-break-inside: avoid; <?php echo $bg_style; ?>">
-                            <?php if (!$is_par): ?>
-                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo $num++; ?>.</td>
-                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; white-space: nowrap; <?php echo $bg_style; ?>" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo htmlspecialchars($item['waktu']); ?></td>
+                            <?php if ($show_schedule_cells): ?>
+                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo $item['display_number']; ?>.</td>
+                                <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; white-space: nowrap; <?php echo $bg_style; ?>" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo htmlspecialchars($item['display_time']); ?></td>
                             <?php endif; ?>
                             <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>"><?php echo nl2br(htmlspecialchars($item['acara'])); ?></td>
                             <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>"><?php echo htmlspecialchars($item['keterangan']); ?></td>
                             <td style="border: 1px solid #000; padding: 8px 12px; text-align: center; vertical-align: middle; <?php echo $bg_style; ?>"><?php echo htmlspecialchars($item['pj'] ?? $item['penanggung_jawab'] ?? ''); ?></td>
                         </tr>
-                    <?php endfor; ?>
-                </tbody>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php if ($rd_day_index === count($rd_days) - 1 && $chunk_index === count($item_chunks) - 1): ?>
+                <div style="font-size: 10pt; font-style: italic; margin-top: -15px; margin-bottom: 20px;">*Catatan: Rundown acara dapat berubah sewaktu-waktu menyesuaikan kondisi dan kebutuhan di lapangan.</div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
             <?php 
                 $day_counter++;
             endforeach; 
             ?>
-            </table>
-            <div style="font-size: 10pt; font-style: italic; margin-top: -15px; margin-bottom: 20px;">*Catatan: Rundown acara dapat berubah sewaktu-waktu menyesuaikan kondisi dan kebutuhan di lapangan.</div>
-        </div>
         <?php endforeach; ?>
     <?php endif; ?>
     
@@ -1170,7 +1247,7 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                         canvas.className = 'pdf-page-canvas';
                         
                         const pageWrapper = document.createElement('div');
-                        pageWrapper.className = 'page';
+                        pageWrapper.className = 'page lampiran-page';
                         pageWrapper.style.padding = '0';
                         pageWrapper.style.margin = '10mm auto';
                         pageWrapper.style.overflow = 'hidden';
@@ -1264,7 +1341,6 @@ $download_name = "SURAT $f_perihal $f_kode UNTUK $f_tujuan $f_tahun";
                 margin: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
-                page-break-after: always;
             }
             .no-print { display: none !important; }
         }

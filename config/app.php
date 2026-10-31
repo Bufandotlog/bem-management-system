@@ -19,8 +19,11 @@ defined('SITE_NAME') || define('SITE_NAME', 'BEM Kabinet Astawidya');
 // 2.5 CANONICAL HOST (force www, prevent state mismatch)
 // ============================================
 $canonicalHost = 'bembudiutomo.my.id';
-$requestHost   = $_SERVER['HTTP_HOST'] ?? '';
-if ($requestHost !== $canonicalHost) {
+$requestHost = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+$requestHostname = strtolower(explode(':', $requestHost)[0]);
+$localHosts = ['localhost', '127.0.0.1', '::1'];
+$isLocalHost = in_array($requestHostname, $localHosts, true);
+if ($requestHostname !== '' && !$isLocalHost && $requestHost !== strtolower($canonicalHost)) {
     $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
     $redirectTo = $scheme . '://' . $canonicalHost . $_SERVER['REQUEST_URI'];
     header("Location: " . $redirectTo, true, 301);
@@ -32,14 +35,17 @@ if ($requestHost !== $canonicalHost) {
 // ============================================
 if (session_status() === PHP_SESSION_NONE) {
 
-    session_set_cookie_params([
+    $sessionCookieParams = [
         'lifetime' => 0,
         'path'     => '/',
-        'domain'   => '.bembudiutomo.my.id',
         'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
         'httponly' => true,
         'samesite' => 'Lax',
-    ]);
+    ];
+    if (!$isLocalHost) {
+        $sessionCookieParams['domain'] = '.bembudiutomo.my.id';
+    }
+    session_set_cookie_params($sessionCookieParams);
 
     // Pakai @ agar tidak fatal di shared hosting yang restrict ini_set
     @ini_set('session.use_strict_mode', 1);

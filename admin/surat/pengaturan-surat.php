@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         $delete_targets = ['warek', 'presma', 'sekretaris', 'cap_panitia', 'cap_warek', 'cap_presma', 'bpm', 'cap_bpm'];
         foreach ($delete_targets as $tgt) {
             if (($_POST['delete_' . $tgt] ?? '') === '1') {
-                $db_key = in_array($tgt, ['warek', 'presma', 'sekretaris']) ? 'ttd_' . $tgt . '_image' : $tgt . '_image';
+                $db_key = in_array($tgt, ['warek', 'presma', 'sekretaris', 'bpm'], true) ? 'ttd_' . $tgt . '_image' : $tgt . '_image';
                 $old_img = $pengaturan[$db_key] ?? '';
                 if ($old_img) {
                     deleteFile($old_img);
@@ -64,44 +64,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         }
 
         // Handle File Uploads
+        $upload_errors = [];
         if (!empty($_FILES['ttd_warek_image']['name'])) {
             $uploaded = uploadFile($_FILES['ttd_warek_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('ttd_warek_image', $uploaded);
-            else $error = "Gagal upload ttd_warek_image.";
+            else $upload_errors[] = "TTD Warek (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
         if (!empty($_FILES['ttd_presma_image']['name'])) {
             $uploaded = uploadFile($_FILES['ttd_presma_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('ttd_presma_image', $uploaded);
-            else $error = "Gagal upload ttd_presma_image.";
+            else $upload_errors[] = "TTD Ketua BEM (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
         if (!empty($_FILES['ttd_sekretaris_image']['name'])) {
             $uploaded = uploadFile($_FILES['ttd_sekretaris_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('ttd_sekretaris_image', $uploaded);
-            else $error = "Gagal upload ttd_sekretaris_image.";
+            else $upload_errors[] = "TTD Sekretaris (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
         if (!empty($_FILES['cap_panitia_image']['name'])) {
             $uploaded = uploadFile($_FILES['cap_panitia_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('cap_panitia_image', $uploaded);
+            else $upload_errors[] = "Cap Panitia (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
         if (!empty($_FILES['cap_warek_image']['name'])) {
             $uploaded = uploadFile($_FILES['cap_warek_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('cap_warek_image', $uploaded);
+            else $upload_errors[] = "Cap Warek (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
         if (!empty($_FILES['cap_presma_image']['name'])) {
             $uploaded = uploadFile($_FILES['cap_presma_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('cap_presma_image', $uploaded);
+            else $upload_errors[] = "Cap BEM (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
         // [FITUR 2026-09-04] BPM TTD & Cap
         if (!empty($_FILES['ttd_bpm_image']['name'])) {
             $uploaded = uploadFile($_FILES['ttd_bpm_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('ttd_bpm_image', $uploaded);
-            else $error = "Gagal upload ttd_bpm_image.";
+            else $upload_errors[] = "TTD Ketua BPM (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
         if (!empty($_FILES['cap_bpm_image']['name'])) {
             $uploaded = uploadFile($_FILES['cap_bpm_image'], 'umum');
             if ($uploaded) dbUpsertPengaturan('cap_bpm_image', $uploaded);
+            else $upload_errors[] = "Cap BPM (" . ($_SESSION['error'] ?? 'gagal disimpan') . ")";
         }
-        if(empty($error)) $success = "Pengaturan Tanda Tangan & Stempel berhasil diperbarui.";
+        if (!empty($upload_errors)) {
+            $error = "Gagal mengunggah berkas: " . implode('; ', $upload_errors);
+        } else {
+            $success = "Pengaturan Tanda Tangan & Stempel berhasil diperbarui.";
+        }
     }
 }
 
@@ -582,7 +591,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_warek').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_warek_ctn" style="<?php echo $def_warek_img ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_warek_img" class="preview-img" src="<?php echo $def_warek_img ? uploadUrl($def_warek_img) : '#'; ?>">
+                                <img id="preview_warek_img" class="preview-img" src="<?php echo $def_warek_img ? uploadUrl($def_warek_img) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="warek" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan direkomendasikan.</small>
@@ -602,7 +611,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_presma').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_presma_ctn" style="<?php echo $def_presma_img ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_presma_img" class="preview-img" src="<?php echo $def_presma_img ? uploadUrl($def_presma_img) : '#'; ?>">
+                                <img id="preview_presma_img" class="preview-img" src="<?php echo $def_presma_img ? uploadUrl($def_presma_img) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="presma" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan direkomendasikan.</small>
@@ -622,7 +631,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_sekretaris').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_sekretaris_ctn" style="<?php echo $def_sekretaris_img ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_sekretaris_img" class="preview-img" src="<?php echo $def_sekretaris_img ? uploadUrl($def_sekretaris_img) : '#'; ?>">
+                                <img id="preview_sekretaris_img" class="preview-img" src="<?php echo $def_sekretaris_img ? uploadUrl($def_sekretaris_img) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="sekretaris" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
@@ -642,7 +651,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_bpm').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_bpm_ctn" style="<?php echo $def_bpm_img ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_bpm_img" class="preview-img" src="<?php echo $def_bpm_img ? uploadUrl($def_bpm_img) : '#'; ?>">
+                                <img id="preview_bpm_img" class="preview-img" src="<?php echo $def_bpm_img ? uploadUrl($def_bpm_img) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="bpm" title="Hapus Gambar"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan direkomendasikan. Kosongkan jika tidak ingin mengubah.</small>
@@ -664,7 +673,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_cap_panitia').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_cap_panitia_ctn" style="<?php echo $def_cap_panitia ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_cap_panitia_img" class="preview-img" src="<?php echo $def_cap_panitia ? uploadUrl($def_cap_panitia) : '#'; ?>">
+                                <img id="preview_cap_panitia_img" class="preview-img" src="<?php echo $def_cap_panitia ? uploadUrl($def_cap_panitia) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="cap_panitia" title="Hapus Cap"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan.</small>
@@ -681,7 +690,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_cap_warek').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_cap_warek_ctn" style="<?php echo $def_cap_warek ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_cap_warek_img" class="preview-img" src="<?php echo $def_cap_warek ? uploadUrl($def_cap_warek) : '#'; ?>">
+                                <img id="preview_cap_warek_img" class="preview-img" src="<?php echo $def_cap_warek ? uploadUrl($def_cap_warek) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="cap_warek" title="Hapus Cap"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan.</small>
@@ -698,7 +707,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_cap_presma').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_cap_presma_ctn" style="<?php echo $def_cap_presma ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_cap_presma_img" class="preview-img" src="<?php echo $def_cap_presma ? uploadUrl($def_cap_presma) : '#'; ?>">
+                                <img id="preview_cap_presma_img" class="preview-img" src="<?php echo $def_cap_presma ? uploadUrl($def_cap_presma) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="cap_presma" title="Hapus Cap"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan.</small>
@@ -715,7 +724,7 @@ $def_cap_bpm  = $pengaturan['cap_bpm_image'] ?? '';
                                 <button type="button" class="btn-select-file" onclick="document.getElementById('file_cap_bpm').click()">Pilih File</button>
                             </div>
                             <div class="preview-container" id="preview_cap_bpm_ctn" style="<?php echo $def_cap_bpm ? 'display:flex' : 'display:none'; ?>">
-                                <img id="preview_cap_bpm_img" class="preview-img" src="<?php echo $def_cap_bpm ? uploadUrl($def_cap_bpm) : '#'; ?>">
+                                <img id="preview_cap_bpm_img" class="preview-img" src="<?php echo $def_cap_bpm ? uploadUrl($def_cap_bpm) : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; ?>">
                                 <button type="button" class="btn-remove-img" data-target="cap_bpm" title="Hapus Cap"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <small>PNG/JPG transparan.</small>

@@ -93,7 +93,8 @@ $rundown_internal_list = dbFetchAll("SELECT id, nama_acara, tanggal_mulai, duras
 // Sekaligus ambil data Ketua Pelaksana dan Sekretaris Kementeriannya untuk autofill TTD
 $all_kegiatan_list = dbFetchAll(
     "SELECT 
-        k.id, k.nama_kegiatan, k.status, k.deskripsi, k.tanggal_mulai, k.tanggal_selesai,
+        k.id, k.nama_kegiatan, k.kode_kegiatan, k.status, k.deskripsi,
+        k.tanggal_mulai, k.tanggal_selesai, k.waktu_pelaksanaan, k.tempat_pelaksanaan,
         u_ketua.nama AS ketua_nama,
         u_ketua.file_ttd AS ketua_ttd,
         ak_sek.nama AS sekretaris_nama,
@@ -940,11 +941,13 @@ if ($is_edit || $is_clone) {
                             <i class="fas fa-info-circle"></i> Otomatis mengacu ke kegiatan status <b>Persiapan</b>
                         </span>
                     </label>
-                    <select name="kegiatan_id" id="kegiatan_id_select" style="border-color: rgba(74, 144, 226, 0.4); background: #0c1017; color: #fff; font-weight: 600;" onchange="filterLampiran()">
+                    <select name="kegiatan_id" id="kegiatan_id_select" style="border-color: rgba(74, 144, 226, 0.4); background: #0c1017; color: #fff; font-weight: 600;" onchange="filterLampiran(true)">
                         <option value="0" data-nama="" data-nama-asli="" data-tema="" <?php echo ((int)$selected_kegiatan_id === 0) ? 'selected' : ''; ?>>-- Tanpa Kegiatan / Surat Umum (Langsung Masuk Arsip Utama) --</option>
                         <?php foreach ($all_kegiatan_list as $kg): 
                             $tgl_mulai = $kg['tanggal_mulai'] ?? '';
                             $tgl_selesai = $kg['tanggal_selesai'] ?? '';
+                            $waktu_pelaksanaan = $kg['waktu_pelaksanaan'] ?? '';
+                            $tempat_pelaksanaan = $kg['tempat_pelaksanaan'] ?? '';
                             $durasi = 1;
                             if ($tgl_mulai && $tgl_selesai && $tgl_mulai !== '0000-00-00' && $tgl_selesai !== '0000-00-00') {
                                 try {
@@ -957,8 +960,11 @@ if ($is_edit || $is_clone) {
                             <option value="<?php echo $kg['id']; ?>" 
                                 data-nama="<?php echo htmlspecialchars(strtolower(trim($kg['nama_kegiatan']))); ?>" 
                                 data-nama-asli="<?php echo htmlspecialchars(trim($kg['nama_kegiatan'])); ?>" 
+                                data-kode="<?php echo htmlspecialchars($kg['kode_kegiatan'] ?? ''); ?>"
                                 data-tema="<?php echo htmlspecialchars(trim($kg['deskripsi'] ?? '')); ?>" 
                                 data-tgl-mulai="<?php echo htmlspecialchars($tgl_mulai); ?>" 
+                                data-waktu="<?php echo htmlspecialchars($waktu_pelaksanaan); ?>"
+                                data-tempat="<?php echo htmlspecialchars($tempat_pelaksanaan); ?>"
                                 data-durasi="<?php echo $durasi; ?>"
                                 data-ketua-nama="<?php echo htmlspecialchars(strtoupper($kg['ketua_nama'] ?? '')); ?>"
                                 data-ketua-ttd="<?php echo htmlspecialchars($kg['ketua_ttd'] ?? ''); ?>"
@@ -1207,6 +1213,10 @@ if ($is_edit || $is_clone) {
                             </div>
                         </div>
                         <div class="preview-bar" id="preview-waktu"><?php echo htmlspecialchars($edit_data['pelaksanaan_waktu']); ?></div>
+                        <div id="master-waktu-sync-notice" role="status" style="display:none; margin-top:12px; padding:12px 14px; border:1px solid rgba(241,196,15,.45); border-radius:10px; background:rgba(241,196,15,.08); color:#f4d35e;">
+                            <div style="margin-bottom:9px;">Waktu surat berbeda dari waktu Master Kegiatan. Perubahan hanya diterapkan ke formulir dan tersimpan setelah surat disimpan.</div>
+                            <button type="button" class="btn-outline" onclick="syncSuratTimeFromMaster()">Gunakan waktu dari Master Kegiatan</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -1801,90 +1811,101 @@ function updatePreviewParagraf() {
     
     document.getElementById('preview-paragraf-text').innerHTML = html;
 }
+const IS_EDIT_OR_CLONE = <?php echo ($is_edit || $is_clone) ? 'true' : 'false'; ?>;
 
-function filterLampiran() {
+function filterLampiran(isUserChange = false) {
     const select = document.getElementById('kegiatan_id_select');
     if (!select) return;
     const selectedOption = select.options[select.selectedIndex];
     const namaKegiatan = selectedOption.getAttribute('data-nama') || '';
     const namaKegiatanAsli = selectedOption.getAttribute('data-nama-asli') || '';
     const temaKegiatan = selectedOption.getAttribute('data-tema') || '';
+    const kodeKegiatan = selectedOption.getAttribute('data-kode') || '';
     
-    // Auto-fill Paragraf Pembuka
-    const rteNamaKeg = document.getElementById('rte_nama_keg');
-    const inputNamaKeg = document.getElementById('input_nama_kegiatan');
-    const rteTema = document.getElementById('rte_tema');
-    const inputTema = document.getElementById('input_tema_kegiatan_val');
+    // Auto-fill form HANYA dijalankan bila:
+    // 1. User SECARA EKSPLISIT mengubah dropdown (isUserChange === true), ATAU
+    // 2. Ini pembuatan surat baru (BUKAN edit/clone) dan kegiatan dipilih (> 0)
+    const canAutoFill = isUserChange || (!IS_EDIT_OR_CLONE && select.value !== '0');
     
-    if (rteNamaKeg && inputNamaKeg) {
-        if (namaKegiatanAsli !== '') {
+    if (canAutoFill) {
+        // Auto-fill Paragraf Pembuka
+        const rteNamaKeg = document.getElementById('rte_nama_keg');
+        const inputNamaKeg = document.getElementById('input_nama_kegiatan');
+        const rteTema = document.getElementById('rte_tema');
+        const inputTema = document.getElementById('input_tema_kegiatan_val');
+        
+        if (rteNamaKeg && inputNamaKeg && namaKegiatanAsli !== '') {
             rteNamaKeg.innerHTML = namaKegiatanAsli;
             inputNamaKeg.value = namaKegiatanAsli;
         }
-        // [FIX 2026-09-04] JANGAN clear rte_nama_keg/input_nama_kegiatan saat clone/edit
-        // jika kegiatan_id tidak ada di <select>. Sebelumnya, line 1451-1452 clear hidden
-        // input, menyebabkan preview paragraf tampil [Nama Kegiatan] placeholder
-        // walaupun data nama_kegiatan ada di $edit_data (hidden input value dari PHP).
-        // Cukup preserve nilai existing; user masih bisa edit manual.
-    }
-    
-    if (rteTema && inputTema) {
-        if (temaKegiatan !== '') {
+        
+        if (rteTema && inputTema && temaKegiatan !== '') {
             rteTema.innerHTML = temaKegiatan;
             inputTema.value = temaKegiatan;
         }
-        // Sama seperti di atas: jangan clear. Preserve value existing.
+        const kodeKegInput = document.getElementById('kode_kegiatan_input');
+        if (kodeKegInput && kodeKegiatan !== '') {
+            kodeKegInput.value = kodeKegiatan;
+        }
+        
+        // Auto-fill Waktu & Tempat Pelaksanaan (Hari & Tanggal)
+        const tglMulai = selectedOption.getAttribute('data-tgl-mulai') || '';
+        const waktuPelaksanaan = selectedOption.getAttribute('data-waktu') || '';
+        const tempatPelaksanaan = selectedOption.getAttribute('data-tempat') || '';
+        const durasi = selectedOption.getAttribute('data-durasi') || '1';
+        const inputTglMulai = document.getElementById('tgl-mulai');
+        const selectDurasi = document.getElementById('durasi-hari');
+        const inputCustomHari = document.getElementById('custom-hari');
+        const labelHari = document.getElementById('label-hari');
+        
+        if (inputTglMulai && selectDurasi) {
+            if (tglMulai) {
+                inputTglMulai.value = tglMulai;
+                const durasiInt = parseInt(durasi);
+                if (durasiInt >= 1 && durasiInt <= 5) {
+                    selectDurasi.value = durasiInt;
+                    if(inputCustomHari) inputCustomHari.style.display = 'none';
+                    if(labelHari) labelHari.style.display = 'none';
+                } else {
+                    selectDurasi.value = 'custom';
+                    if(inputCustomHari) {
+                        inputCustomHari.style.display = 'block';
+                        inputCustomHari.value = durasiInt;
+                    }
+                    if(labelHari) labelHari.style.display = 'block';
+                }
+            } else {
+                inputTglMulai.value = '';
+                selectDurasi.value = '1';
+                if(inputCustomHari) inputCustomHari.style.display = 'none';
+                if(labelHari) labelHari.style.display = 'none';
+            }
+            if (typeof formatTanggalRange === 'function') formatTanggalRange();
+        }
+        setWaktuPelaksanaan(waktuPelaksanaan);
+        updateMasterWaktuSyncNotice();
+        const inputTempat = document.getElementById('input_tempat');
+        if (inputTempat && tempatPelaksanaan !== '') {
+            inputTempat.value = tempatPelaksanaan;
+        }
+        
+        // Auto-fill Panitia (Ketua & Sekretaris Pelaksana)
+        const ketuaNama = selectedOption.getAttribute('data-ketua-nama') || '';
+        const ketuaTtd = selectedOption.getAttribute('data-ketua-ttd') || '';
+        const sekNama = selectedOption.getAttribute('data-sekretaris-nama') || '';
+        const sekTtd = selectedOption.getAttribute('data-sekretaris-ttd') || '';
+        
+        if (typeof selectSavedPanitia === 'function') {
+            if (ketuaNama !== '') {
+                selectSavedPanitia('ketua', { nama: ketuaNama, ttd: ketuaTtd });
+            }
+            if (sekNama !== '') {
+                selectSavedPanitia('sekretaris', { nama: sekNama, ttd: sekTtd });
+            }
+        }
     }
     
     if(typeof updatePreviewParagraf === 'function') updatePreviewParagraf();
-    
-    // Auto-fill Waktu & Tempat Pelaksanaan (Hari & Tanggal)
-    const tglMulai = selectedOption.getAttribute('data-tgl-mulai') || '';
-    const durasi = selectedOption.getAttribute('data-durasi') || '1';
-    const inputTglMulai = document.getElementById('tgl-mulai');
-    const selectDurasi = document.getElementById('durasi-hari');
-    const inputCustomHari = document.getElementById('custom-hari');
-    const labelHari = document.getElementById('label-hari');
-    
-    if (inputTglMulai && selectDurasi) {
-        if (tglMulai) {
-            inputTglMulai.value = tglMulai;
-            const durasiInt = parseInt(durasi);
-            if (durasiInt >= 1 && durasiInt <= 5) {
-                selectDurasi.value = durasiInt;
-                if(inputCustomHari) inputCustomHari.style.display = 'none';
-                if(labelHari) labelHari.style.display = 'none';
-            } else {
-                selectDurasi.value = 'custom';
-                if(inputCustomHari) {
-                    inputCustomHari.style.display = 'block';
-                    inputCustomHari.value = durasiInt;
-                }
-                if(labelHari) labelHari.style.display = 'block';
-            }
-        } else {
-            inputTglMulai.value = '';
-            selectDurasi.value = '1';
-            if(inputCustomHari) inputCustomHari.style.display = 'none';
-            if(labelHari) labelHari.style.display = 'none';
-        }
-        if (typeof formatTanggalRange === 'function') formatTanggalRange();
-    }
-    
-    // Auto-fill Panitia (Ketua & Sekretaris Pelaksana)
-    const ketuaNama = selectedOption.getAttribute('data-ketua-nama') || '';
-    const ketuaTtd = selectedOption.getAttribute('data-ketua-ttd') || '';
-    const sekNama = selectedOption.getAttribute('data-sekretaris-nama') || '';
-    const sekTtd = selectedOption.getAttribute('data-sekretaris-ttd') || '';
-    
-    if (typeof selectSavedPanitia === 'function') {
-        if (ketuaNama !== '') {
-            selectSavedPanitia('ketua', { nama: ketuaNama, ttd: ketuaTtd });
-        }
-        if (sekNama !== '') {
-            selectSavedPanitia('sekretaris', { nama: sekNama, ttd: sekTtd });
-        }
-    }
     
     document.querySelectorAll('.lampiran-item-pinjam').forEach(item => {
         if (namaKegiatan === '') {
@@ -1911,6 +1932,7 @@ function filterLampiran() {
             }
         }
     });
+    updateMasterWaktuSyncNotice();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1938,7 +1960,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    filterLampiran();
+    filterLampiran(false);
 });
 
 function execRTE(cmd) {
@@ -2012,20 +2034,16 @@ class DrumPicker {
 
 const hours = Array.from({length:24}, (_,i) => String(i).padStart(2,'0'));
 const mins  = Array.from({length:60}, (_,i) => String(i).padStart(2,'0'));
-const existingWaktu = document.getElementById('out-waktu').value || '';
-const wParts  = existingWaktu.split(' s.d ');
-const startT  = (wParts[0] || '08.00').replace('.', ':').split(':');
-const isSelesai = !wParts[1] || wParts[1] === 'Selesai';
-const endT    = !isSelesai ? wParts[1].replace('.', ':').split(':') : null;
 
-let drumHS, drumMS, drumHE, drumME, _selesaiMode = isSelesai;
+let drumHS, drumMS, drumHE, drumME, _selesaiMode = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-    drumHS = new DrumPicker('drum-h-start', hours, startT[0]||'08', updateWaktu);
-    drumMS = new DrumPicker('drum-m-start', mins,  startT[1]||'00', updateWaktu);
-    drumHE = new DrumPicker('drum-h-end',   hours, endT?endT[0]:'17', updateWaktu);
-    drumME = new DrumPicker('drum-m-end',   mins,  endT?endT[1]:'00', updateWaktu);
-    if (isSelesai) applyToggleSelesai(true);
+    const waktuParts = parseWaktuPelaksanaan(document.getElementById('out-waktu').value);
+    drumHS = new DrumPicker('drum-h-start', hours, waktuParts.start[0], updateWaktu);
+    drumMS = new DrumPicker('drum-m-start', mins,  waktuParts.start[1], updateWaktu);
+    drumHE = new DrumPicker('drum-h-end',   hours, waktuParts.end[0],   updateWaktu);
+    drumME = new DrumPicker('drum-m-end',   mins,  waktuParts.end[1],   updateWaktu);
+    applyToggleSelesai(waktuParts.selesai);
     
     // Inisialisasi TTD jika sudah ada (Edit Mode)
     ['ketua', 'sekretaris'].forEach(role => {
@@ -2045,6 +2063,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function parseWaktuPelaksanaan(value) {
+    const parts = (value || '').split(' s.d ');
+    const startMatch = (parts[0] || '').match(/(\d{1,2})[\.:](\d{2})/);
+    const endMatch = (parts[1] || '').match(/(\d{1,2})[\.:](\d{2})/);
+    return {
+        start: startMatch ? [startMatch[1].padStart(2, '0'), startMatch[2]] : ['08', '00'],
+        end: endMatch ? [endMatch[1].padStart(2, '0'), endMatch[2]] : ['17', '00'],
+        selesai: !endMatch
+    };
+}
+
+function normalizedWaktuPelaksanaan(value) {
+    const parts = (value || '').split(' s.d ');
+    const startMatch = (parts[0] || '').match(/(\d{1,2})[\.:](\d{2})/);
+    if (!startMatch) return '';
+    const startHour = Number(startMatch[1]);
+    const startMinute = Number(startMatch[2]);
+    if (startHour > 23 || startMinute > 59) return '';
+
+    const endMatch = (parts[1] || '').match(/(\d{1,2})[\.:](\d{2})/);
+    if (!endMatch) return String(startHour).padStart(2, '0') + ':' + String(startMinute).padStart(2, '0') + '|selesai';
+    const endHour = Number(endMatch[1]);
+    const endMinute = Number(endMatch[2]);
+    if (endHour > 23 || endMinute > 59) return '';
+    return [startHour, startMinute].map(v => String(v).padStart(2, '0')).join(':')
+        + '|' + [endHour, endMinute].map(v => String(v).padStart(2, '0')).join(':');
+}
+
+function updateMasterWaktuSyncNotice() {
+    const notice = document.getElementById('master-waktu-sync-notice');
+    const select = document.getElementById('kegiatan_id_select');
+    if (!notice || !select || select.value === '0') {
+        if (notice) notice.style.display = 'none';
+        return;
+    }
+
+    const option = select.options[select.selectedIndex];
+    const masterWaktu = option ? (option.getAttribute('data-waktu') || '').trim() : '';
+    const currentWaktu = document.getElementById('out-waktu').value;
+    const masterNormalized = normalizedWaktuPelaksanaan(masterWaktu);
+    notice.style.display = masterNormalized
+        && masterNormalized !== normalizedWaktuPelaksanaan(currentWaktu)
+        ? 'block'
+        : 'none';
+}
+
+function syncSuratTimeFromMaster() {
+    const select = document.getElementById('kegiatan_id_select');
+    if (!select || select.value === '0') return;
+    const option = select.options[select.selectedIndex];
+    const masterWaktu = option ? (option.getAttribute('data-waktu') || '').trim() : '';
+    if (!normalizedWaktuPelaksanaan(masterWaktu)) return;
+    setWaktuPelaksanaan(masterWaktu);
+    updateMasterWaktuSyncNotice();
+}
+
+function setWaktuPelaksanaan(value) {
+    const input = document.getElementById('out-waktu');
+    if (!input) return;
+    input.value = value;
+    const preview = document.getElementById('preview-waktu');
+    if (preview) preview.innerText = value;
+    if (!drumHS || !drumMS || !drumHE || !drumME) return;
+
+    const waktuParts = parseWaktuPelaksanaan(value);
+    drumHS.idx = hours.indexOf(waktuParts.start[0]);
+    drumMS.idx = mins.indexOf(waktuParts.start[1]);
+    drumHE.idx = hours.indexOf(waktuParts.end[0]);
+    drumME.idx = mins.indexOf(waktuParts.end[1]);
+    [drumHS, drumMS, drumHE, drumME].forEach(picker => picker._render(false));
+    applyToggleSelesai(waktuParts.selesai);
+}
+
 function updateWaktu() {
     if (!drumHS || !drumMS || !drumHE || !drumME) return;
     const start  = drumHS.val() + '.' + drumMS.val();
@@ -2052,6 +2143,7 @@ function updateWaktu() {
     const result = start + ' s.d ' + end;
     document.getElementById('out-waktu').value   = result;
     document.getElementById('preview-waktu').innerText = result;
+    updateMasterWaktuSyncNotice();
 }
 
 function doToggleSelesai() {

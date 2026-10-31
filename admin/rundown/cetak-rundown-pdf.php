@@ -224,6 +224,10 @@ $download_name = "RUNDOWN - $nama_acara - $tahun";
             .page:last-of-type {
                 page-break-after: avoid !important;
             }
+            .rundown-page-continuation {
+                page-break-before: always;
+                break-before: page;
+            }
             .no-print { display: none !important; }
         }
     </style>
@@ -235,71 +239,89 @@ $download_name = "RUNDOWN - $nama_acara - $tahun";
         <a href="cetak-rundown.php" class="btn btn-warning"><i class="fas fa-arrow-left"></i> Kembali</a>
     </div>
 
-    <div class="page">
-        
-        <div class="header-pdf">
-            <h1>SUSUNAN ACARA</h1>
-            <h2><?php echo htmlspecialchars($nama_acara); ?></h2>
-            <h3>PERIODE <?php echo htmlspecialchars($tahun); ?></h3>
-            <p style="font-weight: bold; margin-top: 5px; font-size: 12pt;"><?php echo htmlspecialchars($tanggal_utama); ?></p>
-        </div>
-
-        <table class="table-rundown">
-            <?php foreach ($formatted_days as $dayIndex => $dayData): ?>
-            <thead>
-                <?php if ($dayIndex > 0): ?>
-                <tr>
-                    <td colspan="5" style="border: none; height: 30px;"></td>
-                </tr>
-                <?php endif; ?>
-                <tr>
-                    <th colspan="5" class="day-header">
-                        <?php echo htmlspecialchars($dayData['judul_hari']); ?><br><br>
-                        <?php echo htmlspecialchars($dayData['tanggal']); ?>
-                    </th>
-                </tr>
-                <tr class="col-header">
-                    <th style="width: 5%;">NO</th>
-                    <th style="width: 15%;">WAKTU</th>
-                    <th style="width: 35%;">ACARA</th>
-                    <th style="width: 30%;"><?php echo ($dayData['tipe_ket'] ?? 'ket') === 'ket' ? 'KETERANGAN' : 'TEMPAT'; ?></th>
-                    <th style="width: 15%;">PENANGGUNG<br>JAWAB</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php 
-                $num = 1;
-                for ($idx = 0; $idx < count($dayData['items']); $idx++): 
-                    $item = $dayData['items'][$idx];
-                    $is_parallel = !empty($item['is_parallel']);
-                    
-                    $rowspan = 1;
-                    if (!$is_parallel) {
-                        for ($j = $idx + 1; $j < count($dayData['items']); $j++) {
-                            if (!empty($dayData['items'][$j]['is_parallel'])) {
-                                $rowspan++;
-                            } else {
-                                break;
+        <?php
+        $first_rundown_page = true;
+        foreach ($formatted_days as $dayIndex => $dayData):
+            $numbered_items = [];
+            $current_number = 0;
+            $current_time = '';
+            foreach ($dayData['items'] as $item) {
+                if (empty($item['is_parallel'])) {
+                    $current_number++;
+                    $current_time = $item['waktu'];
+                }
+                $item['display_number'] = $current_number;
+                $item['display_time'] = $current_time;
+                $numbered_items[] = $item;
+            }
+            $item_chunks = array_chunk($numbered_items, 8);
+            foreach ($item_chunks as $chunk_index => $chunk_items):
+        ?>
+        <div class="page rundown-page<?php echo $first_rundown_page ? '' : ' rundown-page-continuation'; ?>">
+            <?php if ($first_rundown_page): ?>
+            <div class="header-pdf">
+                <h1>SUSUNAN ACARA</h1>
+                <h2><?php echo htmlspecialchars($nama_acara); ?></h2>
+                <h3>PERIODE <?php echo htmlspecialchars($tahun); ?></h3>
+                <p style="font-weight: bold; margin-top: 5px; font-size: 12pt;"><?php echo htmlspecialchars($tanggal_utama); ?></p>
+            </div>
+            <?php $first_rundown_page = false; endif; ?>
+            <table class="table-rundown">
+                <thead>
+                    <?php if ($dayIndex > 0 && $chunk_index === 0): ?>
+                    <tr>
+                        <td colspan="5" style="border: none; height: 30px;"></td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr>
+                        <th colspan="5" class="day-header">
+                            <?php echo htmlspecialchars($dayData['judul_hari']); ?><br><br>
+                            <?php echo htmlspecialchars($dayData['tanggal']); ?>
+                        </th>
+                    </tr>
+                    <tr class="col-header">
+                        <th style="width: 5%;">NO</th>
+                        <th style="width: 15%;">WAKTU</th>
+                        <th style="width: 35%;">ACARA</th>
+                        <th style="width: 30%;"><?php echo ($dayData['tipe_ket'] ?? 'ket') === 'ket' ? 'KETERANGAN' : 'TEMPAT'; ?></th>
+                        <th style="width: 15%;">PENANGGUNG<br>JAWAB</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($chunk_items as $idx => $item):
+                        $is_parallel = !empty($item['is_parallel']);
+                        $show_schedule_cells = !$is_parallel || $idx === 0;
+                        $rowspan = 1;
+                        if ($show_schedule_cells) {
+                            for ($j = $idx + 1; $j < count($chunk_items); $j++) {
+                                if (
+                                    !empty($chunk_items[$j]['is_parallel'])
+                                    && $chunk_items[$j]['display_number'] === $item['display_number']
+                                ) {
+                                    $rowspan++;
+                                } else {
+                                    break;
+                                }
                             }
                         }
-                    }
-                ?>
+                    ?>
                     <tr>
-                        <?php if (!$is_parallel): ?>
-                            <td <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo $num++; ?>.</td>
-                            <td style="white-space: nowrap;" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo htmlspecialchars($item['waktu']); ?></td>
+                        <?php if ($show_schedule_cells): ?>
+                            <td <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo $item['display_number']; ?>.</td>
+                            <td style="white-space: nowrap;" <?php echo $rowspan > 1 ? 'rowspan="'.$rowspan.'"' : ''; ?>><?php echo htmlspecialchars($item['display_time']); ?></td>
                         <?php endif; ?>
                         <td><?php echo nl2br(htmlspecialchars($item['acara'])); ?></td>
                         <td><?php echo htmlspecialchars($item['keterangan']); ?></td>
                         <td><?php echo htmlspecialchars($item['pj']); ?></td>
                     </tr>
-                <?php endfor; ?>
-            </tbody>
-            <?php endforeach; ?>
-        </table>
-        
-        <div style="font-size: 10pt; font-style: italic; margin-top: -15px; margin-bottom: 20px;">*Catatan: Rundown acara dapat berubah sewaktu-waktu menyesuaikan kondisi dan kebutuhan di lapangan.</div>
-    </div>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php if ($dayIndex === count($formatted_days) - 1 && $chunk_index === count($item_chunks) - 1): ?>
+            <div style="font-size: 10pt; font-style: italic; margin-top: -15px; margin-bottom: 20px;">*Catatan: Rundown acara dapat berubah sewaktu-waktu menyesuaikan kondisi dan kebutuhan di lapangan.</div>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; endforeach; ?>
 
 </body>
 </html>

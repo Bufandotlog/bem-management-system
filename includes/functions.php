@@ -1810,7 +1810,10 @@ function debugVar($data, $die = false) {
 }
 function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
     // 1. Ambil data rundown jika ada
-    $rundown = dbFetchOne("SELECT id, tanggal_mulai, durasi_hari, rundown_json FROM arsip_rundown WHERE kegiatan_id = ? AND periode_id = ? LIMIT 1", [$kegiatan_id, $periode_id]);
+    $rundown = dbFetchOne(
+        "SELECT id, tanggal_mulai, durasi_hari, rundown_json FROM arsip_rundown WHERE kegiatan_id = ? AND periode_id = ? ORDER BY updated_at DESC, id DESC LIMIT 1",
+        [$kegiatan_id, $periode_id]
+    );
 
     $kegiatan = dbFetchOne("SELECT * FROM kegiatan WHERE id = ?", [$kegiatan_id]);
     if (!$kegiatan) return;
@@ -1823,7 +1826,7 @@ function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
         else $ketuplat_nama = $p['nama'];
     }
 
-    // Tentukan target default BPM
+    // Tentukan target default BPM (karena BEM diawasi BPM, BEM wajib mengirim surat ke BPM)
     $bpm_target = dbFetchOne(
         "SELECT isi_teks FROM surat_templates WHERE jenis = 'tujuan' AND LOWER(TRIM(label)) = 'bpm' AND (periode_id = ? OR periode_id IS NULL) LIMIT 1",
         [$periode_id]
@@ -1903,6 +1906,66 @@ function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
     $processed_staging_ids = [];
     $tgl_indo = function_exists('tanggalIndonesia') ? tanggalIndonesia() : date('d F Y');
     $kode_kegiatan = !empty($kegiatan['kode_kegiatan']) ? strtoupper(trim($kegiatan['kode_kegiatan'])) : 'UND';
+    $format_tanggal_jadwal = static function ($date) {
+        if (
+            !is_string($date)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)
+            || !checkdate((int)substr($date, 5, 2), (int)substr($date, 8, 2), (int)substr($date, 0, 4))
+        ) {
+            return '';
+        }
+        $date_object = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+        return $date_object ? tanggalIndonesia($date_object->getTimestamp(), true) : '';
+    };
+    $format_rentang_tanggal_jadwal = static function ($startDate, $endDate) use ($format_tanggal_jadwal) {
+        $formatted_start = $format_tanggal_jadwal($startDate);
+        if ($formatted_start === '') {
+            return '';
+        }
+        if ($endDate === $startDate) {
+            return $formatted_start;
+        }
+
+        $formatted_end = $format_tanggal_jadwal($endDate);
+        if ($formatted_end === '' || $endDate < $startDate) {
+            return $formatted_start;
+        }
+
+        $start_object = DateTimeImmutable::createFromFormat('!Y-m-d', $startDate);
+        $end_object = DateTimeImmutable::createFromFormat('!Y-m-d', $endDate);
+        if (!$start_object || !$end_object) {
+            return $formatted_start;
+        }
+
+        [$start_weekday, $start_label] = explode(', ', $formatted_start, 2);
+        [$end_weekday, $end_label] = explode(', ', $formatted_end, 2);
+        $start_parts = explode(' ', $start_label);
+        $end_parts = explode(' ', $end_label);
+
+        if ($start_object->format('Y-m') === $end_object->format('Y-m')) {
+            return $start_weekday . '-' . $end_weekday . ', '
+                . $start_object->format('j') . '-' . $end_object->format('j') . ' '
+                . $start_parts[1] . ' ' . $start_object->format('Y');
+        }
+
+        if ($start_object->format('Y') === $end_object->format('Y')) {
+            return $start_weekday . '-' . $end_weekday . ', '
+                . $start_object->format('j') . ' ' . $start_parts[1] . '-'
+                . $end_object->format('j') . ' ' . $end_parts[1] . ' '
+                . $start_object->format('Y');
+        }
+
+        return $start_weekday . '-' . $end_weekday . ', '
+            . $start_object->format('j') . ' ' . $start_parts[1] . ' ' . $start_object->format('Y') . '-'
+            . $end_object->format('j') . ' ' . $end_parts[1] . ' ' . $end_object->format('Y');
+    };
+    $tanggal_jadwal_kegiatan = $format_rentang_tanggal_jadwal(
+        $kegiatan['tanggal_mulai'] ?? '',
+        $kegiatan['tanggal_selesai'] ?? ''
+    );
+    if ($tanggal_jadwal_kegiatan === '' && $rundown) {
+        $tanggal_jadwal_kegiatan = $format_tanggal_jadwal($rundown['tanggal_mulai'] ?? '');
+    }
 
     foreach ($clean_items as $g_item) {
         $g_nama = trim($g_item['nama']);
@@ -1939,8 +2002,12 @@ function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
             continue;
         }
 
-        $pelaksanaan_hari = 'Sesuai Jadwal Kegiatan';
-        $pelaksanaan_waktu = '08.00 s.d Selesai';
+        $pelaksanaan_hari = $tanggal_jadwal_kegiatan !== '' ? $tanggal_jadwal_kegiatan : 'Sesuai Jadwal Kegiatan';
+        $pelaksanaan_waktu = !empty($kegiatan['waktu_pelaksanaan'])
+            ? $kegiatan['waktu_pelaksanaan']
+            : '08.00 s.d Selesai';
+        $waktu_sesi_rundown = null;
+        $tanggal_sesi_rundown = null;
 
         if (in_array($g_perihal_label, $rapat_perihals) || in_array($g_perihal_surat, $rapat_perihals)) {
             $konteks_narasi = 'untuk menghadiri ' . $g_perihal_surat . ' kegiatan tersebut';
@@ -1973,16 +2040,29 @@ function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
                 $g_nama_parts = explode(',', $g_nama);
                 $g_nama_pendek = trim($g_nama_parts[0]);
                 
-                foreach ($rd_json as $dayIdx => $dayData) {
+                foreach ($rd_json as $dayIndex => $dayData) {
                     if ($found_waktu) break;
                     foreach ($dayData['items'] ?? [] as $item) {
                         if (stripos($item['keterangan'] ?? '', $g_nama_pendek) !== false || stripos($item['acara'] ?? '', $g_nama_pendek) !== false) {
-                            $pelaksanaan_waktu = $item['waktu'];
-                            // Tarik tanggal pelaksanaan dari rundown (hari ke-$dayIdx sejak tanggal_mulai)
-                            // supaya "Hari, tanggal" di surat tidak tertinggal narasi default 'Sesuai Jadwal Kegiatan'.
-                            $day_ts = strtotime($rundown['tanggal_mulai'] . ' + ' . (int)$dayIdx . ' days');
-                            if ($day_ts !== false) {
-                                $pelaksanaan_hari = tanggalIndonesia($day_ts, true);
+                            $waktu_sesi_rundown = preg_replace(
+                                '/\s*[-–]\s*/u',
+                                ' s.d ',
+                                trim((string)($item['waktu'] ?? ''))
+                            );
+                            if ($waktu_sesi_rundown !== '') {
+                                $pelaksanaan_waktu = $waktu_sesi_rundown;
+                            } else {
+                                $waktu_sesi_rundown = null;
+                            }
+                            if (
+                                isset($rundown['tanggal_mulai'])
+                                && preg_match('/^\d{4}-\d{2}-\d{2}$/', $rundown['tanggal_mulai'])
+                                && checkdate((int)substr($rundown['tanggal_mulai'], 5, 2), (int)substr($rundown['tanggal_mulai'], 8, 2), (int)substr($rundown['tanggal_mulai'], 0, 4))
+                            ) {
+                                $tanggal_sesi = (new DateTimeImmutable($rundown['tanggal_mulai']))
+                                    ->modify('+' . max(0, (int)$dayIndex) . ' days');
+                                $tanggal_sesi_rundown = tanggalIndonesia($tanggal_sesi->getTimestamp(), true);
+                                $pelaksanaan_hari = $tanggal_sesi_rundown;
                             }
                             $found_waktu = true;
                             break;
@@ -2020,6 +2100,12 @@ function syncTamuUndanganLetters($kegiatan_id, $periode_id) {
             if (!empty($old_konten['is_edited'])) {
                 $konten_data = array_merge($konten_data, $old_konten);
                 $konten_data['is_edited'] = 1;
+            }
+            if ($waktu_sesi_rundown !== null) {
+                $konten_data['pelaksanaan_waktu'] = $waktu_sesi_rundown;
+            }
+            if (!in_array($g_perihal_label, $rapat_perihals, true) && !in_array($g_perihal_surat, $rapat_perihals, true)) {
+                $konten_data['pelaksanaan_hari_tanggal'] = $tanggal_sesi_rundown ?? $pelaksanaan_hari;
             }
 
             if ($old_jenis !== $g_kat || strpos($nomor_surat_cur, "/{$g_kat}/{$kode_kegiatan}/") === false) {
@@ -2640,4 +2726,3 @@ HTML;
     }
     echo $html;
 }
-

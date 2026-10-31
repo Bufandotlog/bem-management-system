@@ -291,12 +291,14 @@ if (isset($page_css)) {
     $safeCss = preg_replace('/[^a-zA-Z0-9\-_]/', '', $page_css);
     if (!empty($safeCss)) {
         $pageCssPath = __DIR__ . '/../css/' . $safeCss . '.css';
-        $pageCssVer  = file_exists($pageCssPath) ? filemtime($pageCssPath) : '1';
-        $pageCssUrl  = htmlspecialchars(
-            baseUrl('admin/css/' . $safeCss . '.css') . '?v=' . $pageCssVer,
-            ENT_QUOTES, 'UTF-8'
-        );
-        $pageCssTag = "<link rel=\"stylesheet\" href=\"{$pageCssUrl}\">";
+        if (file_exists($pageCssPath)) {
+            $pageCssVer  = filemtime($pageCssPath);
+            $pageCssUrl  = htmlspecialchars(
+                baseUrl('admin/css/' . $safeCss . '.css') . '?v=' . $pageCssVer,
+                ENT_QUOTES, 'UTF-8'
+            );
+            $pageCssTag = "<link rel=\"stylesheet\" href=\"{$pageCssUrl}\">";
+        }
     }
 }
 ?>

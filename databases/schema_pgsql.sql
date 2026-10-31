@@ -508,5 +508,3 @@ LATERAL json_to_recordset(NULLIF(r.rundown_json, '')::json) AS jt(
     pj VARCHAR(100),
     keterangan TEXT
 );
-
-
