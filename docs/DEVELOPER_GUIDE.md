@@ -104,6 +104,17 @@ graph TD
 - Nama Sekretaris Umum pada BA baru diambil dari anggota pengurus yang valid jika pengaturan tanda tangan kosong atau berisi label jabatan generik. Nama BA yang sudah tersimpan tetap merupakan snapshot dokumen dan tidak diubah otomatis.
 - Pada cetakan BA, blok tanda tangan dipindah ke halaman baru bila rincian kegiatan lebih dari tiga. URL kop surat memakai cache-buster agar perubahan gambar dapat terlihat tanpa cache lama.
 
+### Integrasi Program Kerja kementerian dan kegiatan
+
+- `program_kerja` adalah sumber daftar aktif per kementerian dan periode. `kegiatan.kementerian_id` serta `kegiatan.program_kerja_id` menyimpan relasi berbasis ID; `kegiatan.pelaksana` dan `kegiatan.program_kerja` tetap disimpan sebagai snapshot teks agar data lama dan dokumen yang sudah memakai kolom tersebut tidak berubah.
+- Menghapus item dari daftar kementerian mengarsipkannya. Item arsip tidak lagi muncul sebagai rekomendasi, tetapi relasi dan teks kegiatan lama dipertahankan; item arsip dapat dipulihkan dari halaman edit kementerian.
+- Nama Program Kerja yang diketik di master kegiatan tetap menjadi teks kegiatan kecuali admin mencentang **Ajukan sebagai usulan**. Usulan tidak tersedia sebagai rekomendasi aktif sampai disetujui di halaman edit kementerian. Usulan yang diarsipkan juga tidak menghapus teks/referensi kegiatan pengusul.
+- Menghapus kementerian mengarsipkan seluruh Program Kerja dan melepas relasi ke kementerian, tetapi tidak menghapus record Program Kerja atau referensi kegiatan.
+- Sebelum deploy kode pada database lama, backup database lalu jalankan migrasi sesuai engine:
+  - MySQL/MariaDB: `database/migrations/2026-10-31-link-program-kerja.mysql.sql`
+  - PostgreSQL: `database/migrations/2026-10-31-link-program-kerja.pgsql.sql`
+- Migrasi MySQL/MariaDB mengimpor daftar JSON yang valid. Relasi kegiatan lama diisi hanya bila nama pelaksana dan Program Kerja cocok secara unik pada periode/kementerian yang sama; pasangan ambigu tetap sebagai snapshot teks tanpa ID. Migrasi PostgreSQL hanya menjalankan backfill bila kolom legacy yang diperlukan tersedia pada instalasi tersebut.
+
 ### Unggahan tanda tangan pendaftaran
 
 - Pendaftar dapat mengunggah PNG/JPG dengan ukuran maksimum **5 MB**. Batas diperiksa di browser dan server; server juga memeriksa format gambar, ukuran file, dan dimensi maksimum 8000×8000 piksel.
@@ -116,8 +127,12 @@ graph TD
 
 ### Pemeriksaan setelah migrasi atau deployment
 
-1. Buat surat dan BA untuk dua kegiatan bernama sama; pastikan data yang ditarik berasal dari ID kegiatan yang dipilih.
-2. Buat lampiran logistik baru, ubah data lampiran, lalu periksa relasi kegiatan dan filter staging setelah tindakan.
-3. Uji pendaftaran dengan gambar valid, file di atas 5 MB, ekstensi/MIME tidak cocok, serta upload yang gagal; pastikan error ditampilkan dan tidak ada pendaftaran palsu yang sukses.
-4. Setujui satu pendaftar uji dan periksa referensi `file_ttd` pada akun, tabel anggota yang sesuai, dan `panitia_tetap` bila jabatannya Ketua/Sekretaris.
-5. Cetak BA dengan tiga rincian dan lebih dari tiga rincian; periksa pemisahan blok tanda tangan dan hasil kop surat.
+1. Tambah Program Kerja di edit kementerian, lalu pilih kementerian di master kegiatan dan pastikan rekomendasi menyimpan ID yang benar.
+2. Ketik Program Kerja baru pada master dan ajukan sebagai usulan; pastikan tidak menjadi pilihan aktif sampai disetujui, lalu pastikan persetujuan menyinkronkan JSON kompatibilitas kementerian.
+3. Arsipkan item yang telah dipakai oleh kegiatan; pastikan rekomendasi hilang, data teks/ID kegiatan tetap ada, dan item dapat dipulihkan.
+4. Hapus kementerian uji yang punya Program Kerja; pastikan Program Kerja berstatus arsip dan kegiatan tetap menyimpan snapshot serta referensi riwayat.
+5. Buat surat dan BA untuk dua kegiatan bernama sama; pastikan data yang ditarik berasal dari ID kegiatan yang dipilih.
+6. Buat lampiran logistik baru, ubah data lampiran, lalu periksa relasi kegiatan dan filter staging setelah tindakan.
+7. Uji pendaftaran dengan gambar valid, file di atas 5 MB, ekstensi/MIME tidak cocok, serta upload yang gagal; pastikan error ditampilkan dan tidak ada pendaftaran palsu yang sukses.
+8. Setujui satu pendaftar uji dan periksa referensi `file_ttd` pada akun, tabel anggota yang sesuai, dan `panitia_tetap` bila jabatannya Ketua/Sekretaris.
+9. Cetak BA dengan tiga rincian dan lebih dari tiga rincian; periksa pemisahan blok tanda tangan dan hasil kop surat.

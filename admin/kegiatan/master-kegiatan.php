@@ -73,7 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
         $waktu = !empty($_POST['waktu_pelaksanaan']) ? $_POST['waktu_pelaksanaan'] : null;
         $tempat = !empty($_POST['tempat_pelaksanaan']) ? $_POST['tempat_pelaksanaan'] : null;
         $pelaksana = trim($_POST['pelaksana'] ?? '');
-        $program_kerja = trim($_POST['program_kerja'] ?? '');
+        $program_kerja_input = $_POST['program_kerja'] ?? '';
+        $program_kerja = is_string($program_kerja_input) ? sanitizeText($program_kerja_input, 255) : '';
+        $kementerian_id = !empty($_POST['kementerian_id']) ? (int)$_POST['kementerian_id'] : null;
+        $program_kerja_id = !empty($_POST['program_kerja_id']) ? (int)$_POST['program_kerja_id'] : null;
+        $ajukan_program_kerja = ($_POST['ajukan_program_kerja'] ?? '') === '1';
         $tujuan = isset($_POST['tujuan']) && is_array($_POST['tujuan']) ? json_encode(array_values(array_filter(array_map('trim', $_POST['tujuan'])))) : null;
         $manfaat = isset($_POST['manfaat']) && is_array($_POST['manfaat']) ? json_encode(array_values(array_filter(array_map('trim', $_POST['manfaat'])))) : null;
         $ketuplat_id = !empty($_POST['ketuplat_id']) ? (int)$_POST['ketuplat_id'] : null;
@@ -83,10 +87,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
         } else {
             try {
                 dbBeginTransaction();
+
+                if ($kementerian_id !== null) {
+                    $kementerian = dbFetchOne(
+                        "SELECT id, nama FROM kementerian WHERE id = ? AND periode_id = ?",
+                        [$kementerian_id, $periode_id],
+                        "ii"
+                    );
+                    if (!$kementerian) {
+                        throw new InvalidArgumentException('Kementerian tidak valid atau bukan dari periode aktif.');
+                    }
+                    $pelaksana = $kementerian['nama'];
+                }
+
+                if ($program_kerja_id !== null) {
+                    $selected_program = dbFetchOne(
+                        "SELECT id, kementerian_id, periode_id, nama, status
+                         FROM program_kerja WHERE id = ?",
+                        [$program_kerja_id],
+                        "i"
+                    );
+                    $is_valid_selection = $selected_program
+                        && $kementerian_id !== null
+                        && (int)$selected_program['kementerian_id'] === $kementerian_id
+                        && (int)$selected_program['periode_id'] === $periode_id
+                        && in_array($selected_program['status'], ['aktif', 'usulan'], true);
+
+                    $is_existing_history = false;
+                    if (!$is_valid_selection && $_POST['action'] === 'edit') {
+                        $existing_activity = dbFetchOne(
+                            "SELECT program_kerja_id FROM kegiatan WHERE id = ? AND periode_id = ?",
+                            [(int)($_POST['edit_id'] ?? 0), $periode_id],
+                            "ii"
+                        );
+                        $is_existing_history = $selected_program
+                            && $existing_activity
+                            && (int)$existing_activity['program_kerja_id'] === $program_kerja_id;
+                    }
+
+                    if (!$is_valid_selection && !$is_existing_history) {
+                        throw new InvalidArgumentException('Program Kerja tidak sesuai dengan kementerian yang dipilih.');
+                    }
+                    if ($is_valid_selection) {
+                        $program_kerja = $selected_program['nama'];
+                    }
+                } elseif ($ajukan_program_kerja) {
+                    if ($kementerian_id === null || $program_kerja === '') {
+                        throw new InvalidArgumentException('Pilih kementerian dan isi nama Program Kerja untuk mengajukan usulan.');
+                    }
+                    dbFetchOne(
+                        "SELECT id FROM kementerian WHERE id = ? AND periode_id = ? FOR UPDATE",
+                        [$kementerian_id, $periode_id],
+                        "ii"
+                    );
+                    $existing_program = dbFetchOne(
+                        "SELECT id, nama FROM program_kerja
+                         WHERE kementerian_id = ? AND periode_id = ?
+                           AND status IN ('aktif', 'usulan')
+                           AND LOWER(TRIM(nama)) = LOWER(TRIM(?))
+                         ORDER BY CASE WHEN status = 'aktif' THEN 0 ELSE 1 END
+                         LIMIT 1",
+                        [$kementerian_id, $periode_id, $program_kerja],
+                        "iis"
+                    );
+                    if ($existing_program) {
+                        $program_kerja_id = (int)$existing_program['id'];
+                        $program_kerja = $existing_program['nama'];
+                    } else {
+                        dbQuery(
+                            "INSERT INTO program_kerja (kementerian_id, periode_id, nama, status, proposed_by)
+                             VALUES (?, ?, ?, 'usulan', ?)",
+                            [$kementerian_id, $periode_id, $program_kerja, $_SESSION['admin_id']],
+                            "iisi"
+                        );
+                        $program_kerja_id = dbLastId();
+                    }
+                }
                 
                 if ($_POST['action'] === 'add') {
-                    dbQuery("INSERT INTO kegiatan (periode_id, nama_kegiatan, kode_kegiatan, deskripsi, tanggal_mulai, tanggal_selesai, waktu_pelaksanaan, tempat_pelaksanaan, pelaksana, program_kerja, tujuan, manfaat, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
-                        $periode_id, $nama, $kode_kegiatan, $deskripsi, $tgl_mulai, $tgl_selesai, $waktu, $tempat, $pelaksana, $program_kerja, $tujuan, $manfaat, $_SESSION['admin_id']
+                    dbQuery("INSERT INTO kegiatan (periode_id, nama_kegiatan, kode_kegiatan, deskripsi, tanggal_mulai, tanggal_selesai, waktu_pelaksanaan, tempat_pelaksanaan, pelaksana, kementerian_id, program_kerja, program_kerja_id, tujuan, manfaat, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                        $periode_id, $nama, $kode_kegiatan, $deskripsi, $tgl_mulai, $tgl_selesai, $waktu, $tempat, $pelaksana, $kementerian_id, $program_kerja, $program_kerja_id, $tujuan, $manfaat, $_SESSION['admin_id']
                     ]);
                     $kegiatan_id = dbLastId();
                     
@@ -98,8 +178,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
                     $success = "Kegiatan berhasil ditambahkan.";
                 } else {
                     $edit_id = (int)$_POST['edit_id'];
-                    dbQuery("UPDATE kegiatan SET nama_kegiatan = ?, kode_kegiatan = ?, deskripsi = ?, tanggal_mulai = ?, tanggal_selesai = ?, waktu_pelaksanaan = ?, tempat_pelaksanaan = ?, pelaksana = ?, program_kerja = ?, tujuan = ?, manfaat = ? WHERE id = ? AND periode_id = ?", [
-                        $nama, $kode_kegiatan, $deskripsi, $tgl_mulai, $tgl_selesai, $waktu, $tempat, $pelaksana, $program_kerja, $tujuan, $manfaat, $edit_id, $periode_id
+                    dbQuery("UPDATE kegiatan SET nama_kegiatan = ?, kode_kegiatan = ?, deskripsi = ?, tanggal_mulai = ?, tanggal_selesai = ?, waktu_pelaksanaan = ?, tempat_pelaksanaan = ?, pelaksana = ?, kementerian_id = ?, program_kerja = ?, program_kerja_id = ?, tujuan = ?, manfaat = ? WHERE id = ? AND periode_id = ?", [
+                        $nama, $kode_kegiatan, $deskripsi, $tgl_mulai, $tgl_selesai, $waktu, $tempat, $pelaksana, $kementerian_id, $program_kerja, $program_kerja_id, $tujuan, $manfaat, $edit_id, $periode_id
                     ]);
                     
                     // Update ketuplat
@@ -134,6 +214,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
                 }
                 
                 dbCommit();
+            } catch (InvalidArgumentException $e) {
+                dbRollback();
+                $error = $e->getMessage();
             } catch (Exception $e) {
                 dbRollback();
                 $error = "Terjadi kesalahan: " . $e->getMessage();
@@ -163,10 +246,19 @@ $list_tempat = array_filter($templates, fn($t) => $t['jenis'] === 'tempat');
 $list_kode_kegiatan = array_filter($templates, fn($t) => $t['jenis'] === 'kegiatan');
 
 // Ambil kementerian untuk proker dropdown
-$list_kementerian = dbFetchAll("SELECT nama, proker FROM kementerian WHERE periode_id = ? ORDER BY urutan ASC", [$periode_id], "i");
+$list_kementerian = dbFetchAll("SELECT id, nama FROM kementerian WHERE periode_id = ? ORDER BY urutan ASC", [$periode_id], "i");
 $proker_map = [];
-foreach ($list_kementerian as $kem) {
-    $proker_map[$kem['nama']] = !empty($kem['proker']) ? (json_decode($kem['proker'], true) ?: []) : [];
+foreach (dbFetchAll(
+    "SELECT id, kementerian_id, nama FROM program_kerja
+     WHERE periode_id = ? AND status = 'aktif' AND kementerian_id IS NOT NULL
+     ORDER BY nama ASC",
+    [$periode_id],
+    "i"
+) as $program) {
+    $proker_map[(string)$program['kementerian_id']][] = [
+        'id' => (int)$program['id'],
+        'nama' => $program['nama'],
+    ];
 }
 
 // Ambil daftar kegiatan
@@ -959,6 +1051,8 @@ $list_kegiatan = dbFetchAll("
                     <input type="hidden" name="edit_id" value="<?php echo $edit_data['id']; ?>">
                 <?php endif; ?>
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+                <input type="hidden" name="kementerian_id" id="input_kementerian_id" value="<?php echo (int)($edit_data['kementerian_id'] ?? 0) ?: ''; ?>">
+                <input type="hidden" name="program_kerja_id" id="input_program_kerja_id" value="<?php echo (int)($edit_data['program_kerja_id'] ?? 0) ?: ''; ?>">
 
                 <div class="form-grid-layout">
                     <!-- KOLOM KIRI: Informasi Utama & Ketuplat -->
@@ -967,17 +1061,17 @@ $list_kegiatan = dbFetchAll("
                         <div class="floating-group">
                             <div class="tpl-picker" id="picker-pelaksana">
                                 <i class="fas fa-users tpl-search-icon"></i>
-                                <input type="text" id="input_pelaksana" name="pelaksana" class="floating-input tpl-floating-input" placeholder=" " value="<?php echo htmlspecialchars($edit_data['pelaksana'] ?? ''); ?>" required autocomplete="off" onfocus="showTplResults('pelaksana')" onkeyup="filterTpl('pelaksana')">
+                                <input type="text" id="input_pelaksana" name="pelaksana" class="floating-input tpl-floating-input" placeholder=" " value="<?php echo htmlspecialchars($edit_data['pelaksana'] ?? ''); ?>" required autocomplete="off" onfocus="showTplResults('pelaksana')" onkeyup="filterTpl('pelaksana')" oninput="clearPelaksanaSelection()">
                                 <label for="input_pelaksana" class="floating-label tpl-floating-label">Menteri / Pelaksana</label>
                                 <div class="tpl-results" id="results-pelaksana">
-                                    <div class="tpl-item" onclick='selectPelaksana("Badan Eksekutif Mahasiswa (BEM)")'>
+                                    <div class="tpl-item" onclick='selectPelaksana("Badan Eksekutif Mahasiswa (BEM)", null)'>
                                         <div class="tpl-item-label">Badan Eksekutif Mahasiswa (BEM)</div>
                                     </div>
-                                    <div class="tpl-item" onclick='selectPelaksana("Badan Pengurus Harian (BPH) BEM")'>
+                                    <div class="tpl-item" onclick='selectPelaksana("Badan Pengurus Harian (BPH) BEM", null)'>
                                         <div class="tpl-item-label">Badan Pengurus Harian (BPH) BEM</div>
                                     </div>
                                     <?php foreach($list_kementerian as $kem): ?>
-                                    <div class="tpl-item" onclick='selectPelaksana(<?php echo json_encode($kem["nama"]); ?>)'>
+                                    <div class="tpl-item" onclick='selectPelaksana(<?php echo htmlspecialchars(json_encode($kem["nama"]), ENT_QUOTES, "UTF-8"); ?>, <?php echo (int)$kem["id"]; ?>)'>
                                         <div class="tpl-item-label"><?php echo htmlspecialchars($kem['nama']); ?></div>
                                     </div>
                                     <?php endforeach; ?>
@@ -989,12 +1083,16 @@ $list_kegiatan = dbFetchAll("
                         <div class="floating-group">
                             <div class="tpl-picker" id="picker-proker">
                                 <i class="fas fa-tasks tpl-search-icon"></i>
-                                <input type="text" id="input_proker" name="program_kerja" class="floating-input tpl-floating-input" placeholder=" " value="<?php echo htmlspecialchars($edit_data['program_kerja'] ?? ''); ?>" autocomplete="off" onfocus="showTplResults('proker')" onkeyup="filterTpl('proker')">
+                                <input type="text" id="input_proker" name="program_kerja" class="floating-input tpl-floating-input" placeholder=" " value="<?php echo htmlspecialchars($edit_data['program_kerja'] ?? ''); ?>" autocomplete="off" onfocus="showTplResults('proker')" onkeyup="filterTpl('proker')" oninput="clearSelectedProgram()">
                                 <label for="input_proker" class="floating-label tpl-floating-label">Program Kerja</label>
                                 <div class="tpl-results" id="results-proker">
                                     <div class="tpl-empty">Pilih Menteri / Pelaksana terlebih dahulu atau ketik manual.</div>
                                 </div>
                             </div>
+                            <label class="small text-muted" style="display:block;margin-top:-12px;margin-bottom:16px;">
+                                <input type="checkbox" name="ajukan_program_kerja" id="ajukan_program_kerja" value="1">
+                                Ajukan sebagai usulan untuk ditinjau kementerian (tidak langsung masuk daftar aktif)
+                            </label>
                         </div>
 
                         <!-- FLOATING INPUT: Nama Kegiatan -->
@@ -1561,41 +1659,81 @@ function selectKodeKegiatan(kode) {
     document.getElementById('results-kode-kegiatan').style.display = 'none';
 }
 
-const prokerMap = <?php echo json_encode($proker_map ?? []); ?>;
+const prokerMap = <?php echo json_encode($proker_map ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
-function selectPelaksana(nama) {
-    const el = document.getElementById('input_pelaksana');
-    el.value = nama;
-    el.dispatchEvent(new Event('input'));
-    document.getElementById('results-pelaksana').style.display = 'none';
-    
+function clearPelaksanaSelection() {
+    document.getElementById('input_kementerian_id').value = '';
+    document.getElementById('input_program_kerja_id').value = '';
+    document.getElementById('input_proker').value = '';
+    const proposalCheckbox = document.getElementById('ajukan_program_kerja');
+    proposalCheckbox.checked = false;
+    proposalCheckbox.disabled = true;
+}
+
+function clearSelectedProgram() {
+    document.getElementById('input_program_kerja_id').value = '';
+    document.getElementById('ajukan_program_kerja').disabled =
+        !document.getElementById('input_kementerian_id').value;
+}
+
+function renderProkerSuggestions(kementerianId, clearValue = false) {
     const prokerInput = document.getElementById('input_proker');
+    const prokerIdInput = document.getElementById('input_program_kerja_id');
     const prokerResults = document.getElementById('results-proker');
-    prokerInput.value = '';
-    prokerResults.innerHTML = '';
-    
-    let options = [];
-    if (prokerMap[nama]) {
-        options = prokerMap[nama];
-    } else if (nama === 'Badan Eksekutif Mahasiswa (BEM)' || nama === 'Badan Pengurus Harian (BPH) BEM') {
-        options = []; // Usually no specific proker mapped here, but can add if needed
+    const proposalCheckbox = document.getElementById('ajukan_program_kerja');
+
+    if (clearValue) {
+        prokerInput.value = '';
+        prokerIdInput.value = '';
+        proposalCheckbox.checked = false;
     }
-    
+    prokerResults.innerHTML = '';
+    const options = kementerianId && prokerMap[String(kementerianId)]
+        ? prokerMap[String(kementerianId)]
+        : [];
+
     if (options.length > 0) {
-        options.forEach(p => {
+        options.forEach(program => {
             const div = document.createElement('div');
             div.className = 'tpl-item';
-            div.onclick = function() { selectTpl('input_proker', p, 'proker'); };
-            div.innerHTML = `<div class="tpl-item-label">${p}</div>`;
+            const label = document.createElement('div');
+            label.className = 'tpl-item-label';
+            label.textContent = program.nama;
+            div.appendChild(label);
+            div.addEventListener('click', () => selectProgramKerja(program.id, program.nama));
             prokerResults.appendChild(div);
         });
     } else {
         const emptyMsg = document.createElement('div');
         emptyMsg.className = 'tpl-empty';
-        emptyMsg.innerText = 'Tidak ada program kerja terdaftar, silakan ketik manual.';
+        emptyMsg.textContent = kementerianId
+            ? 'Belum ada Program Kerja aktif. Ketik nama atau ajukan usulan.'
+            : 'Pilih kementerian terlebih dahulu atau ketik manual.';
         prokerResults.appendChild(emptyMsg);
     }
-} 
+    proposalCheckbox.disabled = !kementerianId || !!prokerIdInput.value;
+}
+
+function selectPelaksana(nama, kementerianId = null) {
+    const el = document.getElementById('input_pelaksana');
+    el.value = nama;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('input_kementerian_id').value = kementerianId || '';
+    document.getElementById('results-pelaksana').style.display = 'none';
+    renderProkerSuggestions(kementerianId, true);
+}
+
+function selectProgramKerja(id, nama) {
+    const input = document.getElementById('input_proker');
+    input.value = nama;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('input_program_kerja_id').value = id;
+    document.getElementById('ajukan_program_kerja').checked = false;
+    document.getElementById('ajukan_program_kerja').disabled = true;
+    document.getElementById('results-proker').style.display = 'none';
+}
+
+renderProkerSuggestions(document.getElementById('input_kementerian_id').value || null);
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.tpl-picker')) {
         document.querySelectorAll('.tpl-results').forEach(el => el.style.display = 'none');

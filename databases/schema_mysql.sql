@@ -224,7 +224,9 @@ CREATE TABLE `kegiatan` (
   `periode_id` int(11) NOT NULL,
   `nama_kegiatan` varchar(255) NOT NULL,
   `pelaksana` varchar(255) DEFAULT NULL,
+  `kementerian_id` int(11) DEFAULT NULL,
   `program_kerja` varchar(255) DEFAULT NULL,
+  `program_kerja_id` int(11) DEFAULT NULL,
   `tujuan` text DEFAULT NULL,
   `manfaat` text DEFAULT NULL,
   `kode_kegiatan` varchar(50) DEFAULT NULL,
@@ -241,6 +243,8 @@ CREATE TABLE `kegiatan` (
   PRIMARY KEY (`id`),
   KEY `fk_kegiatan_periode` (`periode_id`),
   KEY `fk_kegiatan_user` (`created_by`),
+  KEY `idx_kegiatan_kementerian` (`kementerian_id`),
+  KEY `idx_kegiatan_program_kerja` (`program_kerja_id`),
   CONSTRAINT `fk_kegiatan_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_kegiatan_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -275,6 +279,25 @@ CREATE TABLE `kementerian` (
   `fungsi` text DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+CREATE TABLE `program_kerja` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `kementerian_id` int(11) DEFAULT NULL,
+  `periode_id` int(11) DEFAULT NULL,
+  `nama` varchar(255) NOT NULL,
+  `status` enum('aktif','usulan','arsip') NOT NULL DEFAULT 'aktif',
+  `proposed_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_program_kerja_kementerian` (`kementerian_id`, `periode_id`, `status`),
+  KEY `idx_program_kerja_proposed_by` (`proposed_by`),
+  CONSTRAINT `fk_program_kerja_kementerian` FOREIGN KEY (`kementerian_id`) REFERENCES `kementerian` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_program_kerja_periode` FOREIGN KEY (`periode_id`) REFERENCES `periode_kepengurusan` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_program_kerja_proposed_by` FOREIGN KEY (`proposed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+ALTER TABLE `kegiatan`
+  ADD CONSTRAINT `fk_kegiatan_kementerian` FOREIGN KEY (`kementerian_id`) REFERENCES `kementerian` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_kegiatan_program_kerja` FOREIGN KEY (`program_kerja_id`) REFERENCES `program_kerja` (`id`) ON DELETE SET NULL;
 CREATE TABLE `kontak` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `alamat` text NOT NULL,

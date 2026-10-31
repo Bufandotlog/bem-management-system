@@ -30,6 +30,11 @@ $anggota_list = dbFetchAll(
     [$id, $active_periode], "ii"
 );
 $jumlah_anggota = count($anggota_list);
+$jumlah_program_kerja = (int)(dbFetchOne(
+    "SELECT COUNT(*) AS total FROM program_kerja WHERE kementerian_id = ? AND periode_id = ?",
+    [$id, $active_periode],
+    "ii"
+)['total'] ?? 0);
 
 // Proses hapus
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,11 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_POST['confirm'] ?? '') === 'yes') {
         dbBeginTransaction();
         try {
-            if (!empty($kementerian['logo'])) deleteFile($kementerian['logo']);
-
-            foreach ($anggota_list as $a) {
-                if (!empty($a['foto'])) deleteFile($a['foto']);
-            }
+            dbQuery(
+                "UPDATE program_kerja SET status = 'arsip', updated_at = CURRENT_TIMESTAMP
+                 WHERE kementerian_id = ? AND periode_id = ?",
+                [$id, $active_periode],
+                "ii"
+            );
 
             dbQuery("DELETE FROM anggota_kementerian WHERE kementerian_id = ? AND periode_id = ?",
                     [$id, $active_periode], "ii");
@@ -55,8 +61,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($hapus) {
                 dbCommit();
-                auditLog('DELETE', 'kementerian', $id, 'Hapus kementerian: ' . $kementerian['nama']);
-                redirect('admin/konten/kepengurusan.php', 'Kementerian berhasil dihapus', 'success');
+                if (!empty($kementerian['logo'])) deleteFile($kementerian['logo']);
+                foreach ($anggota_list as $a) {
+                    if (!empty($a['foto'])) deleteFile($a['foto']);
+                }
+                auditLog('DELETE', 'kementerian', $id, 'Hapus kementerian beserta arsip Program Kerja');
+                redirect('admin/konten/kepengurusan.php', 'Kementerian dihapus. Program Kerja terkait diarsipkan untuk menjaga riwayat kegiatan.', 'success');
             } else {
                 throw new Exception('Gagal menghapus kementerian');
             }
@@ -93,6 +103,10 @@ $periode_info = htmlspecialchars(
         <?php if ($jumlah_anggota > 0): ?>
             <p>⚠️ <strong><?php echo $jumlah_anggota; ?> orang anggota</strong> juga akan ikut terhapus!</p>
             <p style="font-size: 0.95rem; color: #ffaa00;">Foto-foto anggota akan dihapus permanen dari server</p>
+        <?php endif; ?>
+        <?php if ($jumlah_program_kerja > 0): ?>
+            <p>✅ <strong><?php echo $jumlah_program_kerja; ?> Program Kerja</strong> akan diarsipkan, bukan dihapus.</p>
+            <p style="font-size: 0.95rem; color: #9ec5ff;">Referensi pada kegiatan yang sudah dibuat tetap dipertahankan.</p>
         <?php endif; ?>
 
         <p class="periode-warning">Data yang dihapus hanya untuk periode

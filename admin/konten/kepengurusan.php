@@ -25,20 +25,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus_kementerian_id'
             [$hapusId, $active_periode], "ii"
         );
         if ($hapusKem) {
-            // Hapus logo jika ada
-            if (!empty($hapusKem['logo'])) deleteFile($hapusKem['logo']);
-            // Hapus anggota kementerian
             $anggotaHapus = dbFetchAll(
                 "SELECT foto FROM anggota_kementerian WHERE kementerian_id = ?",
                 [$hapusId], "i"
             );
-            foreach ($anggotaHapus as $a) {
-                if (!empty($a['foto'])) deleteFile($a['foto']);
+            dbBeginTransaction();
+            try {
+                dbQuery(
+                    "UPDATE program_kerja SET status = 'arsip', updated_at = CURRENT_TIMESTAMP
+                     WHERE kementerian_id = ? AND periode_id = ?",
+                    [$hapusId, $active_periode],
+                    "ii"
+                );
+                dbQuery("DELETE FROM anggota_kementerian WHERE kementerian_id = ?", [$hapusId], "i");
+                dbQuery(
+                    "DELETE FROM kementerian WHERE id = ? AND periode_id = ?",
+                    [$hapusId, $active_periode],
+                    "ii"
+                );
+                dbCommit();
+
+                if (!empty($hapusKem['logo'])) deleteFile($hapusKem['logo']);
+                foreach ($anggotaHapus as $a) {
+                    if (!empty($a['foto'])) deleteFile($a['foto']);
+                }
+                auditLog('DELETE', 'kementerian', $hapusId, 'Hapus kementerian beserta arsip Program Kerja');
+                redirect('admin/konten/kepengurusan.php', 'Kementerian dihapus. Program Kerja terkait diarsipkan untuk menjaga riwayat kegiatan.', 'success');
+            } catch (Exception $e) {
+                dbRollback();
+                error_log('[KEPENGURUSAN-DELETE] ' . $e->getMessage());
+                redirect('admin/konten/kepengurusan.php', 'Gagal menghapus kementerian.', 'error');
             }
-            dbQuery("DELETE FROM anggota_kementerian WHERE kementerian_id = ?", [$hapusId], "i");
-            dbQuery("DELETE FROM kementerian WHERE id = ? AND periode_id = ?",
-                    [$hapusId, $active_periode], "ii");
-            redirect('admin/konten/kepengurusan.php', 'Kementerian berhasil dihapus!', 'success');
         } else {
             redirect('admin/konten/kepengurusan.php', 'Kementerian tidak ditemukan atau akses ditolak.', 'error');
         }

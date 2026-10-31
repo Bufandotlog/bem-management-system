@@ -115,6 +115,19 @@ CREATE TABLE "kementerian" (
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE "program_kerja" (
+  "id" SERIAL PRIMARY KEY,
+  "kementerian_id" INTEGER REFERENCES "kementerian"("id") ON DELETE SET NULL,
+  "periode_id" INTEGER REFERENCES "periode_kepengurusan"("id") ON DELETE SET NULL,
+  "nama" VARCHAR(255) NOT NULL,
+  "status" VARCHAR(20) NOT NULL DEFAULT 'aktif' CHECK ("status" IN ('aktif', 'usulan', 'arsip')),
+  "proposed_by" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX "idx_program_kerja_kementerian"
+  ON "program_kerja" ("kementerian_id", "periode_id", "status");
+
 -- ----------------------------------------
 -- 7. Tabel `anggota_kementerian`
 -- ----------------------------------------
@@ -375,6 +388,8 @@ DROP TABLE IF EXISTS "kegiatan" CASCADE;
 CREATE TABLE "kegiatan" (
   "id" SERIAL PRIMARY KEY,
   "periode_id" INTEGER NOT NULL REFERENCES "periode_kepengurusan"("id") ON DELETE CASCADE,
+  "kementerian_id" INTEGER REFERENCES "kementerian"("id") ON DELETE SET NULL,
+  "program_kerja_id" INTEGER REFERENCES "program_kerja"("id") ON DELETE SET NULL,
   "nama_kegiatan" VARCHAR(255) NOT NULL,
   "deskripsi" TEXT,
   "tanggal_mulai" DATE,
