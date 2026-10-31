@@ -19,6 +19,28 @@ $success_msg = '';
 $error_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $status_pendaftaran === 'buka') {
+    $post_max_size = trim((string)ini_get('post_max_size'));
+    $post_max_multiplier = strtoupper(substr($post_max_size, -1));
+    $post_max_bytes = (int)$post_max_size;
+    if ($post_max_multiplier === 'G') {
+        $post_max_bytes *= 1024;
+    }
+    if ($post_max_multiplier === 'G' || $post_max_multiplier === 'M') {
+        $post_max_bytes *= 1024 * 1024;
+    } elseif ($post_max_multiplier === 'K') {
+        $post_max_bytes *= 1024;
+    }
+    if (
+        $post_max_bytes > 0
+        &&
+        !empty($_SERVER['CONTENT_LENGTH'])
+        && (int)$_SERVER['CONTENT_LENGTH'] > $post_max_bytes
+        && empty($_POST)
+        && empty($_FILES)
+    ) {
+        $error_msg = 'Ukuran permintaan melebihi batas server. Silakan kirim formulir dengan file yang lebih kecil.';
+    }
+
     // Handle form submission
     $nama_lengkap = trim($_POST['nama_lengkap'] ?? '');
     $username = trim($_POST['username'] ?? '');
@@ -31,9 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $status_pendaftaran === 'buka') {
     }
     
     // Validate
-    if (empty($nama_lengkap) || empty($username) || empty($penempatan) || empty($jabatan)) {
+    if (
+        $error_msg === ''
+        && (empty($nama_lengkap) || empty($username) || empty($penempatan) || empty($jabatan))
+    ) {
         $error_msg = "Semua field wajib diisi.";
-    } else {
+    } elseif ($error_msg === '') {
         // Cek apakah username sudah ada di tabel users
         $cek_username = dbFetchOne("SELECT id FROM users WHERE username = ?", [$username]);
         if ($cek_username) {
@@ -41,13 +66,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $status_pendaftaran === 'buka') {
         } else {
             // Upload TTD jika ada
             $file_ttd_path = null;
-            if (isset($_FILES['file_ttd']) && $_FILES['file_ttd']['error'] === UPLOAD_ERR_OK) {
-                $uploaded = uploadFile($_FILES['file_ttd'], 'ttd');
-                if ($uploaded) {
-                    $file_ttd_path = $uploaded;
-                } else {
-                    $error_msg = isset($_SESSION['error']) ? $_SESSION['error'] : "Gagal mengunggah tanda tangan.";
-                    unset($_SESSION['error']);
+            if (isset($_FILES['file_ttd'])) {
+                $file = $_FILES['file_ttd'];
+                $upload_error = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
+
+                if ($upload_error !== UPLOAD_ERR_NO_FILE && $upload_error !== UPLOAD_ERR_OK) {
+                    $error_msg = match ($upload_error) {
+                        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'File tanda tangan melebihi batas ukuran yang diizinkan server.',
+                        UPLOAD_ERR_PARTIAL => 'File tanda tangan hanya terunggah sebagian. Silakan coba lagi.',
+                        UPLOAD_ERR_NO_TMP_DIR => 'Server tidak memiliki folder sementara untuk unggahan.',
+                        UPLOAD_ERR_CANT_WRITE => 'Server gagal menyimpan unggahan ke disk.',
+                        UPLOAD_ERR_EXTENSION => 'Unggahan dihentikan oleh konfigurasi server.',
+                        default => 'Terjadi kesalahan saat mengunggah tanda tangan.',
+                    };
+                } elseif ($upload_error === UPLOAD_ERR_OK) {
+                    $extension = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+                    $allowed_mime_types = [
+                        'png' => ['image/png'],
+                        'jpg' => ['image/jpeg'],
+                        'jpeg' => ['image/jpeg'],
+                    ];
+
+                    if ((int)$file['size'] <= 0) {
+                        $error_msg = 'File tanda tangan kosong atau rusak.';
+                    } elseif ((int)$file['size'] > MAX_TTD_FILE_SIZE) {
+                        $error_msg = 'Ukuran file tanda tangan terlalu besar. Maksimal ' . (MAX_TTD_FILE_SIZE / 1024 / 1024) . ' MB.';
+                    } else {
+                        $image_info = @getimagesize($file['tmp_name']);
+                        $mime_type = $image_info['mime'] ?? '';
+                        if (
+                            !isset($allowed_mime_types[$extension])
+                            || !in_array($mime_type, $allowed_mime_types[$extension], true)
+                        ) {
+                            $error_msg = 'Format tanda tangan tidak valid. Gunakan gambar PNG atau JPG yang valid.';
+                        } elseif ($image_info[0] > 8000 || $image_info[1] > 8000) {
+                            $error_msg = 'Dimensi gambar tanda tangan terlalu besar. Maksimal 8000x8000 piksel.';
+                        } else {
+                            $uploaded = uploadFile($file, 'ttd');
+                            if ($uploaded) {
+                                $file_ttd_path = $uploaded;
+                            } else {
+                                $error_msg = $_SESSION['error'] ?? 'Gagal mengunggah tanda tangan.';
+                                unset($_SESSION['error']);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -59,26 +122,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $status_pendaftaran === 'buka') {
                     } else {
                         $pendaftar_id = dbInsert("INSERT INTO pendaftaran_anggota (nama_lengkap, username, penempatan, jabatan, file_ttd) VALUES (?, ?, ?, ?, ?)", [$nama_lengkap, $username, $penempatan, $jabatan, $file_ttd_path]);
                     }
-                    
-                    // Set cookie anti-spam/tracking
+                } catch (Exception $e) {
+                    if ($file_ttd_path !== null) {
+                        deleteFile($file_ttd_path);
+                    }
+                    error_log('Pendaftaran anggota gagal disimpan: ' . $e->getMessage());
+                    $error_msg = "Terjadi kesalahan sistem saat menyimpan data.";
+                }
+
+                if (empty($error_msg)) {
                     setcookie('pendaftar_id', $pendaftar_id, time() + (86400 * 30), '/');
                     $_COOKIE['pendaftar_id'] = $pendaftar_id;
-                    
                     $success_msg = "Pendaftaran berhasil dikirim. Silakan tunggu persetujuan dari Admin.";
 
-                    // FCM Notification ke Superadmin, Admin, dan Sekretaris
-                    $adminIds = getTargetUserIdsByRole(['superadmin', 'admin', 'sekretaris']);
-                    if (!empty($adminIds)) {
-                        createNotificationAndPush(
-                            $adminIds,
-                            "👤 Pendaftar BEM Baru",
-                            "{$nama_lengkap} ({$username}) mendaftar sebagai pengurus di {$penempatan}.",
-                            baseUrl('admin/konten/pendaftaran.php?tab=pending'),
-                            "info"
-                        );
+                    try {
+                        $adminIds = getTargetUserIdsByRole(['superadmin', 'admin', 'sekretaris']);
+                        if (!empty($adminIds)) {
+                            createNotificationAndPush(
+                                $adminIds,
+                                "👤 Pendaftar BEM Baru",
+                                "{$nama_lengkap} ({$username}) mendaftar sebagai pengurus di {$penempatan}.",
+                                baseUrl('admin/konten/pendaftaran.php?tab=pending'),
+                                "info"
+                            );
+                        }
+                    } catch (Throwable $e) {
+                        error_log('Notifikasi pendaftaran anggota gagal dikirim: ' . $e->getMessage());
                     }
-                } catch (Exception $e) {
-                    $error_msg = "Terjadi kesalahan sistem saat menyimpan data.";
                 }
             }
         }
@@ -241,7 +311,7 @@ if ($periode_id > 0) {
                 <div class="form-group" id="ttd_group">
                     <label>Tanda Tangan (Opsional, format PNG/JPG transparan)</label>
                     <input type="file" name="file_ttd" accept="image/png, image/jpeg, image/jpg" onchange="previewTtd(this)">
-                    <p style="font-size: 0.8rem; color: #888; margin-top: 5px;">Upload tanda tangan Anda di sini agar sistem persuratan otomatis menggunakan TTD Anda jika Anda ditunjuk menjadi Ketua Pelaksana atau Sekretaris Pelaksana. Maks 5MB.</p>
+                    <p style="font-size: 0.8rem; color: #888; margin-top: 5px;">Upload tanda tangan Anda di sini agar sistem persuratan otomatis menggunakan TTD Anda jika Anda ditunjuk menjadi Ketua Pelaksana atau Sekretaris Pelaksana. Maks <?php echo (int)(MAX_TTD_FILE_SIZE / 1024 / 1024); ?> MB.</p>
                     
                     <!-- File Preview & Indicator -->
                     <div id="ttd-preview-container" style="display: none; margin-top: 15px; padding: 15px; background: rgba(74, 144, 226, 0.1); border: 1px dashed #4A90E2; border-radius: 8px; text-align: center;">
@@ -269,12 +339,12 @@ function previewTtd(input) {
         const file = input.files[0];
         
         // Validate Size (Maks 5MB)
-        const maxSize = 5 * 1024 * 1024;
+        const maxSize = <?php echo (int)MAX_TTD_FILE_SIZE; ?>;
         if (file.size > maxSize) {
-            alert('Ukuran file terlalu besar! Maksimal 5MB.');
+            alert('Ukuran file terlalu besar! Maksimal <?php echo (int)(MAX_TTD_FILE_SIZE / 1024 / 1024); ?>MB.');
             input.value = '';
             container.style.display = 'none';
-            btnSubmit.disabled = true;
+            btnSubmit.disabled = false;
             return;
         }
         
@@ -282,7 +352,7 @@ function previewTtd(input) {
             alert('File kosong (0 byte) atau rusak. Silakan pilih file lain.');
             input.value = '';
             container.style.display = 'none';
-            btnSubmit.disabled = true;
+            btnSubmit.disabled = false;
             return;
         }
         

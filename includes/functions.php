@@ -1027,10 +1027,9 @@ function uploadFile($file, $folder = 'umum') {
             }
             return $relativePath;
         } else {
-            // Jika upload S3 gagal, hapus file lokal dan return false
-            // if (file_exists($destination)) {
-            //     @unlink($destination);
-            // }
+            if (file_exists($destination)) {
+                @unlink($destination);
+            }
             return false;
         }
     }
@@ -1514,6 +1513,40 @@ function getSekretarisUmum($periode_id = null) {
         $data['proker']  = json_decode($data['proker'] ?? '[]', true) ?? [];
     }
     return $data;
+}
+
+function getNamaSekretarisUmum1($periode_id = null) {
+    $data = getSekretarisUmum($periode_id);
+    if (!$data) return '';
+
+    $namaGenerik = ['sekretaris umum', 'sekretaris umum bem', 'sekretaris bem', 'sekretaris'];
+    $namaValid = static function ($nama) use ($namaGenerik) {
+        $nama = trim((string)$nama);
+        return $nama !== '' && !in_array(strtolower($nama), $namaGenerik, true);
+    };
+
+    if (!empty($data['anggota']) && is_array($data['anggota'])) {
+        foreach ($data['anggota'] as $anggota) {
+            $jabatan = strtolower(trim($anggota['jabatan'] ?? ''));
+            if (
+                preg_match('/(umum\s*(i\b|1\b)|sekum\s*(i\b|1\b)|sekretaris\s*(i\b|1\b)|\b(i|1)\b)/i', $jabatan)
+                || strpos($jabatan, 'sekum1') !== false
+            ) {
+                if ($namaValid($anggota['nama'] ?? '')) {
+                    return trim($anggota['nama']);
+                }
+            }
+        }
+
+        foreach ($data['anggota'] as $anggota) {
+            if ($namaValid($anggota['nama'] ?? '')) {
+                return trim($anggota['nama']);
+            }
+        }
+    }
+
+    $nama = trim($data['nama'] ?? '');
+    return $namaValid($nama) ? $nama : '';
 }
 
 function getBendaharaUmum($periode_id = null) {
@@ -2137,6 +2170,19 @@ function autoCommitSentStagingLetters($periode_id = null) {
 }
 
 /**
+ * Mencari kegiatan berdasarkan nama hanya jika namanya unik dalam periode.
+ */
+function getUniqueKegiatanIdByName($nama_acara, $periode_id) {
+    $matches = dbFetchAll(
+        "SELECT id FROM kegiatan WHERE LOWER(TRIM(nama_kegiatan)) = LOWER(TRIM(?)) AND periode_id = ? ORDER BY id ASC LIMIT 2",
+        [$nama_acara, $periode_id],
+        "si"
+    );
+
+    return count($matches) === 1 ? (int)$matches[0]['id'] : null;
+}
+
+/**
  * Menyimpan data peminjaman ke lampiran_pinjam dan secara otomatis
  * membuat / memperbarui draft surat peminjaman di Staging Index.
  */
@@ -2145,13 +2191,13 @@ function saveLogistikPeminjamanAndDraftLetter($kegiatan_id, $periode_id, $acara,
 
     $saved_lampiran_id = 0;
     if ($target_edit_id > 0) {
-        dbQuery("UPDATE lampiran_pinjam SET nama_acara = ?, tanggal_kegiatan = ?, tahun = ?, barang_json = ? WHERE id = ? AND periode_id = ?", [
-            $acara, $tanggal, $tahun, $barang_json, $target_edit_id, $periode_id
+        dbQuery("UPDATE lampiran_pinjam SET kegiatan_id = ?, nama_acara = ?, tanggal_kegiatan = ?, tahun = ?, barang_json = ? WHERE id = ? AND periode_id = ?", [
+            $kegiatan_id, $acara, $tanggal, $tahun, $barang_json, $target_edit_id, $periode_id
         ]);
         $saved_lampiran_id = $target_edit_id;
     } else {
-        dbQuery("INSERT INTO lampiran_pinjam (nama_acara, tanggal_kegiatan, tahun, barang_json, periode_id) VALUES (?, ?, ?, ?, ?)", [
-            $acara, $tanggal, $tahun, $barang_json, $periode_id
+        dbQuery("INSERT INTO lampiran_pinjam (kegiatan_id, nama_acara, tanggal_kegiatan, tahun, barang_json, periode_id) VALUES (?, ?, ?, ?, ?, ?)", [
+            $kegiatan_id, $acara, $tanggal, $tahun, $barang_json, $periode_id
         ]);
         $saved_lampiran_id = dbLastId();
     }

@@ -84,3 +84,40 @@ graph TD
 
 ---
 *Dokumen ini dibuat dan dijaga untuk kelancaran regenerasi tim IT BEM. "Code with logic, design with empathy."*
+
+---
+
+## 5. Perubahan Alur Administrasi & Tanda Tangan (31 Oktober 2026)
+
+### Relasi kegiatan pada surat, rundown, dan logistik
+
+- Form surat dan berita acara mengirim `kegiatan_id` saat mengambil data rundown, logistik, atau dokumentasi. API mengutamakan ID kegiatan; pencarian berdasarkan nama hanya menjadi fallback untuk arsip yang belum memiliki relasi, dan tidak digunakan bila nama kegiatan ambigu.
+- Data lampiran logistik baru menyimpan `lampiran_pinjam.kegiatan_id`. Data lama hanya dihubungkan otomatis bila nama kegiatan cocok secara unik pada periode yang sama.
+- Redirect tindakan staging surat mempertahankan filter kegiatan yang sedang dipilih.
+- Sebelum menerapkan kode pada database lama, jalankan migrasi sesuai engine setelah membuat backup:
+  - MySQL/MariaDB: `database/migrations/2026-10-31-link-logistics-to-activities.mysql.sql`
+  - PostgreSQL: `database/migrations/2026-10-31-link-logistics-to-activities.pgsql.sql`
+
+### Berita Acara
+
+- Saat master kegiatan dipilih, form BA mengisi kode, tanggal dan durasi, waktu, serta tempat dari data kegiatan. Nilai tetap dapat diedit sebelum disimpan.
+- Nama Sekretaris Umum pada BA baru diambil dari anggota pengurus yang valid jika pengaturan tanda tangan kosong atau berisi label jabatan generik. Nama BA yang sudah tersimpan tetap merupakan snapshot dokumen dan tidak diubah otomatis.
+- Pada cetakan BA, blok tanda tangan dipindah ke halaman baru bila rincian kegiatan lebih dari tiga. URL kop surat memakai cache-buster agar perubahan gambar dapat terlihat tanpa cache lama.
+
+### Unggahan tanda tangan pendaftaran
+
+- Pendaftar dapat mengunggah PNG/JPG dengan ukuran maksimum **5 MB**. Batas diperiksa di browser dan server; server juga memeriksa format gambar, ukuran file, dan dimensi maksimum 8000×8000 piksel.
+- Berkas disimpan melalui `uploadFile()` dan database menyimpan path relatif. Ketika pendaftaran disetujui, path diteruskan ke akun, data anggota, dan daftar panitia tetap yang relevan; file dibersihkan bila insert pendaftaran gagal.
+- Tabel `signatures` belum menjadi sumber utama alur ini. Jangan menganggapnya terisi oleh pendaftaran tanpa mengubah dan menguji alur penyimpanan terlebih dahulu.
+- Migrasi kolom dan tabel untuk skema lama tersedia di:
+  - MySQL/MariaDB: `database/migrations/2026-10-31-registration-signatures.mysql.sql`
+  - PostgreSQL: `database/migrations/2026-10-31-registration-signatures.pgsql.sql`
+- Konfigurasi PHP/Nginx harus mengizinkan sedikitnya 5 MB per file dan ukuran total request lebih besar dari batas tersebut. Beberapa PHP built-in/local runtime memiliki `upload_max_filesize` lebih kecil; periksa `upload_max_filesize`, `post_max_size`, dan batas web server pada environment yang diuji.
+
+### Pemeriksaan setelah migrasi atau deployment
+
+1. Buat surat dan BA untuk dua kegiatan bernama sama; pastikan data yang ditarik berasal dari ID kegiatan yang dipilih.
+2. Buat lampiran logistik baru, ubah data lampiran, lalu periksa relasi kegiatan dan filter staging setelah tindakan.
+3. Uji pendaftaran dengan gambar valid, file di atas 5 MB, ekstensi/MIME tidak cocok, serta upload yang gagal; pastikan error ditampilkan dan tidak ada pendaftaran palsu yang sukses.
+4. Setujui satu pendaftar uji dan periksa referensi `file_ttd` pada akun, tabel anggota yang sesuai, dan `panitia_tetap` bila jabatannya Ketua/Sekretaris.
+5. Cetak BA dengan tiga rincian dan lebih dari tiga rincian; periksa pemisahan blok tanda tangan dan hasil kop surat.

@@ -62,7 +62,7 @@ function format_paragraphs($text) {
         .page {
             width: 210mm;
             min-height: 297mm;
-            padding: 30mm;
+            padding: 30mm 30mm 5mm 30mm;
             margin: 10mm auto;
             border: 1px solid #D3D3D3;
             border-radius: 5px;
@@ -70,18 +70,6 @@ function format_paragraphs($text) {
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
             position: relative;
             page-break-after: always;
-        }
-        table.page-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: none;
-            background: transparent;
-        }
-        table.page-table > thead > tr > td,
-        table.page-table > tbody > tr > td {
-            border: none;
-            padding: 0;
-            background: transparent;
         }
         .sig-block, .meta-table, .doc-item, .section-header {
             page-break-inside: avoid;
@@ -335,12 +323,12 @@ function format_paragraphs($text) {
 
         @media print {
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
-            .page { 
-                margin: 0 !important; 
-                padding: 30mm; 
-                border: none !important; 
-                border-radius: 0 !important; 
-                width: 210mm; 
+            .page {
+                margin: 0 !important;
+                padding: 30mm 30mm 5mm 30mm;
+                border: none !important;
+                border-radius: 0 !important;
+                width: 210mm;
                 min-height: 297mm;
                 box-shadow: none !important; 
                 outline: none !important;
@@ -351,7 +339,6 @@ function format_paragraphs($text) {
                 page-break-after: avoid !important;
             }
             .no-print { display: none !important; }
-            thead { display: table-header-group; }
         }
     </style>
 </head>
@@ -372,7 +359,8 @@ function format_paragraphs($text) {
             $kop_exists = downloadFromS3('kop_surat.png', $kop_path);
         }
         if ($kop_exists): 
-            $kop_url = uploadUrl('kop_surat.png');
+            $v = filemtime($kop_path) ?: time();
+            $kop_url = uploadUrl('kop_surat.png') . '?v=' . $v;
         ?>
             <div style="margin: -20mm -20mm 15px -20mm; text-align: center;">
                 <img src="<?php echo htmlspecialchars($kop_url); ?>" style="width:100%; height:auto; display:block;" alt="Kop Surat">
@@ -403,18 +391,12 @@ function format_paragraphs($text) {
     ?>
 
     <!-- PAGE 1: BERITA ACARA KEGIATAN -->
+    <?php
+    $rincian = is_array($konten['rincian_kegiatan'] ?? null) ? $konten['rincian_kegiatan'] : [];
+    $pecah_halaman = count($rincian) > 3;
+    ?>
     <div class="page">
-        <table class="page-table">
-            <thead>
-                <tr>
-                    <td>
                         <?php renderKop(); ?>
-                    </td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
                         <div class="doc-title">BERITA ACARA KEGIATAN</div>
                         <div class="doc-number">Nomor: <?php echo htmlspecialchars($ba['nomor_berita']); ?></div>
 
@@ -432,7 +414,6 @@ function format_paragraphs($text) {
 
                             <ol class="list-kegiatan">
                                 <?php 
-                                $rincian = $konten['rincian_kegiatan'] ?? [];
                                 foreach ($rincian as $item): 
                                 ?>
                                     <li><?php echo htmlspecialchars($item); ?></li>
@@ -447,6 +428,13 @@ function format_paragraphs($text) {
                                 Demikian berita acara ini dibuat dengan sebenarnya untuk digunakan sebagaimana mestinya.
                             </p>
                         </div>
+
+                        <?php if ($pecah_halaman): ?>
+    </div>
+    <div class="page">
+        <?php renderKop(); ?>
+        <div style="margin-top: 30px;"></div>
+                        <?php endif; ?>
 
                         <div class="date-creation">
                             <?php echo htmlspecialchars($konten['tempat_pembuatan'] ?? 'Majalengka'); ?>, <?php echo htmlspecialchars($konten['tanggal_pembuatan'] ?? ''); ?>
@@ -531,25 +519,11 @@ function format_paragraphs($text) {
                                 </td>
                             </tr>
                         </table>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 
     <!-- PAGE 2: LAPORAN KEGIATAN -->
     <div class="page">
-        <table class="page-table">
-            <thead>
-                <tr>
-                    <td>
                         <?php renderKop(); ?>
-                    </td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
                         <div class="doc-title" style="text-decoration:none; margin-bottom: 30px;">LAPORAN KEGIATAN <?php echo strtoupper(htmlspecialchars($ba['nama_kegiatan'])); ?></div>
 
                         <table class="meta-table">
@@ -624,25 +598,11 @@ function format_paragraphs($text) {
                                 Demikian Laporan Kegiatan ini kami buat, semoga dapat dipergunakan sebagaimana mestinya.
                             </p>
                         </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 
     <!-- PAGE 3: DOKUMENTASI -->
     <div class="page">
-        <table class="page-table">
-            <thead>
-                <tr>
-                    <td>
                         <?php renderKop(); ?>
-                    </td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
                         <div class="section-header" style="font-size: 18px; margin-bottom: 20px;">D. Dokumentasi :</div>
 
                         <?php if (!empty($konten['dokumentasi'])): ?>
@@ -661,10 +621,6 @@ function format_paragraphs($text) {
                                 (tidak ada dokumentasi dalam kegiatan ini)
                             </p>
                         <?php endif; ?>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 
     <script>

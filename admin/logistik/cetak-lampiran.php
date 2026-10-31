@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $tahun   = trim($_POST['tahun'] ?? '');
         $qtys    = $_POST['qty'] ?? [];
         $target_edit_id = isset($_POST['edit_id']) ? (int)$_POST['edit_id'] : 0;
+        $kegiatan_id = getUniqueKegiatanIdByName($acara, $periode_id);
         
         // Filter barang yang jumlahnya > 0
         $items_to_save = [];
@@ -54,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         
         if ($target_edit_id > 0) {
             // Update existing data
-            $res = dbQuery("UPDATE lampiran_pinjam SET nama_acara = ?, tanggal_kegiatan = ?, tahun = ?, barang_json = ? WHERE id = ? AND periode_id = ?", [
-                $acara, $tanggal, $tahun, $barang_json, $target_edit_id, $periode_id
+            $res = dbQuery("UPDATE lampiran_pinjam SET kegiatan_id = ?, nama_acara = ?, tanggal_kegiatan = ?, tahun = ?, barang_json = ? WHERE id = ? AND periode_id = ?", [
+                $kegiatan_id, $acara, $tanggal, $tahun, $barang_json, $target_edit_id, $periode_id
             ]);
             if ($res) {
                 $success_msg = "Data peminjaman berhasil diperbarui.";
@@ -74,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         } else {
             // Insert new data
-            $res = dbQuery("INSERT INTO lampiran_pinjam (nama_acara, tanggal_kegiatan, tahun, barang_json, periode_id) VALUES (?, ?, ?, ?, ?)", [
-                $acara, $tanggal, $tahun, $barang_json, $periode_id
+            $res = dbQuery("INSERT INTO lampiran_pinjam (kegiatan_id, nama_acara, tanggal_kegiatan, tahun, barang_json, periode_id) VALUES (?, ?, ?, ?, ?, ?)", [
+                $kegiatan_id, $acara, $tanggal, $tahun, $barang_json, $periode_id
             ]);
             if ($res) {
                 $success_msg = "Data peminjaman berhasil disimpan ke arsip.";

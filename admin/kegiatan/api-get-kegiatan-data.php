@@ -6,11 +6,24 @@ requireLogin();
 header('Content-Type: application/json');
 
 $nama_acara = isset($_GET['nama_acara']) ? trim($_GET['nama_acara']) : '';
+$kegiatan_id = isset($_GET['kegiatan_id']) ? filter_var($_GET['kegiatan_id'], FILTER_VALIDATE_INT) : 0;
+$kegiatan_id = $kegiatan_id !== false ? (int)$kegiatan_id : 0;
 $periode_id = getUserPeriode();
 
-if (empty($nama_acara)) {
-    echo json_encode(['status' => 'error', 'message' => 'Nama acara tidak diberikan.']);
+if ($kegiatan_id <= 0 && empty($nama_acara)) {
+    echo json_encode(['status' => 'error', 'message' => 'Kegiatan tidak diberikan.']);
     exit;
+}
+
+$kegiatan = null;
+if ($kegiatan_id > 0) {
+    $kegiatan = dbFetchOne("SELECT id, nama_kegiatan FROM kegiatan WHERE id = ? AND periode_id = ?", [$kegiatan_id, $periode_id], "ii");
+    if (!$kegiatan) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Kegiatan tidak ditemukan pada periode aktif.']);
+        exit;
+    }
+    $nama_acara = $kegiatan['nama_kegiatan'];
 }
 
 $response = [
@@ -20,8 +33,19 @@ $response = [
     'dokumentasi' => null
 ];
 
-// Fetch Rundown
-$rundown = dbFetchOne("SELECT * FROM arsip_rundown WHERE LOWER(TRIM(nama_acara)) = LOWER(TRIM(?)) AND periode_id = ? ORDER BY id DESC LIMIT 1", [$nama_acara, $periode_id]);
+// Fetch Rundown: prioritaskan relasi kegiatan_id jika ada, fallback ke pencarian nama
+$rundown = $kegiatan_id > 0
+    ? dbFetchOne("SELECT * FROM arsip_rundown WHERE kegiatan_id = ? AND periode_id = ? ORDER BY id DESC LIMIT 1", [$kegiatan_id, $periode_id], "ii")
+    : null;
+if (!$rundown) {
+    $rundown = dbFetchOne(
+        "SELECT * FROM arsip_rundown WHERE LOWER(TRIM(nama_acara)) = LOWER(TRIM(?)) AND periode_id = ?"
+        . ($kegiatan_id > 0 ? " AND kegiatan_id IS NULL" : "")
+        . " ORDER BY id DESC LIMIT 1",
+        [$nama_acara, $periode_id],
+        "si"
+    );
+}
 if ($rundown) {
     $rundown_json = json_decode($rundown['rundown_json'], true);
     
@@ -45,8 +69,26 @@ if ($rundown) {
     ];
 }
 
-// Fetch Logistik
-$logistik = dbFetchOne("SELECT * FROM lampiran_pinjam WHERE LOWER(TRIM(nama_acara)) = LOWER(TRIM(?)) AND periode_id = ? ORDER BY id DESC LIMIT 1", [$nama_acara, $periode_id]);
+$matching_activities = $nama_acara !== ''
+    ? dbFetchAll(
+        "SELECT id FROM kegiatan WHERE LOWER(TRIM(nama_kegiatan)) = LOWER(TRIM(?)) AND periode_id = ? LIMIT 2",
+        [$nama_acara, $periode_id],
+        "si"
+    )
+    : [];
+$unique_activity_id = count($matching_activities) === 1 ? (int)$matching_activities[0]['id'] : 0;
+$logistik_activity_id = $kegiatan_id > 0 ? $kegiatan_id : $unique_activity_id;
+
+// Prefer the activity link; only use legacy name matching when unambiguous.
+$logistik = $logistik_activity_id > 0
+    ? dbFetchOne("SELECT * FROM lampiran_pinjam WHERE kegiatan_id = ? AND periode_id = ? ORDER BY id DESC LIMIT 1", [$logistik_activity_id, $periode_id], "ii")
+    : null;
+if (!$logistik && count($matching_activities) <= 1) {
+    $logistik = dbFetchOne(
+        "SELECT * FROM lampiran_pinjam WHERE kegiatan_id IS NULL AND LOWER(TRIM(nama_acara)) = LOWER(TRIM(?)) AND periode_id = ? ORDER BY id DESC LIMIT 1",
+        [$nama_acara, $periode_id]
+    );
+}
 if ($logistik) {
     $barang_json = json_decode($logistik['barang_json'], true);
     $barang_list = [];
@@ -64,7 +106,9 @@ if ($logistik) {
 }
 
 // Fetch Dokumentasi
-$dok_kegiatan = dbFetchOne("SELECT id FROM kegiatan WHERE LOWER(TRIM(nama_kegiatan)) = LOWER(TRIM(?)) AND periode_id = ? LIMIT 1", [$nama_acara, $periode_id]);
+$dok_kegiatan = $kegiatan_id > 0
+    ? $kegiatan
+    : dbFetchOne("SELECT id FROM kegiatan WHERE LOWER(TRIM(nama_kegiatan)) = LOWER(TRIM(?)) AND periode_id = ? LIMIT 1", [$nama_acara, $periode_id], "si");
 if ($dok_kegiatan) {
     $dokumentasi = dbFetchOne("SELECT dokumentasi_json FROM arsip_dokumentasi WHERE kegiatan_id = ? LIMIT 1", [$dok_kegiatan['id']]);
     if ($dokumentasi && !empty($dokumentasi['dokumentasi_json'])) {

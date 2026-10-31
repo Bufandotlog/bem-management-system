@@ -440,15 +440,13 @@ $ketua = getKetua($periode_id);
 $fallback_presma = $ketua ? ($ketua['nama'] ?? $ketua['nama_lengkap'] ?? '') : '';
 $def_presma_name = $pengaturan['ttd_presma_name'] ?? $fallback_presma;
 
-$sekretaris = getSekretarisUmum($periode_id);
-$fallback_sekretaris = '';
-if ($sekretaris) {
-    $fallback_sekretaris = $sekretaris['nama'] ?? '';
-    if (empty($fallback_sekretaris) && !empty($sekretaris['anggota'])) {
-        $fallback_sekretaris = $sekretaris['anggota'][0]['nama'] ?? '';
-    }
-}
-$def_sekretaris_name = $pengaturan['ttd_sekretaris_name'] ?? $fallback_sekretaris;
+$fallback_sekretaris = getNamaSekretarisUmum1($periode_id);
+$nama_sekretaris_pengaturan = trim($pengaturan['ttd_sekretaris_name'] ?? '');
+$label_sekretaris_generik = ['sekretaris umum', 'sekretaris umum bem', 'sekretaris bem', 'sekretaris'];
+$def_sekretaris_name = $nama_sekretaris_pengaturan !== ''
+    && !in_array(strtolower($nama_sekretaris_pengaturan), $label_sekretaris_generik, true)
+        ? $nama_sekretaris_pengaturan
+        : $fallback_sekretaris;
 $def_warek_name = $pengaturan['ttd_warek_name'] ?? 'II MUHAMAD MISBAH, S.Pd.I., SE., MM.';
 
 // Defaults
@@ -1033,6 +1031,16 @@ if (!empty($tanggal_kegiatan_val)) {
                         <?php foreach ($all_kegiatan_list as $kg): 
                             $tgl_mulai = $kg['tanggal_mulai'] ?? '';
                             $tgl_selesai = $kg['tanggal_selesai'] ?? '';
+                            $durasi = 1;
+                            if (
+                                preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl_mulai)
+                                && preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl_selesai)
+                                && checkdate((int)substr($tgl_mulai, 5, 2), (int)substr($tgl_mulai, 8, 2), (int)substr($tgl_mulai, 0, 4))
+                                && checkdate((int)substr($tgl_selesai, 5, 2), (int)substr($tgl_selesai, 8, 2), (int)substr($tgl_selesai, 0, 4))
+                                && $tgl_selesai >= $tgl_mulai
+                            ) {
+                                $durasi = (int)(new DateTimeImmutable($tgl_mulai))->diff(new DateTimeImmutable($tgl_selesai))->days + 1;
+                            }
                             
                             $tgl_format = '';
                             if ($tgl_mulai && $tgl_mulai !== '0000-00-00') {
@@ -1045,10 +1053,13 @@ if (!empty($tanggal_kegiatan_val)) {
                         ?>
                             <option value="<?php echo $kg['id']; ?>" 
                                 data-nama="<?php echo htmlspecialchars(trim($kg['nama_kegiatan'])); ?>" 
+                                data-kode="<?php echo htmlspecialchars(strtoupper(trim($kg['kode_kegiatan'] ?? ''))); ?>"
                                 data-tema="<?php echo htmlspecialchars(trim($kg['deskripsi'] ?? '')); ?>" 
                                 data-tgl="<?php echo htmlspecialchars($tgl_format); ?>" 
                                 data-tgl-raw="<?php echo htmlspecialchars($tgl_mulai); ?>"
-                                data-tempat="<?php echo htmlspecialchars(trim($kg['tempat'] ?? '')); ?>"
+                                data-durasi="<?php echo $durasi; ?>"
+                                data-waktu="<?php echo htmlspecialchars(trim($kg['waktu_pelaksanaan'] ?? '')); ?>"
+                                data-tempat="<?php echo htmlspecialchars(trim($kg['tempat_pelaksanaan'] ?? '')); ?>"
                                 data-ketuplat="<?php echo htmlspecialchars(trim($kg['ketua_nama'] ?? '')); ?>"
                                 data-slug="<?php echo htmlspecialchars(trim($kg['slug_surat'] ?? '')); ?>"
                                 data-pelaksana="<?php echo htmlspecialchars(trim($kg['pelaksana'] ?? '')); ?>"
@@ -1653,6 +1664,25 @@ function updateWaktu() {
     document.getElementById('preview-waktu').innerText = result;
 }
 
+function setWaktuPelaksanaan(value) {
+    const input = document.getElementById('out-waktu');
+    input.value = value || '08.00 s.d Selesai';
+    if (!drumHS || !drumMS || !drumHE || !drumME) return;
+
+    const parts = input.value.split(' s.d ');
+    const startMatch = (parts[0] || '').match(/(\d{1,2})[\.:](\d{2})/);
+    const endMatch = (parts[1] || '').match(/(\d{1,2})[\.:](\d{2})/);
+    const start = startMatch ? [startMatch[1].padStart(2, '0'), startMatch[2]] : ['08', '00'];
+    const end = endMatch ? [endMatch[1].padStart(2, '0'), endMatch[2]] : ['17', '00'];
+
+    drumHS.idx = hours.indexOf(start[0]);
+    drumMS.idx = mins.indexOf(start[1]);
+    drumHE.idx = hours.indexOf(end[0]);
+    drumME.idx = mins.indexOf(end[1]);
+    [drumHS, drumMS, drumHE, drumME].forEach(picker => picker._render(false));
+    applyToggleSelesai(!endMatch);
+}
+
 function doToggleSelesai() {
     _selesaiMode = !_selesaiMode;
     applyToggleSelesai(_selesaiMode);
@@ -1984,8 +2014,11 @@ function syncKegiatanData() {
     }
     
     const nama = opt.getAttribute('data-nama');
+    const kodeMaster = opt.getAttribute('data-kode') || '';
     const tema = opt.getAttribute('data-tema');
     const tglRaw = opt.getAttribute('data-tgl-raw'); // For YYYY-MM-DD input
+    const durasi = parseInt(opt.getAttribute('data-durasi') || '1', 10);
+    const waktu = opt.getAttribute('data-waktu') || '';
     const tempat = opt.getAttribute('data-tempat');
     const ketuplat = opt.getAttribute('data-ketuplat');
     const slug = opt.getAttribute('data-slug');
@@ -1998,9 +2031,25 @@ function syncKegiatanData() {
         const inputTgl = document.getElementById('tgl-mulai');
         if (inputTgl) {
             inputTgl.value = tglRaw;
+            const durasiSelect = document.getElementById('durasi-hari');
+            const customInput = document.getElementById('custom-hari');
+            const labelHari = document.getElementById('label-hari');
+            if (durasiSelect) {
+                if (durasi >= 1 && durasi <= 5) {
+                    durasiSelect.value = String(durasi);
+                    customInput.style.display = 'none';
+                    labelHari.style.display = 'none';
+                } else {
+                    durasiSelect.value = 'custom';
+                    customInput.value = String(durasi);
+                    customInput.style.display = 'inline-block';
+                    labelHari.style.display = 'inline';
+                }
+            }
             if (typeof formatTanggalRange === 'function') formatTanggalRange();
         }
     }
+    if (waktu) setWaktuPelaksanaan(waktu);
     if (tempat) document.querySelector('input[name="tempat"]').value = tempat;
     if (ketuplat) document.querySelector('input[name="penanggung_jawab"]').value = ketuplat;
     
@@ -2048,7 +2097,9 @@ function syncKegiatanData() {
     }
     
     // Auto-fill kode/slug (prioritize DB slug from arsip_surat)
-    if (slug) {
+    if (kodeMaster) {
+        document.getElementById('kode_kegiatan_input').value = kodeMaster;
+    } else if (slug) {
         document.getElementById('kode_kegiatan_input').value = slug;
     } else if (nama) {
         let words = nama.replace(/[^a-zA-Z0-9 ]/g, '').split(' ');
@@ -2085,7 +2136,7 @@ function tarikDataKegiatan() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menarik...';
     btn.disabled = true;
     
-    fetch('<?php echo baseUrl("admin/kegiatan/api-get-kegiatan-data.php"); ?>?nama_acara=' + encodeURIComponent(namaAcara))
+    fetch('<?php echo baseUrl("admin/kegiatan/api-get-kegiatan-data.php"); ?>?kegiatan_id=' + encodeURIComponent(kegiatanId) + '&nama_acara=' + encodeURIComponent(namaAcara))
         .then(res => res.json())
         .then(data => {
             btn.innerHTML = oldHtml;

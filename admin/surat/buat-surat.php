@@ -2296,8 +2296,9 @@ function tarikDataSurat() {
     const oldHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
     btn.disabled = true;
+    const kegiatanId = document.getElementById('kegiatan_id_select')?.value || '0';
     
-    fetch('<?php echo baseUrl("admin/kegiatan/api-get-kegiatan-data.php"); ?>?nama_acara=' + encodeURIComponent(namaAcara))
+    fetch('<?php echo baseUrl("admin/kegiatan/api-get-kegiatan-data.php"); ?>?kegiatan_id=' + encodeURIComponent(kegiatanId) + '&nama_acara=' + encodeURIComponent(namaAcara))
         .then(res => res.json())
         .then(data => {
             btn.innerHTML = oldHtml;

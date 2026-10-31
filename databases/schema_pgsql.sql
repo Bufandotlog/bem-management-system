@@ -33,6 +33,7 @@ CREATE TABLE "users" (
   "password" VARCHAR(255) NOT NULL,
   "nama" VARCHAR(100) NOT NULL,
   "email" VARCHAR(100),
+  "file_ttd" VARCHAR(255),
   "role" VARCHAR(20) NOT NULL DEFAULT 'anggota' CHECK ("role" IN ('superadmin', 'admin', 'kominfo', 'sekretaris', 'anggota')),
   "periode_id" INTEGER REFERENCES "periode_kepengurusan"("id") ON DELETE SET NULL,
   "can_access_all" BOOLEAN DEFAULT FALSE,
@@ -94,6 +95,7 @@ CREATE TABLE "anggota_bph" (
   "nama" VARCHAR(100) NOT NULL,
   "jabatan" VARCHAR(100) NOT NULL,
   "foto" VARCHAR(255),
+  "file_ttd" VARCHAR(255),
   "urutan" INTEGER DEFAULT 0,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -126,9 +128,37 @@ CREATE TABLE "anggota_kementerian" (
   "nama" VARCHAR(100) NOT NULL,
   "jabatan" VARCHAR(100) NOT NULL,
   "foto" VARCHAR(255),
+  "file_ttd" VARCHAR(255),
   "urutan" INTEGER DEFAULT 0,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------
+-- 7a. Pendaftaran anggota dan tanda tangan panitia
+-- ----------------------------------------
+
+DROP TABLE IF EXISTS "pendaftaran_anggota" CASCADE;
+CREATE TABLE "pendaftaran_anggota" (
+  "id" SERIAL PRIMARY KEY,
+  "nama_lengkap" VARCHAR(255) NOT NULL,
+  "username" VARCHAR(255) NOT NULL,
+  "penempatan" VARCHAR(50) NOT NULL,
+  "kementerian_id" INTEGER,
+  "jabatan" VARCHAR(100) NOT NULL,
+  "status" VARCHAR(50) DEFAULT 'pending',
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "file_ttd" VARCHAR(255)
+);
+
+DROP TABLE IF EXISTS "panitia_tetap" CASCADE;
+CREATE TABLE "panitia_tetap" (
+  "id" SERIAL PRIMARY KEY,
+  "periode_id" INTEGER REFERENCES "periode_kepengurusan"("id") ON DELETE CASCADE,
+  "nama" VARCHAR(100) NOT NULL,
+  "jabatan" VARCHAR(20) NOT NULL CHECK ("jabatan" IN ('ketua', 'sekretaris')),
+  "file_ttd" VARCHAR(255) NOT NULL,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ----------------------------------------
@@ -367,6 +397,20 @@ CREATE TABLE "kegiatan_panitia" (
   "ditunjuk_oleh" INTEGER REFERENCES "users"("id") ON DELETE SET NULL,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+DROP TABLE IF EXISTS "lampiran_pinjam" CASCADE;
+CREATE TABLE "lampiran_pinjam" (
+  "id" SERIAL PRIMARY KEY,
+  "kegiatan_id" INTEGER REFERENCES "kegiatan"("id") ON DELETE SET NULL,
+  "nama_acara" VARCHAR(255) NOT NULL,
+  "tanggal_kegiatan" VARCHAR(100),
+  "tahun" VARCHAR(10),
+  "barang_json" TEXT,
+  "readiness_json" TEXT,
+  "periode_id" INTEGER REFERENCES "periode_kepengurusan"("id") ON DELETE SET NULL,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX "idx_lampiran_pinjam_kegiatan_periode" ON "lampiran_pinjam" ("kegiatan_id", "periode_id");
 
 -- ----------------------------------------
 -- 17. Views untuk First Normal Form (1NF)
