@@ -1264,8 +1264,10 @@ function requireLogin() {
 }
 
 function isSekretaris() {
-    $role = $_SESSION['admin_role'] ?? '';
-    return $role === 'sekretaris' || $role === 'admin' || $role === 'superadmin' || !empty($_SESSION['admin_can_access_all']);
+    $role = strtolower(trim((string)($_SESSION['admin_role'] ?? '')));
+    return in_array($role, ['sekretaris', 'sekertaris'], true)
+        || in_array($role, ['admin', 'superadmin'], true)
+        || !empty($_SESSION['admin_can_access_all']);
 }
 
 function requireSekretaris() {
@@ -1275,8 +1277,7 @@ function requireSekretaris() {
 }
 
 function isKetuplat() {
-    $role = $_SESSION['admin_role'] ?? '';
-    if (in_array($role, ['superadmin', 'admin', 'sekretaris']) || !empty($_SESSION['admin_can_access_all'])) {
+    if (isSekretaris()) {
         return true;
     }
     $user_id = $_SESSION['admin_id'] ?? 0;
@@ -1291,8 +1292,7 @@ function isKetuplat() {
 
 
 function isLogistik() {
-    $role = $_SESSION['admin_role'] ?? '';
-    if (in_array($role, ['superadmin', 'admin', 'sekretaris']) || !empty($_SESSION['admin_can_access_all'])) {
+    if (isSekretaris()) {
         return true;
     }
     $user_id = $_SESSION['admin_id'] ?? 0;
@@ -1328,10 +1328,8 @@ function getEventRole($user_id, $kegiatan_id) {
  * Middleware validasi akses khusus per-kegiatan (Event-Level)
  */
 function requireEventAccess($kegiatan_id, $allowed_event_roles = []) {
-    $system_role = $_SESSION['admin_role'] ?? '';
-    
     // Bypass untuk System-Level Role yang berwenang memonitor seluruh kegiatan
-    if (in_array($system_role, ['superadmin', 'admin', 'sekretaris']) || !empty($_SESSION['admin_can_access_all'])) {
+    if (isSekretaris()) {
         return true; 
     }
     

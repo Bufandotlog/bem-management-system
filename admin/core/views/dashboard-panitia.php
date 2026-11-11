@@ -12,7 +12,13 @@ $event_role    = $active_panitia['event_role'];
 $tanggal_mulai = $active_panitia['tanggal_mulai'];
 
 // 1. Kalkulasi Progress Divisi Acara (%)
-$rundown = dbFetchOne("SELECT id, rundown_json FROM arsip_rundown WHERE periode_id = ? LIMIT 1", [$periode_id], "i");
+$rundown = dbFetchOne(
+    "SELECT id, rundown_json FROM arsip_rundown
+     WHERE kegiatan_id = ? AND periode_id = ?
+     ORDER BY id DESC LIMIT 1",
+    [$kegiatan_id, $periode_id],
+    "ii"
+);
 $rundown_score = $rundown ? 50 : 0;
 $mc_score = 50; 
 $progress_acara = min(100, $rundown_score + $mc_score);
@@ -25,7 +31,33 @@ $tempat_score  = $total_tempat > 0 ? 30 : 15;
 $progress_logistik = min(100, $barang_score + $tempat_score);
 
 // Fetch data spesifik logistik untuk event aktif (barang & tempat dari JSON)
-$lampiran_event = dbFetchOne("SELECT id, barang_json, readiness_json FROM lampiran_pinjam WHERE LOWER(TRIM(nama_acara)) = LOWER(TRIM(?)) AND periode_id = ? ORDER BY id DESC LIMIT 1", [$nama_kegiatan, $periode_id]);
+$lampiran_event = dbFetchOne(
+    "SELECT id, barang_json, readiness_json
+     FROM lampiran_pinjam
+     WHERE kegiatan_id = ? AND periode_id = ?
+     ORDER BY id DESC LIMIT 1",
+    [$kegiatan_id, $periode_id],
+    "ii"
+);
+if (!$lampiran_event) {
+    $matching_activity_count = dbFetchOne(
+        "SELECT COUNT(*) AS total FROM kegiatan
+         WHERE periode_id = ? AND LOWER(TRIM(nama_kegiatan)) = LOWER(TRIM(?))",
+        [$periode_id, $nama_kegiatan],
+        "is"
+    );
+    if ((int)($matching_activity_count['total'] ?? 0) === 1) {
+        $lampiran_event = dbFetchOne(
+            "SELECT id, barang_json, readiness_json
+             FROM lampiran_pinjam
+             WHERE kegiatan_id IS NULL AND LOWER(TRIM(nama_acara)) = LOWER(TRIM(?))
+               AND periode_id = ?
+             ORDER BY id DESC LIMIT 1",
+            [$nama_kegiatan, $periode_id],
+            "si"
+        );
+    }
+}
 $items_pinjam_cnt = 0;
 $tempat_list = [];
 $logistik_items_list = [];
@@ -81,8 +113,18 @@ if ($total_logistik_items > 0) {
 }
 
 // 3. Kalkulasi Progress Divisi Humas (%)
-$total_surat_event = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE periode_id = ? AND jenis_surat = 'L'", [$periode_id], "i")['total'] ?? 0;
-$pending_staging   = dbFetchOne("SELECT COUNT(*) as total FROM arsip_surat WHERE periode_id = ? AND status_arsip = 'staging'", [$periode_id], "i")['total'] ?? 0;
+$total_surat_event = dbFetchOne(
+    "SELECT COUNT(*) as total FROM arsip_surat
+     WHERE kegiatan_id = ? AND periode_id = ? AND jenis_surat = 'L'",
+    [$kegiatan_id, $periode_id],
+    "ii"
+)['total'] ?? 0;
+$pending_staging = dbFetchOne(
+    "SELECT COUNT(*) as total FROM arsip_surat
+     WHERE kegiatan_id = ? AND periode_id = ? AND status_arsip = 'staging'",
+    [$kegiatan_id, $periode_id],
+    "ii"
+)['total'] ?? 0;
 $progress_humas    = $total_surat_event > 0 ? min(100, $total_surat_event * 25) : 40;
 
 // 4. Combined Total Event Progress (%)
@@ -232,7 +274,7 @@ $role_title = $role_labels[$event_role] ?? 'Panitia Event';
     </div>
 
     <!-- ELSE IF ROLE IS KETUPLAT OR OTHER PANITIA: FULL DIVISION HEALTH MONITOR -->
-    <?php else: ?>
+    <?php elseif ($event_role === 'ketuplat'): ?>
     <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h4 style="margin: 0; font-size: 0.88rem; color: #ffffff; display: flex; align-items: center; gap: 6px;">
@@ -295,23 +337,36 @@ function onLogistikSwitchChange(input, lampiranId, itemId) {
 
     const formData = new FormData();
     formData.append('lampiran_id', lampiranId);
+    formData.append('kegiatan_id', <?php echo (int)$kegiatan_id; ?>);
     formData.append('item_id', itemId);
     formData.append('status', isChecked);
+    formData.append('csrf_token', '<?php echo htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8'); ?>');
 
     fetch('<?php echo baseUrl("api/save-logistik-readiness.php"); ?>', {
         method: 'POST',
         body: formData
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.status === 'success') {
-            const readyCounter = document.getElementById('logistik-ready-count');
-            const progressPct = document.getElementById('logistik-progress-pct');
-            if (readyCounter) readyCounter.innerText = data.ready_count;
-            if (progressPct) progressPct.innerText = data.percentage + '%';
+    .then(async response => {
+        const data = await response.json();
+        if (!response.ok || data.status !== 'success') {
+            throw new Error(data.message || 'Gagal memperbarui kesiapan logistik.');
         }
+        return data;
     })
-    .catch(err => console.error('Gagal update kesiapan logistik:', err));
+    .then(data => {
+        const readyCounter = document.getElementById('logistik-ready-count');
+        const progressPct = document.getElementById('logistik-progress-pct');
+        if (readyCounter) readyCounter.innerText = data.ready_count;
+        if (progressPct) progressPct.innerText = data.percentage + '%';
+    })
+    .catch(err => {
+        input.checked = !isChecked;
+        if (statusText) {
+            statusText.innerText = isChecked ? 'BELUM SIAP' : 'SIAP';
+            statusText.style.color = isChecked ? '#e74c3c' : '#2ecc71';
+        }
+        console.error('Gagal update kesiapan logistik:', err);
+    });
 }
 
 function toggleLogistikItem(container, lampiranId, itemId) {

@@ -6,19 +6,27 @@ require_once __DIR__ . '/header.php';
 
 // 1. Context & User Credentials
 $admin_role = $_SESSION['admin_role'] ?? 'anggota';
+if ($isSekretaris && !in_array($admin_role, ['admin', 'superadmin'], true)) {
+    $admin_role = 'sekretaris';
+}
 $periode_id = getUserPeriode();
 $user_id    = $_SESSION['admin_id'] ?? 0;
 
-// 2. Check Event Role (Panitia Context) di Kegiatan Aktif
-$active_panitia = dbFetchOne(
-    "SELECT kp.event_role, k.id as kegiatan_id, k.nama_kegiatan, k.tanggal_mulai, k.status 
+// 2. Resolve event assignment for the selected activity, or the newest active one.
+$active_kegiatan_id = isset($_GET['kegiatan_id']) ? (int)$_GET['kegiatan_id'] : 0;
+$active_panitia_sql = "SELECT kp.event_role, k.id as kegiatan_id, k.nama_kegiatan, k.tanggal_mulai, k.status
      FROM kegiatan_panitia kp
      JOIN kegiatan k ON kp.kegiatan_id = k.id
-     WHERE kp.user_id = ? AND k.periode_id = ? AND k.status != 'selesai'
-     ORDER BY k.id DESC LIMIT 1",
-    [$user_id, $periode_id],
-    "ii"
-);
+     WHERE kp.user_id = ? AND k.periode_id = ? AND k.status != 'selesai'";
+$active_panitia_params = [$user_id, $periode_id];
+$active_panitia_types = 'ii';
+if ($active_kegiatan_id > 0) {
+    $active_panitia_sql .= " AND k.id = ?";
+    $active_panitia_params[] = $active_kegiatan_id;
+    $active_panitia_types .= 'i';
+}
+$active_panitia_sql .= " ORDER BY k.created_at DESC, k.id DESC LIMIT 1";
+$active_panitia = dbFetchOne($active_panitia_sql, $active_panitia_params, $active_panitia_types);
 
 $role_labels = [
     'superadmin' => 'Superadmin',
