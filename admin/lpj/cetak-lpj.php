@@ -78,9 +78,24 @@ if (!function_exists('getLpjImageUrl')) {
 // Helper to parse points string or array
 if (!function_exists('parsePoints')) {
     function parsePoints($val) {
-        if (empty($val)) return [];
-        if (is_array($val)) return $val;
-        return array_filter(array_map('trim', explode("\n", $val)));
+        if (is_array($val)) {
+            $points = [];
+            foreach ($val as $item) {
+                $points = array_merge($points, parsePoints($item));
+            }
+            return $points;
+        }
+        if (!is_scalar($val) || trim((string)$val) === '') return [];
+
+        $text = trim((string)$val);
+        if ($text[0] === '[') {
+            $decoded = json_decode($text, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return parsePoints($decoded);
+            }
+        }
+
+        return array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $text))));
     }
 }
 

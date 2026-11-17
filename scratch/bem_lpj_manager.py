@@ -311,21 +311,28 @@ def set_table_indent(table, indent_cm):
         tblPr.append(tblInd)
 
 def parse_points(val):
-    if not val:
-        return []
     if isinstance(val, list):
         items = []
         for item in val:
-            items.extend(parse_points(str(item)))
+            items.extend(parse_points(item))
         return items
-    
+
+    if val is None or not isinstance(val, (str, int, float)):
+        return []
     val_str = str(val).strip()
     if not val_str or val_str in ["—", "-"]:
         return []
-    
-    lines = [l.strip() for l in val_str.split("\n") if l.strip()]
+
+    if val_str.startswith('['):
+        try:
+            decoded = json.loads(val_str)
+        except json.JSONDecodeError:
+            decoded = None
+        if isinstance(decoded, list):
+            return parse_points(decoded)
+
+    lines = [line.strip() for line in re.split(r'\r\n|\r|\n', val_str) if line.strip()]
     items = []
-    import re
     for line in lines:
         cleaned = re.sub(r'^(\d+[\.\)]|[a-zA-Z][\.\)]|\-|\*)\s*', '', line).strip()
         if cleaned:
