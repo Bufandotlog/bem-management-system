@@ -20,6 +20,12 @@ if (!$ba) {
 }
 
 $konten = json_decode($ba['konten_json'], true) ?: [];
+$uppercaseNamaTtd = static function ($nama): string {
+    $nama = (string)$nama;
+    return function_exists('mb_strtoupper')
+        ? mb_strtoupper($nama, 'UTF-8')
+        : strtoupper($nama);
+};
 
 // Ambil Pengaturan Tanda Tangan
 $db_pengaturan = dbFetchAll("SELECT kunci, nilai FROM pengaturan");
@@ -394,6 +400,11 @@ function format_paragraphs($text) {
     <?php
     $rincian = is_array($konten['rincian_kegiatan'] ?? null) ? $konten['rincian_kegiatan'] : [];
     $pecah_halaman = count($rincian) > 3;
+    $tujuan = is_array($konten['tujuan'] ?? null) ? $konten['tujuan'] : [];
+    $manfaat = is_array($konten['manfaat'] ?? null) ? $konten['manfaat'] : [];
+    $pisah_bentuk_kegiatan = count($tujuan) >= 3 || count($manfaat) >= 3;
+    $dokumentasi = is_array($konten['dokumentasi'] ?? null) ? $konten['dokumentasi'] : [];
+    $dokumentasi_halaman = !empty($dokumentasi) ? array_chunk($dokumentasi, 6) : [[]];
     ?>
     <div class="page">
                         <?php renderKop(); ?>
@@ -467,7 +478,7 @@ function format_paragraphs($text) {
                                         <?php endif; ?>
                                     <?php endif; ?>
                                     
-                                    <div class="sig-name"><?php echo htmlspecialchars($konten['ketua_bem_nama'] ?: ($pengaturan['ttd_presma_name'] ?? 'Dede Anggi Muhyidin')); ?></div>
+                                    <div class="sig-name"><?php echo htmlspecialchars($uppercaseNamaTtd($konten['ketua_bem_nama'] ?: ($pengaturan['ttd_presma_name'] ?? 'Dede Anggi Muhyidin'))); ?></div>
                                 </td>
                                 <td>
                                     <div class="sig-title">
@@ -487,7 +498,7 @@ function format_paragraphs($text) {
                                         <?php endif; ?>
                                     <?php endif; ?>
                                     
-                                    <div class="sig-name"><?php echo htmlspecialchars($konten['sekretaris_bem_nama'] ?: ($pengaturan['ttd_sekretaris_name'] ?? 'Mela Agustin')); ?></div>
+                                    <div class="sig-name"><?php echo htmlspecialchars($uppercaseNamaTtd($konten['sekretaris_bem_nama'] ?: ($pengaturan['ttd_sekretaris_name'] ?? 'Mela Agustin'))); ?></div>
                                 </td>
                             </tr>
                             <tr>
@@ -514,7 +525,7 @@ function format_paragraphs($text) {
                                         <?php endif; ?>
                                     <?php endif; ?>
                                     
-                                    <div class="sig-name"><?php echo htmlspecialchars($konten['warek_nama'] ?: ($pengaturan['ttd_warek_name'] ?? 'Ir Muhammad Misbah, S.Pd.I., SE., MM.')); ?></div>
+                                    <div class="sig-name"><?php echo htmlspecialchars($uppercaseNamaTtd($konten['warek_nama'] ?: ($pengaturan['ttd_warek_name'] ?? 'Ir Muhammad Misbah, S.Pd.I., SE., MM.'))); ?></div>
                                     <div style="font-size: 14px;">NUPTK. <?php echo htmlspecialchars($konten['warek_nuptk'] ?? '7756762662200002'); ?></div>
                                 </td>
                             </tr>
@@ -572,7 +583,6 @@ function format_paragraphs($text) {
                         <div class="section-header">A. Tujuan :</div>
                         <ol class="section-list">
                             <?php 
-                            $tujuan = $konten['tujuan'] ?? [];
                             foreach ($tujuan as $item): 
                             ?>
                                 <li><?php echo htmlspecialchars($item); ?></li>
@@ -583,14 +593,19 @@ function format_paragraphs($text) {
                         <div class="section-header">B. Manfaat :</div>
                         <ol class="section-list">
                             <?php 
-                            $manfaat = $konten['manfaat'] ?? [];
                             foreach ($manfaat as $item): 
                             ?>
                                 <li><?php echo htmlspecialchars($item); ?></li>
                             <?php endforeach; ?>
                         </ol>
 
-                        <!-- C. BENTUK KEGIATAN -->
+                        <?php if ($pisah_bentuk_kegiatan): ?>
+    </div>
+    <!-- PAGE 3: C. BENTUK KEGIATAN -->
+    <div class="page">
+        <?php renderKop(); ?>
+                        <?php endif; ?>
+
                         <div class="section-header">C. Bentuk Kegiatan :</div>
                         <div class="doc-body" style="text-indent:0;">
                             <?php echo format_paragraphs($konten['bentuk_kegiatan'] ?? ''); ?>
@@ -600,14 +615,14 @@ function format_paragraphs($text) {
                         </div>
     </div>
 
-    <!-- PAGE 3: DOKUMENTASI -->
+    <?php foreach ($dokumentasi_halaman as $idx => $dok_group): ?>
     <div class="page">
                         <?php renderKop(); ?>
-                        <div class="section-header" style="font-size: 18px; margin-bottom: 20px;">D. Dokumentasi :</div>
+                        <div class="section-header" style="font-size: 18px; margin-bottom: 20px;"><?php echo $idx === 0 ? 'D. Dokumentasi :' : 'D. Dokumentasi (Lanjutan) :'; ?></div>
 
-                        <?php if (!empty($konten['dokumentasi'])): ?>
+                        <?php if (!empty($dok_group)): ?>
                             <div class="doc-grid">
-                                <?php foreach ($konten['dokumentasi'] as $doc): ?>
+                                <?php foreach ($dok_group as $doc): ?>
                                     <div class="doc-item">
                                         <div class="doc-photo-wrap">
                                             <img src="<?php echo uploadUrl($doc['image']); ?>" alt="Foto Kegiatan">
@@ -622,6 +637,7 @@ function format_paragraphs($text) {
                             </p>
                         <?php endif; ?>
     </div>
+    <?php endforeach; ?>
 
     <script>
     function exportWord() {
