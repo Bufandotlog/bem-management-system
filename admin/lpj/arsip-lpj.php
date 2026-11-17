@@ -6,6 +6,7 @@ require_once __DIR__ . '/../core/header.php';
 $periode_id = getUserPeriode();
 $error = '';
 $success = '';
+$consolidation_downloaded = false;
 
 // Handle LPJ deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_delete'])) {
@@ -32,69 +33,156 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_consolidate'])
     if (!csrfVerify()) {
         $error = "Token CSRF tidak valid.";
     } else {
-        $selected_ids = $_POST['selected_lpj'] ?? [];
+        $selected_ids = array_values(array_unique(array_filter(
+            array_map('intval', (array)($_POST['selected_lpj'] ?? [])),
+            static fn($id) => $id > 0
+        )));
         if (empty($selected_ids)) {
             $error = "Pilih minimal satu LPJ untuk dikonsolidasikan.";
         } else {
-            // Fetch selected LPJs, ordered by ministry order
+            // Use saved LPJ data instead of rebuilding reports from their DOCX files.
             $placeholders = implode(',', array_fill(0, count($selected_ids), '?'));
             $types = str_repeat('i', count($selected_ids) + 1);
             $query_params = array_merge([$periode_id], array_map('intval', $selected_ids));
             
-            $query = "SELECT l.file_path, k.nama as nama_kementerian 
+            $query = "SELECT l.*, k.nama as nama_kementerian, k.tugas, k.fungsi,
+                             p.tahun_mulai, p.tahun_selesai
                       FROM lpj_dokumen l
                       JOIN kementerian k ON l.kementerian_id = k.id
+                      JOIN periode_kepengurusan p ON l.periode_id = p.id
                       WHERE l.periode_id = ? AND l.id IN ($placeholders)
+                        AND l.status = 'submitted'
                       ORDER BY k.urutan ASC";
                       
             $lpjs = dbFetchAll($query, $query_params, $types);
-            
-            $files_to_consolidate = [];
-            foreach ($lpjs as $lpj) {
-                if (!empty($lpj['file_path'])) {
-                    $abs_path = UPLOAD_PATH . '/' . $lpj['file_path'];
-                    if (file_exists($abs_path)) {
-                        $files_to_consolidate[] = $abs_path;
-                    }
-                }
-            }
-            
-            if (empty($files_to_consolidate)) {
-                $error = "File LPJ yang dipilih tidak ditemukan secara fisik di server.";
+            if (count($lpjs) !== count($selected_ids)) {
+                $error = "Sebagian LPJ tidak ditemukan, belum diserahkan, atau bukan milik periode aktif.";
             } else {
-                $out_filename = 'MASTER_LPJ_Triwulan_BEM_' . time() . '.docx';
-                $out_filepath = UPLOAD_PATH . '/lpj/' . $out_filename;
-                
-                // Ensure directory exists
-                if (!file_exists(UPLOAD_PATH . '/lpj')) {
-                    mkdir(UPLOAD_PATH . '/lpj', 0777, true);
-                }
-                
-                // Build consolidation command
-                $files_escaped = array_map('escapeshellarg', $files_to_consolidate);
-                $manager_script = escapeshellarg(__DIR__ . '/../../scratch/bem_lpj_manager.py');
-                $command = "python3 {$manager_script} consolidate " . escapeshellarg($out_filepath) . " " . implode(' ', $files_escaped) . " 2>&1";
-                $output = shell_exec($command);
-                
-                if (file_exists($out_filepath)) {
-                    // Send file for download immediately
-                    header('Content-Description: File Transfer');
-                    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-                    header('Content-Disposition: attachment; filename="' . $out_filename . '"');
-                    header('Expires: 0');
-                    header('Cache-Control: must-revalidate');
-                    header('Pragma: public');
-                    header('Content-Length: ' . filesize($out_filepath));
-                    readfile($out_filepath);
-                    
-                    // Clean up consolidated file from server if needed (optional, let's keep it in uploads)
-                    exit();
+                $selected_triwulan = array_unique(array_map(
+                    static fn($lpj) => strtoupper(trim($lpj['triwulan'])),
+                    $lpjs
+                ));
+                if (count($selected_triwulan) !== 1) {
+                    $error = "Konsolidasi hanya dapat dilakukan untuk LPJ dengan jenis yang sama (Triwulan I, Triwulan II, atau MUBESMA).";
                 } else {
-                    $error = "Gagal melakukan konsolidasi LPJ. Output: " . $output;
+                    $visi_misi_row = dbFetchOne("SELECT visi, misi FROM visi_misi WHERE id = 1");
+                    $visi = $visi_misi_row['visi'] ?? '';
+                    $misi = !empty($visi_misi_row['misi'])
+                        ? (json_decode($visi_misi_row['misi'], true) ?: [])
+                        : [];
+                    $periode_text = $lpjs[0]['tahun_mulai'] . '-' . $lpjs[0]['tahun_selesai'];
+                    $configs = [];
+                    foreach ($lpjs as $lpj) {
+                        $decodeJson = static function ($value, $default = []) {
+                            if ($value === null || $value === '') {
+                                return $default;
+                            }
+                            $decoded = json_decode($value, true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                throw new RuntimeException("Data LPJ tersimpan tidak valid: " . json_last_error_msg());
+                            }
+                            return $decoded === null ? $default : $decoded;
+                        };
+                        try {
+                            $configs[] = [
+                                'cover' => [
+                                    'triwulan' => strtoupper(trim($lpj['triwulan'])),
+                                    'kementerian' => $lpj['nama_kementerian'],
+                                    'periode' => $periode_text,
+                                ],
+                                'keadaan_objektif' => $lpj['keadaan_objektif'] ?? '',
+                                'penutup' => $lpj['penutup'] ?? '',
+                                'keanggotaan' => $decodeJson($lpj['keanggotaan'] ?? ''),
+                                'tugas_pokok' => $decodeJson($lpj['tugas'] ?? ''),
+                                'fungsi' => $decodeJson($lpj['fungsi'] ?? ''),
+                                'visi' => $visi,
+                                'misi' => $misi,
+                                'proker_terlaksana' => $decodeJson($lpj['proker_terlaksana'] ?? ''),
+                                'proker_belum_terlaksana' => $decodeJson($lpj['proker_belum_terlaksana'] ?? ''),
+                                'anggaran' => $decodeJson($lpj['anggaran'] ?? ''),
+                                'dokumentasi' => $decodeJson($lpj['dokumentasi'] ?? ''),
+                                'evaluasi_kinerja_pribadi' => $lpj['evaluasi_kinerja_pribadi'] ?? '',
+                                'evaluasi_anggota_internal' => $decodeJson($lpj['evaluasi_anggota_internal'] ?? ''),
+                            ];
+                        } catch (Throwable $e) {
+                            $error = "Data LPJ tersimpan tidak valid: " . $e->getMessage();
+                            break;
+                        }
+                    }
+
+                    if ($error === '') {
+                    $out_filename = 'MASTER_LPJ_' . preg_replace('/[^A-Z0-9_-]/', '_', reset($selected_triwulan)) . '_' . time() . '.docx';
+                    $out_filepath = UPLOAD_PATH . '/lpj/' . $out_filename;
+                    $lpj_dir = UPLOAD_PATH . '/lpj';
+                    if (!is_dir($lpj_dir) && !mkdir($lpj_dir, 0777, true) && !is_dir($lpj_dir)) {
+                        $error = "Folder penyimpanan LPJ tidak dapat dibuat.";
+                    } else {
+                        $temp_json_path = tempnam(sys_get_temp_dir(), 'lpj_consolidate_');
+                        $s3_temp_files = [];
+                        try {
+                            foreach ($configs as &$config) {
+                                $s3_temp_files = array_merge($s3_temp_files, prefetchS3ImagesForDocx($config));
+                            }
+                            unset($config);
+                            $json = json_encode($configs, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                            if ($json === false || file_put_contents($temp_json_path, $json) === false) {
+                                throw new RuntimeException("Data konsolidasi LPJ gagal disiapkan.");
+                            }
+
+                            $manager_script = escapeshellarg(__DIR__ . '/../../scratch/bem_lpj_manager.py');
+                            $command = "python3 {$manager_script} consolidate-data "
+                                . escapeshellarg($out_filepath) . " "
+                                . escapeshellarg($temp_json_path) . " 2>&1";
+                            $output = shell_exec($command);
+                            if (!is_file($out_filepath) || filesize($out_filepath) === 0) {
+                                throw new RuntimeException("Generator konsolidasi gagal. " . trim((string)$output));
+                            }
+
+                            if (ob_get_level() > 0) {
+                                ob_clean();
+                            }
+                            header('Content-Description: File Transfer');
+                            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                            header('Content-Disposition: attachment; filename="' . $out_filename . '"');
+                            header('Expires: 0');
+                            header('Cache-Control: must-revalidate');
+                            header('Pragma: public');
+                            header('Content-Length: ' . filesize($out_filepath));
+                            readfile($out_filepath);
+                            $consolidation_downloaded = true;
+                        } catch (Throwable $e) {
+                            $error = "Gagal melakukan konsolidasi LPJ: " . $e->getMessage();
+                            error_log("[LPJ Consolidation Error] " . $e->getMessage());
+                            if (is_file($out_filepath)) {
+                                @unlink($out_filepath);
+                            }
+                        } finally {
+                            if (is_file($temp_json_path)) {
+                                @unlink($temp_json_path);
+                            }
+                            foreach (array_unique($s3_temp_files) as $temp_file) {
+                                if (is_dir($temp_file)) {
+                                    foreach (glob(rtrim($temp_file, '/\\') . DIRECTORY_SEPARATOR . '*') ?: [] as $child) {
+                                        if (is_file($child)) {
+                                            @unlink($child);
+                                        }
+                                    }
+                                    @rmdir($temp_file);
+                                } elseif (is_file($temp_file)) {
+                                    @unlink($temp_file);
+                                }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
+}
+
+if ($consolidation_downloaded) {
+    exit();
 }
 
 // Fetch filter options
@@ -486,6 +574,9 @@ if (!empty($filter_triwulan)) {
 <form method="POST" id="consolidateForm">
     <?php echo csrfField(); ?>
     <input type="hidden" name="action_consolidate" value="1">
+    <p style="color: #9aa8ba; font-size: 0.85rem; margin: 0 0 18px;">
+        Pilih LPJ dari satu jenis triwulan yang sama. Isi dan foto laporan dipertahankan; nomor halaman daftar isi diperbarui saat dokumen dibuka di Word.
+    </p>
 
     <?php if (empty($lpj_list)): ?>
         <div style="text-align: center; padding: 40px; background: #0f1217; border: 1px solid #2a3545; border-radius: 12px; margin-bottom: 30px;">

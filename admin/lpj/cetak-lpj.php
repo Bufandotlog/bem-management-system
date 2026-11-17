@@ -750,8 +750,7 @@ if (!function_exists('cleanPointPrefix')) {
             </div>
         </div>
 
-        <!-- 4. PROGRAM KERJA BELUM TEREALISASI (Mubesma Only) -->
-        <?php if ($is_mubesma): ?>
+        <!-- 4. PROGRAM KERJA BELUM TEREALISASI -->
         <div class="page">
             <div class="section-header">
                 <?php echo $is_mubesma ? "VII. PROGRAM KERJA YANG TIDAK TEREALISASI" : "D. PROGRAM KERJA YANG BELUM TEREALISASI"; ?>
@@ -844,24 +843,22 @@ if (!function_exists('cleanPointPrefix')) {
                 Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
             </div>
         </div>
-        <?php endif; ?>
 
         <!-- 5. EVALUASI KINERJA MENTERI & PENUTUP -->
-        <?php if ($is_mubesma): ?>
         <div class="page">
-            <div class="section-header">
-                <?php echo "VIII. EVALUASI KINERJA MENTERI"; ?>
-            </div>
-            <?php 
-            $eval_pribadi = trim($lpj['evaluasi_kinerja_pribadi'] ?? '');
-            $lines_p = array_filter(array_map('trim', explode("\n", $eval_pribadi)));
-            if (empty($lines_p)) {
-                $lines_p = ["—"];
-            }
-            foreach ($lines_p as $line): 
-            ?>
-                <p class="narrative-p"><?php echo htmlspecialchars($line); ?></p>
-            <?php endforeach; ?>
+            <?php if ($is_mubesma): ?>
+                <div class="section-header">VIII. EVALUASI KINERJA MENTERI</div>
+                <?php
+                $eval_pribadi = trim($lpj['evaluasi_kinerja_pribadi'] ?? '');
+                $lines_p = array_filter(array_map('trim', explode("\n", $eval_pribadi)));
+                if (empty($lines_p)) {
+                    $lines_p = ["—"];
+                }
+                foreach ($lines_p as $line):
+                ?>
+                    <p class="narrative-p"><?php echo htmlspecialchars($line); ?></p>
+                <?php endforeach; ?>
+            <?php endif; ?>
 
             <!-- PENUTUP SECTION -->
             <div class="section-header" style="margin-top: 30px;">
@@ -878,6 +875,7 @@ if (!function_exists('cleanPointPrefix')) {
                 <p class="narrative-p"><?php echo htmlspecialchars($line); ?></p>
             <?php endforeach; ?>
             
+            <?php if ($is_mubesma): ?>
             <div style="margin-top: 30px; margin-right: 0.5cm; float: right; text-align: right; width: 6cm;">
                 <?php
                 $ketua_name = $keanggotaan['ketua'] ?? 'Nama Ketua';
@@ -901,12 +899,12 @@ if (!function_exists('cleanPointPrefix')) {
                 <p style="margin: 0; line-height: 1.15; font-size: 12pt; font-family: 'Times New Roman', serif; font-weight: bold; text-decoration: underline;"><?php echo htmlspecialchars($ketua_name); ?></p>
             </div>
             <div style="clear: both;"></div>
+            <?php endif; ?>
 
             <div class="page-footer-label">
-                Laporan Pertanggungjawaban Mubesma
+                Laporan Pertanggungjawaban <?php echo $is_mubesma ? "Mubesma" : "Triwulan " . htmlspecialchars($triwulan); ?>
             </div>
         </div>
-        <?php endif; ?>
 
     </div>
 
