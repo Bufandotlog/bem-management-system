@@ -17,6 +17,27 @@ $success = '';
 $search = trim($_GET['search'] ?? '');
 $params = [$periode_id];
 $types = "i";
+$sort_berita_acara = static function (array $items): array {
+    usort($items, static function (array $a, array $b): int {
+        preg_match('/^\s*(\d+)/', (string)($a['nomor_berita'] ?? ''), $a_sequence);
+        preg_match('/^\s*(\d+)/', (string)($b['nomor_berita'] ?? ''), $b_sequence);
+
+        $sequence_order = (int)($b_sequence[1] ?? 0) <=> (int)($a_sequence[1] ?? 0);
+        if ($sequence_order !== 0) {
+            return $sequence_order;
+        }
+
+        $number_order = strnatcasecmp(
+            (string)($b['nomor_berita'] ?? ''),
+            (string)($a['nomor_berita'] ?? '')
+        );
+        return $number_order !== 0
+            ? $number_order
+            : ((int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
+    });
+
+    return $items;
+};
 $sql_query = "SELECT * FROM arsip_berita_acara WHERE periode_id = ?";
 
 if ($search !== '') {
@@ -27,7 +48,7 @@ if ($search !== '') {
 }
 
 $sql_query .= " ORDER BY id DESC";
-$list_berita_acara = dbFetchAll($sql_query, $params, $types);
+$list_berita_acara = $sort_berita_acara(dbFetchAll($sql_query, $params, $types));
 
 // Handle Export Excel (Must be done before header.php is loaded to prevent HTML pollution)
 if (isset($_GET['export']) && $_GET['export'] === 'excel') {
@@ -88,7 +109,7 @@ if (isset($_GET['hapus']) && is_numeric($_GET['hapus'])) {
             $success = "Arsip berita acara beserta seluruh file fotonya berhasil dihapus.";
             
             // Refresh list
-            $list_berita_acara = dbFetchAll($sql_query, $params, $types);
+            $list_berita_acara = $sort_berita_acara(dbFetchAll($sql_query, $params, $types));
         } else {
             $error = "Data tidak ditemukan atau akses ditolak.";
         }
@@ -129,33 +150,114 @@ $css = "
 .btn-act-del { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
 .btn-act-del:hover { background: #e74c3c; color: white; }
 
-.action-menu { position: relative; display: inline-block; }
-.hamburger-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
-.action-dropdown {
-    display: none; position: absolute; right: 0; top: 100%;
-    background: #0f1217; border: 1px solid var(--border-color);
-    border-radius: 8px; min-width: 150px; z-index: 999;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-    flex-direction: column; padding: 5px; gap: 5px; margin-top: 5px;
-}
-.action-dropdown.show { display: flex; }
-.action-dropdown a, .action-dropdown button {
-    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-    color: #fff; text-decoration: none; font-size: 0.85rem;
-    border-radius: 6px; white-space: nowrap; border: none; background: transparent; cursor: pointer; width: 100%; text-align: left;
-}
-.action-dropdown a:hover, .action-dropdown button:hover { background: rgba(255,255,255,0.05); }
-
 .show-mobile-only { display: none; }
 .desktop-actions { display: flex; gap: 8px; justify-content: center; }
 .mobile-actions { display: none; }
 
 @media (max-width: 768px) {
     .hide-mobile { display: none !important; }
-    .show-mobile-only { display: table-cell !important; }
-    .ba-table th, .ba-table td { padding: 12px 10px; }
+    .show-mobile-only { display: inline-flex !important; }
+    .ba-table td.mobile-ba-number { display: flex !important; }
+    .ba-table-container {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        overflow: visible;
+        box-shadow: none;
+    }
+    .ba-table,
+    .ba-table tbody {
+        display: block;
+        width: 100%;
+    }
+    .ba-table thead { display: none; }
+    .ba-table tr {
+        display: block;
+        width: 100%;
+        margin-bottom: 14px;
+        padding: 14px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-premium);
+        box-sizing: border-box;
+    }
+    .ba-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        width: 100%;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        box-sizing: border-box;
+        overflow-wrap: anywhere;
+        text-align: right;
+    }
+    .ba-table td::before {
+        content: attr(data-label);
+        flex: 0 0 38%;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .ba-table td.mobile-number-cell {
+        display: inline-flex;
+        width: auto;
+        margin: 0 0 8px;
+        padding: 5px 10px;
+        color: #4facfe !important;
+        background: rgba(74, 144, 226, 0.1);
+        border: 1px solid rgba(74, 144, 226, 0.25);
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+    .ba-table td.mobile-number-cell::before { content: none; }
+    .ba-table td.activity-cell {
+        display: block;
+        padding-top: 0;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        text-align: left;
+    }
+    .ba-table td.activity-cell::before { content: none; }
+    .ba-table td.actions-cell {
+        display: block;
+        padding: 12px 0 0;
+        border-bottom: 0;
+        text-align: left !important;
+    }
+    .ba-table td.actions-cell::before { content: none; }
     .desktop-actions { display: none !important; }
-    .mobile-actions { display: block !important; text-align: center; }
+    .mobile-actions {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .mobile-actions .btn-act {
+        flex: 1 1 auto;
+        width: auto;
+        min-height: 40px;
+        height: auto;
+        gap: 7px;
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    .ba-table tr.empty-state-row {
+        padding: 24px 14px;
+        text-align: center;
+    }
+    .ba-table tr.empty-state-row td {
+        display: block;
+        border: 0;
+        text-align: center !important;
+    }
+    .ba-table tr.empty-state-row td::before { content: none; }
 }
 ";
 
@@ -225,7 +327,7 @@ echo "<style>{$css}</style>";
             </thead>
             <tbody>
                 <?php if (empty($list_berita_acara)): ?>
-                    <tr>
+                    <tr class="empty-state-row">
                         <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
                             <i class="fas fa-folder-open" style="font-size: 2.5rem; margin-bottom: 15px; display: block; color: #3a4b64;"></i>
                             <span>Belum ada data berita acara atau tidak ada yang sesuai dengan pencarian.</span>
@@ -240,13 +342,13 @@ echo "<style>{$css}</style>";
                     ?>
                         <tr>
                             <td class="hide-mobile" style="text-align: center; font-weight: bold; color: var(--text-muted);"><?php echo $no++; ?></td>
-                            <td class="show-mobile-only" style="text-align: center; font-weight: bold; color: #4facfe; font-size: 1.1rem;"><?php echo htmlspecialchars($no_ba_pendek); ?></td>
-                            <td class="hide-mobile" style="font-weight: bold; color: #8BB9F0;"><?php echo htmlspecialchars($item['nomor_berita']); ?></td>
-                            <td><?php echo htmlspecialchars($item['nama_kegiatan']); ?></td>
-                            <td><?php echo htmlspecialchars($item['tanggal_kegiatan']); ?></td>
-                            <td class="hide-mobile"><?php echo htmlspecialchars($item['tempat']); ?></td>
-                            <td class="hide-mobile"><?php echo htmlspecialchars($item['waktu']); ?></td>
-                            <td style="text-align: center; position: relative;">
+                            <td class="show-mobile-only mobile-number-cell"><?php echo htmlspecialchars($no_ba_pendek); ?></td>
+                            <td class="hide-mobile mobile-ba-number" data-label="Nomor Berita Acara" style="font-weight: bold; color: #8BB9F0;"><?php echo htmlspecialchars($item['nomor_berita']); ?></td>
+                            <td class="activity-cell"><?php echo htmlspecialchars($item['nama_kegiatan']); ?></td>
+                            <td data-label="Tanggal Kegiatan"><?php echo htmlspecialchars($item['tanggal_kegiatan']); ?></td>
+                            <td data-label="Tempat"><?php echo htmlspecialchars($item['tempat']); ?></td>
+                            <td data-label="Waktu"><?php echo htmlspecialchars($item['waktu']); ?></td>
+                            <td class="actions-cell" style="text-align: center; position: relative;">
                                 <!-- DESKTOP ACTIONS -->
                                 <div class="desktop-actions">
                                     <a href="cetak-berita-acara.php?id=<?php echo $item['id']; ?>" class="btn-act btn-act-view" title="Cetak / Pratinjau">
@@ -259,14 +361,17 @@ echo "<style>{$css}</style>";
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
-                                <!-- MOBILE ACTIONS (HAMBURGER) -->
-                                <div class="mobile-actions action-menu">
-                                    <button type="button" class="hamburger-btn" onclick="toggleDropdown(this)"><i class="fas fa-bars"></i></button>
-                                    <div class="action-dropdown" style="text-align: left;">
-                                        <a href="cetak-berita-acara.php?id=<?php echo $item['id']; ?>" style="color: #4A90E2;"><i class="fas fa-print" style="width: 20px; text-align: center;"></i> Cetak/Pratinjau</a>
-                                        <a href="buat-berita-acara.php?edit=<?php echo $item['id']; ?>" style="color: #f1c40f;"><i class="fas fa-edit" style="width: 20px; text-align: center;"></i> Edit Berita Acara</a>
-                                        <button type="button" onclick="confirmDelete(<?php echo $item['id']; ?>, '<?php echo addslashes($item['nomor_berita']); ?>')" style="color: #e74c3c;"><i class="fas fa-trash" style="width: 20px; text-align: center;"></i> Hapus Arsip</button>
-                                    </div>
+                                <!-- MOBILE ACTIONS -->
+                                <div class="mobile-actions">
+                                    <a href="cetak-berita-acara.php?id=<?php echo $item['id']; ?>" class="btn-act btn-act-view" aria-label="Cetak atau pratinjau berita acara">
+                                        <i class="fas fa-print"></i><span>Cetak</span>
+                                    </a>
+                                    <a href="buat-berita-acara.php?edit=<?php echo $item['id']; ?>" class="btn-act btn-act-edit" aria-label="Edit berita acara">
+                                        <i class="fas fa-edit"></i><span>Edit</span>
+                                    </a>
+                                    <button type="button" class="btn-act btn-act-del" aria-label="Hapus arsip berita acara" onclick="confirmDelete(<?php echo $item['id']; ?>, '<?php echo addslashes($item['nomor_berita']); ?>')">
+                                        <i class="fas fa-trash"></i><span>Hapus</span>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -278,20 +383,6 @@ echo "<style>{$css}</style>";
 </div>
 
 <script>
-function toggleDropdown(btn) {
-    const dropdown = btn.nextElementSibling;
-    document.querySelectorAll('.action-dropdown.show').forEach(d => {
-        if (d !== dropdown) d.classList.remove('show');
-    });
-    dropdown.classList.toggle('show');
-}
-
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.action-menu')) {
-        document.querySelectorAll('.action-dropdown.show').forEach(d => d.classList.remove('show'));
-    }
-});
-
 function confirmDelete(id, nomor) {
     if (confirm("Apakah Anda yakin ingin menghapus arsip Berita Acara \"" + nomor + "\" beserta file di dalamnya secara permanen?")) {
         window.location.href = "arsip-berita-acara.php?hapus=" + id + "&csrf_token=<?php echo $_SESSION['csrf_token']; ?>";

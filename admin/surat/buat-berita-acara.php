@@ -698,13 +698,17 @@ if (!empty($tanggal_kegiatan_val)) {
 
 .buat-ba-container .grid-2 {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
+}
+
+.buat-ba-container .grid-2 > .form-group {
+    min-width: 0;
 }
 
 @media (min-width: 768px) {
     .buat-ba-container .grid-2 {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -952,7 +956,7 @@ if (!empty($tanggal_kegiatan_val)) {
 }
 
 /* WAKTU PELAKSANAAN (PRESERVED) */
-.buat-ba-container .wakpel-card { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 20px; border: 1px solid var(--border-color); }
+.buat-ba-container .wakpel-card { min-width: 0; background: rgba(0,0,0,0.2); border-radius: 20px; padding: 20px; border: 1px solid var(--border-color); }
 .buat-ba-container .preview-bar { background: rgba(74,144,226,0.08); border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; margin-top: 15px; color: #8BB9F0; border-left: 4px solid var(--accent-color); }
 
 /* Drum Picker Refinement (Wheel Effect) */
@@ -977,11 +981,29 @@ if (!empty($tanggal_kegiatan_val)) {
 
 @media (max-width: 600px) {
     .buat-ba-container .drum-groups-wrap { 
+        width: 100%;
+        min-width: 0;
         justify-content: center; 
         gap: 10px;
         flex-wrap: wrap;
     }
-    .time-group-inner { gap: 5px; }
+    .buat-ba-container .time-group-inner {
+        flex: 1 1 100%;
+        min-width: 0;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .buat-ba-container .time-group-inner > div:first-child,
+    .buat-ba-container .time-group-inner > #drum-end-wrap {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+    .buat-ba-container .time-group-inner .sd-label {
+        flex: 1 1 100%;
+        padding-top: 0;
+        text-align: center;
+    }
+    .buat-ba-container .time-group-inner .drum-group { justify-content: center; }
     .drum-col { width: 45px; height: 130px; }
     .drum-item { height: 30px; line-height: 30px; font-size: 1rem; }
     .drum-highlight { top: 50px; height: 30px; left: 2px; right: 2px; }
@@ -993,7 +1015,19 @@ if (!empty($tanggal_kegiatan_val)) {
 
 .buat-ba-container .date-range-wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 @media (max-width: 600px) {
-    .buat-ba-container .date-range-wrap { flex-direction: column; align-items: stretch; }
+    .buat-ba-container .date-range-wrap {
+        min-width: 0;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .buat-ba-container .date-range-wrap > input[type="date"] {
+        min-width: 0 !important;
+        max-width: 100%;
+    }
+    .buat-ba-container .date-range-wrap > div {
+        min-width: 0 !important;
+        max-width: 100%;
+    }
     .buat-ba-container .date-range-wrap span { display: none; }
 }
 </style>

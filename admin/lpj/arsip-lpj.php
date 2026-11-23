@@ -337,10 +337,12 @@ if (!empty($filter_triwulan)) {
         object-fit: cover;
     }
     .lpj-card-header h3 {
+        min-width: 0;
         margin: 0;
         font-size: 0.95rem;
         color: #fff;
         line-height: 1.3;
+        overflow-wrap: anywhere;
     }
     .lpj-card-body {
         padding: 16px;
@@ -363,6 +365,7 @@ if (!empty($filter_triwulan)) {
         color: #fff;
         font-weight: bold;
         font-size: 0.95rem;
+        overflow-wrap: anywhere;
     }
     .lpj-card-actions {
         padding: 16px;
@@ -382,16 +385,18 @@ if (!empty($filter_triwulan)) {
     }
     .lpj-card-actions .actions-buttons {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
     }
     .lpj-card-actions .actions-buttons > a, .lpj-card-actions .actions-buttons > button {
         width: 100%;
+        min-width: 0;
         justify-content: center;
         display: flex;
         align-items: center;
         padding: 8px;
         font-size: 0.8rem;
+        overflow-wrap: anywhere;
     }
     .lpj-checkbox-label {
         display: flex;
@@ -524,14 +529,48 @@ if (!empty($filter_triwulan)) {
         .lpj-group-title i {
             font-size: 1.2rem;
         }
+        .lpj-archive-page-header,
+        .lpj-archive-page-actions,
+        .filter-bar .floating-group {
+            min-width: 0;
+        }
+        .lpj-archive-page-actions {
+            display: grid !important;
+            width: 100%;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px !important;
+        }
+        .lpj-archive-page-actions > * {
+            min-width: 0;
+            justify-content: center;
+            padding: 9px 8px;
+            font-size: 0.78rem;
+            line-height: 1.3;
+            text-align: center;
+            white-space: normal;
+        }
+        .lpj-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 14px;
+        }
+        .filter-bar .floating-group {
+            flex: 1 1 100%;
+        }
+        .filter-bar .btn-filter-group {
+            width: 100%;
+        }
+        .filter-bar .btn-filter-group > * {
+            flex: 1;
+            justify-content: center;
+        }
     }
 </style>
 
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+<div class="page-header lpj-archive-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
     <div>
         <h1><i class="fas fa-archive"></i> Arsip Laporan Pertanggungjawaban (LPJ)</h1>
     </div>
-    <div style="display: flex; gap: 10px;">
+    <div class="lpj-archive-page-actions" style="display: flex; gap: 10px;">
         <button type="submit" form="consolidateForm" class="btn-primary" style="background: #28a745;"><i class="fas fa-compress-arrows-alt"></i> Konsolidasi LPJ Terpilih</button>
         <a href="buat-lpj.php" class="btn-primary"><i class="fas fa-plus"></i> Buat LPJ Baru</a>
     </div>

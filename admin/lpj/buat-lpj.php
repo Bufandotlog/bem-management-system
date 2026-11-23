@@ -1116,6 +1116,27 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
             white-space: normal;
             line-height: 1.2;
         }
+        .lpj-wizard-actions {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .lpj-wizard-actions > #btnPrev {
+            flex: 1 1 36%;
+        }
+        .lpj-wizard-action-group {
+            flex: 1 1 100%;
+            gap: 8px !important;
+        }
+        .lpj-wizard-action-group > button {
+            flex: 1;
+            min-width: 0;
+            justify-content: center;
+            padding: 8px 10px;
+            font-size: 0.78rem;
+            line-height: 1.25;
+            text-align: center;
+            white-space: normal;
+        }
     }
     /* ===== WIZARD PANELS ===== */
     .wizard-panel {
@@ -1778,7 +1799,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
         <div class="card">
             <div class="card-body">
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <div class="floating-group" style="flex: 1; min-width: 280px;">
+                    <div class="floating-group" style="flex: 1 1 280px; min-width: 0;">
                         <select name="kementerian_id" id="kementerianSelect" class="floating-input" required <?php echo $edit_data ? 'disabled' : ''; ?> data-has-value="<?php echo !empty($edit_data['kementerian_id']) ? 'true' : 'false'; ?>" onchange="this.setAttribute('data-has-value', this.value !== '' ? 'true' : 'false')">
                             <option value="" hidden>Kementerian</option>
                             <?php foreach ($kementerian_list as $k): ?>
@@ -1790,7 +1811,7 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
                             <input type="hidden" name="kementerian_id" value="<?php echo $edit_data['kementerian_id']; ?>">
                         <?php endif; ?>
                     </div>
-                    <div class="floating-group" style="flex: 1; min-width: 280px;">
+                    <div class="floating-group" style="flex: 1 1 280px; min-width: 0;">
                         <select name="triwulan" id="triwulanSelect" class="floating-input" required <?php echo $edit_data ? 'disabled' : ''; ?> data-has-value="<?php echo !empty($selected_triwulan) ? 'true' : 'false'; ?>" onchange="this.setAttribute('data-has-value', this.value !== '' ? 'true' : 'false')">
                             <option value="" hidden>Triwulan Periode</option>
                             <option value="I" <?php echo ($selected_triwulan === 'I') ? 'selected' : ''; ?>>TRIWULAN I</option>
@@ -2315,10 +2336,10 @@ $selected_triwulan = $edit_data['triwulan'] ?? (sanitizeText($_GET['triwulan'] ?
     </div>
 
     <!-- Wizard Actions Buttons -->
-    <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+    <div class="lpj-wizard-actions" style="display: flex; justify-content: space-between; margin-top: 30px;">
         <button type="button" class="btn-secondary" id="btnPrev" style="visibility: hidden;" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Sebelumnya</button>
         
-        <div style="display: flex; gap: 10px;">
+        <div class="lpj-wizard-action-group" style="display: flex; gap: 10px;">
             <button type="button" class="btn-secondary" onclick="saveDraft()"><i class="fas fa-save"></i> Simpan Draft</button>
             <button type="button" class="btn-primary" id="btnNext" onclick="nextStep()">Selanjutnya <i class="fas fa-arrow-right"></i></button>
             <button type="submit" class="btn-primary" id="btnSubmitForm" style="display: none;" onclick="submitLpj()"><i class="fas fa-paper-plane"></i> Simpan & Kirim LPJ</button>

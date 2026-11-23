@@ -140,6 +140,19 @@ if (!function_exists('cleanPointPrefix')) {
         .btn-warning { background: #f39c12; color: white; }
         .btn-warning:hover { background: #d68010; }
 
+        @media screen and (max-width: 480px) {
+            .no-print {
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+            .no-print .btn {
+                flex: 1 1 140px;
+                justify-content: center;
+                padding: 9px 12px;
+                font-size: 12px;
+            }
+        }
+
         .page-container {
             display: flex;
             flex-direction: column;
